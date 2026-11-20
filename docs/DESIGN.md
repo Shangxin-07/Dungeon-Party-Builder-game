@@ -263,6 +263,19 @@ In town, a simple **pit gauge** shows the overflow climbing out against your def
 
 Defences are ordinary buildings in `content/buildings/` with a `defence` (or `raidWarning`) effect, so new kinds of defence are just new data.
 
+### Later: the opening, holding the pit
+
+> Added 2026-11-20. **Not in the first playable version**, which still starts with a Guild Hall and delving available. This becomes the game's opening once raids and defences exist (after M4).
+
+The game starts when you arrive at a mining site that has just dug too far. There are no defences, no Guild Hall, and monsters are already climbing out of the pit.
+
+1. **Hold the line.** There's no delving yet. You assign your first heroes to **makeshift defence posts** around the pit (barricade, gate gap, lookout) and to **makeshift roles** (whoever is holding the pick-axe is the fighter). Then you watch them hold. Each night's overflow is fought with the normal combat sim, as waves against the posts.
+2. **Gather materials.** Fallen raiders drop materials, and the miners salvage what they can. Losses still hurt, and heroes still have morale.
+3. **Build up.** Once you have enough, you build the first real defences (palisade, gate) and the Guild Hall.
+4. **Push down.** With the town secure enough, delving unlocks and the normal game begins: send parties down to thin the population at its source.
+
+This works as a tutorial in disguise. It teaches assigning heroes, watching auto-battles, morale and building, before the player has to think about expeditions. It reuses the combat sim and the defence buildings, so it is mostly new content and a few new rules rather than new systems. Defence posts and makeshift roles are data like everything else (`content/posts/`, roles as temporary class definitions).
+
 ### Favourite buildings
 
 Every hero has a **favourite building**, usually linked to their motivation (a Comrades hero loves the Tavern, a Knowledge hero the Library, a Glory hero the Training Yard, a Gold hero the Vault or Market). Their profile shows it.
@@ -433,7 +446,7 @@ Each milestone ends with something you can run.
 | M3 | Town UI: roster, recruit, equip, formation, launch, watch the log, results screen | Actually play a loop in the browser |
 | M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load | Feel the dungeon getting worse over time |
 | M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs | Play the full design in miniature |
-| M6+ | Balance pass, then grow content: Cleric, alignment (§7), more buildings, more monsters/floors, 2D watch view, multiple parties | Keep growing |
+| M6+ | Balance pass, then grow content: Cleric, alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |
 
 ## 16. Decisions (agreed 2026-11-20)
 
@@ -453,3 +466,4 @@ Each milestone ends with something you can run.
 | 12 | Town buildings | One-off cost (gold, deep-floor materials, renown); permanent, survive wipes; raids damage but never destroy |
 | 13 | Favourite buildings | Each hero has one; built = morale boost, missing = morale drain |
 | 14 | Dungeon entrance and defences | An open pit dug by the original mining camp. Defences around it (walls, gate, watchtowers) soak up overflow; what gets past becomes a raid |
+| 15 | Game opening (later) | Start at an undefended mining site, assign heroes to makeshift defences, gather materials, build up, then unlock delving. The first playable version is unchanged |
