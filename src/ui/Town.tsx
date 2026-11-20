@@ -35,9 +35,11 @@ import {
   shopStock,
   toggleParty,
   TownError,
+  underConstruction,
   unequip,
   unpackItem,
   upgrade,
+  type Construction,
   type TownState,
 } from "../sim/town";
 import type { RaidReport } from "../sim/raid";
@@ -341,6 +343,15 @@ function TownBar({ town, act }: { town: TownState; act: Act }) {
       <span>
         Defence <strong>{defence(ix, town)}</strong>
       </span>
+      {town.construction.length ? (
+        <span
+          title={town.construction
+            .map((c) => `${ix.building(c.building).name}: ${c.daysLeft}d`)
+            .join(", ")}
+        >
+          Under construction <strong>{town.construction.length}</strong>
+        </span>
+      ) : null}
       {town.damaged.length ? (
         <span className="damaged-note">{town.damaged.length} damaged</span>
       ) : null}
@@ -845,6 +856,7 @@ function Buildings({ town, act }: { town: TownState; act: Act }) {
           const next = nextLevel(ix, town, b.id);
           const damaged = town.damaged.includes(b.id);
           const fix = damaged ? repairCost(ix, town, b.id) : 0;
+          const work = underConstruction(town, b.id);
           return (
             <li key={b.id} className={`card${damaged ? " damaged" : ""}`}>
               <h3>
@@ -854,6 +866,14 @@ function Buildings({ town, act }: { town: TownState; act: Act }) {
               <p className="small">{b.blurb}</p>
               {now ? <p className="small">Now: {now.summary}.</p> : null}
               {b.raidProof ? <p className="small muted">Raids can't damage it.</p> : null}
+              {work ? (
+                <Works
+                  building={b.name}
+                  work={work}
+                  total={b.levels[work.level - 1]!.days}
+                  town={town}
+                />
+              ) : null}
               {damaged ? (
                 <>
                   <p className="small damaged-note">
@@ -868,7 +888,7 @@ function Buildings({ town, act }: { town: TownState; act: Act }) {
                     Repair for {fix} gold
                   </button>
                 </>
-              ) : next ? (
+              ) : work ? null : next ? (
                 <>
                   <p className="small muted">
                     Level {level + 1}: {next.summary}.
@@ -880,6 +900,7 @@ function Buildings({ town, act }: { town: TownState; act: Act }) {
                     onClick={() => act((t) => upgrade(ix, t, b.id))}
                   >
                     {level ? "Upgrade" : "Build"} for {next.cost} gold
+                    {next.days ? `, ${next.days} ${next.days === 1 ? "day" : "days"}` : ""}
                   </button>
                 </>
               ) : (
@@ -890,6 +911,39 @@ function Buildings({ town, act }: { town: TownState; act: Act }) {
         })}
       </ul>
     </section>
+  );
+}
+
+/** Builders at work: progress and when it'll be done. */
+function Works({
+  building,
+  work,
+  total,
+  town,
+}: {
+  building: string;
+  work: Construction;
+  total: number;
+  town: TownState;
+}) {
+  const done = total - work.daysLeft;
+  return (
+    <div className="works">
+      <p className="small">
+        Builders at work on level {work.level}: {work.daysLeft}{" "}
+        {work.daysLeft === 1 ? "day" : "days"} left, ready on day {town.day + work.daysLeft}.
+        {work.level > 1
+          ? ` The ${building} keeps working at level ${work.level - 1} until then.`
+          : ""}
+      </p>
+      <span
+        className="pop-track works-track"
+        role="img"
+        aria-label={`${done} of ${total} days of work done`}
+      >
+        <span className="pop-fill" style={{ width: `${(done / total) * 100}%` }} />
+      </span>
+    </div>
   );
 }
 

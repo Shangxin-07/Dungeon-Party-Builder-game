@@ -289,6 +289,11 @@ export type BuildingEffect =
 export interface BuildingLevel {
   /** Gold to build or upgrade to this level. */
   cost: number;
+  /**
+   * Days the builders need. The building keeps working at its old level until
+   * the work is done (0 = ready at once).
+   */
+  days: number;
   /** One line shown in town, e.g. "4 heroes per party, 8 on the roster". */
   summary: string;
   effects: readonly BuildingEffect[];

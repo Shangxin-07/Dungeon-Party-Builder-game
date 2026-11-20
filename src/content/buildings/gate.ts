@@ -9,11 +9,13 @@ export default defineBuilding({
   levels: [
     {
       cost: 60,
+      days: 1,
       summary: "Timber gate: holds back 3 strength a night",
       effects: [{ type: "defence", amount: 3 }],
     },
     {
       cost: 180,
+      days: 3,
       summary: "Iron-bound gate: holds back 6 strength a night",
       effects: [{ type: "defence", amount: 6 }],
     },

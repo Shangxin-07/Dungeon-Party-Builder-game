@@ -1015,3 +1015,9 @@ sup.down {
     padding-right: 8px;
   }
 }
+
+.works-track {
+  width: 100%;
+  max-width: 200px;
+  margin-bottom: 8px;
+}

@@ -9,16 +9,19 @@ export default defineBuilding({
   levels: [
     {
       cost: 80,
+      days: 2,
       summary: "Wooden palisade: holds back 6 strength a night",
       effects: [{ type: "defence", amount: 6 }],
     },
     {
       cost: 250,
+      days: 4,
       summary: "Stone wall: holds back 12 strength a night",
       effects: [{ type: "defence", amount: 12 }],
     },
     {
       cost: 600,
+      days: 6,
       summary: "High stone wall: holds back 20 strength a night",
       effects: [{ type: "defence", amount: 20 }],
     },

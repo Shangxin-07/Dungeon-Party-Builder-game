@@ -199,6 +199,7 @@ export function validateLibrary(lib: Library): string[] {
     if (b.startLevel < 0 || b.startLevel > b.levels.length) err(`${w}: bad start level`);
     b.levels.forEach((lvl, i) => {
       if (lvl.cost < 0) err(`${w} level ${i + 1}: negative cost`);
+      if (!(lvl.days >= 0)) err(`${w} level ${i + 1}: days must be 0 or more`);
       for (const e of lvl.effects) {
         if (e.type === "sells") {
           for (const id of e.items) if (!itemIds.has(id)) err(`${w}: sells unknown item "${id}"`);
