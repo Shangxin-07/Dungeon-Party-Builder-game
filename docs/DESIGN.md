@@ -542,6 +542,28 @@ A guild that builds now has about two-thirds of the town by day 60 instead of al
 
 **The Cleric** (§12's fourth class). WIL/CHA, front row, likes maces and holy things. Starts with a mace (+2 spell power), leather armour, a wooden shield and bandages. *Prayer of Mending* heals more than a mage's Mend; *Smite* is holy damage, and skeletons now take 50% extra from holy. A new `healer` AI heals anyone below 60% HP, saves its spells for the undead (or a full mana pool) and otherwise swings the mace. Three class perks: Devout (+3 spell power, +6 mana), Turn Undead (+40% vs undead, level 3+) and Rallying Voice (+2 CHA, which softens the party's morale losses on a trip). Clerics turn up among the recruits; the starting roster is unchanged. Balance (`npm run balance -- 300 fighter,cleric,scout`): fighter, cleric and scout return from floor 2 91% of the time (fighter, scout and mage: 85%). Without a scout to spot ambushes, fighter, cleric and mage do worse (79%).
 
+### As built in M6 (part 2): restocking, fatigue and injuries
+
+> Added 2026-11-20 after Mike played M5: "once you had a group, there wasn't really any need to change it." The goal for the rest of M6 is pressure that makes changing the party worthwhile. Rules in `content/wear.ts` and `content/injuries/`.
+
+- **Restocking.** Potions and bandages a hero used on a trip have to be replaced. After each trip the town shows a *Restock* list: each used item, for whom, from the store room if there's a spare or bought at the Market. Untick anything you don't want, then okay it. Nothing is bought without the okay.
+- **Fatigue** (0-100). A trip adds 8 per day and 5 per fight. A day in town takes off 15. At 35 a hero is **tired** (−2 accuracy and evasion, −3 initiative); at 70 **exhausted** (−5 accuracy and evasion, −6 initiative, −2 attack and spell power). Sent down tired: −3 morale. The same party sent to floor 1 every day is tired within a week; a floor-2 trip (about 3 days, 5 fights) tires a hero out in one go.
+- **Injuries.** A hero knocked down in a fight has a 50% chance of coming home injured. A hero who dropped below a third of their HP has a 30% chance. END lowers both, by 3% a point. Raid defenders can be injured too. Five injuries to start: broken arm, cracked ribs, twisted ankle, concussion and deep gash, each with its own penalty, lasting 3 to 6 days in town. Getting injured costs 2 morale; being sent down still injured costs 4.
+- **In town:** each hero card has a fatigue bar and lists their injuries with the days left. Launch warnings name tired and injured heroes. Trip results show each hero's fatigue and new injuries. Saves are version 6; older saves start everyone rested and whole.
+
+The bot now restocks, keeps a hero on the bench and sends the freshest heroes (`--static` keeps the same party). Over 60 days (40 towns each, building):
+
+| Plan | Trips | Gold from trips | Buildings (of 20) | Level |
+|---|---|---|---|---|
+| Floor 1, rotating | 58 | 3,900 | 12.4 | 5.0 |
+| Floor 1, same party | 47 | 3,250 | 11.2 | 5.0 |
+| Floor 2, rotating | 20 | 2,950 | 9.5 | 4.8 |
+| Floor 2, same party | 16 | 2,400 | 7.8 | 4.2 |
+
+Rotating gets about a quarter more trips and gold out of the same 60 days. Injuries are occasional: about one per town over 60 days on floors 1 to 3.
+
+**More pressure (ideas, not built yet):** floors whose monsters suit different parties, such as spiders that punish having no scout and skeletons that punish having no crushing or holy damage, with a scouting report before launch; veterans who demand raises or want to retire; and Glory heroes who sulk on the bench while others go down.
+
 Still to come in M6+: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters and floors, the 2D watch view and multiple parties.
 
 ## 12. First playable slice

@@ -51,6 +51,17 @@ export interface Hero {
   dislikes?: string;
   /** Recent morale changes and why, newest last. */
   moraleLog: MoraleNote[];
+  /** 0-100: builds up on trips, wears off in town (content/wear.ts). */
+  fatigue: number;
+  /** Lasting wounds and the days in town left until each heals. */
+  injuries: { id: string; days: number }[];
+}
+
+/** The fatigue tier a hero is in ("tired", "exhausted"), if any. */
+export function fatigueTier(ix: Index, hero: Hero) {
+  let tier: (typeof ix.lib.wear.tiers)[number] | undefined;
+  for (const t of ix.lib.wear.tiers) if ((hero.fatigue ?? 0) >= t.at) tier = t;
+  return tier;
 }
 
 /** A level gained but not yet spent. */
@@ -90,6 +101,8 @@ export function heroPassives(ix: Index, hero: Hero): PassiveEffect[] {
     if (id) out.push(...(ix.item(id).passives ?? []));
   }
   for (const id of hero.perks) out.push(...ix.perk(id).passives);
+  for (const inj of hero.injuries ?? []) out.push(...ix.injury(inj.id).passives);
+  out.push(...(fatigueTier(ix, hero)?.passives ?? []));
   return out;
 }
 
@@ -139,6 +152,8 @@ export function createHero(
     xp: 0,
     levelUps: [],
     moraleLog: [],
+    fatigue: 0,
+    injuries: [],
     ...rollPersonality(ix, opts.id, opts.name, stats, cls.id),
   };
   for (const itemId of cls.startingKit) {

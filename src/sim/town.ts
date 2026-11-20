@@ -13,12 +13,13 @@ import {
   DEFAULT_ORDERS,
   runExpedition,
   type CarriedGear,
+  type ExpeditionEvent,
   type ExpeditionResult,
   type SiteVisit,
   type StandingOrders,
 } from "./expedition";
 import { applyKills, dungeonDay, newDungeon, type DungeonState } from "./dungeon";
-import { createHero, EQUIP_SLOTS, heroSheet, type EquipSlot, type Hero } from "./hero";
+import { createHero, EQUIP_SLOTS, fatigueTier, heroSheet, type EquipSlot, type Hero } from "./hero";
 import { gainXp, spendLevelUp } from "./levels";
 import type { Index } from "./library";
 import type { HaulItem } from "./loot";
@@ -27,7 +28,7 @@ import { resolveRaid, type RaidReport } from "./raid";
 import { createRng, type Rng } from "./rng";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 5;
+export const TOWN_VERSION = 6;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 const PIT_HISTORY = 60;
@@ -130,6 +131,10 @@ export interface TripReport {
   recovered?: HaulItem[];
   /** Names of heroes who quit when they got back. */
   quit?: string[];
+  /** Injuries picked up on the trip, by hero id (injury ids). */
+  injuries?: Record<string, string[]>;
+  /** Each hero's fatigue when they got home, by hero id. */
+  fatigue?: Record<string, number>;
 }
 
 export interface TownState {
@@ -340,6 +345,12 @@ export function launchWarnings(ix: Index, town: TownState): string[] {
   if (party.length && !party.some((h) => h.pack.some((id) => ix.item(id).tags.includes("heal"))))
     out.push("Nobody is carrying potions or bandages.");
   for (const h of party) {
+    const tier = fatigueTier(ix, h);
+    if (tier) out.push(`${h.name} is ${tier.name} (fatigue ${h.fatigue}) and will fight worse.`);
+    for (const inj of h.injuries ?? [])
+      out.push(
+        `${h.name} has a ${ix.injury(inj.id).name.toLowerCase()} (${ix.injury(inj.id).description}, ${inj.days} more ${inj.days === 1 ? "day" : "days"} to heal).`,
+      );
     if (h.levelUps.length) out.push(`${h.name} has a level-up to spend.`);
     if (isLow(ix, h)) {
       const low = ix.motivation(h.motivation).lowMorale;
@@ -584,6 +595,67 @@ export function sell(ix: Index, town: TownState, itemId: string): TownState {
   return t;
 }
 
+/** One potion or bandage to put back in a hero's pack after a trip. */
+export interface RestockLine {
+  heroId: string;
+  item: string;
+  /** From the store room (free) or bought at the Market. */
+  from: "store" | "market";
+  cost: number;
+}
+
+/**
+ * What the last trip used up (M6): every consumable a hero set off with and
+ * came back without, to be taken from the store room or bought again. The
+ * player sees this list and okays it. Things nobody sells are left out.
+ */
+export function restockPlan(ix: Index, town: TownState): RestockLine[] {
+  const trip = town.lastTrip;
+  if (!trip) return [];
+  const stash = [...town.stash];
+  const stock = shopStock(ix, town);
+  const out: RestockLine[] = [];
+  for (const before of trip.party) {
+    const h = findHero(town, before.id);
+    if (!h) continue;
+    const now = [...h.pack];
+    let room = heroSheet(ix, h).derived.carrySlots - h.pack.length;
+    for (const id of before.pack) {
+      const i = now.indexOf(id);
+      if (i >= 0) {
+        now.splice(i, 1);
+        continue;
+      }
+      if (room <= 0) break;
+      const s = stash.indexOf(id);
+      if (s >= 0) {
+        stash.splice(s, 1);
+        out.push({ heroId: h.id, item: id, from: "store", cost: 0 });
+      } else if (stock.includes(id)) {
+        out.push({ heroId: h.id, item: id, from: "market", cost: buyPrice(ix.item(id)) });
+      } else continue;
+      room--;
+    }
+  }
+  return out;
+}
+
+/** Put used supplies back in packs, buying what the store room doesn't have. */
+export function restock(ix: Index, town: TownState, lines: readonly RestockLine[]): TownState {
+  const cost = lines.reduce((s, l) => s + l.cost, 0);
+  if (cost > town.gold) throw new TownError("Not enough gold for all of that.");
+  const t = edit(town);
+  for (const l of lines) {
+    const h = hero(t, l.heroId);
+    if (h.pack.length >= heroSheet(ix, h).derived.carrySlots)
+      throw new TownError(`${h.name}'s pack is full.`);
+    if (l.from === "store") takeFromStash(t, l.item);
+    else book(t, "bought", -buyPrice(ix.item(l.item)));
+    h.pack.push(l.item);
+  }
+  return t;
+}
+
 /** Put an item from the store room on a hero. Whatever they had goes back. */
 export function equip(ix: Index, town: TownState, heroId: string, itemId: string): TownState {
   const slot = ix.item(itemId).slot;
@@ -762,6 +834,62 @@ function restHero(ix: Index, h: Hero, days: number): void {
   h.hp = Math.min(d.maxHp, Math.max(h.hp, 0) + per * days);
   h.mana = d.mana;
   h.condition = "ok";
+  h.fatigue = Math.max(0, (h.fatigue ?? 0) - ix.lib.wear.restPerDay * days);
+}
+
+/** Wounds knit a day at a time in town. Returns the names of injuries that healed. */
+function healInjuries(ix: Index, h: Hero): string[] {
+  const healed: string[] = [];
+  h.injuries = (h.injuries ?? []).filter((inj) => {
+    inj.days -= 1;
+    if (inj.days > 0) return true;
+    healed.push(ix.injury(inj.id).name.toLowerCase());
+    return false;
+  });
+  return healed;
+}
+
+/** The lowest share of max HP a hero fell to in this log (1 if never hit). */
+function lowestHp(log: readonly ExpeditionEvent[], heroId: string): number {
+  let low = 1;
+  for (const e of log) {
+    const hp = e.combat?.hp;
+    if (hp?.uid === heroId && hp.max > 0) low = Math.min(low, hp.hp / hp.max);
+  }
+  return low;
+}
+
+/** Was this hero knocked down at any point in this log? */
+const wasDowned = (log: readonly ExpeditionEvent[], heroId: string) =>
+  log.some((e) => e.combat?.kind === "downed" && e.combat.target === heroId);
+
+/**
+ * A hero who was knocked down (or came home badly hurt, with a smaller
+ * `base` chance) may pick up an injury (content/wear.ts, content/injuries/).
+ * END helps. Returns the injury id, if any.
+ */
+function maybeInjure(
+  ix: Index,
+  t: TownState,
+  h: Hero,
+  base = ix.lib.wear.injuryChance,
+): string | undefined {
+  const w = ix.lib.wear;
+  const end = heroSheet(ix, h).stats.END;
+  const chance = Math.max(0, Math.min(1, base - (end - 10) * w.injuryPerEnd));
+  const id = roll(t, (rng) => {
+    if (!rng.chance(chance)) return undefined;
+    const pool = ix.lib.injuries.filter((i) => !(h.injuries ?? []).some((x) => x.id === i.id));
+    if (!pool.length) return undefined;
+    let r = rng.next() * pool.reduce((s, i) => s + i.weight, 0);
+    for (const i of pool) if ((r -= i.weight) < 0) return i.id;
+    return pool.at(-1)!.id;
+  });
+  if (!id) return undefined;
+  h.injuries = [...(h.injuries ?? []), { id, days: ix.injury(id).days }];
+  const max = heroSheet(ix, h).derived.maxHp;
+  h.hp = Math.min(h.hp, max);
+  return id;
 }
 
 /**
@@ -837,6 +965,17 @@ function nightfall(ix: Index, t: TownState, away: ReadonlySet<string>): RaidRepo
       const h = structuredClone(after);
       const levels = roll(t, (rng) => gainXp(ix, h, xpEach, rng));
       if (levels) applyMorale(ix, h, { levelUp: levels }, t.day);
+      if (wasDowned(raid.log, h.id)) {
+        const inj = maybeInjure(ix, t, h);
+        if (inj) {
+          applyMorale(ix, h, { injured: 1 }, t.day);
+          news(
+            t,
+            `${h.name} took a ${ix.injury(inj).name.toLowerCase()} defending the town.`,
+            "bad",
+          );
+        }
+      }
       t.roster[i] = h;
     }
   }
@@ -849,6 +988,13 @@ function nightfall(ix: Index, t: TownState, away: ReadonlySet<string>): RaidRepo
 
 /** A day in town for a hero who isn't away: morale from the town, and training. */
 function dayInTown(ix: Index, t: TownState, h: Hero): void {
+  const healed = healInjuries(ix, h);
+  if (healed.length)
+    news(
+      t,
+      `${h.name}'s ${listWords(healed)} ${healed.length > 1 ? "have" : "has"} healed.`,
+      "good",
+    );
   const fav = standing(t, h.favourite);
   applyMorale(
     ix,
@@ -1156,6 +1302,27 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     t.roster[i] = structuredClone(after);
   }
 
+  // Wear and tear: the trip tires everyone out, and a hero who was knocked
+  // down may bring home an injury.
+  const fights = result.log.filter((e) => e.kind === "fight" && e.monsters).length;
+  const tiredBy =
+    ix.lib.wear.fatiguePerTripDay * result.days + ix.lib.wear.fatiguePerFight * fights;
+  const injuries: Record<string, string[]> = {};
+  const fatigue: Record<string, number> = {};
+  for (const before of party) {
+    const h = findHero(t, before.id);
+    if (!h) continue;
+    h.fatigue = Math.min(100, (h.fatigue ?? 0) + tiredBy);
+    fatigue[h.id] = h.fatigue;
+    const downed = wasDowned(result.log, h.id);
+    const wounded = lowestHp(result.log, h.id) < ix.lib.wear.woundedBelow;
+    if (downed || wounded) {
+      const w = ix.lib.wear;
+      const inj = maybeInjure(ix, t, h, downed ? w.injuryChance : w.woundedInjuryChance);
+      if (inj) injuries[h.id] = [inj];
+    }
+  }
+
   // How everyone feels about it (DESIGN.md §6).
   const morale: Record<string, { amount: number; reason: string }[]> = {};
   const leaderCha = Math.max(10, ...party.map((h) => heroSheet(ix, h).stats.CHA));
@@ -1182,6 +1349,9 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
       likedGear: before.likes && tags.has(before.likes) ? 1 : 0,
       dislikedGear: before.dislikes && tags.has(before.dislikes) ? 1 : 0,
       levelUp: levels[h.id] ?? 0,
+      sentTired: fatigueTier(ix, before) ? 1 : 0,
+      sentInjured: before.injuries?.length ? 1 : 0,
+      injured: injuries[h.id]?.length ? 1 : 0,
     };
     morale[h.id] = moraleChanges(ix, h, facts, { leaderCha });
     applyMorale(ix, h, facts, backDay, { leaderCha });
@@ -1247,6 +1417,8 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     rescued: rescued.map((h) => h.name),
     recovered,
     quit,
+    injuries,
+    fatigue,
   };
   return t;
 }

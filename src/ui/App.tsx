@@ -50,9 +50,8 @@ export function App() {
 
       <footer>
         <p>
-          New: heroes draw wages, the Market takes a cut of the haul, the Cleric joins the recruits,
-          and you can see every monster's stats while you watch. Next up: more monsters, floors and
-          buildings.
+          New: used potions and bandages need restocking, and heroes get tired and injured, so it
+          pays to rotate the party. Next up: more monsters, floors and buildings.
         </p>
       </footer>
     </main>

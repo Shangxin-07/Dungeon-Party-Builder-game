@@ -10,6 +10,7 @@ import type {
   ClassDef,
   EncounterDef,
   FloorDef,
+  InjuryDef,
   ItemDef,
   Library,
   LootTableDef,
@@ -121,6 +122,12 @@ import comradesMotivation from "./motivations/comrades";
 import moraleRules from "./morale";
 import levelRules from "./levels";
 import rescueRules from "./rescue";
+import wearRules from "./wear";
+import brokenArmInjury from "./injuries/broken-arm";
+import crackedRibsInjury from "./injuries/cracked-ribs";
+import twistedAnkleInjury from "./injuries/twisted-ankle";
+import concussionInjury from "./injuries/concussion";
+import deepGashInjury from "./injuries/deep-gash";
 import townRules from "./town";
 import dungeonRules from "./dungeon";
 
@@ -234,6 +241,14 @@ export const buildings: readonly BuildingDef[] = [
   vaultBuilding,
 ];
 
+export const injuries: readonly InjuryDef[] = [
+  brokenArmInjury,
+  crackedRibsInjury,
+  twistedAnkleInjury,
+  concussionInjury,
+  deepGashInjury,
+];
+
 export const library: Library = {
   classes,
   items,
@@ -253,6 +268,8 @@ export const library: Library = {
   morale: moraleRules,
   levels: levelRules,
   rescue: rescueRules,
+  wear: wearRules,
+  injuries,
 };
 
 export { heroNames } from "./names";

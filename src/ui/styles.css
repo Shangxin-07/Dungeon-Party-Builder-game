@@ -1078,6 +1078,19 @@ sup.down {
   background: #8fd49a;
 }
 
+.fatigue-fill {
+  background: #9aa3b5;
+}
+
+.fatigue-fill.low {
+  background: #e4b27a;
+}
+
+.injuries {
+  margin: 2px 0 0;
+  padding-left: 18px;
+}
+
 .xp-fill {
   background: #7fa6d9;
 }
@@ -1224,4 +1237,13 @@ sup.down {
 .log-x-site {
   color: var(--accent);
   font-weight: 600;
+}
+
+.restock {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }

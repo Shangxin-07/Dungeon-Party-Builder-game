@@ -36,6 +36,10 @@ export default defineMoraleRules({
     { fact: "favouriteMissing", amount: -1, reason: "misses having a {favourite}" },
     { fact: "restMorale", amount: 1, below: 70, reason: "an evening at the Tavern" },
     { fact: "unpaid", amount: -3, reason: "wasn't paid" },
+    // M6: nobody likes being worked into the ground.
+    { fact: "sentTired", amount: -3, reason: "was sent down worn out" },
+    { fact: "sentInjured", amount: -4, reason: "was sent down still injured" },
+    { fact: "injured", amount: -2, reason: "picked up a nasty injury" },
     { fact: "likedGear", amount: 1, reason: "liked their gear" },
     { fact: "dislikedGear", amount: -3, reason: "hates their gear" },
     { fact: "wounded", amount: -3, reason: "came home badly hurt" },

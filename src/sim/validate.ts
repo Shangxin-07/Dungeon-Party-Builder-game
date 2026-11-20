@@ -144,6 +144,22 @@ export function validateLibrary(lib: Library): string[] {
     if (!p.passives.length) err(`perk "${p.id}": needs at least one passive`);
   }
 
+  ids("injury", lib.injuries);
+  for (const i of lib.injuries) {
+    passives(`injury "${i.id}"`, i.passives);
+    if (i.days < 1) err(`injury "${i.id}": days must be at least 1`);
+    if (i.weight <= 0) err(`injury "${i.id}": weight must be positive`);
+  }
+  const wear = lib.wear;
+  if (wear.fatiguePerTripDay < 0 || wear.fatiguePerFight < 0 || wear.restPerDay <= 0)
+    err("wear: fatigue rates can't be negative, and rest must take some away");
+  wear.tiers.forEach((tier, n) => {
+    passives(`wear tier "${tier.name}"`, tier.passives);
+    if (n && tier.at <= wear.tiers[n - 1]!.at) err("wear: tiers must go up in order");
+  });
+  for (const k of ["injuryChance", "woundedInjuryChance"] as const)
+    if (wear[k] < 0 || wear[k] > 1) err(`wear: ${k} must be 0-1`);
+
   for (const e of lib.encounters) {
     const w = `encounter "${e.id}"`;
     const [lo, hi] = e.floors;
