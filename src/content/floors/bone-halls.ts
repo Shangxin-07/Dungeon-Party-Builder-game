@@ -6,4 +6,6 @@ export default defineFloor({
   name: "The Bone Halls",
   rooms: [6, 8],
   fixedRooms: ["rest-spot"],
+  capacity: 60,
+  startPopulation: 50,
 });

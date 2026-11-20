@@ -16,14 +16,42 @@ export function floorPower(floor: number): number {
   return Math.round(FLOOR_ONE_POWER * POWER_PER_FLOOR ** (floor - 1));
 }
 
+export interface EncounterOptions {
+  /**
+   * The floor's monster level today (DESIGN.md §4). Defaults to the depth.
+   * A higher level means bigger groups, sized like a deeper floor's, and lets
+   * that deeper floor's monster groups turn up too.
+   */
+  level?: number;
+  /** Total power to aim for instead of the level's usual (raids use this). */
+  power?: number;
+  /** Most monsters in the group (e.g. only a few left alive on the floor). */
+  max?: number;
+}
+
+/** Target power for a floor at a (possibly fractional) monster level. */
+export function levelPower(level: number): number {
+  return Math.round(FLOOR_ONE_POWER * POWER_PER_FLOOR ** (Math.max(1, level) - 1));
+}
+
 /** Roll a list of monster ids for a fight on this floor. */
-export function rollEncounter(ix: Index, floor: number, rng: Rng): string[] {
-  const options = ix.lib.encounters.filter((e) => floor >= e.floors[0] && floor <= e.floors[1]);
+export function rollEncounter(
+  ix: Index,
+  floor: number,
+  rng: Rng,
+  opts: EncounterOptions = {},
+): string[] {
+  const level = opts.level ?? floor;
+  const from = Math.min(floor, Math.round(level));
+  const to = Math.max(floor, Math.round(level));
+  const options = ix.lib.encounters.filter((e) => e.floors[0] <= to && e.floors[1] >= from);
   if (!options.length) throw new Error(`No encounters defined for floor ${floor}`);
-  const target = floorPower(floor);
+  const target = opts.power ?? (opts.level === undefined ? floorPower(floor) : levelPower(level));
+  const cap = Math.min(MAX_MONSTERS, opts.max ?? MAX_MONSTERS);
   const total = options.reduce((s, e) => s + e.weight, 0);
   const monsters: string[] = [];
   let power = 0;
+  if (cap <= 0) return monsters;
 
   for (let picks = 0; picks < 4 && power < target * 0.85; picks++) {
     let roll = rng.next() * total;
@@ -33,8 +61,7 @@ export function rollEncounter(ix: Index, floor: number, rng: Rng): string[] {
       for (let i = 0; i < n; i++) {
         const p = ix.monster(g.monster).power;
         // Stop once a group would overshoot badly, but always add at least one monster.
-        if (monsters.length >= MAX_MONSTERS || (monsters.length && power + p > target * 1.25))
-          break;
+        if (monsters.length >= cap || (monsters.length && power + p > target * 1.25)) break;
         monsters.push(g.monster);
         power += p;
       }

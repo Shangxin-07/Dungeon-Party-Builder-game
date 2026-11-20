@@ -17,11 +17,14 @@ npm run build      # production build into dist/
 npm run fight      # run one fight in the terminal and print the battle report
 npm run expedition # run one full trip into the dungeon and print the trip report
 npm run balance    # simulate hundreds of fights and trips per floor and print the odds
+npm run days       # play a town for 40 days with a simple bot and print the dungeon night by night
 ```
 
 `npm run fight` takes options: `--floor 3`, `--seed 42`, or a fixed line-up with `--monsters skeleton,skeleton,goblin-archer`.
 
 `npm run expedition` takes `--floor 3` (how deep to go), `--seed 42`, `--retreat hp-30|downed|potions|never` and `--loot everything|valuable`.
+
+`npm run days` takes `--days 60`, `--policy idle|1|2|3` (never go down, or which floor to send the party to), `--build` (build defences when affordable), `--seed 7` and `--runs 100` (summary over many towns).
 
 Every push to `main` is deployed to GitHub Pages by `.github/workflows/deploy.yml`.
 
@@ -37,6 +40,10 @@ src/
     encounter.ts  floor power (×1.3 per floor) and rolling monster groups
     expedition.ts a full trip: floors, rooms, first aid, carrying, standing orders
     rooms.ts      room behaviours (fight, trap, treasure, rest, quiet), registered by id
+    dungeon.ts    the population over time: breeding, push-up, overflow out of the pit
+    raid.ts       what gets past the pit defences, and the fight in town
+    town.ts       town actions: hire, kit out, build, repair, rest, launch; nights at the pit
+    save.ts       versioned saves, migrations, save files
     loot.ts       loot tables, item values and appraisal
     validate.ts   content checks (broken ids, bad stats, missing references)
     balance.ts    headless balance runs

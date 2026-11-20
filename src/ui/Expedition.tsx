@@ -40,7 +40,7 @@ export function ExpeditionView() {
       </p>
       <TripPlayer
         heroes={trip.heroes}
-        result={trip.result}
+        log={trip.result.log}
         results={<Results result={trip.result} />}
         controls={
           <>

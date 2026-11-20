@@ -181,6 +181,9 @@ export function validateLibrary(lib: Library): string[] {
     if (depths.has(f.depth)) err(`${w}: two floors at depth ${f.depth}`);
     depths.add(f.depth);
     if (f.rooms[0] < 1 || f.rooms[1] < f.rooms[0]) err(`${w}: bad room count`);
+    if (f.capacity < 1) err(`${w}: capacity must be at least 1`);
+    if (f.startPopulation < 0 || f.startPopulation > f.capacity)
+      err(`${w}: startPopulation must be between 0 and capacity`);
     for (const id of f.fixedRooms ?? []) if (!roomIds.has(id)) err(`${w}: unknown room "${id}"`);
     if (!lib.rooms.some((r) => f.depth >= r.floors[0] && f.depth <= r.floors[1]))
       err(`${w}: no rooms can appear at depth ${f.depth}`);
@@ -199,6 +202,8 @@ export function validateLibrary(lib: Library): string[] {
       for (const e of lvl.effects) {
         if (e.type === "sells") {
           for (const id of e.items) if (!itemIds.has(id)) err(`${w}: sells unknown item "${id}"`);
+        } else if (e.type === "raidWarning") {
+          if (e.days < 1) err(`${w} level ${i + 1}: raidWarning needs at least 1 day`);
         } else if (e.amount < 0) err(`${w} level ${i + 1}: negative ${e.type}`);
       }
     });
@@ -216,6 +221,15 @@ export function validateLibrary(lib: Library): string[] {
   if (t.sellRate < 0 || t.sellRate > 1) err("town: sellRate must be between 0 and 1");
   if (t.restPercent <= 0) err("town: restPercent must be above 0");
   if (t.hireCost < 0 || t.startingGold < 0) err("town: costs can't be negative");
+  if (t.repairRate < 0) err("town: repairRate can't be negative");
+
+  const d = lib.dungeon;
+  if (d.spawnPerDay < 0 || d.spawnGrowthPerDay < 0) err("dungeon: spawn rates can't be negative");
+  if (d.evictedLevelDrop < 0 || d.settlePerDay < 0) err("dungeon: level drift can't be negative");
+  const r = d.raids;
+  if (r.powerPerStrength <= 0) err("dungeon: raids.powerPerStrength must be above 0");
+  if (r.strengthPerDamage <= 0) err("dungeon: raids.strengthPerDamage must be above 0");
+  if (r.maxDefenders < 1) err("dungeon: raids.maxDefenders must be at least 1");
 
   return errors;
 }

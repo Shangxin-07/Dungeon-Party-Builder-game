@@ -7,7 +7,6 @@
  */
 import type { DamageType, RoomDef } from "../content/types";
 import type { Side } from "./combat";
-import { rollEncounter } from "./encounter";
 import type { ExpeditionEventKind } from "./expedition";
 import type { Hero } from "./hero";
 import type { Index } from "./library";
@@ -28,6 +27,8 @@ export interface RoomContext {
   maxHp(hero: Hero): number;
   maxMana(hero: Hero): number;
   log(kind: ExpeditionEventKind, text: string): void;
+  /** Roll a group of this floor's monsters, sized for how the floor is today. Empty if none are left. */
+  rollMonsters(): string[];
   /** Fight, then roll loot from the kills. Logs everything and updates the party. */
   fight(monsters: readonly string[], opts?: { surprise?: boolean }): Side | "none";
   /** Hurt a hero outside combat. Resistances apply, armour doesn't. */
@@ -89,7 +90,11 @@ registerRoom("quiet", () => {});
 
 /** Monsters from this floor's encounter tables. A good scout may get the first strike. */
 registerRoom("fight", (ctx) => {
-  const monsters = rollEncounter(ctx.ix, ctx.depth, ctx.rng);
+  const monsters = ctx.rollMonsters();
+  if (!monsters.length) {
+    ctx.log("quiet", "Nothing stirs. This floor has been cleared out.");
+    return;
+  }
   const scout = ctx.best("scouting");
   const chance = clamp(((scout?.value ?? 0) - SURPRISE_FLOOR) / 100, 0, SURPRISE_MAX);
   const surprise = !!scout && ctx.rng.chance(chance);

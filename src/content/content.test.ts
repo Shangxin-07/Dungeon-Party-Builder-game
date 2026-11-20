@@ -87,7 +87,15 @@ describe("validateLibrary", () => {
       ],
       floors: [
         ...library.floors,
-        { id: "deep", depth: 9, name: "Deep", rooms: [3, 3], fixedRooms: ["nowhere"] },
+        {
+          id: "deep",
+          depth: 9,
+          name: "Deep",
+          rooms: [3, 3],
+          fixedRooms: ["nowhere"],
+          capacity: 10,
+          startPopulation: 20,
+        },
       ],
     });
     expect(errors).toEqual(
@@ -98,6 +106,7 @@ describe("validateLibrary", () => {
         'loot table "bad-loot": unknown item "laser-sword"',
         'floor "deep": unknown room "nowhere"',
         'floor "deep": no rooms can appear at depth 9',
+        'floor "deep": startPopulation must be between 0 and capacity',
         "floors: depth 4 is missing",
       ]),
     );

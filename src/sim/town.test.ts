@@ -135,6 +135,9 @@ describe("town actions", () => {
     expect(rosterSize(ix, t)).toBe(8);
     t = toggleParty(ix, t, fourth.id);
     expect(t.party).toHaveLength(4);
+    t = upgrade(ix, upgrade(ix, { ...t, gold: 1600 }, "guild-hall"), "guild-hall");
+    expect(partySlots(ix, t)).toBe(6);
+    expect(rosterSize(ix, t)).toBe(12);
     expect(() => upgrade(ix, t, "guild-hall")).toThrow(/bigger/);
   });
 });

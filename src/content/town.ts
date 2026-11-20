@@ -10,4 +10,6 @@ export default defineTownRules({
   hireCost: 60,
   sellRate: 0.5,
   restPercent: 40,
+  // A raid-damaged building costs a quarter of its build price to fix.
+  repairRate: 0.25,
 });

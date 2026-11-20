@@ -9,6 +9,7 @@ export default defineBuilding({
   name: "Guild Hall",
   blurb: "Where parties are put together. A bigger hall means bigger parties.",
   startLevel: 1,
+  raidProof: true,
   levels: [
     {
       cost: 0,
@@ -24,6 +25,22 @@ export default defineBuilding({
       effects: [
         { type: "partySlots", amount: 4 },
         { type: "rosterSize", amount: 8 },
+      ],
+    },
+    {
+      cost: 600,
+      summary: "5 heroes per party, 10 on the roster",
+      effects: [
+        { type: "partySlots", amount: 5 },
+        { type: "rosterSize", amount: 10 },
+      ],
+    },
+    {
+      cost: 1000,
+      summary: "6 heroes per party, 12 on the roster",
+      effects: [
+        { type: "partySlots", amount: 6 },
+        { type: "rosterSize", amount: 12 },
       ],
     },
   ],

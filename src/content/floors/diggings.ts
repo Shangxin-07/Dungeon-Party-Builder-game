@@ -6,4 +6,6 @@ export default defineFloor({
   name: "The Diggings",
   rooms: [5, 7],
   fixedRooms: ["rest-spot"],
+  capacity: 40,
+  startPopulation: 28,
 });

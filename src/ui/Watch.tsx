@@ -57,6 +57,7 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
     if (e.kind === "room") where = `Floor ${e.floor}, room ${e.room}`;
     if (e.kind === "wander") where = `Climbing back up through floor ${e.floor}`;
     if (e.kind === "home") where = "Back in town";
+    if (e.kind === "raid") where = "At the edge of the pit";
     if (e.kind === "fight" && e.monsters) {
       monsters = new Map(e.monsters.map((m) => [m.uid, { ...m, state: "up" as const }]));
     }
@@ -282,27 +283,26 @@ export function Results({ result, children }: { result: ExpeditionResult; childr
 }
 
 /**
- * Plays a trip's log line by line with live HP bars. `results` is shown once
- * the log has played out (or the player skips to the end).
+ * Plays a trip's (or a raid's) log line by line with live HP bars. `results`
+ * is shown once the log has played out (or the player skips to the end).
  */
 export function TripPlayer({
   heroes,
-  result,
+  log,
   controls,
   results,
 }: {
   /** The party as it set off. */
   heroes: readonly Hero[];
-  result: ExpeditionResult;
+  log: readonly ExpeditionEvent[];
   /** Extra controls shown before the speed picker. */
   controls?: ReactNode;
   results: ReactNode;
 }) {
   const [speed, setSpeed] = useState<Speed>("normal");
-  const log = result.log;
   const [shown, setShown] = useState(0);
 
-  useEffect(() => setShown(0), [result]);
+  useEffect(() => setShown(0), [log]);
   useEffect(() => {
     if (shown >= log.length) return;
     const t = setTimeout(() => setShown((n) => n + 1), SPEEDS[speed]);
