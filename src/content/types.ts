@@ -99,6 +99,8 @@ export interface ClassDef {
   abilities: readonly string[];
   /** Item ids a new recruit starts with. */
   startingKit: readonly string[];
+  /** Fixed stat gains every time a hero of this class levels up (DESIGN.md §9). */
+  growth: Partial<Record<Stat, number>>;
 }
 
 export type ItemSlot = "weapon" | "offhand" | "armor" | "consumable" | "loot";
@@ -187,9 +189,161 @@ export interface PerkDef {
   id: string;
   name: string;
   description: string;
-  /** Class ids this perk can be offered to. Empty = anyone. */
+  /**
+   * Class ids this perk can be offered to. Empty = anyone. Class perks are
+   * offered more often than general ones (LevelRules.classPerkWeight).
+   */
   classes: readonly string[];
+  /** Not offered before this hero level. Defaults to 2 (the first level-up). */
+  minLevel?: number;
   passives: readonly PassiveEffect[];
+}
+
+// ---------------------------------------------------------------------------
+// Morale and motivation (DESIGN.md §6)
+// ---------------------------------------------------------------------------
+
+/**
+ * Numbers the town works out about something that happened to a hero: a
+ * trip, a day of rest, news from the dungeon. Morale rules turn these into
+ * morale. New facts need a line of engine code (src/sim/morale.ts) to work
+ * them out; new rules that use existing facts are just data.
+ */
+export const MORALE_FACTS = [
+  /** A day spent resting in town. */
+  "restDay",
+  /** A rest day with their favourite building standing (and not damaged). */
+  "favouriteBuilt",
+  /** A rest day without it. */
+  "favouriteMissing",
+  /** A rest day: the town's restMorale building effects added up (the Tavern). */
+  "restMorale",
+  /** Gold the Market paid for the haul, per hero who went. */
+  "goldShare",
+  /** 1 if the haul was worth nothing. */
+  "emptyHanded",
+  /** Monsters this hero killed. */
+  "kills",
+  /** Floors deeper than this hero had ever been before. */
+  "newFloors",
+  /** 1 if the trip went no deeper than this hero had been before. */
+  "sameOldFloor",
+  /** Kinds of monster this hero had never seen before. */
+  "newMonsters",
+  /** 1 if the party turned back early. */
+  "retreated",
+  /** Party members (or guild mates in a raid) who died or were left behind. */
+  "fallenComrades",
+  /** 1 if everyone who set off came home. */
+  "allHome",
+  /** Trapped guild mates a rescue run brought home. */
+  "rescuedComrades",
+  /** 1 if this hero came home badly hurt (below a third of max HP, or carried). */
+  "wounded",
+  /** 1 if they were sent down already hurt (below 75% HP). */
+  "sentHurt",
+  /** 1 if they carried gear they like (a weapon or school of magic). */
+  "likedGear",
+  /** 1 if they carried gear they dislike. */
+  "dislikedGear",
+  /** 1 if this hero was trapped after a wipe and brought home. */
+  "wasTrapped",
+  /** A trapped guild mate died waiting for a rescue that never came. */
+  "abandoned",
+  /** 1 if they were given the perk they wanted at a level-up. */
+  "wantedPerk",
+  /** 1 if they levelled up. */
+  "levelUp",
+] as const;
+export type MoraleFact = (typeof MORALE_FACTS)[number];
+
+/** Morale change = amount × fact ÷ per, limited to ±cap. */
+export interface MoraleRule {
+  fact: MoraleFact;
+  amount: number;
+  /** Units of the fact per `amount` of morale. Defaults to 1. */
+  per?: number;
+  /** Most morale this rule can add or take away at once. */
+  cap?: number;
+  /** Only applies while the hero's morale is below this. */
+  below?: number;
+  /** Shown in town next to the change, e.g. "liked the gold". */
+  reason: string;
+}
+
+/** What drives a hero (DESIGN.md §6). */
+export interface MotivationDef {
+  id: string;
+  name: string;
+  /** One line shown on the hero card, e.g. "In it for the money". */
+  blurb: string;
+  /** Relative chance a recruit has this motivation. */
+  weight: number;
+  /** Morale rules on top of the ones everybody has (MoraleRulesDef.rules). */
+  rules: readonly MoraleRule[];
+  /** Buildings a hero with this motivation may love, weighted. */
+  favourites: readonly { building: string; weight: number }[];
+  /**
+   * What they do in the dungeon when morale is low (DESIGN.md §6).
+   * refuseRetreat: chance they won't turn back when the orders say so.
+   * grabJunk: they keep junk the loot orders say to leave.
+   */
+  lowMorale?: { refuseRetreat?: number; grabJunk?: boolean };
+}
+
+/** Morale rules that apply to everyone, and the morale scale. */
+export interface MoraleRulesDef {
+  /** A recruit's starting morale, inclusive range. */
+  start: readonly [number, number];
+  /** Below this a hero complains, and may ignore orders in the dungeon. */
+  low: number;
+  /** Morale stability: losses × (1 − (WIL − 10) × this), at least half. */
+  stabilityPerWil: number;
+  /** Best CHA in the party cuts losses on a trip by (CHA − 10) × this. */
+  leaderPerCha: number;
+  rules: readonly MoraleRule[];
+  /** Chance a hero has a disliked kind of gear. */
+  dislikeChance: number;
+  /** Gear tags a hero might dislike (never one their class likes). */
+  dislikeTags: readonly string[];
+}
+
+/** How heroes earn experience and level up (DESIGN.md §9). */
+export interface LevelRules {
+  maxLevel: number;
+  /** XP for each point of monster power killed, shared by the party. */
+  xpPerPower: number;
+  /** XP each hero gets per floor reached. */
+  xpPerFloor: number;
+  /** Raids teach less than delving: share of the usual XP for raiders killed. */
+  raidXpShare: number;
+  /** XP to reach level L is xpBase × (L − 1) ^ xpGrowth. */
+  xpBase: number;
+  xpGrowth: number;
+  /** Perks offered at each level-up. */
+  perkOffers: number;
+  /** A perk for the hero's class is this many times as likely as a general one. */
+  classPerkWeight: number;
+  /** One free stat point every this many levels. */
+  freeStatEvery: number;
+  /** Chance that a hero wants one of the perks on offer ("Bram wants Cleave"). */
+  wantChance: number;
+}
+
+/** What happens after a wipe (DESIGN.md §10). */
+export interface RescueRules {
+  /** Chance a fallen (not yet dead) hero is still alive and trapped. */
+  survival: number;
+  /** Added per point of END above 10 (taken away below). */
+  survivalPerEnd: number;
+  /** Days after the news reaches town that the trapped can hold out. */
+  windowDays: number;
+  /** Each night, chance per item at a site that monsters carry it off. */
+  scavengeChance: number;
+  /** Chance that a fight on a floor with scavenged gear has a monster carrying some. */
+  carryChance: number;
+  /** HP share the rescued come home with. */
+  rescuedHpPercent: number;
 }
 
 export interface EncounterDef {
@@ -284,7 +438,15 @@ export type BuildingEffect =
   /** Extra recruits looking for work each day. */
   | { type: "recruitOffers"; amount: number }
   /** Each recruit is the best of this many extra candidates (by their class's main stats). */
-  | { type: "recruitPicks"; amount: number };
+  | { type: "recruitPicks"; amount: number }
+  /** Morale for each hero on every rest day in town. */
+  | { type: "restMorale"; amount: number }
+  /** XP for each hero on every rest day in town. */
+  | { type: "trainingXp"; amount: number }
+  /** Extra XP, as a percent, from every trip. */
+  | { type: "xpPercent"; amount: number }
+  /** Share of the guild's gold (percent) that raiders can't get at. */
+  | { type: "vault"; amount: number };
 
 export interface BuildingLevel {
   /** Gold to build or upgrade to this level. */
@@ -375,8 +537,12 @@ export interface Library {
   rooms: readonly RoomDef[];
   floors: readonly FloorDef[];
   buildings: readonly BuildingDef[];
+  motivations: readonly MotivationDef[];
   town: TownRules;
   dungeon: DungeonRules;
+  morale: MoraleRulesDef;
+  levels: LevelRules;
+  rescue: RescueRules;
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -394,3 +560,7 @@ export const defineFloor = (def: FloorDef): FloorDef => def;
 export const defineBuilding = (def: BuildingDef): BuildingDef => def;
 export const defineTownRules = (def: TownRules): TownRules => def;
 export const defineDungeonRules = (def: DungeonRules): DungeonRules => def;
+export const defineMotivation = (def: MotivationDef): MotivationDef => def;
+export const defineMoraleRules = (def: MoraleRulesDef): MoraleRulesDef => def;
+export const defineLevelRules = (def: LevelRules): LevelRules => def;
+export const defineRescueRules = (def: RescueRules): RescueRules => def;

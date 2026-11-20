@@ -130,6 +130,7 @@ describe("downed heroes (custom content)", () => {
         ai: "test-idle",
         abilities: [],
         startingKit: ["test-plate"],
+        growth: {},
       }),
       defineClass({
         id: "nurse",
@@ -142,6 +143,7 @@ describe("downed heroes (custom content)", () => {
         ai: "caster",
         abilities: ["mend"],
         startingKit: [],
+        growth: {},
       }),
     ],
     monsters: [

@@ -40,6 +40,8 @@ export interface StandingOrders {
   targetFloor: number;
   retreat: RetreatRule;
   loot: LootRule;
+  /** A rescue run: the id of the lost party's site to reach (DESIGN.md §10). */
+  rescue?: string;
 }
 
 export const DEFAULT_ORDERS: StandingOrders = {
@@ -83,6 +85,10 @@ export type ExpeditionEventKind =
   | "wipe"
   /** A fight room with nothing left alive in it. */
   | "quiet"
+  /** A low-morale hero ignores the standing orders (DESIGN.md §6). */
+  | "disobey"
+  /** A rescue party reaches where a lost party fell (DESIGN.md §10). */
+  | "site"
   /** Raids on the town reuse the trip log format. */
   | "raid";
 
@@ -135,6 +141,46 @@ export interface ExpeditionResult {
   log: ExpeditionEvent[];
   /** Where the party fell, if it was wiped. */
   wipeSite?: { floor: number; room: number };
+  /** Kinds of monster the party fought. */
+  seen: string[];
+  /** Trapped heroes the party found and freed. After a wipe they're lost again. */
+  rescued: Hero[];
+  /** The lost party's site the party reached, if any. */
+  siteVisited?: string;
+  /** What the party couldn't carry away from that site. */
+  siteLeft: HaulItem[];
+  /** Ids of scavenged gear taken back from the monsters carrying it. */
+  gearTaken: string[];
+  /** Times a hero ignored orders. */
+  disobeyed: number;
+}
+
+/** Where a lost party fell, as a rescue party will find it (DESIGN.md §10). */
+export interface SiteVisit {
+  id: string;
+  floor: number;
+  /** The room they fell in. The rescue party gets there after that many rooms. */
+  room: number;
+  /** Trapped heroes still alive when the rescue party arrives. */
+  trapped: Hero[];
+  /** Names of those who died there. */
+  bodies: string[];
+  /** Their gear and the haul they were carrying. */
+  items: HaulItem[];
+}
+
+/** A lost hero's gear that monsters carried off from a site, now loose on a floor. */
+export interface CarriedGear {
+  id: string;
+  item: string;
+  owner?: string;
+}
+
+/** What the dungeon holds besides monsters: a site to reach, gear being carried about. */
+export interface ExpeditionExtras {
+  site?: SiteVisit;
+  /** Scavenged gear by floor depth. */
+  gear?: Readonly<Record<number, readonly CarriedGear[]>>;
 }
 
 // ---------------------------------------------------------------------------
@@ -167,8 +213,9 @@ export function runExpedition(
   orders: StandingOrders,
   seed: number,
   floors?: readonly FloorPressure[],
+  extras: ExpeditionExtras = {},
 ): ExpeditionResult {
-  return new Expedition(ix, party, orders, createRng(seed), floors).run();
+  return new Expedition(ix, party, orders, createRng(seed), floors, extras).run();
 }
 
 /** Pick the rooms for one floor: random rooms, with the floor's fixed rooms placed mid-floor. */
@@ -214,6 +261,15 @@ class Expedition {
   /** Downed heroes we've already said are being carried, so the log doesn't repeat it. */
   private carried = new Set<string>();
   private orders: StandingOrders;
+  private seen = new Set<string>();
+  /** Freed trapped heroes walking out with the party. They don't fight. */
+  private followers: Hero[] = [];
+  private siteVisited?: string;
+  private siteLeft: HaulItem[] = [];
+  private gearTaken: string[] = [];
+  private disobeyed = 0;
+  /** Hero id → floor they last refused to turn back on (once per floor each). */
+  private refused = new Map<string, number>();
 
   constructor(
     private ix: Index,
@@ -221,6 +277,7 @@ class Expedition {
     orders: StandingOrders,
     private rng: Rng,
     private floors?: readonly FloorPressure[],
+    private extras: ExpeditionExtras = {},
   ) {
     this.floors = floors?.map((f) => ({ ...f }));
     this.party = party.map((h) => ({
@@ -231,15 +288,22 @@ class Expedition {
       pack: [...h.pack],
     }));
     const deepest = Math.max(...ix.lib.floors.map((f) => f.depth));
-    this.orders = { ...orders, targetFloor: Math.max(1, Math.min(deepest, orders.targetFloor)) };
+    this.orders = {
+      ...orders,
+      targetFloor: Math.max(1, Math.min(deepest, orders.targetFloor)),
+    };
   }
 
   run(): ExpeditionResult {
     const { targetFloor, retreat, loot } = this.orders;
     const names = list(this.conscious().map((h) => h.name));
+    const site = this.extras.site;
+    const mission = site
+      ? `floor ${site.floor} to find ${site.trapped.length ? list(site.trapped.map((h) => h.name)) : "the lost party"}`
+      : `floor ${targetFloor}`;
     this.emit(
       "depart",
-      `${names} set off for floor ${targetFloor}. Orders: ${describeRetreat(retreat)}; ` +
+      `${names} set off for ${mission}. Orders: ${describeRetreat(retreat)}; ` +
         `${loot === "everything" ? "carry everything" : "leave the junk"}.`,
     );
 
@@ -260,9 +324,23 @@ class Expedition {
         if (!this.wiped) this.betweenRooms();
         if (this.wiped) return this.finish("wiped");
 
+        const site = this.extras.site;
+        if (site && !this.siteVisited && site.floor === depth) {
+          if (i + 1 === Math.max(1, Math.min(site.room, rooms.length))) this.visitSite(site);
+        }
+
         const lastRoom = depth === targetFloor && i === rooms.length - 1;
         const reason = lastRoom ? undefined : this.retreatReason();
         if (reason) {
+          const rebel = this.refuser();
+          if (rebel) {
+            this.disobeyed++;
+            this.emit(
+              "disobey",
+              `${reason}, but ${rebel.name} won't hear of turning back. The party presses on.`,
+            );
+            continue;
+          }
           this.emit("retreat", `${reason}. Following orders, the party turns back.`);
           return this.goHome("retreated");
         }
@@ -287,7 +365,7 @@ class Expedition {
       if (this.wiped) return this.finish("wiped");
     }
     this.depth = 0;
-    const back = list(this.alive().map((h) => h.name));
+    const back = list([...this.alive(), ...this.followers].map((h) => h.name));
     this.emit("home", `${back} climb out of the pit.`);
     return this.finish(outcome);
   }
@@ -310,7 +388,83 @@ class Expedition {
       floorKills: this.floorKills,
       log: this.log,
       wipeSite: wiped ? { floor: this.depth, room: this.roomNo } : undefined,
+      seen: [...this.seen],
+      rescued: this.followers,
+      siteVisited: this.siteVisited,
+      siteLeft: this.siteLeft,
+      gearTaken: this.gearTaken,
+      disobeyed: this.disobeyed,
     };
+  }
+
+  // -------------------------------------------------------------------------
+  // Morale in the dungeon and rescue runs
+  // -------------------------------------------------------------------------
+
+  /**
+   * A low-morale hero whose motivation makes them refuse to turn back
+   * (DESIGN.md §6), if one does this time. Each can refuse once per floor.
+   */
+  private refuser(): Hero | undefined {
+    for (const h of this.conscious()) {
+      const chance = this.ix.motivation(h.motivation).lowMorale?.refuseRetreat;
+      if (!chance || h.morale >= this.ix.lib.morale.low) continue;
+      if (this.refused.get(h.id) === this.depth) continue;
+      if (this.rng.chance(chance)) {
+        this.refused.set(h.id, this.depth);
+        return h;
+      }
+    }
+    return undefined;
+  }
+
+  /** A low-morale hero who grabs junk whatever the loot orders say. */
+  private greedy(): Hero | undefined {
+    return this.conscious().find(
+      (h) =>
+        this.ix.motivation(h.motivation).lowMorale?.grabJunk && h.morale < this.ix.lib.morale.low,
+    );
+  }
+
+  /** The rescue party reaches where the lost party fell (DESIGN.md §10). */
+  private visitSite(site: SiteVisit): void {
+    this.siteVisited = site.id;
+    const names = [...site.trapped.map((h) => h.name), ...site.bodies];
+    this.emit(
+      "site",
+      names.length
+        ? `The party finds the place where ${list(names)} fell.`
+        : "The party finds the place where the lost party fell.",
+    );
+    const pct = this.ix.lib.rescue.rescuedHpPercent;
+    for (const h of site.trapped) {
+      const hero = structuredClone(h);
+      hero.hp = Math.max(1, Math.round((this.maxHp(hero) * pct) / 100));
+      hero.mana = 0;
+      hero.condition = "ok";
+      this.followers.push(hero);
+      this.emit(
+        "site",
+        `${h.name} is alive! Weak and starving, but alive. They'll walk out with the party.`,
+      );
+    }
+    for (const b of site.bodies) this.emit("site", `There's nothing to be done for ${b}.`);
+    const items = [...site.items].sort(
+      (a, b) =>
+        Number(!!b.keep) - Number(!!a.keep) || worthPerSlot(this.ix, b) - worthPerSlot(this.ix, a),
+    );
+    for (const it of items) {
+      const name = this.ix.item(it.item).name;
+      this.haul.push(it);
+      this.emit(
+        "loot",
+        it.owner
+          ? `Recovered ${it.owner}'s ${name}.`
+          : `Picked up the ${name.toLowerCase()} they'd found.`,
+      );
+    }
+    this.repack();
+    this.siteLeft = items.filter((it) => !this.haul.includes(it));
   }
 
   // -------------------------------------------------------------------------
@@ -349,7 +503,14 @@ class Expedition {
     extra: Partial<ExpeditionEvent> = {},
   ): void {
     const party = kind === "combat" ? undefined : this.snapshot();
-    this.log.push({ kind, text, floor: this.depth, room: this.roomNo, party, ...extra });
+    this.log.push({
+      kind,
+      text,
+      floor: this.depth,
+      room: this.roomNo,
+      party,
+      ...extra,
+    });
   }
 
   private context(roomId: string): RoomContext {
@@ -382,16 +543,30 @@ class Expedition {
     const f = this.floors?.[this.depth - 1];
     if (!f) return rollEncounter(this.ix, this.depth, this.rng);
     if (f.population <= 0) return [];
-    return rollEncounter(this.ix, this.depth, this.rng, { level: f.level, max: f.population });
+    return rollEncounter(this.ix, this.depth, this.rng, {
+      level: f.level,
+      max: f.population,
+    });
   }
 
   private fight(monsters: readonly string[], opts: { surprise?: boolean } = {}): Side | "none" {
+    // Monsters on this floor may have picked up a lost hero's gear.
+    const loose = this.extras.gear?.[this.depth]?.filter((g) => !this.gearTaken.includes(g.id));
+    let carried: { gear: CarriedGear; index: number } | undefined;
+    if (loose?.length && monsters.length && this.rng.chance(this.ix.lib.rescue.carryChance)) {
+      carried = {
+        gear: this.rng.pick(loose),
+        index: this.rng.int(0, monsters.length - 1),
+      };
+    }
     const result = runCombat(this.ix, this.party, monsters, {
       seed: this.rng.int(0, 2 ** 31 - 1),
       surprise: opts.surprise,
+      carrying: carried && { index: carried.index, item: carried.gear.item },
     });
     const summoned = new Set(result.log.filter((e) => e.kind === "summon").map((e) => e.target));
     const foes = result.fighters.filter((f) => f.side === "monsters" && !summoned.has(f.uid));
+    for (const f of foes) if (f.monsterId) this.seen.add(f.monsterId);
     const heroes = list(this.conscious().map((h) => h.name));
     this.emit("fight", `${heroes} face ${list(foes.map((f) => f.name))}.`, {
       monsters: foes.map((f) => {
@@ -399,6 +574,14 @@ class Expedition {
         return { uid: f.uid, name: f.name, hp: max, max };
       }),
     });
+    const carrier = carried && foes[carried.index];
+    if (carried && carrier) {
+      const whose = carried.gear.owner ? `${carried.gear.owner}'s` : "a lost hero's";
+      this.emit(
+        "fight",
+        `${carrier.name} has ${whose} ${this.ix.item(carried.gear.item).name.toLowerCase()}!`,
+      );
+    }
     for (const e of result.log) {
       if (e.kind === "start") continue;
       this.emit("combat", e.text, { combat: e });
@@ -418,6 +601,20 @@ class Expedition {
       for (const id of result.kills) {
         const table = this.ix.monster(id).loot;
         if (table) this.findLoot(table, `on the ${this.ix.monster(id).name}`, false);
+      }
+      if (carried && carrier?.state === "dead") {
+        const def = this.ix.item(carried.gear.item);
+        this.gearTaken.push(carried.gear.id);
+        const owner = carried.gear.owner;
+        this.haul.push({
+          item: def.id,
+          value: def.value,
+          estimate: def.value,
+          keep: true,
+          owner,
+        });
+        this.emit("loot", `Got ${owner ? `${owner}'s` : "the"} ${def.name.toLowerCase()} back!`);
+        this.repack();
       }
     }
     return result.winner;
@@ -546,9 +743,15 @@ class Expedition {
       const item: HaulItem = { item: id, value, estimate };
       this.emit("loot", `Found ${an(def.name)} ${from} (worth about ${item.estimate}).`);
       if (this.orders.loot === "valuable" && worthPerSlot(this.ix, item) < VALUABLE_PER_SLOT) {
-        const who = appraiser ? `${appraiser.hero.name} reckons it` : "It";
-        this.emit("drop", `${who} isn't worth the space. Left behind.`);
-        continue;
+        const grabber = this.greedy();
+        if (grabber) {
+          this.disobeyed++;
+          this.emit("disobey", `Orders say leave the junk, but ${grabber.name} pockets it anyway.`);
+        } else {
+          const who = appraiser ? `${appraiser.hero.name} reckons it` : "It";
+          this.emit("drop", `${who} isn't worth the space. Left behind.`);
+          continue;
+        }
       }
       this.haul.push(item);
       this.repack();

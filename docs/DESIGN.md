@@ -1,6 +1,6 @@
 # Dungeon Party Builder: Design & Build Plan
 
-> **Status:** agreed design, 2026-11-20. Built so far: M0 (project setup), M1 (simulation core), M2 (expeditions), M3 (the town) and M4 (time, raids and saves).
+> **Status:** agreed design, 2026-11-20. Built so far: M0 (project setup), M1 (simulation core), M2 (expeditions), M3 (the town), M4 (time, raids and saves) and M5 (morale, levels and rescue runs).
 > Items marked **✅ DECIDED** were open questions; Mike accepted the recommended option for each.
 > A summary of every decision is at the end.
 
@@ -485,6 +485,31 @@ What the bot sees over 60 days (40 towns each; the bot rests to 90% HP, then goe
 
 Not yet: materials and renown as building costs, the Tavern's morale bonus, Blacksmith repairs and upgrades, the Vault (stash protection), and garrisons or traps at the pit.
 
+### As built in M5: personalities, levels and rescue runs
+
+> Added 2026-11-20. The numbers are starting points for tuning. Alignment (§7) is still M6+.
+
+- **Personalities** (§6). Every hero has a **motivation** (Gold, Glory, Knowledge, Comrades; `content/motivations/`), a gear tag they **like** (from their class's likes) and sometimes one they **hate**, a **favourite building** (picked from their motivation's list) and **morale** 0-100, starting 52-68. Personalities are worked out from the hero's id, name and stats rather than the shared dice, so no fight changed, and old saves get the same personality every time they load.
+- **Morale is data.** Things that happen are boiled down to *facts* (gold share, kills, new floors, same old floor, new monsters, retreated, fallen comrades, everyone home, a rescue, came home hurt, sent down hurt, liked or hated gear, a quiet day, favourite built or missing, the Tavern, a wanted perk, a level-up). Rules in `content/morale.ts` (everyone) and each motivation turn facts into morale: `{ fact, amount, per, cap, below, reason }`. Losses are softened by WIL (3% per point above 10) and on a trip by the party's best CHA. Each hero keeps a short log of what moved their morale and why, shown in town.
+- **Low morale** (below 30): the hero complains in town. A low-morale **Glory** hero may refuse to turn back when the orders say retreat (50%, once per floor); a low-morale **Gold** hero pockets junk the loot orders say to leave. **At 0** they quit, keeping what they wear and leaving their pack (decision 4).
+- **Favourite buildings:** +1 morale each day in town while it stands (up to 80), −1 while it's missing or damaged, and a grumble in town. A quiet day also gives +1 to anyone below 50. New buildings so every favourite exists: **Library** (+10% / +20% trip XP), **Training Yard** (heroes in town earn 4 / 8 XP a day), **Vault** (raiders can't touch 50% / 100% of the gold). The **Tavern** now adds +1 / +2 morale a day.
+- **XP and levels** (§9, rules in `content/levels.ts`). A trip gives 3 XP per point of monster power killed, shared by the survivors, plus 10 per floor reached each. Raids teach a quarter of that. Level L needs 100 × (L−1)^1.8 XP (100, 350, 720, 1210...), up to level 10 for now. Each level the class's `growth` applies at once (Fighter +1 STR/END, Scout DEX/PER, Mage INT/WIL); the player then picks **1 perk of 3** (class perks twice as likely as general ones; some need level 3), plus **a free stat point every 3rd level**. 35% of the time a hero wants one of the perks; granting it gives +8 morale. 16 perks in `content/perks/`.
+- **Wipes** (§10). The dead lie where they fell with their gear. Everyone else rolls: 55% (+3% per END above 10) they're alive and **trapped**, with **5 days** from the news to be reached. A site (`LostSite`) holds the trapped, the bodies, the dead's gear and the haul. Each night monsters pick over it (8% per item); gear they take is **carried by monsters on that floor**: a fight there has a 35% chance one of them wields it (with its bonuses), and killing it gets it back ("Got Bram's sword back!"). A trapped hero nobody reaches dies, and the whole guild takes it hard. When a party loses someone but gets home, it brings their gear home.
+- **Rescue runs** are an order on a normal trip (`orders.rescue`). The party goes down to the site's floor and, after as many rooms as the room they fell in, finds it: the trapped walk out with them at 25% HP (they don't fight; if the rescuers fall too, they're lost again), and the party picks up what it can carry, heroes' gear first. Heroes' own gear goes back to the store room instead of being sold.
+- **Town:** each hero card shows morale (with "Why?"), XP, motivation, likes, favourite, perks and the level-up picker. New panels: *Around the guild* (news and grumbles) and *Lost in the dungeon* (sites, days left, what monsters carried off, "Send the next party to find them"). Trip results add XP, level-ups and each hero's morale change with reasons. Saves are version 4; older saves upgrade.
+
+What the bot sees over 60 days (40 towns each; it spends level-ups, rescues the trapped, and with `--build` builds favourites once the walls are up):
+
+| Plan | Average level at the end | Morale | Unhappy | Quit per town | Lost per town |
+|---|---|---|---|---|---|
+| Never go down | 2.0 (raids only) | 55 | 0% | 0 | 0 |
+| Floor-1 trips, no building | 4.8 | 78 | 10% | 1.0 | 0 |
+| Floor-1 trips, building | 5.8 | 87 | 2% | 0 | 0 |
+| Floor-2 trips, building | 5.9 | 89 | 0% | 0 | 0.4 |
+| Floor-3 trips, building | 6.1 | 93 | 0% | 0 | 3.5 (rescues rarely get through) |
+
+Gold is plentiful in every plan (thousands by day 60), which keeps morale high once buildings go up. That's for the M6 balance pass.
+
 ## 12. First playable slice
 
 Small on purpose. Everything here is data, so adding more later means adding entries, not rewriting code.
@@ -600,7 +625,7 @@ Each milestone ends with something you can run.
 | M2 | Expeditions: floors, rooms, scouting, traps, loot, appraisal, standing orders | Simulate a full trip to floor 1–3 |
 | M3 | Town UI: roster, recruit, equip, formation, launch, watch the log, results screen (built, see §11 "As built in M3") | Actually play a loop in the browser |
 | M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load (built, see §11 "As built in M4") | Feel the dungeon getting worse over time |
-| M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs | Play the full design in miniature |
+| M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs (built, see §11 "As built in M5") | Play the full design in miniature |
 | M6+ | Balance pass, then grow content: Cleric, freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |
 
 ## 16. Decisions (agreed 2026-11-20)

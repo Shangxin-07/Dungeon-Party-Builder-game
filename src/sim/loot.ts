@@ -14,6 +14,10 @@ export interface HaulItem {
   value: number;
   /** What the party's best appraiser thinks it's worth. */
   estimate: number;
+  /** A hero's own gear, recovered: it goes back in the store room instead of being sold. */
+  keep?: boolean;
+  /** Whose it was, for recovered gear ("Bram's Sword"). */
+  owner?: string;
 }
 
 /** How far off a guess can be with Appraisal 0 (±90%). Shrinks to 0 at Appraisal 100. */

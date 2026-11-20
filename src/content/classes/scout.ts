@@ -11,4 +11,5 @@ export default defineClass({
   ai: "archer",
   abilities: [],
   startingKit: ["short-bow", "leather-armor", "bandages"],
+  growth: { DEX: 1, PER: 1 },
 });

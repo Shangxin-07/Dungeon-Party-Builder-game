@@ -103,6 +103,12 @@ export interface CombatOptions {
   surprise?: boolean;
   /** Downed heroes don't bleed out (fights in town, where the fallen are dragged indoors). */
   noBleeding?: boolean;
+  /**
+   * One monster has picked up a hero's gear from a lost party's site
+   * (DESIGN.md §10): it fights with the item's bonuses (and wields it, if
+   * it's a weapon). `index` is its place in the monster list.
+   */
+  carrying?: { index: number; item: string };
 }
 
 /** The basic weapon attack every fighter has. Not a content file, so "attack" is a reserved id. */
@@ -131,6 +137,7 @@ export function runCombat(
     createRng(opts.seed),
     !!opts.surprise,
     !!opts.noBleeding,
+    opts.carrying,
   ).run(opts.maxRounds ?? MAX_ROUNDS);
 }
 
@@ -150,14 +157,17 @@ class Battle {
     private rng: Rng,
     private surprise = false,
     private noBleeding = false,
+    carrying?: { index: number; item: string },
   ) {
     for (const hero of party) {
       if (hero.condition === "ok") this.fighters.push(this.fromHero(hero));
     }
     const totals = new Map<string, number>();
     for (const id of monsterIds) totals.set(id, (totals.get(id) ?? 0) + 1);
-    for (const id of monsterIds)
-      this.fighters.push(this.fromMonster(id, "monsters", totals.get(id)! > 1));
+    monsterIds.forEach((id, i) => {
+      const item = carrying?.index === i ? carrying.item : undefined;
+      this.fighters.push(this.fromMonster(id, "monsters", totals.get(id)! > 1, item));
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -199,10 +209,12 @@ class Battle {
     };
   }
 
-  private fromMonster(id: string, side: Side, lettered: boolean): Fighter {
+  private fromMonster(id: string, side: Side, lettered: boolean, carried?: string): Fighter {
     const def = this.ix.monster(id);
-    const passives = [...(def.passives ?? [])];
+    const item = carried ? this.ix.item(carried) : undefined;
+    const passives = [...(def.passives ?? []), ...(item?.passives ?? [])];
     const ranged = !!def.weapon.ranged;
+    const wields = item?.slot === "weapon" && !item.ranged;
     const derived = computeDerived(def.stats, passives, { ranged, overrides: def.overrides });
     derived.attack += def.weapon.attack;
     let name = def.name;
@@ -222,7 +234,9 @@ class Battle {
       passives,
       skills: {},
       tags: [...def.tags],
-      weapon: { name: def.weapon.name, damageType: def.weapon.damageType, ranged },
+      weapon: wields
+        ? { name: item.name.toLowerCase(), damageType: item.damageType ?? "crushing", ranged }
+        : { name: def.weapon.name, damageType: def.weapon.damageType, ranged },
       abilities: [...(def.abilities ?? [])],
       ai: def.ai,
       hp: derived.maxHp,

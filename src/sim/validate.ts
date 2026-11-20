@@ -6,7 +6,9 @@
 import {
   DAMAGE_TYPES,
   DERIVED,
+  MORALE_FACTS,
   STATS,
+  type MoraleRule,
   type ActiveEffect,
   type Library,
   type PassiveEffect,
@@ -79,6 +81,12 @@ export function validateLibrary(lib: Library): string[] {
     for (const s of c.mainStats) if (!STATS.includes(s)) err(`${w}: unknown main stat "${s}"`);
     if (!hasAi(c.ai)) err(`${w}: unknown AI "${c.ai}"`);
     for (const a of c.abilities) if (!abilityIds.has(a)) err(`${w}: unknown ability "${a}"`);
+    for (const [s, v] of Object.entries(c.growth)) {
+      if (!STATS.includes(s as never)) err(`${w}: growth in unknown stat "${s}"`);
+      if (!Number.isInteger(v) || v < 0) err(`${w}: growth must be whole numbers, 0 or more`);
+    }
+    if (!lib.perks.some((p) => !p.classes.length || p.classes.includes(c.id)))
+      err(`${w}: no perks can ever be offered to it`);
     const slots = new Set<string>();
     for (const i of c.startingKit) {
       const item = lib.items.find((x) => x.id === i);
@@ -133,6 +141,7 @@ export function validateLibrary(lib: Library): string[] {
   for (const p of lib.perks) {
     for (const c of p.classes) if (!classIds.has(c)) err(`perk "${p.id}": unknown class "${c}"`);
     passives(`perk "${p.id}"`, p.passives);
+    if (!p.passives.length) err(`perk "${p.id}": needs at least one passive`);
   }
 
   for (const e of lib.encounters) {
@@ -215,6 +224,54 @@ export function validateLibrary(lib: Library): string[] {
     );
     if (!has) err(`buildings: the starting town has no ${want}`);
   }
+
+  // Morale and motivations (DESIGN.md §6).
+  ids("motivation", lib.motivations);
+  const buildingIds = new Set(lib.buildings.map((b) => b.id));
+  const facts = new Set<string>(MORALE_FACTS);
+  const rules = (where: string, list: readonly MoraleRule[]) => {
+    for (const r of list) {
+      if (!facts.has(r.fact)) err(`${where}: unknown morale fact "${r.fact}"`);
+      if (r.per !== undefined && r.per <= 0) err(`${where}: "per" must be above 0`);
+      if (r.cap !== undefined && r.cap <= 0) err(`${where}: "cap" must be above 0`);
+      if (!r.reason) err(`${where}: every morale rule needs a reason`);
+    }
+  };
+  if (!lib.motivations.length) err("motivations: need at least one");
+  for (const m of lib.motivations) {
+    const w = `motivation "${m.id}"`;
+    if (m.weight <= 0) err(`${w}: weight must be positive`);
+    rules(w, m.rules);
+    if (!m.favourites.length) err(`${w}: needs at least one favourite building`);
+    for (const f of m.favourites) {
+      if (!buildingIds.has(f.building)) err(`${w}: unknown building "${f.building}"`);
+      if (f.weight <= 0) err(`${w}: favourite weights must be positive`);
+    }
+    const chance = m.lowMorale?.refuseRetreat;
+    if (chance !== undefined && (chance < 0 || chance > 1))
+      err(`${w}: refuseRetreat must be between 0 and 1`);
+  }
+  const mo = lib.morale;
+  rules("morale", mo.rules);
+  if (mo.start[0] < 1 || mo.start[1] > 100 || mo.start[1] < mo.start[0])
+    err("morale: start must be a range within 1-100");
+  if (mo.low < 0 || mo.low > 100) err("morale: low must be 0-100");
+  if (mo.dislikeChance < 0 || mo.dislikeChance > 1) err("morale: dislikeChance must be 0-1");
+
+  const lv = lib.levels;
+  if (lv.maxLevel < 1) err("levels: maxLevel must be at least 1");
+  if (lv.xpBase <= 0 || lv.xpGrowth <= 0) err("levels: the XP curve must go up");
+  if (lv.raidXpShare < 0) err("levels: raidXpShare can't be negative");
+  if (lv.perkOffers < 1) err("levels: perkOffers must be at least 1");
+  if (lv.freeStatEvery < 1) err("levels: freeStatEvery must be at least 1");
+  if (lv.wantChance < 0 || lv.wantChance > 1) err("levels: wantChance must be 0-1");
+
+  const rs = lib.rescue;
+  for (const k of ["survival", "scavengeChance", "carryChance"] as const)
+    if (rs[k] < 0 || rs[k] > 1) err(`rescue: ${k} must be 0-1`);
+  if (rs.windowDays < 1) err("rescue: windowDays must be at least 1");
+  if (rs.rescuedHpPercent <= 0 || rs.rescuedHpPercent > 100)
+    err("rescue: rescuedHpPercent must be 1-100");
 
   const t = lib.town;
   for (const id of t.startingRoster) if (!classIds.has(id)) err(`town: unknown class "${id}"`);

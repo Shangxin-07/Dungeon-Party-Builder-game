@@ -176,7 +176,7 @@ describe("launching a party", () => {
     expect(launch(ix, fresh(9), heroNames)).toEqual(launch(ix, fresh(9), heroNames));
   });
 
-  it("loses the whole party on a wipe, and the town carries on", () => {
+  it("loses the whole party on a wipe: some dead, some trapped, and the town carries on", () => {
     let wipe: TownState | undefined;
     for (let seed = 0; seed < 200 && !wipe; seed++) {
       const t = setOrders(ix, fresh(seed), {
@@ -190,7 +190,9 @@ describe("launching a party", () => {
     expect(wipe).toBeDefined();
     const sent = wipe!.lastTrip!.party.map((h) => h.id);
     for (const id of sent) expect(wipe!.roster.map((h) => h.id)).not.toContain(id);
-    expect(wipe!.memorial).toHaveLength(sent.length);
+    const trapped = wipe!.sites.flatMap((s) => s.trapped.map((x) => x.hero.id));
+    // Each is dead, or trapped, unless they died waiting during the trip home.
+    expect(wipe!.memorial.length + trapped.length).toBe(sent.length);
     expect(wipe!.party).toEqual([]);
     expect(wipe!.roster).toHaveLength(1);
     expect(wipe!.lastTrip!.goldEarned).toBe(0);

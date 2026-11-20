@@ -190,6 +190,7 @@ function WatchCard({ hero, bar: raw }: { hero: Hero; bar?: Bar }) {
       {bar ? <HpBar bar={bar} /> : null}
       <p className="hero-class">
         {ix.cls(hero.classId).name}, level {hero.level}, {hero.row} row
+        {hero.morale !== undefined ? <span className="muted"> · morale {hero.morale}</span> : null}
         {bar?.maxMana ? (
           <span className="muted">
             {" "}
@@ -227,10 +228,12 @@ const OUTCOMES = {
 /** The trip summary: where they got to, who fell, and the haul guessed vs real. */
 export function Results({ result, children }: { result: ExpeditionResult; children?: ReactNode }) {
   const r = result;
-  const real = r.haul.reduce((s, h) => s + h.value, 0);
-  const guess = r.haul.reduce((s, h) => s + h.estimate, 0);
+  const sold = r.haul.filter((h) => !h.keep);
+  const kept = r.haul.filter((h) => h.keep);
+  const real = sold.reduce((s, h) => s + h.value, 0);
+  const guess = sold.reduce((s, h) => s + h.estimate, 0);
   const counts = new Map<string, { n: number; guess: number; real: number }>();
-  for (const h of r.haul) {
+  for (const h of sold) {
     const c = counts.get(h.item) ?? { n: 0, guess: 0, real: 0 };
     counts.set(h.item, { n: c.n + 1, guess: c.guess + h.estimate, real: c.real + h.value });
   }
@@ -242,9 +245,26 @@ export function Results({ result, children }: { result: ExpeditionResult; childr
         Reached floor {r.deepestFloor} in {r.days} {r.days === 1 ? "day" : "days"}, {r.roomsVisited}{" "}
         rooms, {r.kills.length} monsters killed.
         {dead.length ? ` Lost: ${dead.join(", ")}.` : " Nobody died."}
-        {r.wipeSite ? ` They lie on floor ${r.wipeSite.floor}, room ${r.wipeSite.room}.` : ""}
+        {r.wipeSite
+          ? ` They lie on floor ${r.wipeSite.floor}, ${r.wipeSite.room ? `room ${r.wipeSite.room}` : "on the way back up"}.`
+          : ""}
+        {r.disobeyed
+          ? ` Orders were ignored ${r.disobeyed} ${r.disobeyed === 1 ? "time" : "times"}.`
+          : ""}
       </p>
-      {r.haul.length ? (
+      {r.rescued?.length && r.outcome !== "wiped" ? (
+        <p>Brought out alive: {r.rescued.map((h) => h.name).join(", ")}.</p>
+      ) : null}
+      {kept.length ? (
+        <p>
+          Heroes' gear recovered:{" "}
+          {kept
+            .map((h) => `${h.owner ? `${h.owner}'s ` : ""}${ix.item(h.item).name.toLowerCase()}`)
+            .join(", ")}
+          .
+        </p>
+      ) : null}
+      {sold.length ? (
         <>
           <p>
             Haul: the party reckons it's worth about <strong>{guess}</strong> coins. It's really
@@ -272,7 +292,7 @@ export function Results({ result, children }: { result: ExpeditionResult; childr
             </tbody>
           </table>
         </>
-      ) : r.leftBehind.length ? (
+      ) : kept.length ? null : r.leftBehind.length ? (
         <p>{r.leftBehind.length} items lie with them, waiting for a rescue party.</p>
       ) : (
         <p>They came back empty-handed.</p>
