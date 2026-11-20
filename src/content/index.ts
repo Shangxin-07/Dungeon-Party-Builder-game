@@ -1,10 +1,11 @@
 /**
  * The content library. To add content, create a file in the matching folder
- * (classes/, items/, monsters/, rooms/, loot/, floors/, ...) and add it to the
+ * (classes/, items/, monsters/, rooms/, loot/, floors/, buildings/, ...) and add it to the
  * list below. No engine code changes are needed. The content tests check every id and reference.
  */
 import type {
   AbilityDef,
+  BuildingDef,
   ClassDef,
   EncounterDef,
   FloorDef,
@@ -75,6 +76,9 @@ import treasureHoardRoom from "./rooms/treasure-hoard";
 import diggingsFloor from "./floors/diggings";
 import warrensFloor from "./floors/warrens";
 import boneHallsFloor from "./floors/bone-halls";
+import guildHallBuilding from "./buildings/guild-hall";
+import marketBuilding from "./buildings/market";
+import townRules from "./town";
 
 export const classes: readonly ClassDef[] = [fighterClass, scoutClass, mageClass];
 export const items: readonly ItemDef[] = [
@@ -138,6 +142,7 @@ export const rooms: readonly RoomDef[] = [
   treasureHoardRoom,
 ];
 export const floors: readonly FloorDef[] = [diggingsFloor, warrensFloor, boneHallsFloor];
+export const buildings: readonly BuildingDef[] = [guildHallBuilding, marketBuilding];
 
 export const library: Library = {
   classes,
@@ -151,6 +156,8 @@ export const library: Library = {
   lootTables,
   rooms,
   floors,
+  buildings,
+  town: townRules,
 };
 
 export { heroNames } from "./names";

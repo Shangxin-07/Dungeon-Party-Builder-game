@@ -262,6 +262,51 @@ export interface FloorDef {
   fixedRooms?: readonly string[];
 }
 
+/** What a building level gives the town. Each level lists its full effects. */
+export type BuildingEffect =
+  /** Heroes that can go on one expedition. */
+  | { type: "partySlots"; amount: number }
+  /** Heroes the guild can keep on its books. */
+  | { type: "rosterSize"; amount: number }
+  /** Items for sale in town. */
+  | { type: "sells"; items: readonly string[] };
+
+export interface BuildingLevel {
+  /** Gold to build or upgrade to this level. */
+  cost: number;
+  /** One line shown in town, e.g. "4 heroes per party, 8 on the roster". */
+  summary: string;
+  effects: readonly BuildingEffect[];
+}
+
+/** A town building (DESIGN.md §8). Level 0 means not built yet. */
+export interface BuildingDef {
+  id: string;
+  name: string;
+  blurb: string;
+  /** Level the town starts with (0 = not built). */
+  startLevel: number;
+  /** levels[0] is level 1, levels[1] is level 2, and so on. */
+  levels: readonly BuildingLevel[];
+}
+
+/** How a new town starts and the house rules of the guild. */
+export interface TownRules {
+  startingGold: number;
+  /** Class ids of the recruits already on the books at the start. */
+  startingRoster: readonly string[];
+  /** Item ids in the guild's store room at the start. */
+  startingStash: readonly string[];
+  /** Fresh faces looking for work each day. */
+  recruitsOnOffer: number;
+  /** Gold to sign a recruit, who brings their class's starting kit. */
+  hireCost: number;
+  /** Share of an item's value the Market pays when you sell it. */
+  sellRate: number;
+  /** Share of max HP a hero gets back for each day spent in town. */
+  restPercent: number;
+}
+
 /** Everything the simulation needs, indexed by kind. */
 export interface Library {
   classes: readonly ClassDef[];
@@ -275,6 +320,8 @@ export interface Library {
   lootTables: readonly LootTableDef[];
   rooms: readonly RoomDef[];
   floors: readonly FloorDef[];
+  buildings: readonly BuildingDef[];
+  town: TownRules;
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -289,3 +336,5 @@ export const defineEncounter = (def: EncounterDef): EncounterDef => def;
 export const defineLootTable = (def: LootTableDef): LootTableDef => def;
 export const defineRoom = (def: RoomDef): RoomDef => def;
 export const defineFloor = (def: FloorDef): FloorDef => def;
+export const defineBuilding = (def: BuildingDef): BuildingDef => def;
+export const defineTownRules = (def: TownRules): TownRules => def;

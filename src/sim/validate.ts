@@ -189,5 +189,33 @@ export function validateLibrary(lib: Library): string[] {
   }
   for (let d = 1; d <= depths.size; d++) if (!depths.has(d)) err(`floors: depth ${d} is missing`);
 
+  ids("building", lib.buildings);
+  for (const b of lib.buildings) {
+    const w = `building "${b.id}"`;
+    if (!b.levels.length) err(`${w}: needs at least one level`);
+    if (b.startLevel < 0 || b.startLevel > b.levels.length) err(`${w}: bad start level`);
+    b.levels.forEach((lvl, i) => {
+      if (lvl.cost < 0) err(`${w} level ${i + 1}: negative cost`);
+      for (const e of lvl.effects) {
+        if (e.type === "sells") {
+          for (const id of e.items) if (!itemIds.has(id)) err(`${w}: sells unknown item "${id}"`);
+        } else if (e.amount < 0) err(`${w} level ${i + 1}: negative ${e.type}`);
+      }
+    });
+  }
+  for (const want of ["partySlots", "rosterSize"] as const) {
+    const has = lib.buildings.some((b) =>
+      b.levels[b.startLevel - 1]?.effects.some((e) => e.type === want && e.amount > 0),
+    );
+    if (!has) err(`buildings: the starting town has no ${want}`);
+  }
+
+  const t = lib.town;
+  for (const id of t.startingRoster) if (!classIds.has(id)) err(`town: unknown class "${id}"`);
+  for (const id of t.startingStash) if (!itemIds.has(id)) err(`town: unknown item "${id}"`);
+  if (t.sellRate < 0 || t.sellRate > 1) err("town: sellRate must be between 0 and 1");
+  if (t.restPercent <= 0) err("town: restPercent must be above 0");
+  if (t.hireCost < 0 || t.startingGold < 0) err("town: costs can't be negative");
+
   return errors;
 }
