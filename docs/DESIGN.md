@@ -1,8 +1,8 @@
 # Dungeon Party Builder: Design & Build Plan
 
-> **Status:** draft for review. Nothing is built yet.
-> Items marked **🔶 DECISION** are open questions for Mike. Each has a recommendation, but none of them are locked in.
-> A summary of every open decision is at the end.
+> **Status:** agreed design, 2026-11-20. Nothing is built yet.
+> Items marked **✅ DECIDED** were open questions; Mike accepted the recommended option for each.
+> A summary of every decision is at the end.
 
 ---
 
@@ -44,9 +44,9 @@ Every floor has a **threat level**. Two things push it up: how deep the floor is
 |---|---|---|---|---|
 | **Linear** both | +X per floor | +Y per day | Predictable, gear outpaces it | Gets boring; deep floors don't feel scary |
 | **Exponential** both | ×k per floor | ×k per day | Tense, "roguelike run" | Death spiral: eventually unwinnable no matter what you do |
-| **Hybrid (recommended)** | ×k per floor | Driven by population sim, pushed back by kills | Clear depth tiers, time pressure you can fight | Needs tuning of the population numbers |
+| **Hybrid (chosen)** | ×k per floor | Driven by population sim, pushed back by kills | Clear depth tiers, time pressure you can fight | Needs tuning of the population numbers |
 
-**Recommendation:** make depth **exponential** and time **not a fixed formula at all**. Instead, time difficulty comes from the monster population simulation in §4. The more you kill, the slower it rises; ignore a floor and it climbs fast. That ties the lore directly to the mechanic, and the player always has a lever to pull.
+**Chosen:** make depth **exponential** and time **not a fixed formula at all**. Instead, time difficulty comes from the monster population simulation in §4. The more you kill, the slower it rises; ignore a floor and it climbs fast. That ties the lore directly to the mechanic, and the player always has a lever to pull.
 
 Starting numbers to tune from (power ≈ total monster strength in a typical encounter):
 
@@ -61,9 +61,9 @@ Starting numbers to tune from (power ≈ total monster strength in a typical enc
 
 A fresh party of three should handle floor 1 comfortably, floor 2 with some risk, and get badly hurt on floor 3.
 
-🔶 **DECISION 1: difficulty curve.** Recommended: exponential depth + population-driven time (above). Alternative: a plain formula like `threat = base(floor) + days × rate`, which is simpler to build but ignores what the player does.
+✅ **DECIDED 1: difficulty curve.** Decision: exponential depth + population-driven time (above). Alternative: a plain formula like `threat = base(floor) + days × rate`, which is simpler to build but ignores what the player does.
 
-🔶 **DECISION 2: what is a "day"?** Recommended: an in-game day, advanced by expeditions (a trip to floor 3 might take 3 days, plus 1 rest day in town). Alternative: real-time clock (idle-game style). I'd avoid real time, because it punishes people for not playing.
+✅ **DECIDED 2: what is a "day"?** Decision: an in-game day, advanced by expeditions (a trip to floor 3 might take 3 days, plus 1 rest day in town). Alternative: real-time clock (idle-game style). I'd avoid real time, because it punishes people for not playing.
 
 ## 4. The push-up mechanic (lore as a system)
 
@@ -80,8 +80,8 @@ The result is exactly the lore: over time, the *weakest* thing on floor 1 is no 
 
 A nice side effect: you can show the player a simple **dungeon pressure** map in town (per floor: population bar + level band) so they can see where the problem is building and choose targets.
 
-🔶 **DECISION 3: what happens when floor 1 overflows?** Options:
-- (a) **Town raids** (recommended): monsters attack the town, damaging shops or injuring resting heroes. Bad, but not game over.
+✅ **DECIDED 3: what happens when floor 1 overflows?** Options:
+- (a) **Town raids** (chosen): monsters attack the town, damaging shops or injuring resting heroes. Bad, but not game over.
 - (b) **Game over** when overflow passes a limit. Gives a clear loss condition, roguelike style.
 - (c) Nothing; floor 1 just gets harder.
 
@@ -157,7 +157,7 @@ Everyone also gets morale from using a liked weapon, and loses it from a dislike
 - **Below 30**: the hero complains (shown in town). In the dungeon they may ignore standing orders (a Glory hero refuses to retreat; a Gold hero lags behind to loot).
 - **At 0**: the hero quits the guild.
 
-🔶 **DECISION 4: does a quitting hero take their gear?** Recommended: they keep what they're wearing and leave the rest. That stings enough to matter without wiping out your stash.
+✅ **DECIDED 4: does a quitting hero take their gear?** Decision: they keep what they're wearing and leave the rest. That stings enough to matter without wiping out your stash.
 
 ## 7. Levelling up
 
@@ -165,13 +165,13 @@ Options:
 
 - **Class-baked**: stats rise automatically by class. Simple, but the player has no input.
 - **Player-chosen**: the player spends points and picks perks. Lots of agency, harder to balance.
-- **Hybrid (recommended)**: each level the class gives fixed small stat gains, *and* the player picks **1 perk from 3 offered** (weighted toward the class). Every 3rd level, +1 free stat point.
+- **Hybrid (chosen)**: each level the class gives fixed small stat gains, *and* the player picks **1 perk from 3 offered** (weighted toward the class). Every 3rd level, +1 free stat point.
 
 Why hybrid: this is a watch-only game, so nearly all of the player's agency lives in town. Level-ups are one of the best places to give them real choices. Class baselines keep classes distinct and keep balance manageable.
 
 Optional twist that ties into morale: a hero may *want* a particular perk ("Bram wants to learn Cleave"). Granting it gives a morale bump.
 
-🔶 **DECISION 5: level-up style.** Recommended: hybrid, as above.
+✅ **DECIDED 5: level-up style.** Decision: hybrid, as above.
 
 ## 8. Death, wipes and recovery runs
 
@@ -181,7 +181,7 @@ Optional twist that ties into morale: a hero may *want* a particular perk ("Bram
 - A **recovery run** is a normal expedition with the target "recover lost party on floor N". It brings back surviving heroes (injured) and whatever gear is still there.
 - Over time, monsters **pick up gear from the site**. Those monsters get stronger, and killing one drops the gear. This makes delay costly and gives a great "we got Bram's sword back" moment.
 
-🔶 **DECISION 6: permadeath.** Recommended: yes, dead heroes stay dead, but the rescue window means a quick recovery run can save some. Alternative: nobody dies, only "lost until rescued".
+✅ **DECIDED 6: permadeath.** Decision: yes, dead heroes stay dead, but the rescue window means a quick recovery run can save some. Alternative: nobody dies, only "lost until rescued".
 
 ## 9. How an expedition is simulated
 
@@ -197,7 +197,7 @@ Optional twist that ties into morale: a hero may *want* a particular perk ("Bram
 
 The simulation is **deterministic**: same seed + same party = same result. That makes it easy to test, debug, balance and replay.
 
-🔶 **DECISION 7: how the watching looks.** Recommended: start with an animated, readable text log (like a battle report), with HP bars. Add a simple 2D view later. Building the sim first and the visuals second means the game is playable much sooner.
+✅ **DECIDED 7: how the watching looks.** Decision: start with an animated, readable text log (like a battle report), with HP bars. Add a simple 2D view later. Building the sim first and the visuals second means the game is playable much sooner.
 
 ## 10. First playable slice
 
@@ -232,7 +232,7 @@ The Cleric (healer, WIL/CHA) is the obvious 4th class to add next.
 
 **Dungeon:** 3 floors, a starting roster of 4 recruits, one party out at a time.
 
-🔶 **DECISION 8: one party or several at once?** Recommended: one at a time in the first slice; multiple parties later (which also makes rescue runs work while your main party is busy).
+✅ **DECIDED 8: one party or several at once?** Decision: one at a time in the first slice; multiple parties later (which also makes rescue runs work while your main party is busy).
 
 ## 11. Built to grow (extensibility)
 
@@ -278,7 +278,7 @@ export default defineMonster({
 
 ## 12. Tech stack and hosting
 
-**Recommendation: a TypeScript web game.**
+**Chosen: a TypeScript web game.**
 
 | Part | Choice | Why |
 |---|---|---|
@@ -299,7 +299,7 @@ Alternatives considered:
 - **Unity**: overkill for this, slow iteration.
 - **Python**: fine for prototyping the sim, but hard to ship as a web game.
 
-🔶 **DECISION 9: stack and hosting.** Recommended: TypeScript + React + Vite, hosted on GitHub Pages.
+✅ **DECIDED 9: stack and hosting.** Decision: TypeScript + React + Vite, hosted on GitHub Pages.
 
 ## 13. Build plan
 
@@ -315,9 +315,9 @@ Each milestone ends with something you can run.
 | M5 | Heroes with personalities: morale, motivations, level-up perks, wipes and recovery runs | Play the full design in miniature |
 | M6+ | Balance pass, then grow content: Cleric, more monsters/floors, 2D watch view, multiple parties | Keep growing |
 
-## 14. Open decisions (summary)
+## 14. Decisions (agreed 2026-11-20)
 
-| # | Decision | Recommendation |
+| # | Decision | Agreed |
 |---|---|---|
 | 1 | Difficulty curve | Exponential with depth; time difficulty driven by the population sim |
 | 2 | What is a "day" | In-game days, advanced by expeditions, not real time |
