@@ -8,9 +8,11 @@
 
 ## 1. The pitch
 
-You run the guild hall in a town that sits on top of a dungeon. You recruit heroes, kit them out, and send a party down. Once they leave town **you can only watch**. If they come back, their loot and experience let you build a better party. If they don't, you can send another party down after them to recover whoever and whatever is left.
+You run the guild hall in a town built around the edge of a pit. The town started as a mining camp, and the miners dug too deep: they broke into a dungeon that was already full. Now the pit is the way in.
 
-The dungeon is getting worse. The deepest level keeps breeding, and the overflow is shoved upward, floor by floor, toward the town. Your job is to keep the population down by killing everything you can.
+You recruit heroes, kit them out, and send a party down. Once they leave town **you can only watch**. If they come back, their loot and experience let you build a better party. If they don't, you can send another party down after them to recover whoever and whatever is left.
+
+The dungeon is getting worse. The deepest level keeps breeding, and the overflow is shoved upward, floor by floor, until monsters with nowhere left to go climb out of the pit. Your job is to keep the population down by killing everything you can.
 
 ## 2. Core loop
 
@@ -75,14 +77,14 @@ Each day:
 1. The bottom floor spawns new monsters at its level band. Its spawn rate creeps up slowly over time (this is the source of all escalation).
 2. Any floor over capacity **evicts its weakest monsters** to the floor above.
 3. Evicted monsters arrive at the upper floor's *strong* end. As they keep arriving, the upper floor's level band rises, and its own weakest get evicted upward in turn.
-4. Floor 1 overflow goes toward the town (see Decision 3).
+4. Floor 1 overflow **climbs out of the pit** toward the town (see Decision 3 and the defences in §8).
 
 The result is exactly the lore: over time, the *weakest* thing on floor 1 is no longer a level-1 slime, because the "weak" rejects from below are stronger than they used to be. Killing monsters on a floor lowers its population, so the overflow stops and that floor's band stabilises.
 
 A nice side effect: you can show the player a simple **dungeon pressure** map in town (per floor: population bar + level band) so they can see where the problem is building and choose targets.
 
 ✅ **DECIDED 3: what happens when floor 1 overflows?** Options:
-- (a) **Town raids** (chosen): monsters attack the town, damaging shops or injuring resting heroes. Bad, but not game over.
+- (a) **Town raids** (chosen): monsters climb out of the pit and attack the town, damaging buildings or injuring resting heroes. Bad, but not game over. Defences around the pit (§8) soften them.
 - (b) **Game over** when overflow passes a limit. Gives a clear loss condition, roguelike style.
 - (c) Nothing; floor 1 just gets harder.
 
@@ -234,9 +236,32 @@ Starting list (more later):
 | Apothecary | Cheaper potions; injuries heal faster | Later |
 | Training Yard | Heroes resting in town gain a little XP | Later |
 | Library | Identify trinkets; Knowledge heroes like it; teaches the Lore skill | Later |
-| Watchtower / Palisade | Reduces damage from town raids | Later |
+| Pit defences | Hold back monsters climbing out of the pit (see below) | Later (M4, with raids) |
 | Vault | Protects your stash from raids | Later |
 | Temple / Black Market | Alignment services for Good / Evil heroes (§7) | With alignment |
+
+### Defences around the pit
+
+Whatever overflows floor 1 climbs out of the pit. Defences built around the pit decide how much of it reaches the town.
+
+| Defence | Does |
+|---|---|
+| **Palisade → Stone wall** | Adds defence. Each level holds back more climbing monsters |
+| **Gate** | Lets parties in and out; a stronger gate stops raiders breaking straight through |
+| **Watchtowers** | Early warning: shows a raid coming a day ahead, so you can keep strong heroes home. Also adds a little defence |
+| Later: traps, a pit-edge garrison of resting heroes | More ways to defend |
+
+How it works each day:
+
+1. Floor 1 overflow climbs out. Its **strength** = number of monsters × their level.
+2. The town's **defence** (from its defences) soaks up that much strength.
+3. Anything left over becomes a **raid**: the bigger the leftover, the worse the raid (a damaged building, an injured resting hero, stolen stash).
+
+So raids measure how well you're keeping the population down. A town that clears floor 1 often hardly sees raids, even with weak walls. A town that neglects the dungeon will eventually be overrun, whatever its walls are made of, because overflow keeps growing and walls don't. Defences buy time; only clearing the dungeon fixes the problem.
+
+In town, a simple **pit gauge** shows the overflow climbing out against your defence. It's the most direct sign of how things are going.
+
+Defences are ordinary buildings in `content/buildings/` with a `defence` (or `raidWarning`) effect, so new kinds of defence are just new data.
 
 ### Favourite buildings
 
@@ -406,7 +431,7 @@ Each milestone ends with something you can run.
 | M1 | Sim core: content definitions + schema checks, effects system, stats, seeded combat between a party and a monster group | Run a fight from the command line and read the log |
 | M2 | Expeditions: floors, rooms, scouting, traps, loot, appraisal, standing orders | Simulate a full trip to floor 1–3 |
 | M3 | Town UI: roster, recruit, equip, formation, launch, watch the log, results screen | Actually play a loop in the browser |
-| M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), save/load | Feel the dungeon getting worse over time |
+| M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load | Feel the dungeon getting worse over time |
 | M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs | Play the full design in miniature |
 | M6+ | Balance pass, then grow content: Cleric, alignment (§7), more buildings, more monsters/floors, 2D watch view, multiple parties | Keep growing |
 
@@ -426,4 +451,5 @@ Each milestone ends with something you can run.
 | 10 | Alignment | Good / Neutral / Evil; two-thirds sets party alignment, others within one step; mismatches cost morale rather than being banned. Added after the first slice |
 | 11 | Party size | Set by the Guild Hall level: 3 slots at the start, up to 6. Good + Evil mixing unlocks at 6 |
 | 12 | Town buildings | One-off cost (gold, deep-floor materials, renown); permanent, survive wipes; raids damage but never destroy |
+| 14 | Dungeon entrance and defences | An open pit dug by the original mining camp. Defences around it (walls, gate, watchtowers) soak up overflow; what gets past becomes a raid |
 | 13 | Favourite buildings | Each hero has one; built = morale boost, missing = morale drain |
