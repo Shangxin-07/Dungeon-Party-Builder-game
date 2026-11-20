@@ -21,7 +21,7 @@ body {
 }
 
 .page {
-  max-width: 880px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 48px 16px 64px;
 }
@@ -404,4 +404,379 @@ footer {
 .haul th {
   color: var(--muted);
   font-weight: normal;
+}
+
+/* Town (M3) */
+
+.small {
+  font-size: 0.85rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: -16px 0 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tabs button {
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 6px 14px;
+  margin-bottom: -1px;
+  cursor: pointer;
+}
+
+.tabs button.on {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.btn,
+.seg button,
+.hero-card select,
+.pack select {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled),
+.seg button:hover {
+  border-color: var(--accent);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-main {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a140b;
+  font-weight: 600;
+  padding: 8px 18px;
+}
+
+.btn-main:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.link {
+  font: inherit;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link.danger {
+  color: #e48a7a;
+}
+
+.townbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: center;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  font-variant-numeric: tabular-nums;
+}
+
+.townbar .btn {
+  margin-left: auto;
+}
+
+.error {
+  padding: 8px 12px;
+  border: 1px solid #e48a7a;
+  border-radius: 6px;
+  color: #f0b0a4;
+}
+
+.last-trip {
+  padding: 8px 12px;
+  border-left: 4px solid var(--accent);
+  background: var(--panel);
+  border-radius: 6px;
+}
+
+.last-wiped {
+  border-left-color: #e48a7a;
+}
+
+.panel {
+  margin-top: 36px;
+}
+
+.panel h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.formation {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.formation-row {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.formation-hero + .formation-hero {
+  margin-top: 8px;
+}
+
+.warnings {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  color: #e0c070;
+  font-size: 0.9rem;
+}
+
+.hero-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.hero-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.hero-card.in-party {
+  border-color: var(--accent);
+}
+
+.hero-card h4 {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+}
+
+.hero-card .btn {
+  align-self: flex-start;
+}
+
+.hero-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hero-head h3 {
+  margin: 0;
+  color: var(--accent);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.seg {
+  display: inline-flex;
+}
+
+.seg button {
+  border-radius: 0;
+}
+
+.seg button:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.seg button:last-child {
+  border-radius: 0 6px 6px 0;
+  margin-left: -1px;
+}
+
+.seg button.on {
+  background: var(--border);
+  color: var(--accent);
+}
+
+.derived-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px 2px;
+  margin: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.derived-grid dt {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.derived-grid dd {
+  margin: 0;
+}
+
+.stat-grid sup {
+  font-size: 0.65rem;
+}
+
+sup.up {
+  color: #8fd49a;
+}
+
+sup.down {
+  color: #e48a7a;
+}
+
+.gear {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.gear li {
+  display: grid;
+  grid-template-columns: 5.5em 1fr;
+  gap: 2px 8px;
+}
+
+.gear-actions {
+  grid-column: 2;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.gear-actions select {
+  font-size: 0.8rem;
+  padding: 2px 6px;
+}
+
+.pack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.chip {
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--text);
+  background: var(--border);
+  border: 0;
+  border-radius: 999px;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: #4a4030;
+}
+
+.pack select {
+  font-size: 0.8rem;
+  padding: 2px 6px;
+}
+
+.record {
+  margin: 4px 0 0;
+}
+
+.recruit .btn {
+  margin-top: auto;
+}
+
+.market {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.shop {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.shop td {
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.shop td:last-child {
+  text-align: right;
+  padding-right: 0;
+}
+
+.shop .num {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.memorial {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.9rem;
+}
+
+.trip-town {
+  margin: 12px 0 16px;
+}
+
+.town .controls label {
+  font-size: 0.9rem;
+}
+
+/* The card heading already names the hero. */
+.hero-card .hp {
+  grid-template-columns: 1fr 4.5em;
+}
+
+.hero-card .hp-name {
+  display: none;
 }

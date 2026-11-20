@@ -565,7 +565,12 @@ class Battle {
       } else {
         target.state = "dead";
         if (target.monsterId) this.kills.push(target.monsterId);
-        this.emit({ kind: "killed", target: target.uid, text: `${target.name} is slain.` });
+        this.emit({
+          kind: "killed",
+          actor: source?.uid,
+          target: target.uid,
+          text: `${target.name} is slain.`,
+        });
       }
     }
     this.fireTriggers(target, amount);

@@ -412,6 +412,19 @@ Balance with a fresh starter party (500 trips each, `npm run balance`):
 
 Floor 1 is unchanged from M1. Careful orders on floor 3 trade reaching the bottom for staying alive, so the orders are a real choice.
 
+### As built in M3: the town
+
+> Added 2026-11-20. The numbers are starting points for tuning.
+
+- **Town rules are content** (`content/town.ts`): 100 starting gold, a roster of 4 (Fighter, Scout, Mage, Fighter), two rolls of bandages in the store room, 3 recruits on offer, 60 gold to hire, the Market pays 50% of value, and heroes heal 40% of max HP per day in town.
+- **Buildings are content** (`content/buildings/`). Each level lists its cost, a one-line summary and its effects (`partySlots`, `rosterSize`, `sells`). Guild Hall level 1 (3 slots, roster 6) and level 2 (4 slots, roster 8, 300 gold); the Market is built from the start. New effect types are added once in `src/sim/town.ts`.
+- **Town logic** lives in `src/sim/town.ts` as pure functions over a plain-data `TownState`: hire, dismiss (the guild keeps their gear), buy, sell, equip, pack supplies, set row, pick the party, set orders, upgrade, rest a day, launch. Same seed, same town.
+- **Recruits** bring their class's starting kit. A new batch turns up every day.
+- **Launch** simulates the whole trip at once, then the UI plays back the log. The town already reflects the outcome, so there's nothing to change while watching.
+- **Coming home:** the Market pays the real value of the haul (the results screen shows the party's guess next to it). The trip takes one day per floor; heroes who stayed home rest that long, the party gets one night's rest. Each hero keeps a record of trips and kills.
+- **Wipes:** the dead go on the memorial; the rest are listed as lost on that floor, with their gear. Rescue runs come in M5.
+- The town is saved in the browser (localStorage) so a refresh doesn't lose it. Proper save slots are still M4.
+
 ## 12. First playable slice
 
 Small on purpose. Everything here is data, so adding more later means adding entries, not rewriting code.
@@ -525,7 +538,7 @@ Each milestone ends with something you can run.
 | M0 | Project setup: Vite + TS, tests, CI, deploy to GitHub Pages | Open a "hello" page at a public URL |
 | M1 | Sim core: content definitions + schema checks, effects system, stats, seeded combat between a party and a monster group | Run a fight from the command line and read the log |
 | M2 | Expeditions: floors, rooms, scouting, traps, loot, appraisal, standing orders | Simulate a full trip to floor 1–3 |
-| M3 | Town UI: roster, recruit, equip, formation, launch, watch the log, results screen | Actually play a loop in the browser |
+| M3 | Town UI: roster, recruit, equip, formation, launch, watch the log, results screen (built, see §11 "As built in M3") | Actually play a loop in the browser |
 | M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load | Feel the dungeon getting worse over time |
 | M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs | Play the full design in miniature |
 | M6+ | Balance pass, then grow content: Cleric, freeform classes (§9), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |

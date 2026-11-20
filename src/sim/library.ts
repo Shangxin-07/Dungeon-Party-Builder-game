@@ -4,6 +4,7 @@
  */
 import type {
   AbilityDef,
+  BuildingDef,
   ClassDef,
   EncounterDef,
   FloorDef,
@@ -29,6 +30,7 @@ export interface Index {
   encounter(id: string): EncounterDef;
   lootTable(id: string): LootTableDef;
   room(id: string): RoomDef;
+  building(id: string): BuildingDef;
   /** The floor at this depth. */
   floor(depth: number): FloorDef;
 }
@@ -60,6 +62,7 @@ export function indexLibrary(lib: Library): Index {
       encounter: table("encounter", lib.encounters),
       lootTable: table("loot table", lib.lootTables),
       room: table("room", lib.rooms),
+      building: table("building", lib.buildings),
       floor: (depth) => {
         const f = lib.floors.find((x) => x.depth === depth);
         if (!f) throw new Error(`No floor defined at depth ${depth}`);
