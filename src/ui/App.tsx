@@ -1,4 +1,5 @@
 import { classes } from "../content";
+import { TestFight } from "./TestFight";
 
 export function App() {
   return (
@@ -28,10 +29,12 @@ export function App() {
         </ul>
       </section>
 
+      <TestFight />
+
       <footer>
         <p>
-          Nothing is playable yet. Next up: the simulation core, where a party fights its first
-          monsters.
+          The combat engine works, but there's no town or dungeon yet. Next up: expeditions, where a
+          party works its way through rooms, traps and loot.
         </p>
       </footer>
     </main>
