@@ -1,6 +1,7 @@
 /**
  * The content library. To add content, create a file in the matching folder
- * (classes/, items/, monsters/, rooms/, loot/, floors/, buildings/, ...) and add it to the
+ * (classes/, items/, monsters/, rooms/, loot/, floors/, buildings/, perks/,
+ * motivations/, ...) and add it to the
  * list below. No engine code changes are needed. The content tests check every id and reference.
  */
 import type {
@@ -13,6 +14,7 @@ import type {
   Library,
   LootTableDef,
   MonsterDef,
+  MotivationDef,
   PerkDef,
   RoomDef,
   SkillDef,
@@ -89,6 +91,29 @@ import longbowItem from "./items/longbow";
 import ironShieldItem from "./items/iron-shield";
 import scaleMailItem from "./items/scale-mail";
 import ironStaffItem from "./items/iron-staff";
+import libraryBuilding from "./buildings/library";
+import trainingYardBuilding from "./buildings/training-yard";
+import vaultBuilding from "./buildings/vault";
+import heavyHitterPerk from "./perks/heavy-hitter";
+import shieldWallPerk from "./perks/shield-wall";
+import thickSkinnedPerk from "./perks/thick-skinned";
+import steadyAimPerk from "./perks/steady-aim";
+import lightFeetPerk from "./perks/light-feet";
+import trapSensePerk from "./perks/trap-sense";
+import spellFocusPerk from "./perks/spell-focus";
+import deepWellPerk from "./perks/deep-well";
+import flameWardPerk from "./perks/flame-ward";
+import fieldMedicPerk from "./perks/field-medic";
+import packMulePerk from "./perks/pack-mule";
+import sharpEyedPerk from "./perks/sharp-eyed";
+import quickReflexesPerk from "./perks/quick-reflexes";
+import goldMotivation from "./motivations/gold";
+import gloryMotivation from "./motivations/glory";
+import knowledgeMotivation from "./motivations/knowledge";
+import comradesMotivation from "./motivations/comrades";
+import moraleRules from "./morale";
+import levelRules from "./levels";
+import rescueRules from "./rescue";
 import townRules from "./town";
 import dungeonRules from "./dungeon";
 
@@ -133,7 +158,30 @@ export const monsters: readonly MonsterDef[] = [
   slimeMonster,
 ];
 export const skills: readonly SkillDef[] = [appraisalSkill, medicineSkill, scoutingSkill];
-export const perks: readonly PerkDef[] = [boneBreakerPerk, keenEyePerk, toughPerk];
+export const perks: readonly PerkDef[] = [
+  boneBreakerPerk,
+  heavyHitterPerk,
+  shieldWallPerk,
+  thickSkinnedPerk,
+  keenEyePerk,
+  steadyAimPerk,
+  lightFeetPerk,
+  trapSensePerk,
+  spellFocusPerk,
+  deepWellPerk,
+  flameWardPerk,
+  toughPerk,
+  fieldMedicPerk,
+  packMulePerk,
+  sharpEyedPerk,
+  quickReflexesPerk,
+];
+export const motivations: readonly MotivationDef[] = [
+  goldMotivation,
+  gloryMotivation,
+  knowledgeMotivation,
+  comradesMotivation,
+];
 export const encounters: readonly EncounterDef[] = [
   goblinBandEncounter,
   ratSwarmEncounter,
@@ -168,6 +216,9 @@ export const buildings: readonly BuildingDef[] = [
   palisadeBuilding,
   gateBuilding,
   watchtowerBuilding,
+  libraryBuilding,
+  trainingYardBuilding,
+  vaultBuilding,
 ];
 
 export const library: Library = {
@@ -183,8 +234,12 @@ export const library: Library = {
   rooms,
   floors,
   buildings,
+  motivations,
   town: townRules,
   dungeon: dungeonRules,
+  morale: moraleRules,
+  levels: levelRules,
+  rescue: rescueRules,
 };
 
 export { heroNames } from "./names";

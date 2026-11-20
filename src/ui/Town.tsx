@@ -1,7 +1,8 @@
 /**
  * The town screen: recruit, kit out, pick a party and its formation, set
  * standing orders, launch, watch the trip and see what came back (M3). Watch
- * the pit and its raids, build defences, and keep save slots (M4). All the
+ * the pit and its raids, build defences, and keep save slots (M4). Morale,
+ * level-ups and rescue runs (M5) are in Heroes.tsx and Lost.tsx. All the
  * rules live in src/sim/town.ts; this file only shows the state and calls
  * those actions.
  */
@@ -24,8 +25,10 @@ import {
   nextLevel,
   packItem,
   partySlots,
+  cancelRescue,
   repair,
   repairCost,
+  rescueSite,
   rest,
   rosterSize,
   sell,
@@ -58,6 +61,8 @@ import {
   writeSlot,
 } from "./saves";
 import { DERIVED_LABELS, HeroBars, Results, StatSheet, TripPlayer } from "./Watch";
+import { LevelUpPicker, MoraleBar, PerkList, Personality, XpBar } from "./Heroes";
+import { Departed, LostPanel, TalkPanel } from "./Lost";
 
 const freshTown = () => newTown(ix, heroNames, Date.now() % 2 ** 31);
 
@@ -184,6 +189,8 @@ export function TownGame() {
         </p>
       ) : null}
       {trip ? <LastTrip town={town} onWatch={() => setWatching("trip")} /> : null}
+      <TalkPanel town={town} />
+      <LostPanel town={town} act={act} />
       <PartyPanel
         town={town}
         act={act}
@@ -399,12 +406,37 @@ function TripTown({ town }: { town: TownState }) {
           The Market pays <strong>{trip.goldEarned}</strong> gold for the haul.
         </p>
       ) : null}
+      {trip.recovered?.length ? (
+        <p>
+          Back in the store room:{" "}
+          {trip.recovered
+            .map((g) => `${g.owner ? `${g.owner}'s ` : ""}${ix.item(g.item).name.toLowerCase()}`)
+            .join(", ")}
+          .
+        </p>
+      ) : null}
+      {trip.rescued?.length ? (
+        <p className="good">
+          Rescued: <strong>{trip.rescued.join(", ")}</strong>. They're home, weak but alive.
+        </p>
+      ) : null}
+      {trip.trapped?.length ? (
+        <p className="warn">
+          {trip.trapped.join(", ")} {trip.trapped.length > 1 ? "are" : "is"} still alive down there,
+          trapped. A rescue party has {ix.lib.rescue.windowDays} days. See "Lost in the dungeon".
+        </p>
+      ) : null}
+      {trip.quit?.length ? (
+        <p className="warn">{trip.quit.join(", ")} had enough and quit the guild.</p>
+      ) : null}
       <table className="haul">
         <thead>
           <tr>
             <th>Hero</th>
             <th>Kills</th>
             <th>HP</th>
+            <th>XP</th>
+            <th>Morale</th>
             <th>Now</th>
           </tr>
         </thead>
@@ -412,13 +444,49 @@ function TripTown({ town }: { town: TownState }) {
           {trip.result.party.map((h) => {
             const max = heroSheet(ix, h).derived.maxHp;
             const fate = fallen.find((m) => m.name === h.name);
+            const trapped = trip.trapped?.includes(h.name);
+            const levels = trip.levels?.[h.id] ?? 0;
+            const morale = trip.morale?.[h.id] ?? [];
+            const total = morale.reduce((s, c) => s + c.amount, 0);
             return (
               <tr key={h.id}>
                 <td>{h.name}</td>
                 <td>{trip.kills[h.id] ?? 0}</td>
                 <td>{h.condition === "ok" ? `${h.hp}/${max}` : h.condition}</td>
                 <td>
-                  {fate ? (fate.fate === "dead" ? "Dead" : `Lost on floor ${fate.floor}`) : "Home"}
+                  {trip.xp?.[h.id] ? `+${trip.xp[h.id]}` : "–"}
+                  {levels ? <strong className="good"> level up!</strong> : null}
+                </td>
+                <td
+                  title={morale
+                    .map((c) => `${c.amount > 0 ? "+" : ""}${c.amount} ${c.reason}`)
+                    .join("\n")}
+                >
+                  {morale.length ? (
+                    <span className={total >= 0 ? "up" : "down"}>
+                      {total > 0 ? "+" : ""}
+                      {total}
+                    </span>
+                  ) : (
+                    "–"
+                  )}
+                  {morale.length ? (
+                    <span className="muted small">
+                      {" "}
+                      {morale
+                        .map((c) => `${c.reason} ${c.amount > 0 ? "+" : ""}${c.amount}`)
+                        .join("; ")}
+                    </span>
+                  ) : null}
+                </td>
+                <td>
+                  {trapped
+                    ? "Trapped"
+                    : fate
+                      ? fate.fate === "dead"
+                        ? "Dead"
+                        : `Lost on floor ${fate.floor}`
+                      : "Home"}
                 </td>
               </tr>
             );
@@ -461,6 +529,7 @@ function PartyPanel({ town, act, onLaunch }: { town: TownState; act: Act; onLaun
     RETREATS.find((r) => JSON.stringify(r.rule) === JSON.stringify(town.orders.retreat))?.id ??
     "hp-30";
   const row = (r: Row) => party.filter((h) => h.row === r);
+  const site = rescueSite(town);
 
   return (
     <section aria-labelledby="party-heading" className="panel">
@@ -470,6 +539,18 @@ function PartyPanel({ town, act, onLaunch }: { town: TownState; act: Act; onLaun
           ({party.length}/{slots})
         </span>
       </h2>
+      {site ? (
+        <p className="mission">
+          Rescue run: down to floor {site.floor} to find{" "}
+          {site.trapped.length
+            ? site.trapped.map((x) => x.hero.name).join(" and ")
+            : `what's left of ${site.bodies.join(" and ") || "the lost party"}`}
+          .{" "}
+          <button type="button" className="link" onClick={() => act((t) => cancelRescue(ix, t))}>
+            Make it an ordinary trip
+          </button>
+        </p>
+      ) : null}
       <div className="formation">
         {(["front", "back"] as const).map((r) => (
           <div key={r} className="formation-row">
@@ -479,7 +560,7 @@ function PartyPanel({ town, act, onLaunch }: { town: TownState; act: Act; onLaun
                 <div key={h.id} className="formation-hero">
                   <HeroBars hero={h} />
                   <span className="muted small">
-                    {ix.cls(h.classId).name} · {describeKit(h)}
+                    {ix.cls(h.classId).name} {h.level} · morale {h.morale} · {describeKit(h)}
                   </span>
                 </div>
               ))
@@ -600,8 +681,13 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
         <span className="muted small">
           {ix.cls(h.classId).name}, level {h.level}
         </span>
+        {h.levelUps.length ? <span className="badge">Level up!</span> : null}
       </div>
       <HeroBars hero={h} />
+      <MoraleBar hero={h} log />
+      <XpBar hero={h} />
+      <Personality hero={h} town={town} />
+      <LevelUpPicker key={h.levelUps[0]?.level ?? 0} hero={h} act={act} />
       <div className="hero-actions">
         <button
           type="button"
@@ -626,6 +712,7 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
         </div>
       </div>
       <StatSheet hero={h} full />
+      <PerkList hero={h} />
 
       <h4>Gear</h4>
       <ul className="gear">
@@ -754,6 +841,8 @@ function Recruits({ town, act }: { town: TownState; act: Act }) {
               <span className="muted small">{ix.cls(h.classId).name}</span>
             </div>
             <p className="muted small quiet">{ix.cls(h.classId).blurb}</p>
+            <Personality hero={h} town={town} />
+            <MoraleBar hero={h} />
             <StatSheet hero={h} full />
             <p className="small quiet">Brings: {describeKit(h)}</p>
             <button
@@ -948,7 +1037,7 @@ function Works({
 }
 
 function Memorial({ town }: { town: TownState }) {
-  if (!town.memorial.length) return null;
+  if (!town.memorial.length && !town.departed.length) return null;
   return (
     <section aria-labelledby="memorial-heading" className="panel">
       <h2 id="memorial-heading">Memorial</h2>
@@ -962,11 +1051,12 @@ function Memorial({ town }: { town: TownState }) {
             , day {m.day}.{" "}
             <span className="muted">
               {m.record.trips} {m.record.trips === 1 ? "trip" : "trips"}, {m.record.kills} kills.
-              {m.fate === "lost" ? " Rescue runs are coming later." : ""}
+              {m.fate === "lost" ? " Lost before rescue runs existed: never found." : ""}
             </span>
           </li>
         ))}
       </ul>
+      <Departed town={town} />
     </section>
   );
 }

@@ -11,4 +11,5 @@ export default defineClass({
   ai: "fighter",
   abilities: [],
   startingKit: ["sword", "chainmail", "wooden-shield", "healing-potion"],
+  growth: { STR: 1, END: 1 },
 });

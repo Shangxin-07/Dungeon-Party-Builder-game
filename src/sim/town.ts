@@ -8,21 +8,26 @@
  * from the state's own seed, so a town is as deterministic as an expedition.
  * Buildings and house rules are content (content/buildings/, content/town.ts).
  */
-import type { BuildingEffect, ItemDef, Row } from "../content/types";
+import type { BuildingEffect, ItemDef, Row, Stat } from "../content/types";
 import {
   DEFAULT_ORDERS,
   runExpedition,
+  type CarriedGear,
   type ExpeditionResult,
+  type SiteVisit,
   type StandingOrders,
 } from "./expedition";
 import { applyKills, dungeonDay, newDungeon, type DungeonState } from "./dungeon";
 import { createHero, EQUIP_SLOTS, heroSheet, type EquipSlot, type Hero } from "./hero";
+import { gainXp, spendLevelUp } from "./levels";
 import type { Index } from "./library";
+import type { HaulItem } from "./loot";
+import { applyMorale, gearTags, isLow, moraleChanges, type Facts } from "./morale";
 import { resolveRaid, type RaidReport } from "./raid";
 import { createRng, type Rng } from "./rng";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 3;
+export const TOWN_VERSION = 4;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 const PIT_HISTORY = 60;
@@ -34,6 +39,45 @@ export interface HeroRecord {
   kills: number;
   /** Day they joined the guild. */
   joined: number;
+  /** Deepest floor they've reached. */
+  deepest: number;
+  /** Kinds of monster they've fought. */
+  seen: string[];
+}
+
+/** A trapped hero waiting for rescue (DESIGN.md §10). */
+export interface Trapped {
+  hero: Hero;
+  /** The last day a rescue party can reach them alive. */
+  until: number;
+}
+
+/** Where a party fell. A rescue run can bring back the living and the gear. */
+export interface LostSite {
+  id: string;
+  floor: number;
+  room: number;
+  /** Day the news reached town. */
+  day: number;
+  trapped: Trapped[];
+  /** Names of those who died there. */
+  bodies: string[];
+  /** Gear of the dead (kept, not sold) and the haul they were carrying. */
+  items: HaulItem[];
+}
+
+/** Gear that monsters carried off from a site. It turns up in fights on that floor. */
+export interface ScavengedGear extends CarriedGear {
+  floor: number;
+}
+
+/** Someone who left the guild of their own accord. */
+export interface Departure {
+  name: string;
+  classId: string;
+  day: number;
+  /** What they took with them. */
+  took: string[];
 }
 
 /** Someone the guild has lost. */
@@ -42,7 +86,7 @@ export interface Memorial {
   classId: string;
   day: number;
   floor: number;
-  /** "dead" for good, or "lost" where the party fell (rescue runs come in M5). */
+  /** "dead" for good. "lost" only appears in saves from before rescue runs. */
   fate: "dead" | "lost";
   /** "raid" if they died defending the town (floor is then 0). */
   cause?: "raid";
@@ -74,6 +118,18 @@ export interface TripReport {
   kills: Record<string, number>;
   /** Raids on the town while the party was away (not "held" nights). */
   raids: RaidReport[];
+  /** XP each hero earned, and levels gained, by hero id. */
+  xp?: Record<string, number>;
+  levels?: Record<string, number>;
+  /** Morale changes after the trip, by hero id. */
+  morale?: Record<string, { amount: number; reason: string }[]>;
+  /** Names of heroes trapped after a wipe, and of those freed by a rescue. */
+  trapped?: string[];
+  rescued?: string[];
+  /** Heroes' own gear brought home to the store room. */
+  recovered?: HaulItem[];
+  /** Names of heroes who quit when they got back. */
+  quit?: string[];
 }
 
 export interface TownState {
@@ -108,6 +164,23 @@ export interface TownState {
   raids: RaidReport[];
   /** Buildings and upgrades the builders are working on. Paid for up front. */
   construction: Construction[];
+  /** Where parties fell, waiting for rescue (DESIGN.md §10). */
+  sites: LostSite[];
+  /** Lost heroes' gear that monsters carried off. */
+  scavenged: ScavengedGear[];
+  /** Heroes who quit. */
+  departed: Departure[];
+  /** Next number for a site or scavenged item id. */
+  nextThingId: number;
+  /** What happened in town lately ("Wren quit", "Bram died waiting"), newest last. */
+  news: News[];
+}
+
+/** One line of town news. */
+export interface News {
+  day: number;
+  text: string;
+  tone?: "good" | "bad";
 }
 
 /** A building or upgrade in progress. */
@@ -156,6 +229,22 @@ export const warningDays = (ix: Index, town: TownState) =>
 const recruitsToday = (ix: Index, town: TownState) =>
   ix.lib.town.recruitsOnOffer + total(ix, town, "recruitOffers");
 const recruitPicks = (ix: Index, town: TownState) => 1 + total(ix, town, "recruitPicks");
+/** Morale every hero in town gets each rest day (the Tavern). */
+export const restMorale = (ix: Index, town: TownState) => total(ix, town, "restMorale");
+/** XP every hero in town gets each rest day (the Training Yard). */
+export const trainingXp = (ix: Index, town: TownState) => total(ix, town, "trainingXp");
+/** Extra XP from trips, in percent (the Library). */
+export const xpBonus = (ix: Index, town: TownState) => total(ix, town, "xpPercent");
+/** Percent of the guild's gold that raiders can't get at (the Vault). */
+export const vaultShare = (ix: Index, town: TownState) =>
+  Math.min(
+    100,
+    effects(ix, town).reduce((m, e) => (e.type === "vault" ? Math.max(m, e.amount) : m), 0),
+  );
+
+/** Whether a building is up and working (built and not damaged). */
+export const standing = (town: TownState, id: string) =>
+  (town.buildings[id] ?? 0) > 0 && !town.damaged.includes(id);
 
 /**
  * What the next nights at the pit will bring if nobody kills anything, as far
@@ -215,6 +304,56 @@ export function launchWarnings(ix: Index, town: TownState): string[] {
     out.push("Nobody is in the front row. Monsters will go straight for the back.");
   if (party.length && !party.some((h) => h.pack.some((id) => ix.item(id).tags.includes("heal"))))
     out.push("Nobody is carrying potions or bandages.");
+  for (const h of party) {
+    if (h.levelUps.length) out.push(`${h.name} has a level-up to spend.`);
+    if (isLow(ix, h)) {
+      const low = ix.motivation(h.motivation).lowMorale;
+      const risk = low?.refuseRetreat
+        ? " They may refuse to turn back."
+        : low?.grabJunk
+          ? " They may ignore the loot orders."
+          : "";
+      out.push(`${h.name} is unhappy (morale ${h.morale}).${risk}`);
+    }
+  }
+  const site = rescueSite(town);
+  if (site) {
+    const arrive = town.day + site.floor - 1;
+    const alive = site.trapped.filter((x) => x.until >= arrive);
+    if (town.orders.targetFloor < site.floor)
+      out.push(`The rescue needs the party to go down to floor ${site.floor}.`);
+    if (site.trapped.length && !alive.length)
+      out.push("They can't get there in time to save anyone, but the gear is still there.");
+  }
+  return out;
+}
+
+/** The site the current orders are a rescue run to, if any. */
+export const rescueSite = (town: TownState) =>
+  town.orders.rescue ? town.sites.find((s) => s.id === town.orders.rescue) : undefined;
+
+/** Things heroes are saying in town: complaints and wishes (DESIGN.md §6, §8). */
+export function grumbles(ix: Index, town: TownState): { hero: string; text: string }[] {
+  const out: { hero: string; text: string }[] = [];
+  for (const h of town.roster) {
+    if (isLow(ix, h)) {
+      const why = [...h.moraleLog].reverse().find((n) => n.amount < 0)?.reason;
+      out.push({
+        hero: h.id,
+        text: `${h.name} is unhappy${why ? ` (${why})` : ""} and talks about leaving.`,
+      });
+    }
+    if (!standing(town, h.favourite)) {
+      const b = ix.building(h.favourite).name;
+      const fixing = (town.buildings[h.favourite] ?? 0) > 0;
+      out.push({
+        hero: h.id,
+        text: fixing
+          ? `${h.name} wants the ${b} repaired.`
+          : `${h.name} keeps asking when we're getting a ${b}.`,
+      });
+    }
+  }
   return out;
 }
 
@@ -234,6 +373,21 @@ export function cantLaunch(ix: Index, town: TownState): string | undefined {
 // ---------------------------------------------------------------------------
 // Starting a town
 // ---------------------------------------------------------------------------
+
+export const newRecord = (day: number): HeroRecord => ({
+  trips: 0,
+  kills: 0,
+  joined: day,
+  deepest: 0,
+  seen: [],
+});
+
+/** How many lines of news the town keeps. */
+const NEWS_LENGTH = 12;
+
+function news(t: TownState, text: string, tone?: News["tone"]): void {
+  t.news = [...t.news, { day: t.day, text, tone }].slice(-NEWS_LENGTH);
+}
 
 /** Take the next random roll from the town's seed. */
 function roll<T>(town: TownState, use: (rng: Rng) => T): T {
@@ -303,11 +457,16 @@ export function newTown(ix: Index, names: readonly string[], seed: number): Town
     pit: [],
     raids: [],
     construction: [],
+    sites: [],
+    scavenged: [],
+    departed: [],
+    nextThingId: 1,
+    news: [],
   };
   for (const classId of rules.startingRoster) {
     const hero = makeHero(ix, town, names, classId);
     town.roster.push(hero);
-    town.records[hero.id] = { trips: 0, kills: 0, joined: 1 };
+    town.records[hero.id] = newRecord(1);
   }
   // Fill the party with one of each role where we can, as a sensible default.
   town.party = town.roster.slice(0, partySlots(ix, town)).map((h) => h.id);
@@ -346,7 +505,7 @@ export function hire(ix: Index, town: TownState, recruitId: string): TownState {
   const [recruit] = t.recruits.splice(i, 1);
   t.gold -= ix.lib.town.hireCost;
   t.roster.push(recruit!);
-  t.records[recruit!.id] = { trips: 0, kills: 0, joined: t.day };
+  t.records[recruit!.id] = newRecord(t.day);
   if (t.party.length < partySlots(ix, t)) t.party.push(recruit!.id);
   return t;
 }
@@ -455,6 +614,50 @@ export function setOrders(_ix: Index, town: TownState, orders: StandingOrders): 
   return { ...town, orders };
 }
 
+/** Make the next trip a rescue run to a lost party's site (DESIGN.md §10). */
+export function planRescue(_ix: Index, town: TownState, siteId: string): TownState {
+  const site = town.sites.find((s) => s.id === siteId);
+  if (!site) throw new TownError("Nobody is waiting there any more.");
+  return {
+    ...town,
+    orders: {
+      ...town.orders,
+      rescue: site.id,
+      targetFloor: Math.max(town.orders.targetFloor, site.floor),
+    },
+  };
+}
+
+/** Back to an ordinary trip. */
+export function cancelRescue(_ix: Index, town: TownState): TownState {
+  const { rescue: _, ...orders } = town.orders;
+  return { ...town, orders };
+}
+
+/**
+ * Spend a hero's oldest level-up (DESIGN.md §9): learn one of the perks on
+ * offer and, every few levels, add a free stat point. Granting the perk they
+ * wanted cheers them up.
+ */
+export function chooseLevelUp(
+  ix: Index,
+  town: TownState,
+  heroId: string,
+  perk: string | undefined,
+  stat?: Stat,
+): TownState {
+  const t = edit(town);
+  const h = hero(t, heroId);
+  let wanted = false;
+  try {
+    wanted = roll(t, (rng) => spendLevelUp(ix, h, perk, stat, rng)).wanted;
+  } catch (e) {
+    throw new TownError((e as Error).message);
+  }
+  if (wanted) applyMorale(ix, h, { wantedPerk: 1 }, t.day);
+  return keepHpInBounds(ix, t, h);
+}
+
 /** The next level of a building, if there is one. */
 export function nextLevel(ix: Index, town: TownState, buildingId: string) {
   const def = ix.building(buildingId);
@@ -537,7 +740,8 @@ function nightfall(ix: Index, t: TownState, away: ReadonlySet<string>): RaidRepo
         strength: day.strength,
         defence: defence(ix, t),
         home,
-        gold: t.gold,
+        // The Vault keeps some of the gold out of reach.
+        gold: Math.floor((t.gold * (100 - vaultShare(ix, t))) / 100),
         targets,
       },
       rng,
@@ -556,13 +760,22 @@ function nightfall(ix: Index, t: TownState, away: ReadonlySet<string>): RaidRepo
   ].slice(-PIT_HISTORY);
   if (raid.outcome === "held") return undefined;
 
-  // Defenders come back from the fight hurt, or not at all.
+  // Defenders come back from the fight hurt, or not at all. Those who saw
+  // raiders off learn from it.
+  const raiderPower = raid.raiders.reduce((s, id) => s + ix.monster(id).power, 0);
+  const share = raid.raiders.length ? (raiderPower * raid.kills) / raid.raiders.length : 0;
+  const standingDefenders = raid.after.filter((h) => h.condition !== "dead");
+  const xpEach = standingDefenders.length
+    ? (share * ix.lib.levels.xpPerPower * ix.lib.levels.raidXpShare) / standingDefenders.length
+    : 0;
+  let died = 0;
   for (const after of raid.after) {
     const i = t.roster.findIndex((h) => h.id === after.id);
     if (i < 0) continue;
     const rec = t.records[after.id];
     if (rec) rec.kills += raid.heroKills[after.id] ?? 0;
     if (after.condition === "dead") {
+      died++;
       t.memorial.push({
         name: after.name,
         classId: after.classId,
@@ -570,27 +783,159 @@ function nightfall(ix: Index, t: TownState, away: ReadonlySet<string>): RaidRepo
         floor: 0,
         fate: "dead",
         cause: "raid",
-        record: rec ?? { trips: 0, kills: 0, joined: t.day },
+        record: rec ?? newRecord(t.day),
       });
       t.roster.splice(i, 1);
       t.party = t.party.filter((id) => id !== after.id);
     } else {
-      t.roster[i] = structuredClone(after);
+      const h = structuredClone(after);
+      const levels = roll(t, (rng) => gainXp(ix, h, xpEach, rng));
+      if (levels) applyMorale(ix, h, { levelUp: levels }, t.day);
+      t.roster[i] = h;
     }
   }
+  if (died) guildFeels(ix, t, { fallenComrades: died }, new Set());
   t.gold -= raid.goldStolen;
   t.damaged = [...t.damaged, ...raid.damaged];
   t.raids = [...t.raids, raid].slice(-RAID_HISTORY);
   return raid;
 }
 
+/** A day in town for a hero who isn't away: morale from the town, and training. */
+function dayInTown(ix: Index, t: TownState, h: Hero): void {
+  const fav = standing(t, h.favourite);
+  applyMorale(
+    ix,
+    h,
+    {
+      restDay: 1,
+      favouriteBuilt: fav ? 1 : 0,
+      favouriteMissing: fav ? 0 : 1,
+      restMorale: restMorale(ix, t),
+    },
+    t.day,
+  );
+  const xp = trainingXp(ix, t);
+  if (xp) {
+    const levels = roll(t, (rng) => gainXp(ix, h, xp, rng));
+    if (levels) {
+      applyMorale(ix, h, { levelUp: levels }, t.day);
+      news(t, `${h.name} reached level ${h.level} in the Training Yard.`, "good");
+    }
+  }
+}
+
+/** A hero quits: they keep what they're wearing, and leave the rest (DESIGN.md decision 4). */
+function quit(ix: Index, t: TownState, h: Hero): void {
+  const took = EQUIP_SLOTS.map((s) => h.equipment[s]).filter((id): id is string => !!id);
+  t.stash.push(...h.pack);
+  t.roster = t.roster.filter((x) => x.id !== h.id);
+  t.party = t.party.filter((id) => id !== h.id);
+  t.departed.push({ name: h.name, classId: h.classId, day: t.day, took });
+  const gear = took.map((id) => ix.item(id).name.toLowerCase());
+  news(
+    t,
+    `${h.name} has had enough and quits the guild${gear.length ? `, taking their ${listWords(gear)}` : ""}.`,
+    "bad",
+  );
+}
+
+/** Anyone at 0 morale walks out. Returns their names. */
+function quitters(ix: Index, t: TownState): string[] {
+  const out: string[] = [];
+  for (const h of [...t.roster]) {
+    if (h.morale > 0) continue;
+    quit(ix, t, h);
+    out.push(h.name);
+  }
+  return out;
+}
+
+const listWords = (items: string[]) =>
+  items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items.at(-1)}` : (items[0] ?? "");
+
+/** Everyone in town takes a piece of news to heart (deaths, rescues, the abandoned). */
+function guildFeels(ix: Index, t: TownState, facts: Facts, except: ReadonlySet<string>): void {
+  for (const h of t.roster) if (!except.has(h.id)) applyMorale(ix, h, facts, t.day);
+}
+
+/**
+ * A night passes at the lost parties' sites: the trapped hold on or don't,
+ * and monsters carry off what they can.
+ */
+function sitesNight(ix: Index, t: TownState): void {
+  const rules = ix.lib.rescue;
+  for (const site of t.sites) {
+    for (const x of site.trapped.filter((x) => x.until < t.day)) {
+      site.trapped = site.trapped.filter((y) => y !== x);
+      site.bodies.push(x.hero.name);
+      site.items.push(...gearOf(ix, x.hero));
+      t.memorial.push({
+        name: x.hero.name,
+        classId: x.hero.classId,
+        day: t.day,
+        floor: site.floor,
+        fate: "dead",
+        record: t.records[x.hero.id] ?? newRecord(t.day),
+      });
+      news(t, `Nobody came for ${x.hero.name}. They died waiting on floor ${site.floor}.`, "bad");
+      guildFeels(ix, t, { abandoned: 1 }, new Set());
+    }
+    const population = t.dungeon.floors[site.floor - 1]?.population ?? 0;
+    if (population <= 0 || !site.items.length) continue;
+    const kept: HaulItem[] = [];
+    for (const it of site.items) {
+      if (!roll(t, (rng) => rng.chance(rules.scavengeChance))) {
+        kept.push(it);
+        continue;
+      }
+      if (it.keep) {
+        t.scavenged.push({
+          id: `g${t.nextThingId++}`,
+          item: it.item,
+          owner: it.owner,
+          floor: site.floor,
+        });
+      }
+    }
+    site.items = kept;
+  }
+  t.sites = t.sites.filter((s) => s.trapped.length || s.items.length);
+  if (t.orders.rescue && !rescueSite(t)) t.orders = cancelRescue(ix, t).orders;
+}
+
+/** A hero's gear as items lying where they fell: it goes back to the store room, not the Market. */
+function gearOf(ix: Index, h: Hero): HaulItem[] {
+  const ids = [
+    ...EQUIP_SLOTS.map((s) => h.equipment[s]).filter((id): id is string => !!id),
+    ...h.pack,
+  ];
+  return ids.map((id) => {
+    const v = ix.item(id).value;
+    return { item: id, value: v, estimate: v, keep: true, owner: h.name };
+  });
+}
+
+/** The end of a day in town: builders, rest, morale, the lost, and anyone who's had enough. */
+function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): void {
+  // Anyone already at the end of their tether goes before the day starts.
+  quitters(ix, t);
+  t.day += 1;
+  buildersWork(t);
+  for (const h of t.roster) {
+    if (away.has(h.id)) continue;
+    restHero(ix, h, 1);
+    dayInTown(ix, t, h);
+  }
+  sitesNight(ix, t);
+  quitters(ix, t);
+}
+
 /** Spend a day in town. Everyone heals, night falls, and new recruits turn up. */
 export function rest(ix: Index, town: TownState, names: readonly string[]): TownState {
   const t = edit(town);
   nightfall(ix, t, new Set());
-  t.day += 1;
-  buildersWork(t);
-  for (const h of t.roster) restHero(ix, h, 1);
+  endOfDay(ix, t, new Set());
   freshRecruits(ix, t, names);
   return t;
 }
@@ -610,8 +955,24 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   const t = edit(town);
   const party = structuredClone(t.party.map((id) => hero(t, id)));
   const seed = roll(t, (rng) => rng.int(0, 2 ** 31 - 1));
-  const result = runExpedition(ix, party, t.orders, seed, t.dungeon.floors);
+  const startDay = t.day;
+
+  // A rescue run: who's still alive when the party gets there (a floor a day).
+  const site = rescueSite(t);
+  const visit: SiteVisit | undefined = site && {
+    id: site.id,
+    floor: site.floor,
+    room: site.room,
+    trapped: site.trapped.filter((x) => x.until >= startDay + site.floor - 1).map((x) => x.hero),
+    bodies: site.bodies,
+    items: site.items,
+  };
+  const gear: Record<number, ScavengedGear[]> = {};
+  for (const g of t.scavenged) (gear[g.floor] ??= []).push(g);
+
+  const result = runExpedition(ix, party, t.orders, seed, t.dungeon.floors, { site: visit, gear });
   const wiped = result.outcome === "wiped";
+  const backDay = startDay + result.days;
 
   // Who killed what.
   const kills: Record<string, number> = {};
@@ -622,31 +983,167 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   }
 
   // The Market pays the real value for the haul, whatever the party guessed.
-  const goldEarned = result.haul.reduce((s, h) => s + h.value, 0);
+  // Heroes' own gear goes back in the store room.
+  const recovered = result.haul.filter((h) => h.keep);
+  const goldEarned = result.haul.filter((h) => !h.keep).reduce((s, h) => s + h.value, 0);
   t.gold += goldEarned;
+  t.stash.push(...recovered.map((h) => h.item));
+  t.scavenged = t.scavenged.filter((g) => !result.gearTaken.includes(g.id));
 
-  const startDay = t.day;
+  // Experience: kills shared by everyone still alive, plus a little per floor.
+  const killPower = result.kills.reduce((s, id) => s + ix.monster(id).power, 0);
+  const living = result.party.filter((h) => h.condition !== "dead");
+  const bonus = 1 + xpBonus(ix, t) / 100;
+  const xpEach = living.length
+    ? ((killPower * ix.lib.levels.xpPerPower) / living.length +
+        ix.lib.levels.xpPerFloor * result.deepestFloor) *
+      bonus
+    : 0;
+  const xp: Record<string, number> = {};
+  const levels: Record<string, number> = {};
+  for (const h of living) {
+    xp[h.id] = Math.round(xpEach);
+    levels[h.id] = roll(t, (rng) => gainXp(ix, h, xpEach, rng));
+  }
+
+  // The rescued walk home with the party, unless the party fell too.
+  const rescued = wiped ? [] : result.rescued;
+  const fallenOnTrip = [...result.party, ...(wiped ? result.rescued : [])];
+
+  // Where the party fell: the dead lie there with their gear; the rest may be
+  // trapped, alive, waiting for a rescue party.
+  const trappedNames: string[] = [];
+  let lostSite: LostSite | undefined;
+  if (wiped) {
+    lostSite = {
+      id: `s${t.nextThingId++}`,
+      floor: result.wipeSite?.floor ?? result.deepestFloor,
+      room: result.wipeSite?.room ?? 1,
+      day: backDay,
+      trapped: [],
+      bodies: [],
+      items: [...result.leftBehind],
+    };
+  }
+
   const away = new Set(t.party);
-  for (const after of result.party) {
-    const rec = t.records[after.id] ?? { trips: 0, kills: 0, joined: startDay };
-    rec.trips += 1;
-    rec.kills += kills[after.id] ?? 0;
-    t.records[after.id] = rec;
-    if (after.condition === "dead" || wiped) {
-      t.memorial.push({
-        name: after.name,
-        classId: after.classId,
-        day: startDay + result.days,
-        floor: result.wipeSite?.floor ?? result.deepestFloor,
-        fate: after.condition === "dead" ? "dead" : "lost",
-        record: rec,
-      });
-      t.roster = t.roster.filter((h) => h.id !== after.id);
-      continue;
+  let fallen = 0;
+  for (const after of fallenOnTrip) {
+    const rec = t.records[after.id] ?? newRecord(startDay);
+    if (party.some((h) => h.id === after.id)) {
+      rec.trips += 1;
+      rec.kills += kills[after.id] ?? 0;
+      rec.deepest = Math.max(rec.deepest, result.deepestFloor);
+      for (const m of result.seen) if (!rec.seen.includes(m)) rec.seen.push(m);
     }
+    t.records[after.id] = rec;
+    const dead = after.condition === "dead";
+    if (!dead && !wiped) continue;
+    fallen++;
+    t.roster = t.roster.filter((h) => h.id !== after.id);
+    if (!dead && lostSite) {
+      const end = heroSheet(ix, after).stats.END;
+      const rs = ix.lib.rescue;
+      const chance = Math.max(0.05, Math.min(0.95, rs.survival + (end - 10) * rs.survivalPerEnd));
+      if (roll(t, (rng) => rng.chance(chance))) {
+        lostSite.trapped.push({ hero: structuredClone(after), until: backDay + rs.windowDays - 1 });
+        trappedNames.push(after.name);
+        continue;
+      }
+    }
+    t.memorial.push({
+      name: after.name,
+      classId: after.classId,
+      day: backDay,
+      floor: lostSite?.floor ?? result.deepestFloor,
+      fate: "dead",
+      record: rec,
+    });
+    if (lostSite) {
+      lostSite.bodies.push(after.name);
+      lostSite.items.push(...gearOf(ix, after));
+    } else {
+      // The party brings a fallen friend's gear home.
+      t.stash.push(...gearOf(ix, after).map((g) => g.item));
+    }
+  }
+  if (lostSite && (lostSite.trapped.length || lostSite.items.length)) t.sites.push(lostSite);
+
+  // A rescue run: take the freed heroes and the gear off the site.
+  if (result.siteVisited) {
+    const s = t.sites.find((x) => x.id === result.siteVisited);
+    if (s) {
+      const freed = new Set(result.rescued.map((h) => h.id));
+      s.trapped = s.trapped.filter((x) => !freed.has(x.hero.id));
+      s.items = result.siteLeft;
+    }
+  }
+  for (const h of rescued) {
+    const rec = t.records[h.id] ?? newRecord(startDay);
+    t.records[h.id] = rec;
+    t.roster.push(structuredClone(h));
+  }
+
+  // Back home: the party's heroes, as they came out of the pit.
+  for (const after of result.party) {
+    if (after.condition === "dead" || wiped) continue;
     const i = t.roster.findIndex((h) => h.id === after.id);
     t.roster[i] = structuredClone(after);
   }
+
+  // How everyone feels about it (DESIGN.md §6).
+  const morale: Record<string, { amount: number; reason: string }[]> = {};
+  const leaderCha = Math.max(10, ...party.map((h) => heroSheet(ix, h).stats.CHA));
+  const share = goldEarned / party.length;
+  for (const before of party) {
+    const h = findHero(t, before.id);
+    if (!h) continue;
+    const prevDeepest = town.records[h.id]?.deepest ?? 0;
+    const prevSeen = town.records[h.id]?.seen ?? [];
+    const tags = gearTags(ix, before);
+    const facts: Facts = {
+      goldShare: share,
+      emptyHanded: goldEarned + recovered.length === 0 ? 1 : 0,
+      kills: kills[h.id] ?? 0,
+      newFloors: Math.max(0, result.deepestFloor - prevDeepest),
+      sameOldFloor: result.deepestFloor <= prevDeepest ? 1 : 0,
+      newMonsters: result.seen.filter((m) => !prevSeen.includes(m)).length,
+      retreated: result.outcome === "retreated" ? 1 : 0,
+      fallenComrades: fallen,
+      allHome: fallen === 0 ? 1 : 0,
+      rescuedComrades: rescued.length,
+      wounded: h.condition !== "ok" || h.hp < maxHp(ix, h) / 3 ? 1 : 0,
+      sentHurt: before.hp < maxHp(ix, before) * 0.75 ? 1 : 0,
+      likedGear: before.likes && tags.has(before.likes) ? 1 : 0,
+      dislikedGear: before.dislikes && tags.has(before.dislikes) ? 1 : 0,
+      levelUp: levels[h.id] ?? 0,
+    };
+    morale[h.id] = moraleChanges(ix, h, facts, { leaderCha });
+    applyMorale(ix, h, facts, backDay, { leaderCha });
+  }
+  for (const h of rescued) {
+    const r = findHero(t, h.id)!;
+    morale[h.id] = moraleChanges(ix, r, { wasTrapped: 1 });
+    applyMorale(ix, r, { wasTrapped: 1 }, backDay);
+  }
+  guildFeels(
+    ix,
+    t,
+    { fallenComrades: fallen, rescuedComrades: rescued.length },
+    new Set([...away, ...rescued.map((h) => h.id)]),
+  );
+  for (const n of trappedNames)
+    news(
+      t,
+      `${n} is trapped on floor ${lostSite!.floor}, alive. A rescue party has ${ix.lib.rescue.windowDays} days.`,
+      "bad",
+    );
+  if (rescued.length)
+    news(
+      t,
+      `${listWords(rescued.map((h) => h.name))} ${rescued.length > 1 ? "are" : "is"} home, rescued.`,
+      "good",
+    );
 
   // Their kills thin out the dungeon.
   t.dungeon = applyKills(t.dungeon, result.floorKills);
@@ -657,14 +1154,34 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   for (let i = 0; i < result.days; i++) {
     const raid = nightfall(ix, t, away);
     if (raid) raids.push(raid);
-    t.day += 1;
-    buildersWork(t);
-    for (const h of t.roster) if (!away.has(h.id)) restHero(ix, h, 1);
+    endOfDay(ix, t, away);
   }
-  for (const h of t.roster) if (away.has(h.id)) restHero(ix, h, 1);
+  for (const h of t.roster) {
+    if (!away.has(h.id)) continue;
+    restHero(ix, h, 1);
+    dayInTown(ix, t, h);
+  }
+  const quit = quitters(ix, t);
   t.party = t.party.filter((id) => findHero(t, id));
+  if (result.siteVisited || (t.orders.rescue && !rescueSite(t)))
+    t.orders = cancelRescue(ix, t).orders;
   freshRecruits(ix, t, names);
 
-  t.lastTrip = { day: startDay, seed, party, result, goldEarned, kills, raids };
+  t.lastTrip = {
+    day: startDay,
+    seed,
+    party,
+    result,
+    goldEarned,
+    kills,
+    raids,
+    xp,
+    levels,
+    morale,
+    trapped: trappedNames,
+    rescued: rescued.map((h) => h.name),
+    recovered,
+    quit,
+  };
   return t;
 }

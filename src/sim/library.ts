@@ -12,6 +12,7 @@ import type {
   Library,
   LootTableDef,
   MonsterDef,
+  MotivationDef,
   PerkDef,
   RoomDef,
   SkillDef,
@@ -31,6 +32,7 @@ export interface Index {
   lootTable(id: string): LootTableDef;
   room(id: string): RoomDef;
   building(id: string): BuildingDef;
+  motivation(id: string): MotivationDef;
   /** The floor at this depth. */
   floor(depth: number): FloorDef;
 }
@@ -63,6 +65,7 @@ export function indexLibrary(lib: Library): Index {
       lootTable: table("loot table", lib.lootTables),
       room: table("room", lib.rooms),
       building: table("building", lib.buildings),
+      motivation: table("motivation", lib.motivations),
       floor: (depth) => {
         const f = lib.floors.find((x) => x.depth === depth);
         if (!f) throw new Error(`No floor defined at depth ${depth}`);

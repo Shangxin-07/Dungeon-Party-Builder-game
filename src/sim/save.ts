@@ -8,6 +8,7 @@
  * file only reads, upgrades and writes them.
  */
 import { newDungeon } from "./dungeon";
+import { rollPersonality, type Hero } from "./hero";
 import type { Index } from "./library";
 import { TOWN_VERSION, type TownState } from "./town";
 
@@ -51,6 +52,34 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
   },
   // Buildings start taking days to put up.
   2: (_ix, old) => ({ ...old, version: 3, construction: [] }),
+  // M5: heroes get personalities, morale and XP; lost parties can be rescued.
+  // Personalities are worked out from each hero's id, name and stats, so a
+  // hero gets the same one every time the save is loaded.
+  3: (ix, old) => {
+    const upgrade = (h: Hero): Hero => ({
+      ...rollPersonality(ix, h.id, h.name, h.stats, h.classId),
+      ...h,
+      xp: h.xp ?? 0,
+      levelUps: h.levelUps ?? [],
+      moraleLog: h.moraleLog ?? [],
+    });
+    const records = old.records as Record<string, Record<string, unknown>>;
+    for (const r of Object.values(records)) {
+      r.deepest ??= 0;
+      r.seen ??= [];
+    }
+    return {
+      ...old,
+      version: 4,
+      roster: (old.roster as Hero[]).map(upgrade),
+      recruits: (old.recruits as Hero[]).map(upgrade),
+      sites: [],
+      scavenged: [],
+      departed: [],
+      nextThingId: 1,
+      news: [],
+    };
+  },
 };
 
 /**

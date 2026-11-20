@@ -50,9 +50,9 @@ export function App() {
 
       <footer>
         <p>
-          The dungeon now breeds and pushes its overflow up and out of the pit every night. Build
-          walls, keep strong heroes home when the watchtower warns of a raid, and keep the floors
-          thinned out. Next up: heroes with personalities, morale and rescue runs.
+          Heroes now have minds of their own: keep their morale up, spend their level-ups, and send
+          a rescue party when a party falls. Next up: a balance pass, then more classes, monsters
+          and buildings.
         </p>
       </footer>
     </main>

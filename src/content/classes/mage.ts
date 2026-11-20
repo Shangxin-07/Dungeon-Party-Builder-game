@@ -11,4 +11,5 @@ export default defineClass({
   ai: "caster",
   abilities: ["flame-wave", "firebolt", "mend"],
   startingKit: ["staff", "healing-potion"],
+  growth: { INT: 1, WIL: 1 },
 });
