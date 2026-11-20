@@ -1,6 +1,6 @@
 # Dungeon Party Builder: Design & Build Plan
 
-> **Status:** agreed design, 2026-11-20. Built so far: M0 (project setup) and M1 (simulation core).
+> **Status:** agreed design, 2026-11-20. Built so far: M0 (project setup), M1 (simulation core) and M2 (expeditions).
 > Items marked **✅ DECIDED** were open questions; Mike accepted the recommended option for each.
 > A summary of every decision is at the end.
 
@@ -329,6 +329,32 @@ Optional twist that ties into morale: a hero may *want* a particular perk ("Bram
 The simulation is **deterministic**: same seed + same party = same result. That makes it easy to test, debug, balance and replay.
 
 ✅ **DECIDED 7: how the watching looks.** Decision: start with an animated, readable text log (like a battle report), with HP bars. Add a simple 2D view later. Building the sim first and the visuals second means the game is playable much sooner.
+
+### As built in M2
+
+> Added 2026-11-20. The numbers are starting points for tuning.
+
+- **Floors** are content (`content/floors/`): a name, a room count (5–7 on floor 1, 6–8 on floors 2–3) and rooms every floor always has. Each floor has one **rest spot**, placed somewhere in the middle.
+- **Rooms** are content (`content/rooms/`). Each names a behaviour: `fight`, `trap`, `treasure`, `rest` or `quiet`. New behaviours (shrines, a wounded stranger) are registered by id, like combat AIs.
+- **Scouting:** before a fight, the best scout may get the jump on the monsters (chance = Scouting − 30, up to 60%). The party then gets a free opening round. Traps are spotted with chance Scouting − hidden + 50, and a spotted trap is simply avoided. Disarming waits for Trapwork.
+- **Traps** hurt one hero or the whole party, ×1.3 per floor like monsters. Resistances help; armour doesn't.
+- **Medicine:** the fight ending stops the bleeding. After every room, the best medic tries to get downed heroes up (30% + 60% × Medicine) and uses bandages on anyone below 60% HP, getting more out of each one the better their Medicine. A hero who can't be brought round is carried and takes up 4 carry slots.
+- **Rest spots** restore HP (60% of max, scaled from half to full by Medicine) and 60% of mana. Casters also get back WIL ÷ 4 mana per room walked. This fixes the M1 problem of the mage running dry.
+- **Loot:** monsters and chests roll loot tables (`content/loot/`). Valuables have a value range, and the party only knows its *guess*: Appraisal 100 is exact, Appraisal 0 can be 90% off. Carry slots are shared across the party; when packs are full, the best appraiser leaves behind whatever looks least valuable per slot.
+- **Standing orders:** a target floor, a retreat rule (below 30% HP, below 50% HP, anyone down, out of potions, never) and a loot rule (carry everything, or leave the junk). Orders are checked after every room. Heroes always obey for now; disobedience comes with morale in M5.
+- **The way home** goes back through cleared floors, with a 20% chance per floor of meeting wandering monsters.
+- **Wipes:** the party and its haul stay where they fell, and the result records the spot for a rescue run (M5). A trip takes one day per floor reached.
+
+Balance with a fresh starter party (500 trips each, `npm run balance`):
+
+| Target floor | Orders | Came home as ordered | Turned back | Wiped |
+|---|---|---|---|---|
+| 1 | below 30% HP | 100% | 0% | 0% |
+| 2 | below 30% HP | 85% | 13% | 2% |
+| 3 | below 30% HP | 27% | 54% | 19% |
+| 3 | never turn back | 47% | 0% | 53% |
+
+Floor 1 is unchanged from M1. Careful orders on floor 3 trade reaching the bottom for staying alive, so the orders are a real choice.
 
 ## 12. First playable slice
 

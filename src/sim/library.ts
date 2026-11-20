@@ -6,10 +6,13 @@ import type {
   AbilityDef,
   ClassDef,
   EncounterDef,
+  FloorDef,
   ItemDef,
   Library,
+  LootTableDef,
   MonsterDef,
   PerkDef,
+  RoomDef,
   SkillDef,
   StatusDef,
 } from "../content/types";
@@ -24,6 +27,10 @@ export interface Index {
   skill(id: string): SkillDef;
   perk(id: string): PerkDef;
   encounter(id: string): EncounterDef;
+  lootTable(id: string): LootTableDef;
+  room(id: string): RoomDef;
+  /** The floor at this depth. */
+  floor(depth: number): FloorDef;
 }
 
 const cache = new WeakMap<Library, Index>();
@@ -51,6 +58,13 @@ export function indexLibrary(lib: Library): Index {
       skill: table("skill", lib.skills),
       perk: table("perk", lib.perks),
       encounter: table("encounter", lib.encounters),
+      lootTable: table("loot table", lib.lootTables),
+      room: table("room", lib.rooms),
+      floor: (depth) => {
+        const f = lib.floors.find((x) => x.depth === depth);
+        if (!f) throw new Error(`No floor defined at depth ${depth}`);
+        return f;
+      },
     };
     cache.set(lib, index);
   }

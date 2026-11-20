@@ -118,6 +118,13 @@ export interface ItemDef {
   passives?: readonly PassiveEffect[];
   /** Consumables only: what happens when used. */
   use?: readonly ActiveEffect[];
+  /**
+   * Loot only: the real value is rolled in this range when the item is found.
+   * A wide range is where a good appraiser earns their keep.
+   */
+  valueRange?: readonly [number, number];
+  /** Carry slots it takes up. Defaults to 1. */
+  size?: number;
 }
 
 export interface AbilityDef {
@@ -164,6 +171,8 @@ export interface MonsterDef {
   triggers?: readonly Trigger[];
   /** Summoned-only monsters never appear in encounters by themselves. */
   summonOnly?: boolean;
+  /** Loot table id rolled when this monster is killed. */
+  loot?: string;
 }
 
 export interface SkillDef {
@@ -192,6 +201,67 @@ export interface EncounterDef {
   groups: readonly { monster: string; count: readonly [number, number] }[];
 }
 
+/** A weighted list of things that can be found. Rolled `rolls` times. */
+export interface LootTableDef {
+  id: string;
+  rolls: readonly [number, number];
+  /** `item: null` is a roll that finds nothing. */
+  entries: readonly { item: string | null; weight: number }[];
+}
+
+/** A trap waiting in a room. Damage grows with depth like monster power. */
+export interface TrapSpec {
+  /** Log text when it springs, e.g. "A dart flies from the wall". */
+  springs: string;
+  /** Log text when spotted, e.g. "a tripwire across the floor". */
+  spotted: string;
+  /** How well hidden it is. Spot chance = (best Scouting − hidden + 50)%. */
+  hidden: number;
+  damage: readonly [number, number];
+  damageType: DamageType;
+  /** One random hero, or the whole party. */
+  hits: "one" | "all";
+}
+
+/** What a rest spot gives back, scaled by the party's best Medicine. */
+export interface RestSpec {
+  /** Share of max HP healed with Medicine 100 (half that with Medicine 0). */
+  hpPercent: number;
+  /** Share of max mana recovered. */
+  manaPercent: number;
+}
+
+/**
+ * A kind of room. `behaviour` names a room handler registered in
+ * src/sim/rooms.ts; the other fields are its settings.
+ */
+export interface RoomDef {
+  id: string;
+  name: string;
+  behaviour: string;
+  /** Floors it can appear on, inclusive. */
+  floors: readonly [number, number];
+  /** Relative chance of being picked for a room. */
+  weight: number;
+  /** One of these is logged when the party walks in. */
+  descriptions: readonly string[];
+  trap?: TrapSpec;
+  /** Loot table id, for treasure rooms. */
+  loot?: string;
+  rest?: RestSpec;
+}
+
+/** The shape of one dungeon floor. */
+export interface FloorDef {
+  id: string;
+  depth: number;
+  name: string;
+  /** How many rooms the party passes through, inclusive range. */
+  rooms: readonly [number, number];
+  /** Room ids always placed on this floor (e.g. one rest spot). */
+  fixedRooms?: readonly string[];
+}
+
 /** Everything the simulation needs, indexed by kind. */
 export interface Library {
   classes: readonly ClassDef[];
@@ -202,6 +272,9 @@ export interface Library {
   skills: readonly SkillDef[];
   perks: readonly PerkDef[];
   encounters: readonly EncounterDef[];
+  lootTables: readonly LootTableDef[];
+  rooms: readonly RoomDef[];
+  floors: readonly FloorDef[];
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -213,3 +286,6 @@ export const defineMonster = (def: MonsterDef): MonsterDef => def;
 export const defineSkill = (def: SkillDef): SkillDef => def;
 export const definePerk = (def: PerkDef): PerkDef => def;
 export const defineEncounter = (def: EncounterDef): EncounterDef => def;
+export const defineLootTable = (def: LootTableDef): LootTableDef => def;
+export const defineRoom = (def: RoomDef): RoomDef => def;
+export const defineFloor = (def: FloorDef): FloorDef => def;

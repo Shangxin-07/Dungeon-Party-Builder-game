@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "fight": "tsx scripts/fight.ts",
-    "balance": "tsx scripts/balance.ts"
+    "balance": "tsx scripts/balance.ts",
+    "expedition": "tsx scripts/expedition.ts"
   },
   "dependencies": {
     "react": "^19.3.1",

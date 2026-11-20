@@ -5,5 +5,6 @@ export default defineItem({
   name: "Strange Trinket",
   slot: "loot",
   value: 20,
+  valueRange: [2, 120],
   tags: ["unidentified"],
 });

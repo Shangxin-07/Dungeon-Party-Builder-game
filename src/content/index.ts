@@ -1,16 +1,19 @@
 /**
  * The content library. To add content, create a file in the matching folder
- * (classes/, items/, monsters/, ...) and add it to the list below. No engine
- * code changes are needed. The content tests check every id and reference.
+ * (classes/, items/, monsters/, rooms/, loot/, floors/, ...) and add it to the
+ * list below. No engine code changes are needed. The content tests check every id and reference.
  */
 import type {
   AbilityDef,
   ClassDef,
   EncounterDef,
+  FloorDef,
   ItemDef,
   Library,
+  LootTableDef,
   MonsterDef,
   PerkDef,
+  RoomDef,
   SkillDef,
   StatusDef,
 } from "./types";
@@ -25,7 +28,9 @@ import daggerItem from "./items/dagger";
 import gemItem from "./items/gem";
 import healingPotionItem from "./items/healing-potion";
 import leatherArmorItem from "./items/leather-armor";
+import rustyHelmetItem from "./items/rusty-helmet";
 import shortBowItem from "./items/short-bow";
+import silverRingItem from "./items/silver-ring";
 import staffItem from "./items/staff";
 import swordItem from "./items/sword";
 import trinketItem from "./items/trinket";
@@ -53,6 +58,23 @@ import ratSwarmEncounter from "./encounters/rat-swarm";
 import skeletonPatrolEncounter from "./encounters/skeleton-patrol";
 import slimesEncounter from "./encounters/slimes";
 import spiderNestEncounter from "./encounters/spider-nest";
+import goblinLoot from "./loot/goblin-loot";
+import richChestLoot from "./loot/rich-chest";
+import skeletonLoot from "./loot/skeleton-loot";
+import slimeLoot from "./loot/slime-loot";
+import smallChestLoot from "./loot/small-chest";
+import spiderLoot from "./loot/spider-loot";
+import dartTrapRoom from "./rooms/dart-trap";
+import fallingRocksRoom from "./rooms/falling-rocks";
+import monsterLairRoom from "./rooms/monster-lair";
+import oldChestRoom from "./rooms/old-chest";
+import quietPassageRoom from "./rooms/quiet-passage";
+import restSpotRoom from "./rooms/rest-spot";
+import spikedPitRoom from "./rooms/spiked-pit";
+import treasureHoardRoom from "./rooms/treasure-hoard";
+import diggingsFloor from "./floors/diggings";
+import warrensFloor from "./floors/warrens";
+import boneHallsFloor from "./floors/bone-halls";
 
 export const classes: readonly ClassDef[] = [fighterClass, scoutClass, mageClass];
 export const items: readonly ItemDef[] = [
@@ -64,7 +86,9 @@ export const items: readonly ItemDef[] = [
   gemItem,
   healingPotionItem,
   leatherArmorItem,
+  rustyHelmetItem,
   shortBowItem,
+  silverRingItem,
   staffItem,
   swordItem,
   trinketItem,
@@ -95,6 +119,25 @@ export const encounters: readonly EncounterDef[] = [
   slimesEncounter,
   spiderNestEncounter,
 ];
+export const lootTables: readonly LootTableDef[] = [
+  goblinLoot,
+  richChestLoot,
+  skeletonLoot,
+  slimeLoot,
+  smallChestLoot,
+  spiderLoot,
+];
+export const rooms: readonly RoomDef[] = [
+  dartTrapRoom,
+  fallingRocksRoom,
+  monsterLairRoom,
+  oldChestRoom,
+  quietPassageRoom,
+  restSpotRoom,
+  spikedPitRoom,
+  treasureHoardRoom,
+];
+export const floors: readonly FloorDef[] = [diggingsFloor, warrensFloor, boneHallsFloor];
 
 export const library: Library = {
   classes,
@@ -105,6 +148,9 @@ export const library: Library = {
   skills,
   perks,
   encounters,
+  lootTables,
+  rooms,
+  floors,
 };
 
 export { heroNames } from "./names";

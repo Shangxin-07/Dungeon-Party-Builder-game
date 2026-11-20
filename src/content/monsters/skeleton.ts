@@ -11,6 +11,7 @@ export default defineMonster({
   row: "front",
   tags: ["undead"],
   ai: "brute",
+  loot: "skeleton-loot",
   passives: [
     { type: "modifyStat", stat: "armor", amount: 2 },
     { type: "resist", damageType: "piercing", percent: 50 },

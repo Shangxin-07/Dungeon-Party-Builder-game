@@ -11,6 +11,7 @@ export default defineMonster({
   row: "front",
   tags: ["ooze"],
   ai: "brute",
+  loot: "slime-loot",
   passives: [{ type: "resist", damageType: "piercing", percent: 25 }],
   triggers: [
     {

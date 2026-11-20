@@ -5,5 +5,6 @@ export default defineItem({
   name: "Handful of Coins",
   slot: "loot",
   value: 10,
+  valueRange: [6, 14],
   tags: ["coins"],
 });
