@@ -49,6 +49,8 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
       raids: [],
     };
   },
+  // Buildings start taking days to put up.
+  2: (_ix, old) => ({ ...old, version: 3, construction: [] }),
 };
 
 /**

@@ -13,6 +13,7 @@ export default defineBuilding({
   levels: [
     {
       cost: 0,
+      days: 0,
       summary: "3 heroes per party, 6 on the roster",
       effects: [
         { type: "partySlots", amount: 3 },
@@ -21,6 +22,7 @@ export default defineBuilding({
     },
     {
       cost: 300,
+      days: 3,
       summary: "4 heroes per party, 8 on the roster",
       effects: [
         { type: "partySlots", amount: 4 },
@@ -29,6 +31,7 @@ export default defineBuilding({
     },
     {
       cost: 600,
+      days: 5,
       summary: "5 heroes per party, 10 on the roster",
       effects: [
         { type: "partySlots", amount: 5 },
@@ -37,6 +40,7 @@ export default defineBuilding({
     },
     {
       cost: 1000,
+      days: 7,
       summary: "6 heroes per party, 12 on the roster",
       effects: [
         { type: "partySlots", amount: 6 },

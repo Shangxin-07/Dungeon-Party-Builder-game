@@ -22,7 +22,7 @@ import { resolveRaid, type RaidReport } from "./raid";
 import { createRng, type Rng } from "./rng";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 2;
+export const TOWN_VERSION = 3;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 const PIT_HISTORY = 60;
@@ -106,6 +106,19 @@ export interface TownState {
   pit: PitNight[];
   /** The most recent raids that reached the town, oldest first. */
   raids: RaidReport[];
+  /** Buildings and upgrades the builders are working on. Paid for up front. */
+  construction: Construction[];
+}
+
+/** A building or upgrade in progress. */
+export interface Construction {
+  building: string;
+  /** The level it will be when finished. */
+  level: number;
+  /** Days of work left. */
+  daysLeft: number;
+  /** Day the work started. */
+  started: number;
 }
 
 /** Why an action can't happen right now, in words for the player. */
@@ -289,6 +302,7 @@ export function newTown(ix: Index, names: readonly string[], seed: number): Town
     damaged: [],
     pit: [],
     raids: [],
+    construction: [],
   };
   for (const classId of rules.startingRoster) {
     const hero = makeHero(ix, town, names, classId);
@@ -448,15 +462,36 @@ export function nextLevel(ix: Index, town: TownState, buildingId: string) {
   return def.levels[level];
 }
 
+/** The work going on at a building, if any. */
+export const underConstruction = (town: TownState, buildingId: string) =>
+  town.construction.find((c) => c.building === buildingId);
+
+/**
+ * Pay for the next level and set the builders to work. It takes the level's
+ * `days` to finish; until then the building works at its old level. One job
+ * per building at a time, but different buildings can go up together.
+ */
 export function upgrade(ix: Index, town: TownState, buildingId: string): TownState {
   const next = nextLevel(ix, town, buildingId);
   if (!next) throw new TownError("It can't be built any bigger yet.");
+  if (underConstruction(town, buildingId)) throw new TownError("The builders are already at it.");
   if (town.damaged.includes(buildingId)) throw new TownError("Repair it first.");
   if (town.gold < next.cost) throw new TownError("Not enough gold.");
   const t = edit(town);
   t.gold -= next.cost;
-  t.buildings[buildingId] = (t.buildings[buildingId] ?? 0) + 1;
+  const level = (t.buildings[buildingId] ?? 0) + 1;
+  if (next.days <= 0) t.buildings[buildingId] = level;
+  else t.construction.push({ building: buildingId, level, daysLeft: next.days, started: t.day });
   return t;
+}
+
+/** A day's building work. Finished jobs take effect straight away. */
+function buildersWork(t: TownState): void {
+  for (const c of t.construction) {
+    c.daysLeft -= 1;
+    if (c.daysLeft <= 0) t.buildings[c.building] = c.level;
+  }
+  t.construction = t.construction.filter((c) => c.daysLeft > 0);
 }
 
 /** Fix a raid-damaged building so it works again. */
@@ -554,6 +589,7 @@ export function rest(ix: Index, town: TownState, names: readonly string[]): Town
   const t = edit(town);
   nightfall(ix, t, new Set());
   t.day += 1;
+  buildersWork(t);
   for (const h of t.roster) restHero(ix, h, 1);
   freshRecruits(ix, t, names);
   return t;
@@ -622,6 +658,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     const raid = nightfall(ix, t, away);
     if (raid) raids.push(raid);
     t.day += 1;
+    buildersWork(t);
     for (const h of t.roster) if (!away.has(h.id)) restHero(ix, h, 1);
   }
   for (const h of t.roster) if (away.has(h.id)) restHero(ix, h, 1);

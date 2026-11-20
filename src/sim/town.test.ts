@@ -27,6 +27,13 @@ const ix = indexLibrary(library);
 const fresh = (seed = 1) => newTown(ix, heroNames, seed);
 const rules = library.town;
 
+/** Pay for an upgrade and skip the builders' wait (tests of what the building does). */
+const build = (t: TownState, id: string): TownState => {
+  const u = upgrade(ix, t, id);
+  const done = Object.fromEntries(u.construction.map((c) => [c.building, c.level]));
+  return { ...u, buildings: { ...u.buildings, ...done }, construction: [] };
+};
+
 describe("a new town", () => {
   it("starts with the house rules from content", () => {
     const t = fresh();
@@ -129,13 +136,13 @@ describe("town actions", () => {
     let t = { ...fresh(), gold: 1000 };
     const fourth = t.roster[3]!;
     expect(() => toggleParty(ix, t, fourth.id)).toThrow(/full/);
-    t = upgrade(ix, t, "guild-hall");
+    t = build(t, "guild-hall");
     expect(t.gold).toBe(700);
     expect(partySlots(ix, t)).toBe(4);
     expect(rosterSize(ix, t)).toBe(8);
     t = toggleParty(ix, t, fourth.id);
     expect(t.party).toHaveLength(4);
-    t = upgrade(ix, upgrade(ix, { ...t, gold: 1600 }, "guild-hall"), "guild-hall");
+    t = build(build({ ...t, gold: 1600 }, "guild-hall"), "guild-hall");
     expect(partySlots(ix, t)).toBe(6);
     expect(rosterSize(ix, t)).toBe(12);
     expect(() => upgrade(ix, t, "guild-hall")).toThrow(/bigger/);

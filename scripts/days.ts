@@ -26,6 +26,7 @@ import {
   rest,
   setOrders,
   toggleParty,
+  underConstruction,
   upgrade,
   type TownState,
 } from "../src/sim/town";
@@ -58,7 +59,7 @@ function step(t: TownState): TownState {
   if (build) {
     for (const id of t.damaged) if (t.gold >= repairCost(ix, t, id)) t = repair(ix, t, id);
     const next = DEFENCES.map((id) => ({ id, lvl: nextLevel(ix, t, id) }))
-      .filter((x) => x.lvl && !t.damaged.includes(x.id))
+      .filter((x) => x.lvl && !t.damaged.includes(x.id) && !underConstruction(t, x.id))
       .sort((a, b) => a.lvl!.cost - b.lvl!.cost)[0];
     if (next && t.gold >= next.lvl!.cost + 40) t = upgrade(ix, t, next.id);
   }

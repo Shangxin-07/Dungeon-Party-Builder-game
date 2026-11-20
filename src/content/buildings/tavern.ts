@@ -12,6 +12,7 @@ export default defineBuilding({
   levels: [
     {
       cost: 150,
+      days: 2,
       summary: "1 more recruit a day, and each is the best of 2",
       effects: [
         { type: "recruitOffers", amount: 1 },
@@ -20,6 +21,7 @@ export default defineBuilding({
     },
     {
       cost: 400,
+      days: 4,
       summary: "2 more recruits a day, and each is the best of 3",
       effects: [
         { type: "recruitOffers", amount: 2 },

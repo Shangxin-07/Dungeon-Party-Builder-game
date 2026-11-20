@@ -459,16 +459,17 @@ Floor 1 is unchanged from M1. Careful orders on floor 3 trade reaching the botto
 - **Expeditions feel it.** A floor's level sets how big its fights are (power = 10 × 1.3^(level − 1), so a floor-1 at level 1.6 fights like 11.7 instead of 10), deeper floors' monster groups can turn up, and a floor can't throw more monsters at you than it has left. Every kill comes off the population, and a floor that's been cleared out has quiet fight rooms. Clearing floor 1 makes room, so for a while stronger rejects from floor 2 move in: you see the lore happen.
 - **The pit** (§8): what climbs out has **strength** = monsters × level. Defences hold back that much. Whatever's left is a **raid**: raiders worth 3 power per point of leftover strength come for the town, and the healthy heroes at home (at least 50% HP, up to 6) fight them with the normal combat sim. The fight is saved and can be watched. Nobody bleeds out in town: defenders who fall wake up hurt. If nobody is fit to fight or the defenders lose, the raiders steal 5 gold per point of leftover and damage one building per 4 points. A damaged building does nothing until it's repaired (25% of what it cost); it's never destroyed. The Guild Hall is raid-proof so a raid can never cost you party slots.
 - **Nights pass one at a time.** Resting a day is one night. A trip of N days is N nights, and while the party is away only the heroes left home can defend. That's the watchtower decision: when a raid is coming, keep someone strong home.
+- **Building takes time** (added after Mike played M4). Every building level has a `days` build time. You pay up front, the builders start, and the new level takes effect on the morning the work is done. Until then the building keeps working at its old level. Each building can have one job at a time, but several buildings can go up at once, and work goes on while a party is away. Repairs are still instant.
 - **New buildings** (all data in `content/buildings/`, with new effect types `defence`, `raidWarning`, `recruitOffers`, `recruitPicks`):
 
 | Building | Levels |
 |---|---|
-| Palisade → Stone wall → High stone wall | 80 / 250 / 600 gold: defence 6 / 12 / 20 |
-| Pit Gate | 60 / 180 gold: defence 3 / 6 |
-| Watchtower | 100 / 220 gold: see 1 / 2 nights ahead, defence 1 / 2 |
-| Tavern | 150 / 400 gold: +1 / +2 recruits a day, each the best of 2 / 3 rolls. Morale comes in M5 |
-| Blacksmith | 200 / 450 gold: sells Iron Sword, War Axe, Longbow, Iron Shield; then Scale Mail and Iron-shod Staff. Repairs and upgrades later |
-| Guild Hall levels 3 and 4 | 600 / 1000 gold: 5 / 6 per party, roster 10 / 12 |
+| Palisade → Stone wall → High stone wall | 80 / 250 / 600 gold, 2 / 4 / 6 days: defence 6 / 12 / 20 |
+| Pit Gate | 60 / 180 gold, 1 / 3 days: defence 3 / 6 |
+| Watchtower | 100 / 220 gold, 2 / 3 days: see 1 / 2 nights ahead, defence 1 / 2 |
+| Tavern | 150 / 400 gold, 2 / 4 days: +1 / +2 recruits a day, each the best of 2 / 3 rolls. Morale comes in M5 |
+| Blacksmith | 200 / 450 gold, 3 / 5 days: sells Iron Sword, War Axe, Longbow, Iron Shield; then Scale Mail and Iron-shod Staff. Repairs and upgrades later |
+| Guild Hall levels 2, 3 and 4 | 300 / 600 / 1000 gold, 3 / 5 / 7 days: 4 / 5 / 6 per party, roster 8 / 10 / 12 |
 
 - **In town**, the pit panel shows last night's gauge (strength vs defence), the watchtower's forecast, the last 30 nights as a chart, the home guard if the party leaves, recent raids (with "Watch the fight"), and a **pressure map**: population, level band and today's fight power per floor. The trip results say what happened at the pit while the party was away.
 - **Saves:** three save slots in the browser, each autosaving after every action, plus save to and load from a file. Saves carry a version number and are upgraded step by step on load (`src/sim/save.ts`); an M3 save is moved into slot 1 and upgraded.

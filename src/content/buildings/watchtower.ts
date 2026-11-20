@@ -9,6 +9,7 @@ export default defineBuilding({
   levels: [
     {
       cost: 100,
+      days: 2,
       summary: "Warns of tomorrow night's overflow, and holds back 1 strength",
       effects: [
         { type: "raidWarning", days: 1 },
@@ -17,6 +18,7 @@ export default defineBuilding({
     },
     {
       cost: 220,
+      days: 3,
       summary: "Warns 2 nights ahead, and holds back 2 strength",
       effects: [
         { type: "raidWarning", days: 2 },

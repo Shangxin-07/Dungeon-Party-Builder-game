@@ -14,6 +14,7 @@ import {
   rest,
   shopStock,
   TOWN_VERSION,
+  underConstruction,
   upgrade,
   type TownState,
 } from "./town";
@@ -27,6 +28,12 @@ function neglected(n = 30): DungeonState {
   for (let i = 0; i < n; i++) d = dungeonDay(ix, d).dungeon;
   return d;
 }
+/** Pay for an upgrade and skip the builders' wait (tests of what the building does). */
+const build = (t: TownState, id: string): TownState => {
+  const u = upgrade(ix, t, id);
+  const done = Object.fromEntries(u.construction.map((c) => [c.building, c.level]));
+  return { ...u, buildings: { ...u.buildings, ...done }, construction: [] };
+};
 const crowded = (t: TownState, n = 30): TownState => ({ ...t, dungeon: neglected(n) });
 const allHurt = (t: TownState): TownState => ({
   ...t,
@@ -85,7 +92,7 @@ describe("nights at the pit", () => {
   it("are held back by defences", () => {
     let t = { ...crowded(fresh()), gold: 2000 };
     for (const id of ["palisade", "palisade", "palisade", "gate", "gate", "watchtower"])
-      t = upgrade(ix, t, id);
+      t = build(t, id);
     expect(defence(ix, t)).toBe(20 + 6 + 1);
     t = rest(ix, allHurt(t), heroNames);
     const night = t.pit.at(-1)!;
@@ -98,7 +105,7 @@ describe("nights at the pit", () => {
   it("are seen coming by a watchtower, exactly", () => {
     let t = { ...crowded(fresh()), gold: 500 };
     expect(forecast(ix, t)).toEqual([]);
-    t = upgrade(ix, t, "watchtower");
+    t = build(t, "watchtower");
     const [tomorrow] = forecast(ix, t);
     expect(tomorrow!.day).toBe(t.day);
     const after = rest(ix, t, heroNames);
@@ -138,17 +145,53 @@ describe("new buildings", () => {
   it("Tavern brings more recruits, picked from more candidates", () => {
     let t = { ...fresh(), gold: 1000 };
     const base = t.recruits.length;
-    t = rest(ix, upgrade(ix, t, "tavern"), heroNames);
+    t = rest(ix, build(t, "tavern"), heroNames);
     expect(t.recruits).toHaveLength(base + 1);
-    t = rest(ix, upgrade(ix, { ...t, gold: 1000 }, "tavern"), heroNames);
+    t = rest(ix, build({ ...t, gold: 1000 }, "tavern"), heroNames);
     expect(t.recruits).toHaveLength(base + 2);
   });
 
   it("Blacksmith sells better gear", () => {
-    const t = upgrade(ix, { ...fresh(), gold: 1000 }, "blacksmith");
+    const t = build({ ...fresh(), gold: 1000 }, "blacksmith");
     expect(shopStock(ix, t)).toContain("iron-sword");
     expect(shopStock(ix, fresh())).not.toContain("iron-sword");
     expect(partySlots(ix, t)).toBe(3);
+  });
+});
+
+describe("building work", () => {
+  it("takes the level's days, and the old level keeps working meanwhile", () => {
+    let t = { ...fresh(), gold: 1000 };
+    const days = library.buildings.find((b) => b.id === "guild-hall")!.levels[1]!.days;
+    expect(days).toBeGreaterThan(0);
+    t = upgrade(ix, t, "guild-hall");
+    expect(t.gold).toBe(1000 - 300);
+    expect(underConstruction(t, "guild-hall")).toMatchObject({ level: 2, daysLeft: days });
+    expect(partySlots(ix, t)).toBe(3);
+    expect(() => upgrade(ix, t, "guild-hall")).toThrow(/already/);
+    for (let i = 1; i < days; i++) t = rest(ix, t, heroNames);
+    expect(t.buildings["guild-hall"]).toBe(1);
+    t = rest(ix, t, heroNames);
+    expect(t.buildings["guild-hall"]).toBe(2);
+    expect(partySlots(ix, t)).toBe(4);
+    expect(t.construction).toEqual([]);
+  });
+
+  it("goes on while a party is away, and several buildings can go up at once", () => {
+    let t = { ...fresh(), gold: 1000, orders: { ...fresh().orders, targetFloor: 2 } };
+    t = upgrade(ix, upgrade(ix, t, "gate"), "palisade");
+    expect(t.construction).toHaveLength(2);
+    t = launch(ix, t, heroNames);
+    const days = t.lastTrip!.result.days;
+    expect(t.buildings.gate).toBe(1); // 1 day of work
+    expect(t.buildings.palisade).toBe(days >= 2 ? 1 : 0);
+  });
+
+  it("doesn't defend the night it was paid for", () => {
+    let t = { ...crowded(fresh()), gold: 500 };
+    t = rest(ix, allHurt(upgrade(ix, t, "gate")), heroNames);
+    expect(t.pit.at(-1)!.defence).toBe(0);
+    expect(defence(ix, t)).toBe(3);
   });
 });
 
@@ -164,7 +207,7 @@ describe("saves", () => {
     const t = launch(ix, fresh(), heroNames);
     const old = structuredClone(t) as Partial<TownState> & Record<string, unknown>;
     old.version = 1;
-    for (const k of ["dungeon", "damaged", "pit", "raids"]) delete old[k];
+    for (const k of ["dungeon", "damaged", "pit", "raids", "construction"]) delete old[k];
     delete (old.lastTrip as Partial<TownState["lastTrip"] & object>).raids;
     const up = migrateTown(ix, JSON.parse(JSON.stringify(old)))!;
     expect(up.version).toBe(TOWN_VERSION);

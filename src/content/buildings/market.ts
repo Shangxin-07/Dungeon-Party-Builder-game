@@ -9,6 +9,7 @@ export default defineBuilding({
   levels: [
     {
       cost: 0,
+      days: 0,
       summary: "Sells basic weapons, armour, potions and bandages",
       effects: [
         {
