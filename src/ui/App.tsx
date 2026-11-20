@@ -1,4 +1,5 @@
 import { classes } from "../content";
+import { ExpeditionView } from "./Expedition";
 import { TestFight } from "./TestFight";
 
 export function App() {
@@ -29,12 +30,15 @@ export function App() {
         </ul>
       </section>
 
+      <ExpeditionView />
+
       <TestFight />
 
       <footer>
         <p>
-          The combat engine works, but there's no town or dungeon yet. Next up: expeditions, where a
-          party works its way through rooms, traps and loot.
+          Parties can now make full trips into the dungeon: rooms, traps, loot, rest spots and
+          standing orders. There's no town yet. Next up: recruiting, kitting out and launching your
+          own party.
         </p>
       </footer>
     </main>

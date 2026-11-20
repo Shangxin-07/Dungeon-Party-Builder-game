@@ -72,4 +72,34 @@ describe("validateLibrary", () => {
     });
     expect(errors).toContain('encounter "x": "little-slime" is summon-only');
   });
+
+  it("checks rooms, loot tables and floors", () => {
+    const odd = { name: "Odd", floors: [1, 1] as const, weight: 1, descriptions: ["x"] };
+    const errors = broken({
+      rooms: [
+        ...library.rooms,
+        { ...odd, id: "odd-room", behaviour: "teleport", descriptions: [] },
+        { ...odd, id: "bad-chest", behaviour: "treasure", loot: "nope" },
+      ],
+      lootTables: [
+        ...library.lootTables,
+        { id: "bad-loot", rolls: [1, 1], entries: [{ item: "laser-sword", weight: 1 }] },
+      ],
+      floors: [
+        ...library.floors,
+        { id: "deep", depth: 9, name: "Deep", rooms: [3, 3], fixedRooms: ["nowhere"] },
+      ],
+    });
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        'room "odd-room": unknown behaviour "teleport"',
+        'room "odd-room": needs at least one description',
+        'room "bad-chest": unknown loot table "nope"',
+        'loot table "bad-loot": unknown item "laser-sword"',
+        'floor "deep": unknown room "nowhere"',
+        'floor "deep": no rooms can appear at depth 9',
+        "floors: depth 4 is missing",
+      ]),
+    );
+  });
 });

@@ -219,3 +219,189 @@ footer {
 .log-revived {
   color: #8fd49a;
 }
+
+/* Expedition view */
+
+.where {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.heroes {
+  gap: 14px;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero + .hero {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.hp-tracks {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mana-track {
+  height: 4px;
+}
+
+.mana-fill {
+  display: block;
+  height: 100%;
+  background: #6f9fdf;
+  transition: width 0.2s;
+}
+
+.hero-class {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-grid dt {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.stat-grid dd {
+  margin: 0;
+}
+
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.skills strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.quiet {
+  margin: 0;
+}
+
+.log-floor {
+  margin-top: 12px;
+  color: var(--accent);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.log-room {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.log-where {
+  color: var(--accent);
+}
+
+.log-combat {
+  padding-left: 16px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.log-combat.log-killed,
+.log-combat.log-downed,
+.log-combat.log-died,
+.log-combat.log-end {
+  color: var(--text);
+}
+
+.log-round-small {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.log-x-trap,
+.log-x-wipe {
+  color: #e48a7a;
+}
+
+.log-x-loot {
+  color: #e0c070;
+}
+
+.log-x-drop {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.log-x-medicine,
+.log-x-rest {
+  color: #8fd49a;
+}
+
+.log-x-scout {
+  color: #9cc7e8;
+}
+
+.log-x-retreat,
+.log-x-home,
+.log-x-wander,
+.log-x-depart {
+  font-weight: 600;
+}
+
+.results {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.results-wiped {
+  border-left-color: #e48a7a;
+}
+
+.results h3 {
+  margin: 0 0 8px;
+}
+
+.results p {
+  margin: 0 0 8px;
+}
+
+.haul {
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.haul th,
+.haul td {
+  padding: 2px 16px 2px 0;
+  text-align: left;
+}
+
+.haul th {
+  color: var(--muted);
+  font-weight: normal;
+}

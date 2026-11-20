@@ -79,6 +79,8 @@ export interface CombatEvent {
   target?: string;
   amount?: number;
   hp?: { uid: string; hp: number; max: number };
+  /** Summon events: the new creature's name. */
+  name?: string;
 }
 
 export interface CombatResult {
@@ -97,6 +99,8 @@ export interface CombatOptions {
   seed: number;
   /** Stop after this many rounds with no winner. */
   maxRounds?: number;
+  /** The party scouted the monsters first: it gets a free opening round. */
+  surprise?: boolean;
 }
 
 /** The basic weapon attack every fighter has. Not a content file, so "attack" is a reserved id. */
@@ -118,7 +122,9 @@ export function runCombat(
   monsterIds: readonly string[],
   opts: CombatOptions,
 ): CombatResult {
-  return new Battle(ix, party, monsterIds, createRng(opts.seed)).run(opts.maxRounds ?? MAX_ROUNDS);
+  return new Battle(ix, party, monsterIds, createRng(opts.seed), !!opts.surprise).run(
+    opts.maxRounds ?? MAX_ROUNDS,
+  );
 }
 
 class Battle {
@@ -135,6 +141,7 @@ class Battle {
     private party: readonly Hero[],
     monsterIds: readonly string[],
     private rng: Rng,
+    private surprise = false,
   ) {
     for (const hero of party) {
       if (hero.condition === "ok") this.fighters.push(this.fromHero(hero));
@@ -233,7 +240,8 @@ class Battle {
         .join(", ");
     this.emit({ kind: "start", text: `${names("party")} face ${names("monsters")}.` });
 
-    this.ambushCheck();
+    if (this.surprise) this.partySurprise();
+    else this.ambushCheck();
 
     let winner: Side | "none" = this.winner();
     while (winner === "none" && this.round < maxRounds) {
@@ -320,6 +328,17 @@ class Battle {
     this.emit({ kind: "ambush", text: "Ambush! Something drops from the dark." });
     for (const f of ambushers) this.ambushing.add(f.uid);
     for (const f of ambushers) {
+      if (f.state === "up" && this.winner() === "none") this.takeTurn(f, true);
+    }
+    this.ambushing.clear();
+  }
+
+  /** A scouted fight: every hero gets one free action, with the ambush bonus. */
+  private partySurprise(): void {
+    this.emit({ kind: "ambush", text: "The party catches them unawares and strikes first!" });
+    const party = this.fighters.filter((f) => f.side === "party" && f.state === "up");
+    for (const f of party) this.ambushing.add(f.uid);
+    for (const f of party) {
       if (f.state === "up" && this.winner() === "none") this.takeTurn(f, true);
     }
     this.ambushing.clear();
@@ -632,6 +651,7 @@ class Battle {
         target: f.uid,
         text: `${f.name} joins the fight.`,
         hp: this.hp(f),
+        name: f.name,
       });
     }
   }
