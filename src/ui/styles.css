@@ -91,3 +91,131 @@ footer {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+.muted {
+  color: var(--muted);
+}
+
+.fight {
+  margin-top: 48px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.controls select,
+.controls input,
+.controls button {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+.controls input {
+  width: 6em;
+}
+
+.controls button {
+  cursor: pointer;
+}
+
+.controls button:hover {
+  border-color: var(--accent);
+}
+
+.sides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.bars {
+  list-style: none;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hp {
+  display: grid;
+  grid-template-columns: 8.5em 1fr 4.5em;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.hp-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hp-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.hp-fill {
+  display: block;
+  height: 100%;
+  background: #6fbf73;
+  transition: width 0.2s;
+}
+
+.hp-num {
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.hp-downed .hp-name,
+.hp-dead .hp-name {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.log {
+  list-style: none;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  font-size: 0.9rem;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.log-round {
+  margin-top: 8px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.log-killed,
+.log-downed,
+.log-died,
+.log-end {
+  font-weight: 600;
+}
+
+.log-heal,
+.log-revived {
+  color: #8fd49a;
+}

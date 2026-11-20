@@ -1,6 +1,6 @@
 # Dungeon Party Builder: Design & Build Plan
 
-> **Status:** agreed design, 2026-11-20. Nothing is built yet.
+> **Status:** agreed design, 2026-11-20. Built so far: M0 (project setup) and M1 (simulation core).
 > Items marked **✅ DECIDED** were open questions; Mike accepted the recommended option for each.
 > A summary of every decision is at the end.
 
