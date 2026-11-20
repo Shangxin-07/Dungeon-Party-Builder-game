@@ -304,22 +304,39 @@ Optional twist that ties into morale: a hero may *want* a particular perk ("Bram
 
 ✅ **DECIDED 5: level-up style.** Decision: hybrid, as above.
 
-### Later: class progression
+### Later: freeform classes and progression
 
-> Added 2026-11-20. **Not in the first playable version**, which keeps its three base classes. Class names below are examples only, not commitments. Level numbers are starting points to tune.
+> Added 2026-11-20. **Not in the first playable version**, where each hero has a single base class and every level goes into it. Class names below are examples only, not commitments. Numbers are starting points to tune.
 
-One rule keeps this simple: **a hero only ever moves forward, never swaps.** Nobody stops being a Fighter; they become *more* than one.
+Two rules keep this simple:
 
-| Tier | How you get it | Example |
+1. **Heroes only move forward, never swap.** A hero keeps every class they learn. Nobody stops being a Fighter; they become *more* than one.
+2. **Depth is rewarded.** Spreading levels out gives breadth and opens combos; staying in one class gives the strongest perks and abilities. A level-50 Fighter should hit very hard.
+
+#### Hero level and class levels
+
+- **Hero level** runs from 1 to about **50**. It drives HP and general power, and its XP is what heroes earn on expeditions.
+- **Each level-up, you choose which of the hero's known classes gets the level.** That class gives its stat gains and a perk offer (pick 1 of 3) from its own pool at its new class level. The free stat point every 3rd hero level stays.
+- **Class levels are not capped.** A hero who puts every level into Fighter ends up Fighter 50. A hero's class levels always add up to their hero level.
+- **Learning a new base class:** at any level-up, a hero can put the level into a base class they don't have yet, if they meet its stat minimum. It starts at class level 1.
+
+#### Rewarding depth
+
+- **Class abilities scale with class level**, not hero level: a Fighter's weapon bonus or a Mage's spell power grows with Fighter or Mage levels.
+- **Milestone perks** sit at class levels 5, 10, 20, 30, 40 and 50, and the deeper ones are the strongest (a level-50 capstone). Only a hero who commits gets them.
+- So a Fighter 25 / Mage 25 has two good kits and access to combos, but nothing close to a Fighter 50's damage. Spread too thin (five classes at level 10) and the hero is a jack of all trades.
+
+#### Unlocks are thresholds, not caps
+
+Advanced and combo classes open up when a hero reaches certain class levels and stats. Once unlocked, they're another class to put levels into, uncapped like the rest, and the earlier classes stay.
+
+| Kind | Unlocks at (example) | Example |
 |---|---|---|
-| **Base** | What you recruit | Fighter, Scout, Mage, Cleric |
-| **Secondary** | At level 5, a hero may take a second *base* class. It costs that level's perk pick, and from then on perk offers draw from both classes | A Fighter who also studies as a Mage |
-| **Advanced** | At level 10, specialise within your base class, if you meet its stat minimum | A Mage with high WIL becomes a Necromancer; one with high INT an Ice Mage |
-| **Combo** | At level 10, a hero with a secondary class can instead take a combo class of the two, if they meet both stat minimums | Fighter + Mage → Spellblade |
+| **Base** | Recruited, or learned at any level-up if the stat minimum is met | Fighter, Scout, Mage, Cleric |
+| **Advanced** | One base class at a threshold, plus a stat minimum | Mage 10 + high WIL → Necromancer; Mage 10 + high INT → Ice Mage |
+| **Combo** | Two (or more) classes at thresholds, plus stat minimums | Fighter 5 + Mage 5 → Spellblade |
 
-At level 10 each hero picks **one** path: advanced *or* combo. The secondary class doesn't give its stat growth, only access to its perks, skills and gear, so it's a real trade: fewer picks in your main class in exchange for a wider hero and a combo option later.
-
-Because heroes only move forward, the system can keep growing: later tiers (a level-20 step after an advanced or combo class) are just more class definitions with their own requirements.
+There's no forced choice at any level: a hero who qualifies for nothing just keeps levelling what they have, and specialises later if they ever meet a requirement. Because unlocks are just requirements, the system keeps growing: deeper unlocks (an advanced class at level 20 that opens a further one) are just more class definitions.
 
 **Extra requirements**, all optional per class:
 
@@ -327,24 +344,21 @@ Because heroes only move forward, the system can keep growing: later tiers (a le
 - **Alignment**: some classes might need or forbid an alignment (§7).
 - **Motivation**: a hero's motivation can favour a path ("Mira wants to be a Necromancer"). Granting it gives a morale boost; when it's possible and you choose something else, they lose morale.
 
-**Built to grow:** every class, whatever its tier, is a class definition with a `requires` block, so adding one is just data:
+**Built to grow:** every class, whatever its kind, is a class definition with a `requires` block, so adding one is just data:
 
 ```ts
 export default defineClass({
   id: "spellblade",
-  tier: "combo",
+  kind: "combo",
   requires: {
-    level: 10,
-    primary: "fighter",
-    secondary: "mage",
+    classLevels: { fighter: 5, mage: 5 },
     stats: { STR: 12, INT: 12 },
     building: "mage-tower",
   },
-  // stat growth, perk pool, gear likes, AI behaviour…
+  milestonePerks: { 5: [...], 10: [...], 20: [...] },
+  // stat growth per class level, perk pool, gear likes, AI behaviour…
 });
 ```
-
-✅ **DECIDED (for now): a hero who qualifies for nothing at level 10** stays a base class and keeps levelling normally, and can specialise later once they meet a requirement. The level scale is still under discussion, so this section may change.
 
 ## 10. Death, wipes and recovery runs
 
@@ -488,7 +502,7 @@ Each milestone ends with something you can run.
 | M3 | Town UI: roster, recruit, equip, formation, launch, watch the log, results screen | Actually play a loop in the browser |
 | M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load | Feel the dungeon getting worse over time |
 | M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs | Play the full design in miniature |
-| M6+ | Balance pass, then grow content: Cleric, class progression (§9), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |
+| M6+ | Balance pass, then grow content: Cleric, freeform classes (§9), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |
 
 ## 16. Decisions (agreed 2026-11-20)
 
@@ -509,4 +523,4 @@ Each milestone ends with something you can run.
 | 13 | Favourite buildings | Each hero has one; built = morale boost, missing = morale drain |
 | 14 | Dungeon entrance and defences | An open pit dug by the original mining camp. Defences around it (walls, gate, watchtowers) soak up overflow; what gets past becomes a raid |
 | 15 | Game opening (later) | Start at an undefended mining site, assign heroes to makeshift defences, gather materials, build up, then unlock delving. The first playable version is unchanged |
-| 16 | Class progression (later) | Forward only, never swap. Base → optional secondary base class at level 5 → advanced or combo class at level 10, gated by stats (and optionally buildings, alignment). Class names are examples only. A hero who qualifies for nothing at 10 stays base and can specialise later (for now) |
+| 16 | Classes and levels (later) | Freeform: hero level up to ~50; each level-up goes into a known class of your choice; class levels uncapped. Advanced and combo classes unlock at class-level and stat thresholds (optionally buildings, alignment). Depth rewarded through class-level scaling and milestone perks. Forward only, never swap. Class names are examples only |
