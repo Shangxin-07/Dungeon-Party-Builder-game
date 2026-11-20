@@ -9,7 +9,7 @@
  * look after the party between rooms, check orders, come home.
  */
 import type { DamageType } from "../content/types";
-import { runCombat, type CombatEvent, type Side } from "./combat";
+import { foeSheet, runCombat, type CombatEvent, type FoeSheet, type Side } from "./combat";
 import type { FloorPressure } from "./dungeon";
 import { rollEncounter } from "./encounter";
 import { heroSheet, type Hero } from "./hero";
@@ -112,8 +112,8 @@ export interface ExpeditionEvent {
   room: number;
   /** "combat" events: the line from the battle report. */
   combat?: CombatEvent;
-  /** "fight" events: the monsters at the start of the fight. */
-  monsters?: { uid: string; name: string; hp: number; max: number }[];
+  /** "fight" events: the monsters at the start of the fight, with their stats. */
+  monsters?: FoeSheet[];
   /** Every event except "combat": the party after it happened. */
   party?: HeroStatus[];
 }
@@ -569,10 +569,7 @@ class Expedition {
     for (const f of foes) if (f.monsterId) this.seen.add(f.monsterId);
     const heroes = list(this.conscious().map((h) => h.name));
     this.emit("fight", `${heroes} face ${list(foes.map((f) => f.name))}.`, {
-      monsters: foes.map((f) => {
-        const max = f.derived.maxHp;
-        return { uid: f.uid, name: f.name, hp: max, max };
-      }),
+      monsters: foes.map(foeSheet),
     });
     const carrier = carried && foes[carried.index];
     if (carried && carrier) {

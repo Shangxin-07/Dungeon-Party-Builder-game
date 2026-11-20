@@ -17,6 +17,7 @@ import {
   underConstruction,
   upgrade,
   type TownState,
+  wageBill,
 } from "./town";
 
 const ix = indexLibrary(library);
@@ -56,7 +57,7 @@ describe("nights at the pit", () => {
     expect(night.outcome).toBe("unopposed");
     const raid = t.raids.at(-1)!;
     expect(raid.goldStolen).toBe(raid.leftover * library.dungeon.raids.goldPerStrength);
-    expect(t.gold).toBe(500 - raid.goldStolen);
+    expect(t.gold).toBe(500 - raid.goldStolen - wageBill(ix, t));
     expect(raid.damaged).toEqual(["market"]);
     expect(t.damaged).toEqual(["market"]);
     // A damaged building stops working until it's repaired. It's never destroyed.

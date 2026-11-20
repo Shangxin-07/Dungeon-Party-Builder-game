@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { heroNames, library } from "../content";
-import { runCombat, type CombatEvent, type CombatResult, type Side } from "../sim/combat";
+import {
+  foeSheet,
+  runCombat,
+  type CombatEvent,
+  type CombatResult,
+  type FoeSheet,
+  type Side,
+} from "../sim/combat";
 import { rollEncounter } from "../sim/encounter";
 import { createStarterParty } from "../sim/hero";
 import { indexLibrary } from "../sim/library";
 import { createRng } from "../sim/rng";
+import { FoeCard } from "./Watch";
 
 const ix = indexLibrary(library);
 const STEP_MS = 280;
@@ -16,6 +24,7 @@ interface Bar {
   hp: number;
   max: number;
   state: "up" | "downed" | "dead";
+  sheet?: FoeSheet;
 }
 
 function simulate(floor: number, seed: number): CombatResult & { start: Map<string, number> } {
@@ -40,6 +49,7 @@ function barsAt(result: ReturnType<typeof simulate>, shown: number): Bar[] {
       hp,
       max: f.derived.maxHp,
       state: "up",
+      sheet: f.side === "monsters" ? foeSheet(f) : undefined,
     });
   }
   for (const e of result.log.slice(0, shown)) {
@@ -52,6 +62,7 @@ function barsAt(result: ReturnType<typeof simulate>, shown: number): Bar[] {
         hp: f.derived.maxHp,
         max: f.derived.maxHp,
         state: "up",
+        sheet: foeSheet(f),
       });
     }
     const bar = e.hp && bars.get(e.hp.uid);
@@ -146,12 +157,16 @@ export function TestFight() {
 
       <div className="sides">
         {(["party", "monsters"] as const).map((side) => (
-          <ul key={side} className="bars" aria-label={side === "party" ? "Party" : "Monsters"}>
+          <ul
+            key={side}
+            className={side === "party" ? "bars" : "bars heroes foes"}
+            aria-label={side === "party" ? "Party" : "Monsters"}
+          >
             {bars
               .filter((b) => b.side === side)
-              .map((b) => (
-                <HpBar key={b.uid} bar={b} />
-              ))}
+              .map((b) =>
+                side === "party" ? <HpBar key={b.uid} bar={b} /> : <FoeCard key={b.uid} bar={b} />,
+              )}
           </ul>
         ))}
       </div>

@@ -138,3 +138,39 @@ registerAi("caster", (view) => {
   }
   return attack(view, (t) => lowest(t, (f) => f.hp));
 });
+
+/**
+ * Healers: keep the party standing. Heal earlier than a mage does, save
+ * spells for the undead (or a full mana pool), and otherwise swing a weapon.
+ */
+registerAi("healer", (view) => {
+  const { self, allies } = view;
+  const heal = byTag(view, "heal")[0];
+  if (heal) {
+    const downed = allies.find((a) => a.state === "downed");
+    const hurt = lowest(
+      allies.filter((a) => a.state === "up" && hpFraction(a) < 0.6),
+      hpFraction,
+    );
+    const patient = downed ?? hurt;
+    if (patient) return { kind: "ability", ability: heal.id, target: patient.uid };
+  }
+  const drink = healSelfWithItem(view, 0.3);
+  if (drink) return drink;
+
+  const healCost = view.abilities().find((a) => a.tags.includes("heal"))?.cost ?? 0;
+  const flush = self.mana >= self.derived.mana * 0.75;
+  const spell = byTag(view, "damage").find(
+    (a) => a.id !== "attack" && a.target === "enemy" && self.mana - (a.cost ?? 0) >= healCost * 2,
+  );
+  if (spell) {
+    const targets = view.targets(spell);
+    const undead = lowest(
+      targets.filter((t) => t.tags.includes("undead")),
+      (f) => f.hp,
+    );
+    const target = undead ?? (flush ? lowest(targets, (f) => f.hp) : undefined);
+    if (target) return { kind: "ability", ability: spell.id, target: target.uid };
+  }
+  return attack(view, (t) => lowest(t, (f) => f.hp));
+});

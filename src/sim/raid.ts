@@ -8,7 +8,7 @@
  * The fight is written in the same log format as an expedition, so the town
  * can play it back on the watch screen.
  */
-import { runCombat } from "./combat";
+import { foeSheet, runCombat } from "./combat";
 import { rollEncounter } from "./encounter";
 import type { ExpeditionEvent, HeroStatus } from "./expedition";
 import { heroSheet, type Hero } from "./hero";
@@ -173,12 +173,7 @@ function raidLog(
     text: `${names(report.defenders.map((h) => h.name))} face ${names(foes.map((f) => f.name))}.`,
     ...at,
     party: snapshot(report.defenders),
-    monsters: foes.map((f) => ({
-      uid: f.uid,
-      name: f.name,
-      hp: f.derived.maxHp,
-      max: f.derived.maxHp,
-    })),
+    monsters: foes.map(foeSheet),
   });
   for (const e of fight.log) {
     if (e.kind !== "start") log.push({ kind: "combat", text: e.text, ...at, combat: e });

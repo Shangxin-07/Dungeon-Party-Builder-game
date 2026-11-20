@@ -659,6 +659,15 @@ footer {
   margin: 0;
 }
 
+/* Monster cards in the watch view: six fight numbers on one line. */
+.foes .derived-grid {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.foe:has(.hp-dead) {
+  opacity: 0.45;
+}
+
 .stat-grid sup {
   font-size: 0.65rem;
 }

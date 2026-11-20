@@ -18,5 +18,6 @@ export default defineMonster({
     { type: "resist", damageType: "slashing", percent: 25 },
     { type: "resist", damageType: "crushing", percent: -25 },
     { type: "resist", damageType: "poison", percent: 100 },
+    { type: "resist", damageType: "holy", percent: -50 },
   ],
 });

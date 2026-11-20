@@ -234,6 +234,8 @@ export function validateLibrary(lib: Library): string[] {
       if (!facts.has(r.fact)) err(`${where}: unknown morale fact "${r.fact}"`);
       if (r.per !== undefined && r.per <= 0) err(`${where}: "per" must be above 0`);
       if (r.cap !== undefined && r.cap <= 0) err(`${where}: "cap" must be above 0`);
+      if (r.below !== undefined && r.above !== undefined && r.above >= r.below)
+        err(`${where}: a rule with "above" and "below" can never apply`);
       if (!r.reason) err(`${where}: every morale rule needs a reason`);
     }
   };
@@ -257,6 +259,8 @@ export function validateLibrary(lib: Library): string[] {
     err("morale: start must be a range within 1-100");
   if (mo.low < 0 || mo.low > 100) err("morale: low must be 0-100");
   if (mo.dislikeChance < 0 || mo.dislikeChance > 1) err("morale: dislikeChance must be 0-1");
+  if (mo.contentAbove.gainShare < 0 || mo.contentAbove.gainShare > 1)
+    err("morale: contentAbove.gainShare must be 0-1");
 
   const lv = lib.levels;
   if (lv.maxLevel < 1) err("levels: maxLevel must be at least 1");
@@ -277,6 +281,8 @@ export function validateLibrary(lib: Library): string[] {
   for (const id of t.startingRoster) if (!classIds.has(id)) err(`town: unknown class "${id}"`);
   for (const id of t.startingStash) if (!itemIds.has(id)) err(`town: unknown item "${id}"`);
   if (t.sellRate < 0 || t.sellRate > 1) err("town: sellRate must be between 0 and 1");
+  if (t.haulRate < 0 || t.haulRate > 1) err("town: haulRate must be between 0 and 1");
+  if (t.wages.base < 0 || t.wages.perLevel < 0) err("town: wages can't be negative");
   if (t.restPercent <= 0) err("town: restPercent must be above 0");
   if (t.hireCost < 0 || t.startingGold < 0) err("town: costs can't be negative");
   if (t.repairRate < 0) err("town: repairRate can't be negative");

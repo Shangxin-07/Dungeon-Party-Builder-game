@@ -7,6 +7,7 @@ import {
   dismiss,
   equip,
   hire,
+  haulPrice,
   launch,
   newTown,
   packItem,
@@ -20,6 +21,7 @@ import {
   unequip,
   unpackItem,
   upgrade,
+  wageBill,
   type TownState,
 } from "./town";
 
@@ -163,8 +165,14 @@ describe("launching a party", () => {
     const trip = after.lastTrip!;
     expect(trip.result.outcome).toBe("returned");
     expect(after.day).toBe(t.day + trip.result.days);
-    expect(trip.goldEarned).toBe(trip.result.haul.reduce((s, h) => s + h.value, 0));
-    expect(after.gold).toBe(t.gold + trip.goldEarned);
+    expect(trip.goldEarned).toBe(
+      trip.result.haul.reduce((s, h) => s + haulPrice(ix, h.item, h.value), 0),
+    );
+    // The Market takes its cut of the loot, and everyone gets paid each day.
+    expect(trip.goldEarned).toBeLessThanOrEqual(trip.result.haul.reduce((s, h) => s + h.value, 0));
+    const wages = after.ledger.filter((l) => l.kind === "wages").reduce((s, l) => s + l.amount, 0);
+    expect(wages).toBe(-wageBill(ix, t) * trip.result.days);
+    expect(after.gold).toBe(t.gold + trip.goldEarned + wages);
     for (const id of t.party) expect(after.records[id]!.trips).toBe(1);
     const kills = Object.values(trip.kills).reduce((a, b) => a + b, 0);
     expect(kills).toBeGreaterThan(0);

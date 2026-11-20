@@ -23,6 +23,13 @@ import type {
 import fighterClass from "./classes/fighter";
 import scoutClass from "./classes/scout";
 import mageClass from "./classes/mage";
+import clericClass from "./classes/cleric";
+import maceItem from "./items/mace";
+import prayerAbility from "./abilities/prayer";
+import smiteAbility from "./abilities/smite";
+import devoutPerk from "./perks/devout";
+import turnUndeadPerk from "./perks/turn-undead";
+import rallyingVoicePerk from "./perks/rallying-voice";
 import axeItem from "./items/axe";
 import bandagesItem from "./items/bandages";
 import chainmailItem from "./items/chainmail";
@@ -117,7 +124,7 @@ import rescueRules from "./rescue";
 import townRules from "./town";
 import dungeonRules from "./dungeon";
 
-export const classes: readonly ClassDef[] = [fighterClass, scoutClass, mageClass];
+export const classes: readonly ClassDef[] = [fighterClass, scoutClass, mageClass, clericClass];
 export const items: readonly ItemDef[] = [
   axeItem,
   bandagesItem,
@@ -140,12 +147,15 @@ export const items: readonly ItemDef[] = [
   ironShieldItem,
   scaleMailItem,
   ironStaffItem,
+  maceItem,
 ];
 export const abilities: readonly AbilityDef[] = [
   fireboltAbility,
   flameWaveAbility,
   mendAbility,
   venomBiteAbility,
+  prayerAbility,
+  smiteAbility,
 ];
 export const statuses: readonly StatusDef[] = [poisonedStatus];
 export const monsters: readonly MonsterDef[] = [
@@ -175,6 +185,9 @@ export const perks: readonly PerkDef[] = [
   packMulePerk,
   sharpEyedPerk,
   quickReflexesPerk,
+  devoutPerk,
+  turnUndeadPerk,
+  rallyingVoicePerk,
 ];
 export const motivations: readonly MotivationDef[] = [
   goldMotivation,

@@ -11,14 +11,31 @@ export default defineMoraleRules({
   stabilityPerWil: 0.03,
   // A CHA 16 leader takes another 15% off losses on a trip.
   leaderPerCha: 0.025,
+  // M6 balance pass: morale settled at 85-95 for any guild that kept trips
+  // safe and built favourites. Above 70, good news only counts half.
+  contentAbove: { morale: 70, gainShare: 0.5 },
   dislikeChance: 0.3,
-  dislikeTags: ["sword", "axe", "dagger", "bow", "staff", "shield", "heavy", "fire"],
+  dislikeTags: [
+    "sword",
+    "axe",
+    "dagger",
+    "bow",
+    "staff",
+    "mace",
+    "shield",
+    "heavy",
+    "fire",
+    "holy",
+  ],
   rules: [
     // A quiet day in town settles nerves, up to a point.
     { fact: "restDay", amount: 1, below: 50, reason: "a quiet day" },
-    { fact: "favouriteBuilt", amount: 1, below: 80, reason: "loves the {favourite}" },
+    // ...but nobody signed up to sit around: the shine of the last trip wears off.
+    { fact: "restDay", amount: -1, above: 70, reason: "restless after days in town" },
+    { fact: "favouriteBuilt", amount: 1, below: 70, reason: "loves the {favourite}" },
     { fact: "favouriteMissing", amount: -1, reason: "misses having a {favourite}" },
-    { fact: "restMorale", amount: 1, below: 75, reason: "an evening at the Tavern" },
+    { fact: "restMorale", amount: 1, below: 70, reason: "an evening at the Tavern" },
+    { fact: "unpaid", amount: -3, reason: "wasn't paid" },
     { fact: "likedGear", amount: 1, reason: "liked their gear" },
     { fact: "dislikedGear", amount: -3, reason: "hates their gear" },
     { fact: "wounded", amount: -3, reason: "came home badly hurt" },

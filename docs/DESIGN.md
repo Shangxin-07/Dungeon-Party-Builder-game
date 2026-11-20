@@ -510,6 +510,40 @@ What the bot sees over 60 days (40 towns each; it spends level-ups, rescues the 
 
 Gold is plentiful in every plan (thousands by day 60), which keeps morale high once buildings go up. That's for the M6 balance pass.
 
+### As built in M6 (part 1): the balance pass, monster stats and the Cleric
+
+> Added 2026-11-20. All numbers are content (`content/town.ts`, `content/morale.ts`) and starting points for tuning.
+
+**Where the gold goes.** M5 left every guild with thousands of gold by day 60 and nothing to spend it on, and morale sat at 85-95. Three changes:
+
+- **Wages.** Every hero on the roster is paid at the end of each day: 2 gold plus 1 per level (`town.wages`). A roster of five level-5 heroes costs 35 gold a day, so wages grow with the guild. If the gold runs out, unpaid heroes lose 3 morale a day ("wasn't paid"), and Gold-motivated heroes another 4. A guild that never goes down now goes broke and its heroes walk out.
+- **The Market's cut.** The Market pays 70% of the real value for loot in a trip's haul (`town.haulRate`); coins are always face value. Selling from the store room is unchanged (50%).
+- **The books.** The town keeps 30 days of accounts (hauls, sales, purchases, hiring, wages, building, repairs, gold stolen by raiders). A new *The books* panel shows the last week, each hero's wage and how many days the gold would last. The town bar shows the daily wage bill. Saves are version 5; older saves start with empty books.
+
+**Morale settles instead of climbing.**
+
+- Above 70 morale, good news counts half (rounded down; `morale.contentAbove`).
+- A day sitting in town above 70 costs 1 morale ("restless after days in town"): the shine of the last trip wears off. Rules can now say `above` as well as `below`.
+- Favourite buildings and the Tavern now lift morale only up to 70 (was 80 and 75).
+
+What the bot sees over 60 days (40 towns each). With `--build` it now builds and upgrades everything once the walls are up, cheapest first, keeping a few days' wages in hand: a guild that spends what it earns.
+
+| Plan | Gold from trips | Gold in hand, day 60 | Buildings (of 20 levels) | Level | Morale | Unhappy | Quit per town |
+|---|---|---|---|---|---|---|---|
+| Never go down | 0 | 0 | 0 | 1.7 | 11 | 100% | 3.6 |
+| Floor-1 trips, no building | 3,900 (was 5,100) | 2,600 (was 5,000) | 0 | 4.9 | 61 (was 78) | 7% | 0.9 |
+| Floor-1 trips, building | 3,850 | 330 | 12.8 | 5.2 | 70 (was 87) | 1% | 0.5 |
+| Floor-2 trips, building | 3,900 | 400 | 12.6 | 5.4 | 71 (was 89) | 1% | 0.1 |
+| Floor-3 trips, building | 2,250 | 0 | 7.5 | 5.8 | 78 (was 93) | 0% | 0 |
+
+A guild that builds now has about two-thirds of the town by day 60 instead of all of it with gold to spare. Floor-3 trips are still the most rewarding for morale but lose 3 heroes per town and leave the coffers empty from raids.
+
+**Monster stats in the watch view.** Each monster in a fight gets a card like the heroes': HP, row, weapon and damage type, tags, the 7 stats and the six numbers that decide a fight (attack, accuracy, evasion, armour, resist, initiative). They're the monster's real numbers in that fight, so one carrying a lost hero's gear shows the bonus. The sandbox test fight has the same cards. Trips saved before M6 just show the HP bars.
+
+**The Cleric** (§12's fourth class). WIL/CHA, front row, likes maces and holy things. Starts with a mace (+2 spell power), leather armour, a wooden shield and bandages. *Prayer of Mending* heals more than a mage's Mend; *Smite* is holy damage, and skeletons now take 50% extra from holy. A new `healer` AI heals anyone below 60% HP, saves its spells for the undead (or a full mana pool) and otherwise swings the mace. Three class perks: Devout (+3 spell power, +6 mana), Turn Undead (+40% vs undead, level 3+) and Rallying Voice (+2 CHA, which softens the party's morale losses on a trip). Clerics turn up among the recruits; the starting roster is unchanged. Balance (`npm run balance -- 300 fighter,cleric,scout`): fighter, cleric and scout return from floor 2 91% of the time (fighter, scout and mage: 85%). Without a scout to spot ambushes, fighter, cleric and mage do worse (79%).
+
+Still to come in M6+: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters and floors, the 2D watch view and multiple parties.
+
 ## 12. First playable slice
 
 Small on purpose. Everything here is data, so adding more later means adding entries, not rewriting code.
@@ -522,7 +556,7 @@ Small on purpose. Everything here is data, so adding more later means adding ent
 | Scout | DEX, PER | Scouting + appraisal, ranged | Bows, daggers |
 | Mage | INT, WIL | Back row, area damage, medicine | Staves; fire spells |
 
-The Cleric (healer, WIL/CHA) is the obvious 4th class to add next.
+The Cleric (healer, WIL/CHA) is the obvious 4th class to add next. (Added in M6.)
 
 **Monsters (5), floors 1–3**
 
@@ -626,7 +660,8 @@ Each milestone ends with something you can run.
 | M3 | Town UI: roster, recruit, equip, formation, launch, watch the log, results screen (built, see §11 "As built in M3") | Actually play a loop in the browser |
 | M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load (built, see §11 "As built in M4") | Feel the dungeon getting worse over time |
 | M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs (built, see §11 "As built in M5") | Play the full design in miniature |
-| M6+ | Balance pass, then grow content: Cleric, freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |
+| M6 | Balance pass (wages, the Market's cut, morale that settles), monster stats in the watch view, the Cleric (built, see §11 "As built in M6") | Feel gold get tight and see what you're up against |
+| M6+ | Grow content: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |
 
 ## 16. Decisions (agreed 2026-11-20)
 

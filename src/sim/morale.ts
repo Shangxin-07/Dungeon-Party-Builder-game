@@ -38,15 +38,19 @@ export function moraleChanges(
 ): { amount: number; reason: string }[] {
   const out: { amount: number; reason: string }[] = [];
   const loss = lossFactor(ix, hero, opts.leaderCha);
+  const m = ix.lib.morale;
   const favourite = ix.building(hero.favourite).name;
   for (const r of moraleRules(ix, hero)) {
     const v = facts[r.fact] ?? 0;
     if (!v) continue;
     if (r.below !== undefined && hero.morale >= r.below) continue;
+    if (r.above !== undefined && hero.morale <= r.above) continue;
     let amount = (r.amount * v) / (r.per ?? 1);
     if (r.cap !== undefined) amount = Math.max(-r.cap, Math.min(r.cap, amount));
-    if (amount < 0) amount *= loss;
-    amount = Math.round(amount);
+    if (amount < 0) amount = Math.round(amount * loss);
+    else if (hero.morale > m.contentAbove.morale)
+      amount = Math.floor(amount * m.contentAbove.gainShare);
+    else amount = Math.round(amount);
     if (amount)
       out.push({
         amount,

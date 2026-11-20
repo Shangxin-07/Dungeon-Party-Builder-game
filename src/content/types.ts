@@ -23,7 +23,7 @@ export const DERIVED = [
 ] as const;
 export type Derived = (typeof DERIVED)[number];
 
-export const DAMAGE_TYPES = ["slashing", "piercing", "crushing", "fire", "poison"] as const;
+export const DAMAGE_TYPES = ["slashing", "piercing", "crushing", "fire", "poison", "holy"] as const;
 export type DamageType = (typeof DAMAGE_TYPES)[number];
 
 export type Row = "front" | "back";
@@ -254,6 +254,8 @@ export const MORALE_FACTS = [
   "wantedPerk",
   /** 1 if they levelled up. */
   "levelUp",
+  /** 1 if the guild couldn't pay their wages today. */
+  "unpaid",
 ] as const;
 export type MoraleFact = (typeof MORALE_FACTS)[number];
 
@@ -267,6 +269,8 @@ export interface MoraleRule {
   cap?: number;
   /** Only applies while the hero's morale is below this. */
   below?: number;
+  /** Only applies while the hero's morale is above this. */
+  above?: number;
   /** Shown in town next to the change, e.g. "liked the gold". */
   reason: string;
 }
@@ -301,6 +305,11 @@ export interface MoraleRulesDef {
   stabilityPerWil: number;
   /** Best CHA in the party cuts losses on a trip by (CHA − 10) × this. */
   leaderPerCha: number;
+  /**
+   * The happier a hero is, the harder they are to please: above `morale`,
+   * gains are cut to this share (rounded down).
+   */
+  contentAbove: { morale: number; gainShare: number };
   rules: readonly MoraleRule[];
   /** Chance a hero has a disliked kind of gear. */
   dislikeChance: number;
@@ -487,10 +496,20 @@ export interface TownRules {
   hireCost: number;
   /** Share of an item's value the Market pays when you sell it. */
   sellRate: number;
+  /**
+   * Share of the real value the Market pays for a trip's haul. Items tagged
+   * "coins" are always worth their face value.
+   */
+  haulRate: number;
   /** Share of max HP a hero gets back for each day spent in town. */
   restPercent: number;
   /** Repairing a raid-damaged building costs this share of what it cost to build. */
   repairRate: number;
+  /**
+   * Gold each hero on the roster is paid at the end of every day: base plus
+   * perLevel for each level. Heroes who can't be paid lose morale ("unpaid").
+   */
+  wages: { base: number; perLevel: number };
 }
 
 /**

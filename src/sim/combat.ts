@@ -120,6 +120,35 @@ export const BASIC_ATTACK: AbilityDef = {
   effects: [{ type: "weaponAttack" }],
 };
 
+/**
+ * A monster as it squared up at the start of a fight, for the watch view's
+ * stat cards. Stats and derived numbers are the fighter's own, so a monster
+ * carrying a lost hero's gear shows its bonuses.
+ */
+export interface FoeSheet {
+  uid: string;
+  name: string;
+  hp: number;
+  max: number;
+  monsterId?: string;
+  row?: Row;
+  stats?: StatBlock;
+  derived?: DerivedBlock;
+  weapon?: { name: string; damageType: DamageType; ranged: boolean };
+}
+
+export const foeSheet = (f: Fighter): FoeSheet => ({
+  uid: f.uid,
+  name: f.name,
+  hp: f.derived.maxHp,
+  max: f.derived.maxHp,
+  monsterId: f.monsterId,
+  row: f.row,
+  stats: { ...f.stats },
+  derived: { ...f.derived },
+  weapon: { ...f.weapon },
+});
+
 const BLEED_ROUNDS = 3;
 const AMBUSH_BONUS = 50;
 const MAX_ROUNDS = 40;

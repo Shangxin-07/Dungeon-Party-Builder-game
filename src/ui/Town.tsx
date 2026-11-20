@@ -42,6 +42,8 @@ import {
   unequip,
   unpackItem,
   upgrade,
+  wage,
+  wageBill,
   type Construction,
   type TownState,
 } from "../sim/town";
@@ -63,6 +65,7 @@ import {
 import { DERIVED_LABELS, HeroBars, Results, StatSheet, TripPlayer } from "./Watch";
 import { LevelUpPicker, MoraleBar, PerkList, Personality, XpBar } from "./Heroes";
 import { Departed, LostPanel, TalkPanel } from "./Lost";
+import { Accounts } from "./Accounts";
 
 const freshTown = () => newTown(ix, heroNames, Date.now() % 2 ** 31);
 
@@ -217,6 +220,7 @@ export function TownGame() {
       <Recruits town={town} act={act} />
       <Market town={town} act={act} />
       <Buildings town={town} act={act} />
+      <Accounts town={town} />
       <Memorial town={town} />
       <Saves
         slot={slot}
@@ -341,6 +345,9 @@ function TownBar({ town, act }: { town: TownState; act: Act }) {
       <span>
         <strong>{town.gold}</strong> gold
       </span>
+      <span title="What the roster is paid each day">
+        Wages <strong>{wageBill(ix, town)}</strong>/day
+      </span>
       <span>
         Roster <strong>{town.roster.length}</strong>/{rosterSize(ix, town)}
       </span>
@@ -403,7 +410,11 @@ function TripTown({ town }: { town: TownState }) {
       ) : null}
       {trip.goldEarned ? (
         <p>
-          The Market pays <strong>{trip.goldEarned}</strong> gold for the haul.
+          The Market pays <strong>{trip.goldEarned}</strong> gold for the haul
+          {ix.lib.town.haulRate < 1
+            ? ` (coins at face value, ${Math.round(ix.lib.town.haulRate * 100)}% of the rest)`
+            : ""}
+          .
         </p>
       ) : null}
       {trip.recovered?.length ? (
@@ -679,7 +690,7 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
       <div className="hero-head">
         <h3>{h.name}</h3>
         <span className="muted small">
-          {ix.cls(h.classId).name}, level {h.level}
+          {ix.cls(h.classId).name}, level {h.level}, paid {wage(ix, h)} gold a day
         </span>
         {h.levelUps.length ? <span className="badge">Level up!</span> : null}
       </div>

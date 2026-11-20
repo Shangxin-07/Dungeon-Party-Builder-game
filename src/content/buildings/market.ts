@@ -22,6 +22,7 @@ export default defineBuilding({
             "axe",
             "short-bow",
             "staff",
+            "mace",
             "leather-armor",
             "chainmail",
             "wooden-shield",

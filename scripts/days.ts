@@ -11,8 +11,8 @@
  * The bot rests until the party is at 90% HP, then sends it down. It spends
  * level-ups (the wanted perk if there is one, else the first; free points go
  * in the class's first main stat) and sends a rescue party when someone is
- * trapped. With --build it also builds favourite buildings once the
- * defences are up.
+ * trapped. With --build it also builds and upgrades everything else once
+ * the defences are up, cheapest first, keeping a few days' wages in hand.
  */
 import { heroNames, library } from "../src/content";
 import { heroSheet } from "../src/sim/hero";
@@ -35,6 +35,7 @@ import {
   toggleParty,
   underConstruction,
   upgrade,
+  wageBill,
   type TownState,
 } from "../src/sim/town";
 import { validateLibrary } from "../src/sim/validate";
@@ -59,7 +60,6 @@ const runs = Number(arg("runs") ?? 1);
 const seed0 = Number(arg("seed") ?? 1);
 
 const DEFENCES = ["palisade", "gate", "watchtower"];
-const COMFORTS = ["tavern", "training-yard", "vault", "library"];
 
 /** One bot decision. Returns the next state. */
 function step(t: TownState): TownState {
@@ -70,10 +70,15 @@ function step(t: TownState): TownState {
       .filter((x) => x.lvl && !t.damaged.includes(x.id) && !underConstruction(t, x.id))
       .sort((a, b) => a.lvl!.cost - b.lvl!.cost)[0];
     if (next && t.gold >= next.lvl!.cost + 40) t = upgrade(ix, t, next.id);
+    // Once the walls are up, build and upgrade everything else, cheapest
+    // first, keeping a few days' wages in hand: a guild that spends it all.
     const defended = DEFENCES.every((id) => (t.buildings[id] ?? 0) > 0);
-    const comfort = COMFORTS.find((id) => !t.buildings[id] && !underConstruction(t, id));
-    const cost = comfort && nextLevel(ix, t, comfort)!.cost;
-    if (defended && comfort && t.gold >= (cost as number) + 60) t = upgrade(ix, t, comfort);
+    const reserve = 60 + 3 * wageBill(ix, t);
+    const more = library.buildings
+      .map((b) => ({ id: b.id, lvl: nextLevel(ix, t, b.id) }))
+      .filter((x) => x.lvl && !t.damaged.includes(x.id) && !underConstruction(t, x.id))
+      .sort((a, b) => a.lvl!.cost - b.lvl!.cost)[0];
+    if (defended && more && t.gold >= more.lvl!.cost + reserve) t = upgrade(ix, t, more.id);
   }
   // Spend level-ups.
   for (const h of t.roster) {
@@ -110,11 +115,16 @@ function step(t: TownState): TownState {
 }
 
 /** Trapped and rescued heroes, counted as trips come back. */
-const tally = { trapped: 0, rescued: 0 };
+const tally = { trapped: 0, rescued: 0, earned: 0, unpaid: 0 };
+/** Gold in the coffers at these days, for the summary. */
+const CHECKPOINTS = [10, 20, 40, 60, 90];
+const goldAt: Record<number, number[]> = {};
 
 function play(seed: number, print: boolean) {
   let t = newTown(ix, heroNames, seed);
   let printed = 0;
+  const seen = new Set<number>();
+  const unpaidDays = new Set<number>();
   if (print) {
     console.log(
       `Policy: ${policy === "idle" ? "never go down" : `trips to floor ${policy}`}` +
@@ -127,10 +137,18 @@ function play(seed: number, print: boolean) {
   while (t.day <= days) {
     const trip = t.lastTrip;
     t = step(t);
+    // Count days the wages went unpaid (from the news, which says so).
+    for (const n of t.news) if (n.text.startsWith("The guild couldn't pay")) unpaidDays.add(n.day);
     if (t.lastTrip && t.lastTrip.seed !== trip?.seed) {
       tally.trapped += t.lastTrip.trapped?.length ?? 0;
       tally.rescued += t.lastTrip.rescued?.length ?? 0;
+      tally.earned += t.lastTrip.goldEarned;
     }
+    for (const c of CHECKPOINTS)
+      if (c <= days && t.day >= c && !seen.has(c)) {
+        seen.add(c);
+        (goldAt[c] ??= []).push(t.gold);
+      }
     if (!print) continue;
     for (const n of t.pit.slice(printed - t.pit.length || t.pit.length)) {
       const floors = t.dungeon.floors
@@ -145,6 +163,7 @@ function play(seed: number, print: boolean) {
     }
     printed = t.pit.length;
   }
+  tally.unpaid += unpaidDays.size;
   return t;
 }
 
@@ -181,8 +200,14 @@ if (runs === 1) {
   let unhappy = 0;
   let rescued = 0;
   let trapped = 0;
+  let built = 0;
+  let unpaid = 0;
+  const levels = library.buildings.reduce((s, b) => s + b.levels.length - b.startLevel, 0);
   for (let i = 0; i < runs; i++) {
     const t = play(seed0 + i, false);
+    built += library.buildings.reduce((s, b) => s + (t.buildings[b.id] ?? 0) - b.startLevel, 0);
+    unpaid += tally.unpaid;
+    tally.unpaid = 0;
     const r = t.pit.filter((n) => n.outcome !== "held");
     raids += r.length;
     beaten += r.filter((n) => n.outcome === "repelled").length;
@@ -200,6 +225,7 @@ if (runs === 1) {
     trapped += tally.trapped;
     tally.rescued = tally.trapped = 0;
   }
+  const earned = tally.earned / runs;
   firstRaid.sort((a, b) => a - b);
   const median = firstRaid[Math.floor(runs / 2)]!;
   console.log(
@@ -210,6 +236,12 @@ if (runs === 1) {
       `  heroes who quit per town: ${(quit / runs).toFixed(1)}\n` +
       `  on the roster at the end: level ${(levelSum / Math.max(1, heroes)).toFixed(1)} on average, ` +
       `morale ${(moraleSum / Math.max(1, heroes)).toFixed(0)}, ${((unhappy / Math.max(1, heroes)) * 100).toFixed(0)}% unhappy\n` +
-      `  overflow strength on the last night: ${(strength / runs).toFixed(1)}`,
+      `  overflow strength on the last night: ${(strength / runs).toFixed(1)}\n` +
+      `  buildings: ${(built / runs).toFixed(1)} of ${levels} levels built; ` +
+      `${(unpaid / runs).toFixed(1)} days with unpaid wages\n` +
+      `  gold from trips per town: ${earned.toFixed(0)}; gold in hand (median) ` +
+      Object.entries(goldAt)
+        .map(([d, g]) => `day ${d}: ${[...g].sort((a, b) => a - b)[Math.floor(g.length / 2)]}`)
+        .join(", "),
   );
 }
