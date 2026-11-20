@@ -159,7 +159,44 @@ Everyone also gets morale from using a liked weapon, and loses it from a dislike
 
 ✅ **DECIDED 4: does a quitting hero take their gear?** Decision: they keep what they're wearing and leave the rest. That stings enough to matter without wiping out your stash.
 
-## 7. Levelling up
+## 7. Alignment (after the first slice)
+
+> Added 2026-11-20. Not part of the first playable slice. It slots in once morale and motivations exist (M5), and is data-driven like everything else.
+
+Every hero is **Good**, **Neutral** or **Evil**. Alignment is shown when recruiting and never changes on its own (perks or events might shift it later).
+
+### Party alignment
+
+- If **at least two-thirds** of the party share an alignment, that is the **party alignment**.
+- Every other member should be **within one step** of it. Good and Evil are two steps apart; Neutral is one step from both.
+- So a **Good** party can take Neutral heroes, an **Evil** party can take Neutral heroes, and a **Neutral** party can take *both* Good and Evil heroes. A Neutral-majority party is the only way Good and Evil heroes go into the dungeon together.
+- With no two-thirds majority, the party is **divided**: no alignment bonuses, and the friction penalty below applies.
+
+| Party (example) | Party alignment | OK? |
+|---|---|---|
+| Good, Good, Neutral | Good | Yes |
+| Good, Good, Evil | Good | Mismatch: the Evil hero is two steps away |
+| Neutral, Neutral, Good | Neutral | Yes |
+| Neutral ×4, Good, Evil | Neutral | Yes, Good and Evil held together by the Neutral majority |
+| Good, Neutral, Evil | Divided | Friction |
+
+**Mismatches are a morale cost, not a ban.** You can always send any party, because sometimes the only heroes free for a rescue run are the wrong ones. A mismatched hero, and the heroes they clash with, lose morale on every day of the expedition, and a mismatched hero at low morale is more likely to ignore standing orders or walk out. Good and Evil heroes in the same party also feel a small amount of friction even when it is allowed. A Neutral majority keeps the peace, but doesn't make them friends.
+
+### What alignment changes
+
+- **Morale:** alignment acts like a second motivation. Good heroes lose morale when the party abandons a downed ally or robs a stranger; Evil heroes gain it from taking extra loot or finishing off fleeing monsters.
+- **Room events:** the same event plays out differently. A wounded stranger is healed by a Good party (maybe a reward later), ignored by a Neutral one, and robbed by an Evil one.
+- **Monsters:** some monsters react to the party's alignment. Undead go after Good heroes first; some goblin bands will parley with, or demand tribute from, an Evil party instead of fighting.
+- **Loot:** holy and unholy items. Good heroes refuse to carry cursed or unholy gear, and Evil heroes are happy to use it.
+- **Town:** the temple offers cheaper healing to Good heroes; a black market only deals with Evil ones. Too many Evil heroes in the guild could make townsfolk wary (worse recruit pool).
+
+### Built to grow
+
+Alignment is just another kind of content (`content/alignments/`): each alignment is a definition with a position on the scale, and party alignment is worked out as a tag on the party (`party:good`, `party:divided`). Events, monster behaviour, item rules and morale effects check those tags through the normal effects system (§12). A second axis (for example Lawful / Chaotic) could be added later without changing the engine.
+
+🔶 **OPEN: small parties.** Under the two-thirds rule, a Neutral party can only hold both a Good and an Evil hero alongside four Neutral heroes (6 in total). In a party of 3 to 5 it can't happen. Suggested fix: a Good + Evil pair "balances out" and counts as Neutral when working out the majority, so Neutral, Neutral, Good, Evil is a Neutral party. To settle once party sizes are set.
+
+## 8. Levelling up
 
 Options:
 
@@ -173,7 +210,7 @@ Optional twist that ties into morale: a hero may *want* a particular perk ("Bram
 
 ✅ **DECIDED 5: level-up style.** Decision: hybrid, as above.
 
-## 8. Death, wipes and recovery runs
+## 9. Death, wipes and recovery runs
 
 - At 0 HP a hero is **downed**, not dead. A downed hero bleeds out over a few turns unless stabilised (Medicine) or the fight ends. Allies carry downed heroes out if they have the carry slots.
 - If the whole party goes down, it's a **wipe**. Each hero then rolls: dead, or alive and **trapped/captured**, with a rescue window of a few days.
@@ -183,7 +220,7 @@ Optional twist that ties into morale: a hero may *want* a particular perk ("Bram
 
 ✅ **DECIDED 6: permadeath.** Decision: yes, dead heroes stay dead, but the rescue window means a quick recovery run can save some. Alternative: nobody dies, only "lost until rescued".
 
-## 9. How an expedition is simulated
+## 10. How an expedition is simulated
 
 1. A floor is a short chain of **rooms** (5–8 for floor 1), generated from a seed.
 2. Entering a room: a **Scouting check** may reveal what's inside (ambush, trap, treasure).
@@ -199,7 +236,7 @@ The simulation is **deterministic**: same seed + same party = same result. That 
 
 ✅ **DECIDED 7: how the watching looks.** Decision: start with an animated, readable text log (like a battle report), with HP bars. Add a simple 2D view later. Building the sim first and the visuals second means the game is playable much sooner.
 
-## 10. First playable slice
+## 11. First playable slice
 
 Small on purpose. Everything here is data, so adding more later means adding entries, not rewriting code.
 
@@ -234,7 +271,7 @@ The Cleric (healer, WIL/CHA) is the obvious 4th class to add next.
 
 ✅ **DECIDED 8: one party or several at once?** Decision: one at a time in the first slice; multiple parties later (which also makes rescue runs work while your main party is busy).
 
-## 11. Built to grow (extensibility)
+## 12. Built to grow (extensibility)
 
 The game will start small and grow, so the main design rule is: **new content is data, not code.** Adding a class, monster, item, skill or perk should mean adding one entry to a data file, with no changes to the engine.
 
@@ -276,7 +313,7 @@ export default defineMonster({
 
 **Guard rails.** A content check (run in tests and CI) fails if a definition references an id that doesn't exist, breaks the schema, or produces a wildly out-of-band balance number in a quick headless simulation. That keeps a growing content library from quietly breaking.
 
-## 12. Tech stack and hosting
+## 13. Tech stack and hosting
 
 **Chosen: a TypeScript web game.**
 
@@ -287,7 +324,7 @@ export default defineMonster({
 | Tests | Vitest | Fast, simple |
 | UI | React + Vite | The town screens are menus, lists and forms, which suit a web UI well |
 | Watch view | Text log first, then PixiJS or Canvas for a 2D view | Visuals can come later without touching the sim |
-| Game content | Typed TS definition files with schema checks (see §11) | Growing the game = adding data |
+| Game content | Typed TS definition files with schema checks (see §12) | Growing the game = adding data |
 | Saves | Browser storage (IndexedDB) | No server needed |
 | Hosting | GitHub Pages, deployed by GitHub Actions | Free, already on GitHub, auto-deploys on merge |
 
@@ -301,7 +338,7 @@ Alternatives considered:
 
 ✅ **DECIDED 9: stack and hosting.** Decision: TypeScript + React + Vite, hosted on GitHub Pages.
 
-## 13. Build plan
+## 14. Build plan
 
 Each milestone ends with something you can run.
 
@@ -313,9 +350,9 @@ Each milestone ends with something you can run.
 | M3 | Town UI: roster, recruit, equip, formation, launch, watch the log, results screen | Actually play a loop in the browser |
 | M4 | Time and saves: dungeon days, population push-up, pressure map, save/load | Feel the dungeon getting worse over time |
 | M5 | Heroes with personalities: morale, motivations, level-up perks, wipes and recovery runs | Play the full design in miniature |
-| M6+ | Balance pass, then grow content: Cleric, more monsters/floors, 2D watch view, multiple parties | Keep growing |
+| M6+ | Balance pass, then grow content: Cleric, alignment (§7), more monsters/floors, 2D watch view, multiple parties | Keep growing |
 
-## 14. Decisions (agreed 2026-11-20)
+## 15. Decisions (agreed 2026-11-20)
 
 | # | Decision | Agreed |
 |---|---|---|
@@ -328,3 +365,4 @@ Each milestone ends with something you can run.
 | 7 | Watch presentation | Text battle log first, 2D view later |
 | 8 | Parties at once | One in the first slice, several later |
 | 9 | Stack and hosting | TypeScript + React + Vite on GitHub Pages |
+| 10 | Alignment | Good / Neutral / Evil; two-thirds sets party alignment, others within one step; mismatches cost morale rather than being banned. Added after the first slice |
