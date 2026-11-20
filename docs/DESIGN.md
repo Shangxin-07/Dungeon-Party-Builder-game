@@ -304,6 +304,48 @@ Optional twist that ties into morale: a hero may *want* a particular perk ("Bram
 
 ✅ **DECIDED 5: level-up style.** Decision: hybrid, as above.
 
+### Later: class progression
+
+> Added 2026-11-20. **Not in the first playable version**, which keeps its three base classes. Class names below are examples only, not commitments. Level numbers are starting points to tune.
+
+One rule keeps this simple: **a hero only ever moves forward, never swaps.** Nobody stops being a Fighter; they become *more* than one.
+
+| Tier | How you get it | Example |
+|---|---|---|
+| **Base** | What you recruit | Fighter, Scout, Mage, Cleric |
+| **Secondary** | At level 5, a hero may take a second *base* class. It costs that level's perk pick, and from then on perk offers draw from both classes | A Fighter who also studies as a Mage |
+| **Advanced** | At level 10, specialise within your base class, if you meet its stat minimum | A Mage with high WIL becomes a Necromancer; one with high INT an Ice Mage |
+| **Combo** | At level 10, a hero with a secondary class can instead take a combo class of the two, if they meet both stat minimums | Fighter + Mage → Spellblade |
+
+At level 10 each hero picks **one** path: advanced *or* combo. The secondary class doesn't give its stat growth, only access to its perks, skills and gear, so it's a real trade: fewer picks in your main class in exchange for a wider hero and a combo option later.
+
+Because heroes only move forward, the system can keep growing: later tiers (a level-20 step after an advanced or combo class) are just more class definitions with their own requirements.
+
+**Extra requirements**, all optional per class:
+
+- **A town building**: training a new advanced class needs the right building (a Mage Tower for spellcasting specialisations, an Arena for fighting ones). This links class progression to the town (§8).
+- **Alignment**: some classes might need or forbid an alignment (§7).
+- **Motivation**: a hero's motivation can favour a path ("Mira wants to be a Necromancer"). Granting it gives a morale boost; when it's possible and you choose something else, they lose morale.
+
+**Built to grow:** every class, whatever its tier, is a class definition with a `requires` block, so adding one is just data:
+
+```ts
+export default defineClass({
+  id: "spellblade",
+  tier: "combo",
+  requires: {
+    level: 10,
+    primary: "fighter",
+    secondary: "mage",
+    stats: { STR: 12, INT: 12 },
+    building: "mage-tower",
+  },
+  // stat growth, perk pool, gear likes, AI behaviour…
+});
+```
+
+🔶 **OPEN: what happens to a hero's class when they reach level 10 and don't qualify for anything?** Suggested: they stay a base class and keep levelling normally, and can specialise later once they meet a requirement.
+
 ## 10. Death, wipes and recovery runs
 
 - At 0 HP a hero is **downed**, not dead. A downed hero bleeds out over a few turns unless stabilised (Medicine) or the fight ends. Allies carry downed heroes out if they have the carry slots.
@@ -446,7 +488,7 @@ Each milestone ends with something you can run.
 | M3 | Town UI: roster, recruit, equip, formation, launch, watch the log, results screen | Actually play a loop in the browser |
 | M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load | Feel the dungeon getting worse over time |
 | M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs | Play the full design in miniature |
-| M6+ | Balance pass, then grow content: Cleric, alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |
+| M6+ | Balance pass, then grow content: Cleric, class progression (§9), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |
 
 ## 16. Decisions (agreed 2026-11-20)
 
@@ -467,3 +509,4 @@ Each milestone ends with something you can run.
 | 13 | Favourite buildings | Each hero has one; built = morale boost, missing = morale drain |
 | 14 | Dungeon entrance and defences | An open pit dug by the original mining camp. Defences around it (walls, gate, watchtowers) soak up overflow; what gets past becomes a raid |
 | 15 | Game opening (later) | Start at an undefended mining site, assign heroes to makeshift defences, gather materials, build up, then unlock delving. The first playable version is unchanged |
+| 16 | Class progression (later) | Forward only, never swap. Base → optional secondary base class at level 5 → advanced or combo class at level 10, gated by stats (and optionally buildings, alignment). Class names are examples only |
