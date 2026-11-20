@@ -344,7 +344,7 @@ export default defineClass({
 });
 ```
 
-🔶 **OPEN: what happens to a hero's class when they reach level 10 and don't qualify for anything?** Suggested: they stay a base class and keep levelling normally, and can specialise later once they meet a requirement.
+✅ **DECIDED (for now): a hero who qualifies for nothing at level 10** stays a base class and keeps levelling normally, and can specialise later once they meet a requirement. The level scale is still under discussion, so this section may change.
 
 ## 10. Death, wipes and recovery runs
 
@@ -509,4 +509,4 @@ Each milestone ends with something you can run.
 | 13 | Favourite buildings | Each hero has one; built = morale boost, missing = morale drain |
 | 14 | Dungeon entrance and defences | An open pit dug by the original mining camp. Defences around it (walls, gate, watchtowers) soak up overflow; what gets past becomes a raid |
 | 15 | Game opening (later) | Start at an undefended mining site, assign heroes to makeshift defences, gather materials, build up, then unlock delving. The first playable version is unchanged |
-| 16 | Class progression (later) | Forward only, never swap. Base → optional secondary base class at level 5 → advanced or combo class at level 10, gated by stats (and optionally buildings, alignment). Class names are examples only |
+| 16 | Class progression (later) | Forward only, never swap. Base → optional secondary base class at level 5 → advanced or combo class at level 10, gated by stats (and optionally buildings, alignment). Class names are examples only. A hero who qualifies for nothing at 10 stays base and can specialise later (for now) |
