@@ -10,17 +10,11 @@
  */
 import type { DamageType } from "../content/types";
 import { runCombat, type CombatEvent, type Side } from "./combat";
+import type { FloorPressure } from "./dungeon";
 import { rollEncounter } from "./encounter";
 import { heroSheet, type Hero } from "./hero";
 import type { Index } from "./library";
-import {
-  appraise,
-  itemSize,
-  rollLootTable,
-  rollValue,
-  worthPerSlot,
-  type HaulItem,
-} from "./loot";
+import { appraise, itemSize, rollLootTable, rollValue, worthPerSlot, type HaulItem } from "./loot";
 import { createRng, type Rng } from "./rng";
 import { getRoom, type RoomContext } from "./rooms";
 import { resistance } from "./stats";
@@ -86,7 +80,11 @@ export type ExpeditionEventKind =
   | "retreat"
   | "wander"
   | "home"
-  | "wipe";
+  | "wipe"
+  /** A fight room with nothing left alive in it. */
+  | "quiet"
+  /** Raids on the town reuse the trip log format. */
+  | "raid";
 
 /** A hero's condition at a point in the trip. */
 export interface HeroStatus {
@@ -132,6 +130,8 @@ export interface ExpeditionResult {
   /** Haul left at the wipe site, for a rescue party to recover later. */
   leftBehind: HaulItem[];
   kills: string[];
+  /** Monsters killed on each floor (summoned ones don't count), for the dungeon's population. */
+  floorKills: Record<number, number>;
   log: ExpeditionEvent[];
   /** Where the party fell, if it was wiped. */
   wipeSite?: { floor: number; room: number };
@@ -157,13 +157,18 @@ const VALUABLE_PER_SLOT = 8;
 
 // ---------------------------------------------------------------------------
 
+/**
+ * Simulate a whole trip. `floors` is the dungeon as it is today (index 0 =
+ * floor 1); without it every floor is at its usual level with plenty of monsters.
+ */
 export function runExpedition(
   ix: Index,
   party: readonly Hero[],
   orders: StandingOrders,
   seed: number,
+  floors?: readonly FloorPressure[],
 ): ExpeditionResult {
-  return new Expedition(ix, party, orders, createRng(seed)).run();
+  return new Expedition(ix, party, orders, createRng(seed), floors).run();
 }
 
 /** Pick the rooms for one floor: random rooms, with the floor's fixed rooms placed mid-floor. */
@@ -199,6 +204,7 @@ class Expedition {
   private party: Hero[];
   private haul: HaulItem[] = [];
   private kills: string[] = [];
+  private floorKills: Record<number, number> = {};
   private log: ExpeditionEvent[] = [];
   private depth = 0;
   private roomNo = 0;
@@ -214,7 +220,9 @@ class Expedition {
     party: readonly Hero[],
     orders: StandingOrders,
     private rng: Rng,
+    private floors?: readonly FloorPressure[],
   ) {
+    this.floors = floors?.map((f) => ({ ...f }));
     this.party = party.map((h) => ({
       ...h,
       stats: { ...h.stats },
@@ -271,8 +279,10 @@ class Expedition {
     for (let d = this.depth; d >= 1; d--) {
       this.depth = d;
       if (!this.rng.chance(WANDER_CHANCE)) continue;
+      const monsters = this.rollMonsters();
+      if (!monsters.length) continue;
       this.emit("wander", `On the way up through floor ${d}, something blocks the tunnel.`);
-      this.fight(rollEncounter(this.ix, d, this.rng));
+      this.fight(monsters);
       if (!this.wiped) this.betweenRooms();
       if (this.wiped) return this.finish("wiped");
     }
@@ -297,6 +307,7 @@ class Expedition {
       haul: wiped ? [] : this.haul,
       leftBehind: wiped ? this.haul : [],
       kills: this.kills,
+      floorKills: this.floorKills,
       log: this.log,
       wipeSite: wiped ? { floor: this.depth, room: this.roomNo } : undefined,
     };
@@ -353,6 +364,7 @@ class Expedition {
       maxHp: this.maxHp,
       maxMana: this.maxMana,
       log: (kind, text) => this.emit(kind, text),
+      rollMonsters: () => this.rollMonsters(),
       fight: (m, o) => this.fight(m, o),
       hurt: (h, a, t) => this.hurt(h, a, t),
       heal: (h, a) => this.heal(h, a),
@@ -364,6 +376,14 @@ class Expedition {
   // -------------------------------------------------------------------------
   // Fights
   // -------------------------------------------------------------------------
+
+  /** A group of monsters from the current floor, as it is today. Empty if it's been cleared out. */
+  private rollMonsters(): string[] {
+    const f = this.floors?.[this.depth - 1];
+    if (!f) return rollEncounter(this.ix, this.depth, this.rng);
+    if (f.population <= 0) return [];
+    return rollEncounter(this.ix, this.depth, this.rng, { level: f.level, max: f.population });
+  }
 
   private fight(monsters: readonly string[], opts: { surprise?: boolean } = {}): Side | "none" {
     const result = runCombat(this.ix, this.party, monsters, {
@@ -385,6 +405,12 @@ class Expedition {
     }
     this.party = result.party;
     this.kills.push(...result.kills);
+    const real = result.kills.filter((id) => !this.ix.monster(id).summonOnly).length;
+    if (real) {
+      this.floorKills[this.depth] = (this.floorKills[this.depth] ?? 0) + real;
+      const f = this.floors?.[this.depth - 1];
+      if (f) f.population = Math.max(0, f.population - real);
+    }
 
     if (result.winner === "monsters") this.wiped = true;
     else if (result.winner === "none") this.emit("fight", "The monsters slink off into the dark.");

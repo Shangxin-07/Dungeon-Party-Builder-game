@@ -1,6 +1,6 @@
 # Dungeon Party Builder: Design & Build Plan
 
-> **Status:** agreed design, 2026-11-20. Built so far: M0 (project setup), M1 (simulation core) and M2 (expeditions).
+> **Status:** agreed design, 2026-11-20. Built so far: M0 (project setup), M1 (simulation core), M2 (expeditions), M3 (the town) and M4 (time, raids and saves).
 > Items marked **✅ DECIDED** were open questions; Mike accepted the recommended option for each.
 > A summary of every decision is at the end.
 
@@ -450,6 +450,40 @@ Floor 1 is unchanged from M1. Careful orders on floor 3 trade reaching the botto
 - **Wipes:** the dead go on the memorial; the rest are listed as lost on that floor, with their gear. Rescue runs come in M5.
 - The town is saved in the browser (localStorage) so a refresh doesn't lose it. Proper save slots are still M4.
 
+### As built in M4: time, the pit and saves
+
+> Added 2026-11-20. The numbers are starting points for tuning. `npm run days` plays a town with a simple bot and prints the dungeon night by night.
+
+- **The dungeon keeps a population** (§4). Each floor has a capacity and a starting population (`content/floors/`: 40/50/60, starting at 28/38/50) and an average **monster level**. Levels are depth-equivalent: level 1.6 means "between a floor-1 and a floor-2 monster".
+- **Every night** (`src/sim/dungeon.ts`, rules in `content/dungeon.ts`): the bottom floor breeds 6 monsters, plus 0.15 more each day. A floor over capacity pushes its extra up; they arrive half a level below their old floor's average and pull the new floor's level up. Every floor settles 5% of the way back to its own depth each day. Floor 1's extra climb out of the pit. No dice, so it can be forecast exactly.
+- **Expeditions feel it.** A floor's level sets how big its fights are (power = 10 × 1.3^(level − 1), so a floor-1 at level 1.6 fights like 11.7 instead of 10), deeper floors' monster groups can turn up, and a floor can't throw more monsters at you than it has left. Every kill comes off the population, and a floor that's been cleared out has quiet fight rooms. Clearing floor 1 makes room, so for a while stronger rejects from floor 2 move in: you see the lore happen.
+- **The pit** (§8): what climbs out has **strength** = monsters × level. Defences hold back that much. Whatever's left is a **raid**: raiders worth 3 power per point of leftover strength come for the town, and the healthy heroes at home (at least 50% HP, up to 6) fight them with the normal combat sim. The fight is saved and can be watched. Nobody bleeds out in town: defenders who fall wake up hurt. If nobody is fit to fight or the defenders lose, the raiders steal 5 gold per point of leftover and damage one building per 4 points. A damaged building does nothing until it's repaired (25% of what it cost); it's never destroyed. The Guild Hall is raid-proof so a raid can never cost you party slots.
+- **Nights pass one at a time.** Resting a day is one night. A trip of N days is N nights, and while the party is away only the heroes left home can defend. That's the watchtower decision: when a raid is coming, keep someone strong home.
+- **New buildings** (all data in `content/buildings/`, with new effect types `defence`, `raidWarning`, `recruitOffers`, `recruitPicks`):
+
+| Building | Levels |
+|---|---|
+| Palisade → Stone wall → High stone wall | 80 / 250 / 600 gold: defence 6 / 12 / 20 |
+| Pit Gate | 60 / 180 gold: defence 3 / 6 |
+| Watchtower | 100 / 220 gold: see 1 / 2 nights ahead, defence 1 / 2 |
+| Tavern | 150 / 400 gold: +1 / +2 recruits a day, each the best of 2 / 3 rolls. Morale comes in M5 |
+| Blacksmith | 200 / 450 gold: sells Iron Sword, War Axe, Longbow, Iron Shield; then Scale Mail and Iron-shod Staff. Repairs and upgrades later |
+| Guild Hall levels 3 and 4 | 600 / 1000 gold: 5 / 6 per party, roster 10 / 12 |
+
+- **In town**, the pit panel shows last night's gauge (strength vs defence), the watchtower's forecast, the last 30 nights as a chart, the home guard if the party leaves, recent raids (with "Watch the fight"), and a **pressure map**: population, level band and today's fight power per floor. The trip results say what happened at the pit while the party was away.
+- **Saves:** three save slots in the browser, each autosaving after every action, plus save to and load from a file. Saves carry a version number and are upgraded step by step on load (`src/sim/save.ts`); an M3 save is moved into slot 1 and upgraded.
+
+What the bot sees over 60 days (40 towns each; the bot rests to 90% HP, then goes down):
+
+| Plan | First raid (median) | Raids | Overflow strength on day 60 |
+|---|---|---|---|
+| Never go down | day 6 | 55 (almost all beaten off by 4 heroes at home) | 20 |
+| Floor-1 trips, no defences | day 37 | 15 (half beaten off) | 10 |
+| Floor-1 trips, building defences | none | 0 | 5 |
+| Floor-2 trips, building defences | none | 2.5 | 12 |
+
+Not yet: materials and renown as building costs, the Tavern's morale bonus, Blacksmith repairs and upgrades, the Vault (stash protection), and garrisons or traps at the pit.
+
 ## 12. First playable slice
 
 Small on purpose. Everything here is data, so adding more later means adding entries, not rewriting code.
@@ -564,7 +598,7 @@ Each milestone ends with something you can run.
 | M1 | Sim core: content definitions + schema checks, effects system, stats, seeded combat between a party and a monster group | Run a fight from the command line and read the log |
 | M2 | Expeditions: floors, rooms, scouting, traps, loot, appraisal, standing orders | Simulate a full trip to floor 1–3 |
 | M3 | Town UI: roster, recruit, equip, formation, launch, watch the log, results screen (built, see §11 "As built in M3") | Actually play a loop in the browser |
-| M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load | Feel the dungeon getting worse over time |
+| M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load (built, see §11 "As built in M4") | Feel the dungeon getting worse over time |
 | M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs | Play the full design in miniature |
 | M6+ | Balance pass, then grow content: Cleric, freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |
 

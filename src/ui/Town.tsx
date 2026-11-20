@@ -1,6 +1,7 @@
 /**
- * The town screen (M3): recruit, kit out, pick a party and its formation, set
- * standing orders, launch, watch the trip and see what came back. All the
+ * The town screen: recruit, kit out, pick a party and its formation, set
+ * standing orders, launch, watch the trip and see what came back (M3). Watch
+ * the pit and its raids, build defences, and keep save slots (M4). All the
  * rules live in src/sim/town.ts; this file only shows the state and calls
  * those actions.
  */
@@ -13,6 +14,7 @@ import {
   buy,
   buyPrice,
   cantLaunch,
+  defence,
   dismiss,
   equip,
   hire,
@@ -22,6 +24,8 @@ import {
   nextLevel,
   packItem,
   partySlots,
+  repair,
+  repairCost,
   rest,
   rosterSize,
   sell,
@@ -30,37 +34,28 @@ import {
   setRow,
   shopStock,
   toggleParty,
-  TOWN_VERSION,
   TownError,
   unequip,
   unpackItem,
   upgrade,
   type TownState,
 } from "../sim/town";
+import type { RaidReport } from "../sim/raid";
+import { importSave } from "../sim/save";
 import { RETREATS } from "./Expedition";
 import { ix } from "./game";
+import { describeRaid, PitPanel } from "./Pit";
+import {
+  activeSlot,
+  adoptLegacySave,
+  clearSlot,
+  downloadSave,
+  readSlot,
+  setActiveSlot,
+  SLOTS,
+  writeSlot,
+} from "./saves";
 import { DERIVED_LABELS, HeroBars, Results, StatSheet, TripPlayer } from "./Watch";
-
-const SAVE_KEY = "dpb-town";
-
-function load(): TownState | undefined {
-  try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return undefined;
-    const town = JSON.parse(raw) as TownState;
-    return town.version === TOWN_VERSION ? town : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function save(town: TownState): void {
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(town));
-  } catch {
-    // Private windows and full storage: the game still plays, it just won't remember.
-  }
-}
 
 const freshTown = () => newTown(ix, heroNames, Date.now() % 2 ** 31);
 
@@ -100,12 +95,23 @@ function tally(ids: readonly string[]): [string, number][] {
 
 type Act = (f: (t: TownState) => TownState) => void;
 
+function startingGame(): { slot: number; town: TownState } {
+  adoptLegacySave();
+  const slot = activeSlot();
+  return { slot, town: readSlot(slot)?.town ?? freshTown() };
+}
+
 export function TownGame() {
-  const [town, setTown] = useState<TownState>(() => load() ?? freshTown());
-  const [watching, setWatching] = useState(false);
+  const [game, setGame] = useState(startingGame);
+  const { slot, town } = game;
+  const setTown = (t: TownState) => setGame((g) => ({ ...g, town: t }));
+  const [watching, setWatching] = useState<false | "trip" | RaidReport>(false);
   const [error, setError] = useState<string>();
 
-  useEffect(() => save(town), [town]);
+  useEffect(() => {
+    writeSlot(slot, town);
+    setActiveSlot(slot);
+  }, [slot, town]);
 
   const act: Act = (f) => {
     try {
@@ -118,6 +124,32 @@ export function TownGame() {
   };
 
   const trip = town.lastTrip;
+  if (watching && typeof watching === "object") {
+    const raid = watching;
+    return (
+      <section className="town" aria-labelledby="watch-heading">
+        <h2 id="watch-heading">Night of day {raid.day}: raiders at the pit</h2>
+        <p className="muted">
+          {raid.climbed} monsters climbed out (strength {raid.strength}). The defences held back{" "}
+          {raid.defence}, so {raid.raiders.length} raiders reached the town.
+        </p>
+        <TripPlayer
+          heroes={raid.defenders}
+          log={raid.log}
+          results={
+            <div
+              className={`results results-${raid.outcome === "repelled" ? "returned" : "wiped"}`}
+            >
+              <p>{describeRaid(raid)}</p>
+              <button type="button" className="btn btn-main" onClick={() => setWatching(false)}>
+                Back to town
+              </button>
+            </div>
+          }
+        />
+      </section>
+    );
+  }
   if (watching && trip) {
     return (
       <section className="town" aria-labelledby="watch-heading">
@@ -127,7 +159,7 @@ export function TownGame() {
         <p className="muted">They're on their own now. You can only watch.</p>
         <TripPlayer
           heroes={trip.party}
-          result={trip.result}
+          log={trip.result.log}
           results={
             <Results result={trip.result}>
               <TripTown town={town} />
@@ -149,7 +181,7 @@ export function TownGame() {
           {error}
         </p>
       ) : null}
-      {trip ? <LastTrip town={town} onWatch={() => setWatching(true)} /> : null}
+      {trip ? <LastTrip town={town} onWatch={() => setWatching("trip")} /> : null}
       <PartyPanel
         town={town}
         act={act}
@@ -157,7 +189,7 @@ export function TownGame() {
           try {
             setTown(launch(ix, town, heroNames));
             setError(undefined);
-            setWatching(true);
+            setWatching("trip");
             window.scrollTo({ top: 0 });
           } catch (e) {
             if (e instanceof TownError) setError(e.message);
@@ -165,25 +197,127 @@ export function TownGame() {
           }
         }}
       />
+      <PitPanel
+        town={town}
+        onWatchRaid={(r) => {
+          setWatching(r);
+          window.scrollTo({ top: 0 });
+        }}
+      />
       <Roster town={town} act={act} />
       <Recruits town={town} act={act} />
       <Market town={town} act={act} />
       <Buildings town={town} act={act} />
       <Memorial town={town} />
+      <Saves
+        slot={slot}
+        town={town}
+        onSwitch={(n, t) => {
+          setGame({ slot: n, town: t });
+          setError(undefined);
+          setWatching(false);
+        }}
+        onError={setError}
+      />
+    </section>
+  );
+}
+
+function Saves({
+  slot,
+  town,
+  onSwitch,
+  onError,
+}: {
+  slot: number;
+  town: TownState;
+  onSwitch: (slot: number, town: TownState) => void;
+  onError: (message: string) => void;
+}) {
+  // Re-read the other slots whenever the town changes, so "saved at" stays fresh.
+  const slots = SLOTS.map((n) => ({ n, info: n === slot ? undefined : readSlot(n) }));
+  return (
+    <section aria-labelledby="saves-heading" className="panel">
+      <h2 id="saves-heading">Saves</h2>
       <p className="muted small">
-        Your town is saved in this browser.{" "}
-        <button
-          type="button"
-          className="link"
-          onClick={() => {
-            if (confirm("Start a new town? Your current guild will be gone.")) {
-              setTown(freshTown());
-              setError(undefined);
-            }
-          }}
-        >
-          Start a new town
-        </button>
+        Your guild saves itself in this browser after everything you do. Keep up to {SLOTS.length}{" "}
+        guilds going in separate slots, or save one to a file to keep it safe or move it to another
+        computer.
+      </p>
+      <ul className="slots">
+        {slots.map(({ n, info }) => {
+          const t = n === slot ? town : info?.town;
+          return (
+            <li key={n} className={`slot${n === slot ? " playing" : ""}`}>
+              <strong>Slot {n}</strong>{" "}
+              {t ? (
+                <span className="muted small">
+                  Day {t.day}, {t.gold} gold, {t.roster.length} heroes
+                  {t.memorial.length ? `, ${t.memorial.length} fallen` : ""}
+                  {info ? `. Saved ${info.savedAt.toLocaleString()}` : ""}
+                </span>
+              ) : (
+                <span className="muted small">Empty</span>
+              )}
+              <span className="slot-actions">
+                {n === slot ? (
+                  <span className="small">Playing</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => onSwitch(n, info?.town ?? freshTown())}
+                  >
+                    {info ? "Play" : "Start a guild here"}
+                  </button>
+                )}
+                {t ? (
+                  <button
+                    type="button"
+                    className="link danger"
+                    onClick={() => {
+                      const what = n === slot ? "your current guild" : `the guild in slot ${n}`;
+                      if (!confirm(`Start over in slot ${n}? ${what} will be gone.`)) return;
+                      if (n === slot) onSwitch(n, freshTown());
+                      else clearSlot(n);
+                      onError("");
+                    }}
+                  >
+                    {n === slot ? "Start over" : "Delete"}
+                  </button>
+                ) : null}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="small">
+        <button type="button" className="btn" onClick={() => downloadSave(town)}>
+          Save to a file
+        </button>{" "}
+        <label className="btn file-btn">
+          Load from a file…
+          <input
+            type="file"
+            accept="application/json,.json"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              try {
+                const loaded = importSave(ix, await file.text());
+                if (
+                  confirm(
+                    `Load this guild (day ${loaded.day}) into slot ${slot}? The one there now will be replaced.`,
+                  )
+                )
+                  onSwitch(slot, loaded);
+              } catch (err) {
+                onError((err as Error).message);
+              }
+            }}
+          />
+        </label>
       </p>
     </section>
   );
@@ -204,10 +338,16 @@ function TownBar({ town, act }: { town: TownState; act: Act }) {
       <span>
         Party slots <strong>{partySlots(ix, town)}</strong>
       </span>
+      <span>
+        Defence <strong>{defence(ix, town)}</strong>
+      </span>
+      {town.damaged.length ? (
+        <span className="damaged-note">{town.damaged.length} damaged</span>
+      ) : null}
       <button
         type="button"
         className="btn"
-        title="Everyone heals and new recruits turn up"
+        title="Everyone heals, night falls at the pit, and new recruits turn up"
         onClick={() => act((t) => rest(ix, t, heroNames))}
       >
         Rest a day
@@ -219,9 +359,30 @@ function TownBar({ town, act }: { town: TownState; act: Act }) {
 /** What the last trip changed in town: gold, kills per hero, the fallen. */
 function TripTown({ town }: { town: TownState }) {
   const trip = town.lastTrip!;
-  const fallen = town.memorial.filter((m) => m.day === trip.day + trip.result.days);
+  const fallen = town.memorial.filter(
+    (m) => m.day === trip.day + trip.result.days && m.cause !== "raid",
+  );
+  const quiet = trip.result.days - trip.raids.length;
   return (
     <div className="trip-town">
+      <h4>Meanwhile, at the pit</h4>
+      {trip.raids.length ? (
+        <ul className="raids">
+          {trip.raids.map((r) => (
+            <li key={r.day} className={`raid raid-${r.outcome}`}>
+              {describeRaid(r)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {quiet ? (
+        <p className="small">
+          {quiet === trip.result.days
+            ? "Every night"
+            : `${quiet} other ${quiet === 1 ? "night" : "nights"}`}{" "}
+          the walls held.
+        </p>
+      ) : null}
       {trip.goldEarned ? (
         <p>
           The Market pays <strong>{trip.goldEarned}</strong> gold for the haul.
@@ -682,15 +843,32 @@ function Buildings({ town, act }: { town: TownState; act: Act }) {
           const level = town.buildings[b.id] ?? 0;
           const now = level ? b.levels[level - 1] : undefined;
           const next = nextLevel(ix, town, b.id);
+          const damaged = town.damaged.includes(b.id);
+          const fix = damaged ? repairCost(ix, town, b.id) : 0;
           return (
-            <li key={b.id} className="card">
+            <li key={b.id} className={`card${damaged ? " damaged" : ""}`}>
               <h3>
                 {b.name}{" "}
                 <span className="muted small">{level ? `level ${level}` : "not built"}</span>
               </h3>
               <p className="small">{b.blurb}</p>
               {now ? <p className="small">Now: {now.summary}.</p> : null}
-              {next ? (
+              {b.raidProof ? <p className="small muted">Raids can't damage it.</p> : null}
+              {damaged ? (
+                <>
+                  <p className="small damaged-note">
+                    Damaged in a raid: it does nothing until repaired.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={town.gold < fix}
+                    onClick={() => act((t) => repair(ix, t, b.id))}
+                  >
+                    Repair for {fix} gold
+                  </button>
+                </>
+              ) : next ? (
                 <>
                   <p className="small muted">
                     Level {level + 1}: {next.summary}.
@@ -724,7 +902,10 @@ function Memorial({ town }: { town: TownState }) {
         {[...town.memorial].reverse().map((m, i) => (
           <li key={i}>
             <strong>{m.name}</strong>, {ix.cls(m.classId).name}.{" "}
-            {m.fate === "dead" ? "Died" : "Lost"} on floor {m.floor}, day {m.day}.{" "}
+            {m.cause === "raid"
+              ? "Died defending the town"
+              : `${m.fate === "dead" ? "Died" : "Lost"} on floor ${m.floor}`}
+            , day {m.day}.{" "}
             <span className="muted">
               {m.record.trips} {m.record.trips === 1 ? "trip" : "trips"}, {m.record.kills} kills.
               {m.fate === "lost" ? " Rescue runs are coming later." : ""}

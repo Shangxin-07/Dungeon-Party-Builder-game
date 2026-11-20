@@ -50,9 +50,9 @@ export function App() {
 
       <footer>
         <p>
-          You can now run a guild: recruit, kit out, pick a formation and orders, send a party down
-          and live with what comes back. Next up: time passing, the dungeon getting worse, and more
-          buildings.
+          The dungeon now breeds and pushes its overflow up and out of the pit every night. Build
+          walls, keep strong heroes home when the watchtower warns of a raid, and keep the floors
+          thinned out. Next up: heroes with personalities, morale and rescue runs.
         </p>
       </footer>
     </main>

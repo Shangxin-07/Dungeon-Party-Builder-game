@@ -15,12 +15,18 @@ import {
   type ExpeditionResult,
   type StandingOrders,
 } from "./expedition";
+import { applyKills, dungeonDay, newDungeon, type DungeonState } from "./dungeon";
 import { createHero, EQUIP_SLOTS, heroSheet, type EquipSlot, type Hero } from "./hero";
 import type { Index } from "./library";
+import { resolveRaid, type RaidReport } from "./raid";
 import { createRng, type Rng } from "./rng";
 
-/** Bump when the shape of TownState changes, so old saves are ignored. */
-export const TOWN_VERSION = 1;
+/** Bump when the shape of TownState changes, and add a migration in save.ts. */
+export const TOWN_VERSION = 2;
+
+/** How many nights of pit history and full raid reports the town keeps. */
+const PIT_HISTORY = 60;
+const RAID_HISTORY = 5;
 
 /** A hero's career so far. */
 export interface HeroRecord {
@@ -38,7 +44,20 @@ export interface Memorial {
   floor: number;
   /** "dead" for good, or "lost" where the party fell (rescue runs come in M5). */
   fate: "dead" | "lost";
+  /** "raid" if they died defending the town (floor is then 0). */
+  cause?: "raid";
   record: HeroRecord;
+}
+
+/** One night at the pit, for the pit gauge and its history. */
+export interface PitNight {
+  day: number;
+  /** Monsters that climbed out and their average level. */
+  climbed: number;
+  level: number;
+  strength: number;
+  defence: number;
+  outcome: RaidReport["outcome"];
 }
 
 /** What came back from the last trip, for the watch and results screens. */
@@ -53,6 +72,8 @@ export interface TripReport {
   goldEarned: number;
   /** Kills per hero id. */
   kills: Record<string, number>;
+  /** Raids on the town while the party was away (not "held" nights). */
+  raids: RaidReport[];
 }
 
 export interface TownState {
@@ -77,6 +98,14 @@ export interface TownState {
   lastTrip?: TripReport;
   /** Next number for a hero id. */
   nextHeroId: number;
+  /** The monster population, floor by floor (DESIGN.md §4). */
+  dungeon: DungeonState;
+  /** Building ids damaged by raids: they don't work until repaired. */
+  damaged: string[];
+  /** The last few weeks of nights at the pit, oldest first. */
+  pit: PitNight[];
+  /** The most recent raids that reached the town, oldest first. */
+  raids: RaidReport[];
 }
 
 /** Why an action can't happen right now, in words for the player. */
@@ -86,20 +115,59 @@ export class TownError extends Error {}
 // Reading the town
 // ---------------------------------------------------------------------------
 
+/** Effects of every working building (damaged ones do nothing until repaired). */
 function effects(ix: Index, town: TownState): BuildingEffect[] {
   const out: BuildingEffect[] = [];
-  for (const b of ix.lib.buildings) {
-    const level = town.buildings[b.id] ?? 0;
-    if (level > 0) out.push(...(b.levels[level - 1]?.effects ?? []));
-  }
+  for (const b of ix.lib.buildings) out.push(...buildingEffects(ix, town, b.id));
   return out;
 }
 
-const total = (ix: Index, town: TownState, type: "partySlots" | "rosterSize") =>
+/** What one building is doing for the town right now. */
+export function buildingEffects(ix: Index, town: TownState, id: string): readonly BuildingEffect[] {
+  const level = town.buildings[id] ?? 0;
+  if (level <= 0 || town.damaged.includes(id)) return [];
+  return ix.building(id).levels[level - 1]?.effects ?? [];
+}
+
+type Amount = Extract<BuildingEffect, { amount: number }>["type"];
+const total = (ix: Index, town: TownState, type: Amount) =>
   effects(ix, town).reduce((s, e) => s + (e.type === type ? e.amount : 0), 0);
 
 export const partySlots = (ix: Index, town: TownState) => total(ix, town, "partySlots");
 export const rosterSize = (ix: Index, town: TownState) => total(ix, town, "rosterSize");
+/** Overflow strength the pit defences hold back each night. */
+export const defence = (ix: Index, town: TownState) => total(ix, town, "defence");
+/** How many nights ahead the watchtowers can see (0 = none). */
+export const warningDays = (ix: Index, town: TownState) =>
+  effects(ix, town).reduce((m, e) => (e.type === "raidWarning" ? Math.max(m, e.days) : m), 0);
+const recruitsToday = (ix: Index, town: TownState) =>
+  ix.lib.town.recruitsOnOffer + total(ix, town, "recruitOffers");
+const recruitPicks = (ix: Index, town: TownState) => 1 + total(ix, town, "recruitPicks");
+
+/**
+ * What the next nights at the pit will bring if nobody kills anything, as far
+ * ahead as the watchtowers can see. The dungeon has no dice, so this is exact.
+ */
+export function forecast(ix: Index, town: TownState): { day: number; strength: number }[] {
+  const out: { day: number; strength: number }[] = [];
+  let d = town.dungeon;
+  for (let i = 0; i < warningDays(ix, town); i++) {
+    const next = dungeonDay(ix, d);
+    d = next.dungeon;
+    out.push({ day: town.day + i, strength: next.day.strength });
+  }
+  return out;
+}
+
+/** Gold to repair a raid-damaged building: a share of everything it cost to build. */
+export function repairCost(ix: Index, town: TownState, id: string): number {
+  const level = town.buildings[id] ?? 0;
+  const spent = ix
+    .building(id)
+    .levels.slice(0, level)
+    .reduce((s, l) => s + l.cost, 0);
+  return Math.max(5, Math.round(spent * ix.lib.town.repairRate));
+}
 
 /** Item ids on sale in town, in shop order. */
 export function shopStock(ix: Index, town: TownState): string[] {
@@ -170,19 +238,34 @@ function pickName(town: TownState, names: readonly string[], rng: Rng): string {
   for (let n = 2; ; n++) if (!taken.has(`${base} ${n}`)) return `${base} ${n}`;
 }
 
-function makeHero(ix: Index, town: TownState, names: readonly string[], classId: string): Hero {
+/** A new hero. With `picks` above 1, the best of that many rolls by the class's main stats. */
+function makeHero(
+  ix: Index,
+  town: TownState,
+  names: readonly string[],
+  classId: string,
+  picks = 1,
+): Hero {
   return roll(town, (rng) => {
     const id = `h${town.nextHeroId++}`;
-    return createHero(ix, { id, name: pickName(town, names, rng), classId }, rng);
+    const name = pickName(town, names, rng);
+    const main = ix.cls(classId).mainStats;
+    const score = (h: Hero) => main.reduce((s, st) => s + h.stats[st], 0);
+    let best = createHero(ix, { id, name, classId }, rng);
+    for (let i = 1; i < picks; i++) {
+      const other = createHero(ix, { id, name, classId }, rng);
+      if (score(other) > score(best)) best = other;
+    }
+    return best;
   });
 }
 
 /** A fresh batch of recruits looking for work. */
 function freshRecruits(ix: Index, town: TownState, names: readonly string[]): void {
   town.recruits = [];
-  for (let i = 0; i < ix.lib.town.recruitsOnOffer; i++) {
+  for (let i = 0; i < recruitsToday(ix, town); i++) {
     const classId = roll(town, (rng) => rng.pick(ix.lib.classes).id);
-    town.recruits.push(makeHero(ix, town, names, classId));
+    town.recruits.push(makeHero(ix, town, names, classId, recruitPicks(ix, town)));
   }
 }
 
@@ -202,6 +285,10 @@ export function newTown(ix: Index, names: readonly string[], seed: number): Town
     records: {},
     memorial: [],
     nextHeroId: 1,
+    dungeon: newDungeon(ix),
+    damaged: [],
+    pit: [],
+    raids: [],
   };
   for (const classId of rules.startingRoster) {
     const hero = makeHero(ix, town, names, classId);
@@ -364,10 +451,22 @@ export function nextLevel(ix: Index, town: TownState, buildingId: string) {
 export function upgrade(ix: Index, town: TownState, buildingId: string): TownState {
   const next = nextLevel(ix, town, buildingId);
   if (!next) throw new TownError("It can't be built any bigger yet.");
+  if (town.damaged.includes(buildingId)) throw new TownError("Repair it first.");
   if (town.gold < next.cost) throw new TownError("Not enough gold.");
   const t = edit(town);
   t.gold -= next.cost;
   t.buildings[buildingId] = (t.buildings[buildingId] ?? 0) + 1;
+  return t;
+}
+
+/** Fix a raid-damaged building so it works again. */
+export function repair(ix: Index, town: TownState, buildingId: string): TownState {
+  if (!town.damaged.includes(buildingId)) throw new TownError("It isn't damaged.");
+  const cost = repairCost(ix, town, buildingId);
+  if (town.gold < cost) throw new TownError("Not enough gold.");
+  const t = edit(town);
+  t.gold -= cost;
+  t.damaged = t.damaged.filter((id) => id !== buildingId);
   return t;
 }
 
@@ -381,9 +480,79 @@ function restHero(ix: Index, h: Hero, days: number): void {
   h.condition = "ok";
 }
 
-/** Spend a day in town. Everyone heals, and new recruits turn up. */
+/**
+ * Night falls on day `t.day`: the dungeon breeds and pushes up, and whatever
+ * climbs out of the pit meets the defences. Heroes in `away` are out on a
+ * trip and can't help. Returns the raid, if anything got past the defences.
+ */
+function nightfall(ix: Index, t: TownState, away: ReadonlySet<string>): RaidReport | undefined {
+  const { dungeon, day } = dungeonDay(ix, t.dungeon);
+  t.dungeon = dungeon;
+  const targets = ix.lib.buildings
+    .filter((b) => !b.raidProof && (t.buildings[b.id] ?? 0) > 0 && !t.damaged.includes(b.id))
+    .map((b) => b.id);
+  const home = t.roster.filter((h) => !away.has(h.id));
+  const raid = roll(t, (rng) =>
+    resolveRaid(
+      ix,
+      {
+        day: t.day,
+        climbed: day.overflow.count,
+        level: day.overflow.level,
+        strength: day.strength,
+        defence: defence(ix, t),
+        home,
+        gold: t.gold,
+        targets,
+      },
+      rng,
+    ),
+  );
+  t.pit = [
+    ...t.pit,
+    {
+      day: t.day,
+      climbed: raid.climbed,
+      level: raid.level,
+      strength: raid.strength,
+      defence: raid.defence,
+      outcome: raid.outcome,
+    },
+  ].slice(-PIT_HISTORY);
+  if (raid.outcome === "held") return undefined;
+
+  // Defenders come back from the fight hurt, or not at all.
+  for (const after of raid.after) {
+    const i = t.roster.findIndex((h) => h.id === after.id);
+    if (i < 0) continue;
+    const rec = t.records[after.id];
+    if (rec) rec.kills += raid.heroKills[after.id] ?? 0;
+    if (after.condition === "dead") {
+      t.memorial.push({
+        name: after.name,
+        classId: after.classId,
+        day: t.day,
+        floor: 0,
+        fate: "dead",
+        cause: "raid",
+        record: rec ?? { trips: 0, kills: 0, joined: t.day },
+      });
+      t.roster.splice(i, 1);
+      t.party = t.party.filter((id) => id !== after.id);
+    } else {
+      t.roster[i] = structuredClone(after);
+    }
+  }
+  t.gold -= raid.goldStolen;
+  t.damaged = [...t.damaged, ...raid.damaged];
+  t.raids = [...t.raids, raid].slice(-RAID_HISTORY);
+  return raid;
+}
+
+/** Spend a day in town. Everyone heals, night falls, and new recruits turn up. */
 export function rest(ix: Index, town: TownState, names: readonly string[]): TownState {
   const t = edit(town);
+  nightfall(ix, t, new Set());
   t.day += 1;
   for (const h of t.roster) restHero(ix, h, 1);
   freshRecruits(ix, t, names);
@@ -405,7 +574,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   const t = edit(town);
   const party = structuredClone(t.party.map((id) => hero(t, id)));
   const seed = roll(t, (rng) => rng.int(0, 2 ** 31 - 1));
-  const result = runExpedition(ix, party, t.orders, seed);
+  const result = runExpedition(ix, party, t.orders, seed, t.dungeon.floors);
   const wiped = result.outcome === "wiped";
 
   // Who killed what.
@@ -443,12 +612,22 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     t.roster[i] = structuredClone(after);
   }
 
-  // Time passes. Those who stayed home rest the whole trip; the party gets a night's sleep.
-  t.day += result.days;
-  for (const h of t.roster) restHero(ix, h, away.has(h.id) ? 1 : result.days);
+  // Their kills thin out the dungeon.
+  t.dungeon = applyKills(t.dungeon, result.floorKills);
+
+  // Time passes, one night at a time. Those who stayed home rest and guard the
+  // town; the party gets a night's sleep when it's back.
+  const raids: RaidReport[] = [];
+  for (let i = 0; i < result.days; i++) {
+    const raid = nightfall(ix, t, away);
+    if (raid) raids.push(raid);
+    t.day += 1;
+    for (const h of t.roster) if (!away.has(h.id)) restHero(ix, h, 1);
+  }
+  for (const h of t.roster) if (away.has(h.id)) restHero(ix, h, 1);
   t.party = t.party.filter((id) => findHero(t, id));
   freshRecruits(ix, t, names);
 
-  t.lastTrip = { day: startDay, seed, party, result, goldEarned, kills };
+  t.lastTrip = { day: startDay, seed, party, result, goldEarned, kills, raids };
   return t;
 }

@@ -13,7 +13,14 @@ const orders = (o: Partial<StandingOrders> = {}): StandingOrders => ({ ...DEFAUL
 
 /** A one-floor dungeon made only of the given rooms, for testing one behaviour at a time. */
 function onlyRooms(rooms: RoomDef[], count = 4): Library {
-  const floor: FloorDef = { id: "test-floor", depth: 1, name: "Test Floor", rooms: [count, count] };
+  const floor: FloorDef = {
+    id: "test-floor",
+    depth: 1,
+    name: "Test Floor",
+    rooms: [count, count],
+    capacity: 20,
+    startPopulation: 10,
+  };
   return { ...library, rooms, floors: [floor] };
 }
 const room = (r: Partial<RoomDef> & Pick<RoomDef, "id" | "behaviour">): RoomDef => ({

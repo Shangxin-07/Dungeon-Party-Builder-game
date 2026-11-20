@@ -260,6 +260,13 @@ export interface FloorDef {
   rooms: readonly [number, number];
   /** Room ids always placed on this floor (e.g. one rest spot). */
   fixedRooms?: readonly string[];
+  /**
+   * Monsters the floor can hold (DESIGN.md §4). Any more are pushed up to the
+   * floor above; floor 1's extra climb out of the pit.
+   */
+  capacity: number;
+  /** Monsters living here when a new game starts. */
+  startPopulation: number;
 }
 
 /** What a building level gives the town. Each level lists its full effects. */
@@ -269,7 +276,15 @@ export type BuildingEffect =
   /** Heroes the guild can keep on its books. */
   | { type: "rosterSize"; amount: number }
   /** Items for sale in town. */
-  | { type: "sells"; items: readonly string[] };
+  | { type: "sells"; items: readonly string[] }
+  /** Holds back this much overflow strength climbing out of the pit (DESIGN.md §8). */
+  | { type: "defence"; amount: number }
+  /** See the next night's overflow this many days ahead. */
+  | { type: "raidWarning"; days: number }
+  /** Extra recruits looking for work each day. */
+  | { type: "recruitOffers"; amount: number }
+  /** Each recruit is the best of this many extra candidates (by their class's main stats). */
+  | { type: "recruitPicks"; amount: number };
 
 export interface BuildingLevel {
   /** Gold to build or upgrade to this level. */
@@ -286,6 +301,8 @@ export interface BuildingDef {
   blurb: string;
   /** Level the town starts with (0 = not built). */
   startLevel: number;
+  /** Raids never damage it (the heroes live here; it's always defended). */
+  raidProof?: boolean;
   /** levels[0] is level 1, levels[1] is level 2, and so on. */
   levels: readonly BuildingLevel[];
 }
@@ -305,6 +322,38 @@ export interface TownRules {
   sellRate: number;
   /** Share of max HP a hero gets back for each day spent in town. */
   restPercent: number;
+  /** Repairing a raid-damaged building costs this share of what it cost to build. */
+  repairRate: number;
+}
+
+/**
+ * How the dungeon fills up and spills over (DESIGN.md §4, §8). Monster levels
+ * are depth-equivalent: a level-2 monster on floor 1 is as strong as a
+ * typical floor-2 one, so encounters there are sized like floor 2's.
+ */
+export interface DungeonRules {
+  /** New monsters the bottom floor breeds on day 1. */
+  spawnPerDay: number;
+  /** Added to the spawn rate every day. The source of all escalation. */
+  spawnGrowthPerDay: number;
+  /** Evicted monsters are the weakest: this many levels below their floor's average. */
+  evictedLevelDrop: number;
+  /** Each day a floor's level moves this share of the way back towards its own depth. */
+  settlePerDay: number;
+  raids: RaidRules;
+}
+
+export interface RaidRules {
+  /** Monster power (as in encounters) per point of overflow strength that gets past the defences. */
+  powerPerStrength: number;
+  /** An unopposed or victorious raid steals this much gold per point of strength. */
+  goldPerStrength: number;
+  /** One building is damaged for every this many points of strength. */
+  strengthPerDamage: number;
+  /** Heroes in town below this share of max HP stay in bed instead of fighting. */
+  defenderMinHpPercent: number;
+  /** Most heroes who can fight off one raid. */
+  maxDefenders: number;
 }
 
 /** Everything the simulation needs, indexed by kind. */
@@ -322,6 +371,7 @@ export interface Library {
   floors: readonly FloorDef[];
   buildings: readonly BuildingDef[];
   town: TownRules;
+  dungeon: DungeonRules;
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -338,3 +388,4 @@ export const defineRoom = (def: RoomDef): RoomDef => def;
 export const defineFloor = (def: FloorDef): FloorDef => def;
 export const defineBuilding = (def: BuildingDef): BuildingDef => def;
 export const defineTownRules = (def: TownRules): TownRules => def;
+export const defineDungeonRules = (def: DungeonRules): DungeonRules => def;

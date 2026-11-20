@@ -101,6 +101,8 @@ export interface CombatOptions {
   maxRounds?: number;
   /** The party scouted the monsters first: it gets a free opening round. */
   surprise?: boolean;
+  /** Downed heroes don't bleed out (fights in town, where the fallen are dragged indoors). */
+  noBleeding?: boolean;
 }
 
 /** The basic weapon attack every fighter has. Not a content file, so "attack" is a reserved id. */
@@ -122,9 +124,14 @@ export function runCombat(
   monsterIds: readonly string[],
   opts: CombatOptions,
 ): CombatResult {
-  return new Battle(ix, party, monsterIds, createRng(opts.seed), !!opts.surprise).run(
-    opts.maxRounds ?? MAX_ROUNDS,
-  );
+  return new Battle(
+    ix,
+    party,
+    monsterIds,
+    createRng(opts.seed),
+    !!opts.surprise,
+    !!opts.noBleeding,
+  ).run(opts.maxRounds ?? MAX_ROUNDS);
 }
 
 class Battle {
@@ -142,6 +149,7 @@ class Battle {
     monsterIds: readonly string[],
     private rng: Rng,
     private surprise = false,
+    private noBleeding = false,
   ) {
     for (const hero of party) {
       if (hero.condition === "ok") this.fighters.push(this.fromHero(hero));
@@ -252,7 +260,7 @@ class Battle {
         this.takeTurn(f);
         if ((winner = this.winner()) !== "none") break;
       }
-      if (winner === "none") this.bleedOut();
+      if (winner === "none" && !this.noBleeding) this.bleedOut();
       winner = this.winner();
     }
 

@@ -78,7 +78,19 @@ import warrensFloor from "./floors/warrens";
 import boneHallsFloor from "./floors/bone-halls";
 import guildHallBuilding from "./buildings/guild-hall";
 import marketBuilding from "./buildings/market";
+import palisadeBuilding from "./buildings/palisade";
+import gateBuilding from "./buildings/gate";
+import watchtowerBuilding from "./buildings/watchtower";
+import tavernBuilding from "./buildings/tavern";
+import blacksmithBuilding from "./buildings/blacksmith";
+import ironSwordItem from "./items/iron-sword";
+import warAxeItem from "./items/war-axe";
+import longbowItem from "./items/longbow";
+import ironShieldItem from "./items/iron-shield";
+import scaleMailItem from "./items/scale-mail";
+import ironStaffItem from "./items/iron-staff";
 import townRules from "./town";
+import dungeonRules from "./dungeon";
 
 export const classes: readonly ClassDef[] = [fighterClass, scoutClass, mageClass];
 export const items: readonly ItemDef[] = [
@@ -97,6 +109,12 @@ export const items: readonly ItemDef[] = [
   swordItem,
   trinketItem,
   woodenShieldItem,
+  ironSwordItem,
+  warAxeItem,
+  longbowItem,
+  ironShieldItem,
+  scaleMailItem,
+  ironStaffItem,
 ];
 export const abilities: readonly AbilityDef[] = [
   fireboltAbility,
@@ -142,7 +160,15 @@ export const rooms: readonly RoomDef[] = [
   treasureHoardRoom,
 ];
 export const floors: readonly FloorDef[] = [diggingsFloor, warrensFloor, boneHallsFloor];
-export const buildings: readonly BuildingDef[] = [guildHallBuilding, marketBuilding];
+export const buildings: readonly BuildingDef[] = [
+  guildHallBuilding,
+  marketBuilding,
+  tavernBuilding,
+  blacksmithBuilding,
+  palisadeBuilding,
+  gateBuilding,
+  watchtowerBuilding,
+];
 
 export const library: Library = {
   classes,
@@ -158,6 +184,7 @@ export const library: Library = {
   floors,
   buildings,
   town: townRules,
+  dungeon: dungeonRules,
 };
 
 export { heroNames } from "./names";

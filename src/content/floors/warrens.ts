@@ -6,4 +6,6 @@ export default defineFloor({
   name: "The Warrens",
   rooms: [6, 8],
   fixedRooms: ["rest-spot"],
+  capacity: 50,
+  startPopulation: 38,
 });

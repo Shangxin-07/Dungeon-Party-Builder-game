@@ -6,7 +6,12 @@
   --muted: #a89c88;
   --accent: #e0a64b;
   color-scheme: dark;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
   line-height: 1.5;
 }
 
@@ -779,4 +784,234 @@ sup.down {
 
 .hero-card .hp-name {
   display: none;
+}
+
+/* The pit (M4) */
+
+.gauges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px 24px;
+  margin: 12px 0;
+}
+
+.gauge-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge-track,
+.pop-track {
+  position: relative;
+  display: block;
+  height: 10px;
+  margin: 4px 0;
+  border-radius: 5px;
+  background: var(--border);
+  overflow: visible;
+}
+
+.pop-track {
+  display: inline-block;
+  width: 90px;
+  height: 8px;
+  vertical-align: middle;
+}
+
+.gauge-fill,
+.pop-fill {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: #8a7f6c;
+}
+
+.gauge-fill.over,
+.pop-fill.full {
+  background: #e48a7a;
+}
+
+.gauge-wall {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text);
+}
+
+.pit-history {
+  margin: 16px 0;
+}
+
+.pit-history svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pit-history .axis {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.pit-history .tick {
+  fill: var(--muted);
+  font-size: 10px;
+}
+
+.pit-history .hit {
+  fill: transparent;
+}
+
+.pit-history .hit:hover {
+  fill: rgba(255, 255, 255, 0.05);
+}
+
+.pit-history .bar {
+  pointer-events: none;
+}
+
+.bar.held,
+.swatch.held {
+  fill: #8a7f6c;
+  background: #8a7f6c;
+}
+
+.bar.repelled,
+.swatch.repelled {
+  fill: var(--accent);
+  background: var(--accent);
+}
+
+.bar.through,
+.swatch.through {
+  fill: #e48a7a;
+  background: #e48a7a;
+}
+
+.wall-line {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+
+.legend {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin-left: 8px;
+  color: var(--muted);
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
+.swatch.wall {
+  width: 14px;
+  height: 0;
+  border-radius: 0;
+  border-top: 2px dashed var(--text);
+  background: none;
+  vertical-align: 3px;
+}
+
+.raids {
+  padding-left: 18px;
+  font-size: 0.9rem;
+}
+
+.raid-overrun,
+.raid-unopposed {
+  color: #f0b0a4;
+}
+
+.pressure {
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.pressure th,
+.pressure td {
+  padding: 3px 16px 3px 0;
+  text-align: left;
+}
+
+.pressure th {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.card.damaged {
+  border-color: #e48a7a;
+}
+
+.damaged-note {
+  color: #f0b0a4;
+}
+
+.slots {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+}
+
+.slot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.slot.playing strong {
+  color: var(--accent);
+}
+
+.slot-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.file-btn input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.file-btn {
+  position: relative;
+  display: inline-block;
+}
+
+.trip-town h4 {
+  margin: 12px 0 4px;
+}
+
+@media (max-width: 600px) {
+  .pressure {
+    font-size: 0.8rem;
+  }
+  .pressure th,
+  .pressure td {
+    padding-right: 8px;
+  }
 }
