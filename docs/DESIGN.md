@@ -20,6 +20,7 @@ The dungeon is getting worse. The deepest level keeps breeding, and the overflow
  │ buy, sell, equip gear         │ launch │ floor → rooms → events   │
  │ pick party + standing orders  │ ─────► │ (fights, traps, loot)    │
  │ spend level-ups               │        │ you watch the log/view   │
+ │ build / upgrade buildings     │        │                          │
  └───────────────▲───────────────┘        └────────────┬────────────┘
                  │   return: loot, XP, morale changes  │
                  └──────────── or wipe → rescue run ◄──┘
@@ -192,11 +193,66 @@ Every hero is **Good**, **Neutral** or **Evil**. Alignment is shown when recruit
 
 ### Built to grow
 
-Alignment is just another kind of content (`content/alignments/`): each alignment is a definition with a position on the scale, and party alignment is worked out as a tag on the party (`party:good`, `party:divided`). Events, monster behaviour, item rules and morale effects check those tags through the normal effects system (§12). A second axis (for example Lawful / Chaotic) could be added later without changing the engine.
+Alignment is just another kind of content (`content/alignments/`): each alignment is a definition with a position on the scale, and party alignment is worked out as a tag on the party (`party:good`, `party:divided`). Events, monster behaviour, item rules and morale effects check those tags through the normal effects system (§13). A second axis (for example Lawful / Chaotic) could be added later without changing the engine.
 
-🔶 **OPEN: small parties.** Under the two-thirds rule, a Neutral party can only hold both a Good and an Evil hero alongside four Neutral heroes (6 in total). In a party of 3 to 5 it can't happen. Suggested fix: a Good + Evil pair "balances out" and counts as Neutral when working out the majority, so Neutral, Neutral, Good, Evil is a Neutral party. To settle once party sizes are set.
+✅ **DECIDED: small parties.** The plain two-thirds rule stays. Party size grows with the Guild Hall (§8), so early parties of 3 to 5 can't mix Good and Evil, and a 6-slot hall (4 Neutral, 1 Good, 1 Evil) unlocks it. Mixing the two becomes something you earn.
 
-## 8. Levelling up
+## 8. The town: guild hall and buildings
+
+> Added 2026-11-20. The Guild Hall is in the first slice; the wider building system grows from M4 onward.
+
+Your progress lives in two places: your **heroes** (who can die) and your **town** (which can't). Loot pays for both.
+
+### Party size comes from the Guild Hall
+
+How many heroes you can send at once is set by the size of your **Guild Hall**. You start small and upgrade it, so the game begins with simple parties and the complexity grows as you do.
+
+| Guild Hall level | Party slots | Roster size | Notes |
+|---|---|---|---|
+| 1 (start) | 3 | 6 | |
+| 2 | 4 | 8 | |
+| 3 | 5 | 10 | |
+| 4 | 6 | 12 | Good and Evil can now share a Neutral party (§7) |
+
+Six is the planned cap for now. More levels are just more rows of data.
+
+### Buildings
+
+- Buildings cost a **one-off** price, with no upkeep.
+- Better buildings need more than gold: **materials only found on deeper floors** (iron ore, spider silk, bone dust…) and sometimes a guild **renown** level. So stronger heroes, who can reach deeper, are what unlock the better buildings.
+- Buildings are **permanent**. If a party wipes, the town is still there. This is the safety net that stops one bad expedition ending the game.
+- **Town raids** (decision 3) can damage a building. A damaged building stops working until it is repaired (cheap), but it is never destroyed.
+
+Starting list (more later):
+
+| Building | Does | Slice? |
+|---|---|---|
+| **Guild Hall** | Party slots and roster size (above) | **First slice** (levels 1–2) |
+| **Market** | Buy and sell basic gear and potions | **First slice** (built from the start) |
+| Tavern | Better recruits to choose from; resting heroes recover morale faster | Later (M4) |
+| Blacksmith | Better gear for sale; repair and upgrade items | Later (M4) |
+| Apothecary | Cheaper potions; injuries heal faster | Later |
+| Training Yard | Heroes resting in town gain a little XP | Later |
+| Library | Identify trinkets; Knowledge heroes like it; teaches the Lore skill | Later |
+| Watchtower / Palisade | Reduces damage from town raids | Later |
+| Vault | Protects your stash from raids | Later |
+| Temple / Black Market | Alignment services for Good / Evil heroes (§7) | With alignment |
+
+### Favourite buildings
+
+Every hero has a **favourite building**, usually linked to their motivation (a Comrades hero loves the Tavern, a Knowledge hero the Library, a Glory hero the Training Yard, a Gold hero the Vault or Market). Their profile shows it.
+
+- **Built:** a small morale boost on every rest day in town.
+- **Missing:** a small morale drain on every rest day, and a grumble shown in town ("Bram keeps asking when we're getting a tavern").
+- Later, a strong recruit might refuse to join a town without their favourite building.
+
+This turns building choices into hero management: the town you build shapes which heroes are happy to stay.
+
+### Built to grow
+
+Buildings are data (`content/buildings/`): each has a cost, required materials and renown, levels, and its effects written in the normal effects system (§13). For example, the Guild Hall's levels just set `partySlots` and `rosterSize`, and the Tavern adds a `restMorale` bonus. A favourite building is a field on the hero, picked from a list weighted by motivation. Adding a building never changes the engine.
+
+## 9. Levelling up
 
 Options:
 
@@ -210,7 +266,7 @@ Optional twist that ties into morale: a hero may *want* a particular perk ("Bram
 
 ✅ **DECIDED 5: level-up style.** Decision: hybrid, as above.
 
-## 9. Death, wipes and recovery runs
+## 10. Death, wipes and recovery runs
 
 - At 0 HP a hero is **downed**, not dead. A downed hero bleeds out over a few turns unless stabilised (Medicine) or the fight ends. Allies carry downed heroes out if they have the carry slots.
 - If the whole party goes down, it's a **wipe**. Each hero then rolls: dead, or alive and **trapped/captured**, with a rescue window of a few days.
@@ -220,7 +276,7 @@ Optional twist that ties into morale: a hero may *want* a particular perk ("Bram
 
 ✅ **DECIDED 6: permadeath.** Decision: yes, dead heroes stay dead, but the rescue window means a quick recovery run can save some. Alternative: nobody dies, only "lost until rescued".
 
-## 10. How an expedition is simulated
+## 11. How an expedition is simulated
 
 1. A floor is a short chain of **rooms** (5–8 for floor 1), generated from a seed.
 2. Entering a room: a **Scouting check** may reveal what's inside (ambush, trap, treasure).
@@ -236,7 +292,7 @@ The simulation is **deterministic**: same seed + same party = same result. That 
 
 ✅ **DECIDED 7: how the watching looks.** Decision: start with an animated, readable text log (like a battle report), with HP bars. Add a simple 2D view later. Building the sim first and the visuals second means the game is playable much sooner.
 
-## 11. First playable slice
+## 12. First playable slice
 
 Small on purpose. Everything here is data, so adding more later means adding entries, not rewriting code.
 
@@ -269,9 +325,11 @@ The Cleric (healer, WIL/CHA) is the obvious 4th class to add next.
 
 **Dungeon:** 3 floors, a starting roster of 4 recruits, one party out at a time.
 
+**Town:** Guild Hall level 1 (3 party slots), upgradeable to level 2 (4 slots), plus a Market. That's enough to prove the building system without much content.
+
 ✅ **DECIDED 8: one party or several at once?** Decision: one at a time in the first slice; multiple parties later (which also makes rescue runs work while your main party is busy).
 
-## 12. Built to grow (extensibility)
+## 13. Built to grow (extensibility)
 
 The game will start small and grow, so the main design rule is: **new content is data, not code.** Adding a class, monster, item, skill or perk should mean adding one entry to a data file, with no changes to the engine.
 
@@ -313,7 +371,7 @@ export default defineMonster({
 
 **Guard rails.** A content check (run in tests and CI) fails if a definition references an id that doesn't exist, breaks the schema, or produces a wildly out-of-band balance number in a quick headless simulation. That keeps a growing content library from quietly breaking.
 
-## 13. Tech stack and hosting
+## 14. Tech stack and hosting
 
 **Chosen: a TypeScript web game.**
 
@@ -324,7 +382,7 @@ export default defineMonster({
 | Tests | Vitest | Fast, simple |
 | UI | React + Vite | The town screens are menus, lists and forms, which suit a web UI well |
 | Watch view | Text log first, then PixiJS or Canvas for a 2D view | Visuals can come later without touching the sim |
-| Game content | Typed TS definition files with schema checks (see §12) | Growing the game = adding data |
+| Game content | Typed TS definition files with schema checks (see §13) | Growing the game = adding data |
 | Saves | Browser storage (IndexedDB) | No server needed |
 | Hosting | GitHub Pages, deployed by GitHub Actions | Free, already on GitHub, auto-deploys on merge |
 
@@ -338,7 +396,7 @@ Alternatives considered:
 
 ✅ **DECIDED 9: stack and hosting.** Decision: TypeScript + React + Vite, hosted on GitHub Pages.
 
-## 14. Build plan
+## 15. Build plan
 
 Each milestone ends with something you can run.
 
@@ -348,11 +406,11 @@ Each milestone ends with something you can run.
 | M1 | Sim core: content definitions + schema checks, effects system, stats, seeded combat between a party and a monster group | Run a fight from the command line and read the log |
 | M2 | Expeditions: floors, rooms, scouting, traps, loot, appraisal, standing orders | Simulate a full trip to floor 1–3 |
 | M3 | Town UI: roster, recruit, equip, formation, launch, watch the log, results screen | Actually play a loop in the browser |
-| M4 | Time and saves: dungeon days, population push-up, pressure map, save/load | Feel the dungeon getting worse over time |
-| M5 | Heroes with personalities: morale, motivations, level-up perks, wipes and recovery runs | Play the full design in miniature |
-| M6+ | Balance pass, then grow content: Cleric, alignment (§7), more monsters/floors, 2D watch view, multiple parties | Keep growing |
+| M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), save/load | Feel the dungeon getting worse over time |
+| M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs | Play the full design in miniature |
+| M6+ | Balance pass, then grow content: Cleric, alignment (§7), more buildings, more monsters/floors, 2D watch view, multiple parties | Keep growing |
 
-## 15. Decisions (agreed 2026-11-20)
+## 16. Decisions (agreed 2026-11-20)
 
 | # | Decision | Agreed |
 |---|---|---|
@@ -366,3 +424,6 @@ Each milestone ends with something you can run.
 | 8 | Parties at once | One in the first slice, several later |
 | 9 | Stack and hosting | TypeScript + React + Vite on GitHub Pages |
 | 10 | Alignment | Good / Neutral / Evil; two-thirds sets party alignment, others within one step; mismatches cost morale rather than being banned. Added after the first slice |
+| 11 | Party size | Set by the Guild Hall level: 3 slots at the start, up to 6. Good + Evil mixing unlocks at 6 |
+| 12 | Town buildings | One-off cost (gold, deep-floor materials, renown); permanent, survive wipes; raids damage but never destroy |
+| 13 | Favourite buildings | Each hero has one; built = morale boost, missing = morale drain |
