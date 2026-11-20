@@ -5,7 +5,7 @@
  */
 import { useState } from "react";
 import { STATS, type Stat } from "../content/types";
-import type { Hero } from "../sim/hero";
+import { fatigueTier, type Hero } from "../sim/hero";
 import { xpProgress } from "../sim/levels";
 import { lossFactor, mood } from "../sim/morale";
 import { chooseLevelUp, standing, type TownState } from "../sim/town";
@@ -181,6 +181,45 @@ export function LevelUpPicker({ hero, act }: { hero: Hero; act: Act }) {
       >
         Learn it
       </button>
+    </div>
+  );
+}
+
+/** Fatigue as a bar (M6), and any injuries with the days left to heal. */
+export function WearBar({ hero }: { hero: Hero }) {
+  const f = hero.fatigue ?? 0;
+  const tier = fatigueTier(ix, hero);
+  const next = ix.lib.wear.tiers.find((t) => t.at > f);
+  return (
+    <div className="morale">
+      <div
+        className="meter"
+        title={`Fatigue ${f}/100. Each day in town takes ${ix.lib.wear.restPerDay} off.${next ? ` ${next.name[0]!.toUpperCase()}${next.name.slice(1)} at ${next.at}.` : ""}`}
+      >
+        <span className="meter-label">Fatigue</span>
+        <span className="pop-track meter-track" aria-hidden="true">
+          <span
+            className={`pop-fill fatigue-fill${tier ? " low" : ""}`}
+            style={{ width: `${f}%` }}
+          />
+        </span>
+        <span className={`meter-num${tier ? " warn" : ""}`}>
+          {f} <span className="muted">{tier?.name ?? "rested"}</span>
+        </span>
+      </div>
+      {hero.injuries?.length ? (
+        <ul className="injuries small">
+          {hero.injuries.map((inj) => {
+            const def = ix.injury(inj.id);
+            return (
+              <li key={inj.id} className="warn">
+                {def.name} <span className="muted">({def.description})</span>, {inj.days}{" "}
+                {inj.days === 1 ? "day" : "days"} to heal
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
     </div>
   );
 }

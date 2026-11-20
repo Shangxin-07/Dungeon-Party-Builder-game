@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DERIVED, STATS, type Derived } from "../content/types";
 import type { FoeSheet } from "../sim/combat";
 import type { ExpeditionEvent, ExpeditionResult } from "../sim/expedition";
-import { heroSheet, type Hero } from "../sim/hero";
+import { fatigueTier, heroSheet, type Hero } from "../sim/hero";
 import { ix } from "./game";
 
 export const SPEEDS = { slow: 450, normal: 200, fast: 40 } as const;
@@ -258,6 +258,15 @@ function WatchCard({ hero, bar: raw }: { hero: Hero; bar?: Bar }) {
       <p className="hero-class">
         {ix.cls(hero.classId).name}, level {hero.level}, {hero.row} row
         {hero.morale !== undefined ? <span className="muted"> · morale {hero.morale}</span> : null}
+        {fatigueTier(ix, hero) ? (
+          <span className="warn"> · {fatigueTier(ix, hero)!.name}</span>
+        ) : null}
+        {hero.injuries?.length ? (
+          <span className="warn">
+            {" "}
+            · {hero.injuries.map((i) => ix.injury(i.id).name.toLowerCase()).join(", ")}
+          </span>
+        ) : null}
         {bar?.maxMana ? (
           <span className="muted">
             {" "}

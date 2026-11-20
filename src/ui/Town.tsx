@@ -12,6 +12,7 @@ import type { ItemDef, Row } from "../content/types";
 import { describeRetreat, type LootRule } from "../sim/expedition";
 import { EQUIP_SLOTS, heroSheet, type EquipSlot, type Hero } from "../sim/hero";
 import {
+  answerRaise,
   buy,
   buyPrice,
   cantLaunch,
@@ -63,7 +64,9 @@ import {
   writeSlot,
 } from "./saves";
 import { DERIVED_LABELS, HeroBars, Results, StatSheet, TripPlayer } from "./Watch";
-import { LevelUpPicker, MoraleBar, PerkList, Personality, XpBar } from "./Heroes";
+import { LevelUpPicker, MoraleBar, PerkList, Personality, WearBar, XpBar } from "./Heroes";
+import { RestockPanel } from "./Restock";
+import { ScoutingReport } from "./Report";
 import { Departed, LostPanel, TalkPanel } from "./Lost";
 import { Accounts } from "./Accounts";
 
@@ -192,6 +195,7 @@ export function TownGame() {
         </p>
       ) : null}
       {trip ? <LastTrip town={town} onWatch={() => setWatching("trip")} /> : null}
+      <RestockPanel town={town} act={act} />
       <TalkPanel town={town} />
       <LostPanel town={town} act={act} />
       <PartyPanel
@@ -448,6 +452,7 @@ function TripTown({ town }: { town: TownState }) {
             <th>HP</th>
             <th>XP</th>
             <th>Morale</th>
+            <th>Fatigue</th>
             <th>Now</th>
           </tr>
         </thead>
@@ -490,6 +495,7 @@ function TripTown({ town }: { town: TownState }) {
                     </span>
                   ) : null}
                 </td>
+                <td>{trip.fatigue?.[h.id] ?? "–"}</td>
                 <td>
                   {trapped
                     ? "Trapped"
@@ -498,6 +504,12 @@ function TripTown({ town }: { town: TownState }) {
                         ? "Dead"
                         : `Lost on floor ${fate.floor}`
                       : "Home"}
+                  {trip.injuries?.[h.id]?.length ? (
+                    <span className="warn">
+                      {", "}
+                      {trip.injuries[h.id]!.map((i) => ix.injury(i).name.toLowerCase()).join(", ")}
+                    </span>
+                  ) : null}
                 </td>
               </tr>
             );
@@ -634,6 +646,7 @@ function PartyPanel({ town, act, onLaunch }: { town: TownState; act: Act; onLaun
         </label>
       </div>
 
+      <ScoutingReport town={town} party={party} />
       {warnings.length ? (
         <ul className="warnings">
           {warnings.map((w) => (
@@ -696,9 +709,33 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
       </div>
       <HeroBars hero={h} />
       <MoraleBar hero={h} log />
+      <WearBar hero={h} />
       <XpBar hero={h} />
       <Personality hero={h} town={town} />
       <LevelUpPicker key={h.levelUps[0]?.level ?? 0} hero={h} act={act} />
+      {h.raiseAsk ? (
+        <div className="raise">
+          <p>
+            <strong>{h.name} wants a raise</strong> of {h.raiseAsk.amount} gold a day (now paid{" "}
+            {wage(ix, h)}). They'll take silence as a no after {ix.lib.town.raises.patienceDays}{" "}
+            days.
+          </p>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => act((t) => answerRaise(ix, t, h.id, true))}
+          >
+            Agree
+          </button>{" "}
+          <button
+            type="button"
+            className="btn"
+            onClick={() => act((t) => answerRaise(ix, t, h.id, false))}
+          >
+            Refuse
+          </button>
+        </div>
+      ) : null}
       <div className="hero-actions">
         <button
           type="button"

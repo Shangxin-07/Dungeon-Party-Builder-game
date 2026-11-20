@@ -4,6 +4,7 @@
  * groups are content; this just keeps adding groups that fit the floor
  * until the total power is close to the target.
  */
+import type { EncounterDef } from "../content/types";
 import type { Index } from "./library";
 import type { Rng } from "./rng";
 
@@ -48,14 +49,15 @@ export function rollEncounter(
   if (!options.length) throw new Error(`No encounters defined for floor ${floor}`);
   const target = opts.power ?? (opts.level === undefined ? floorPower(floor) : levelPower(level));
   const cap = Math.min(MAX_MONSTERS, opts.max ?? MAX_MONSTERS);
-  const total = options.reduce((s, e) => s + e.weight, 0);
+  const weight = (e: EncounterDef) => encounterWeight(e, floor);
+  const total = options.reduce((s, e) => s + weight(e), 0);
   const monsters: string[] = [];
   let power = 0;
   if (cap <= 0) return monsters;
 
   for (let picks = 0; picks < 4 && power < target * 0.85; picks++) {
     let roll = rng.next() * total;
-    const enc = options.find((e) => (roll -= e.weight) < 0) ?? options[options.length - 1]!;
+    const enc = options.find((e) => (roll -= weight(e)) < 0) ?? options[options.length - 1]!;
     for (const g of enc.groups) {
       const n = rng.int(g.count[0], g.count[1]);
       for (let i = 0; i < n; i++) {
@@ -69,6 +71,26 @@ export function rollEncounter(
   }
   // Keep the front row in front: order by row so logs read naturally.
   return monsters.sort((a, b) => rowOrder(ix, a) - rowOrder(ix, b));
+}
+
+/** How likely an encounter group is on this floor. */
+export const encounterWeight = (e: EncounterDef, floor: number) => e.weightOn?.[floor] ?? e.weight;
+
+/**
+ * Chance that a typical fight on this floor (at its usual level) includes
+ * each kind of monster, from the encounter weights. For the scouting report.
+ */
+export function floorOdds(ix: Index, floor: number): { monster: string; share: number }[] {
+  const options = ix.lib.encounters.filter((e) => e.floors[0] <= floor && e.floors[1] >= floor);
+  const total = options.reduce((s, e) => s + encounterWeight(e, floor), 0);
+  const share = new Map<string, number>();
+  for (const e of options) {
+    const p = encounterWeight(e, floor) / total;
+    for (const m of new Set(e.groups.map((g) => g.monster))) share.set(m, (share.get(m) ?? 0) + p);
+  }
+  return [...share]
+    .map(([monster, s]) => ({ monster, share: s }))
+    .sort((a, b) => b.share - a.share);
 }
 
 const rowOrder = (ix: Index, id: string) => (ix.monster(id).row === "front" ? 0 : 1);

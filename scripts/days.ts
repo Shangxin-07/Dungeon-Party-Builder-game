@@ -7,17 +7,21 @@
  *   npm run days -- --policy idle              # never go down: watch it get worse
  *   npm run days -- --policy 2 --build         # floor 2 trips, build defences when affordable
  *   npm run days -- --days 60 --seed 7 --runs 200   # summary over many towns
+ *   npm run days -- --policy 2 --build --static     # never rotate the party
  *
- * The bot rests until the party is at 90% HP, then sends it down. It spends
+ * The bot restocks used supplies, keeps one hero on the bench and sends the
+ * freshest heroes (unless --static), and rests until the party is at 90% HP
+ * and nobody is tired or injured, then sends it down. It spends
  * level-ups (the wanted perk if there is one, else the first; free points go
  * in the class's first main stat) and sends a rescue party when someone is
  * trapped. With --build it also builds and upgrades everything else once
  * the defences are up, cheapest first, keeping a few days' wages in hand.
  */
 import { heroNames, library } from "../src/content";
-import { heroSheet } from "../src/sim/hero";
+import { fatigueTier, heroSheet, type Hero } from "../src/sim/hero";
 import { indexLibrary } from "../src/sim/library";
 import {
+  answerRaise,
   cancelRescue,
   cantLaunch,
   chooseLevelUp,
@@ -31,6 +35,9 @@ import {
   repair,
   repairCost,
   rest,
+  restock,
+  restockPlan,
+  rosterSize,
   setOrders,
   toggleParty,
   underConstruction,
@@ -56,6 +63,7 @@ const ix = indexLibrary(library);
 const days = Number(arg("days") ?? 40);
 const policy = arg("policy") ?? "1";
 const build = flag("build");
+const rotate = !flag("static");
 const runs = Number(arg("runs") ?? 1);
 const seed0 = Number(arg("seed") ?? 1);
 
@@ -92,7 +100,40 @@ function step(t: TownState): TownState {
   const site = t.sites.find((s) => s.trapped.some((x) => x.until >= t.day + s.floor - 1));
   if (site && !t.orders.rescue) t = planRescue(ix, t, site.id);
   if (!site && t.orders.rescue) t = cancelRescue(ix, t);
-  // Keep the party full.
+  // Agree to raises while the gold holds out (a month of the new wage bill).
+  for (const h of t.roster)
+    if (h.raiseAsk)
+      t = answerRaise(ix, t, h.id, t.gold > 30 * (wageBill(ix, t) + h.raiseAsk.amount));
+  // Put back what the last trip used up, as far as the gold goes.
+  const plan = restockPlan(ix, t);
+  let budget = t.gold - 2 * wageBill(ix, t);
+  const okd = plan.filter((l) => (budget -= l.cost) >= 0);
+  if (okd.length) t = restock(ix, t, okd);
+  // Keep a hero on the bench so the party can rotate.
+  if (
+    rotate &&
+    t.roster.length < partySlots(ix, t) + 1 &&
+    t.roster.length < rosterSize(ix, t) &&
+    t.recruits.length &&
+    t.gold >= library.town.hireCost + 60
+  )
+    t = hire(ix, t, t.recruits[0]!.id);
+  // Pick the party: with --static, the same heroes every time (topped up if
+  // someone's gone); otherwise the freshest heroes, injuries last.
+  const fit = (h: Hero) => h.condition === "ok" && h.hp >= heroSheet(ix, h).derived.maxHp * 0.9;
+  const tiredness = (h: Hero) => h.fatigue + (h.injuries.length ? 50 : 0) + (fit(h) ? 0 : 100);
+  if (rotate) {
+    const best = [...t.roster]
+      .sort((a, b) => tiredness(a) - tiredness(b))
+      .slice(0, partySlots(ix, t));
+    if (!best.some((h) => h.row === "front")) {
+      const front = t.roster
+        .filter((h) => h.row === "front" && !best.includes(h))
+        .sort((a, b) => tiredness(a) - tiredness(b))[0];
+      if (front) best[best.length - 1] = front;
+    }
+    t = { ...t, party: best.map((h) => h.id) };
+  }
   while (t.party.length < partySlots(ix, t)) {
     const spare = t.roster.find((h) => !t.party.includes(h.id));
     if (spare) t = toggleParty(ix, t, spare.id);
@@ -101,9 +142,10 @@ function step(t: TownState): TownState {
     else break;
   }
   if (policy === "idle") return rest(ix, t, heroNames);
+  // Go when everyone is healed and nobody is tired or hurt.
   const ready = t.party.every((id) => {
     const h = findHero(t, id)!;
-    return h.condition === "ok" && h.hp >= heroSheet(ix, h).derived.maxHp * 0.9;
+    return fit(h) && !fatigueTier(ix, h) && !h.injuries.length;
   });
   if (!ready || cantLaunch(ix, t)) return rest(ix, t, heroNames);
   const site2 = t.sites.find((s) => s.id === t.orders.rescue);
@@ -115,7 +157,7 @@ function step(t: TownState): TownState {
 }
 
 /** Trapped and rescued heroes, counted as trips come back. */
-const tally = { trapped: 0, rescued: 0, earned: 0, unpaid: 0 };
+const tally = { trapped: 0, rescued: 0, earned: 0, unpaid: 0, trips: 0, injuries: 0 };
 /** Gold in the coffers at these days, for the summary. */
 const CHECKPOINTS = [10, 20, 40, 60, 90];
 const goldAt: Record<number, number[]> = {};
@@ -143,6 +185,8 @@ function play(seed: number, print: boolean) {
       tally.trapped += t.lastTrip.trapped?.length ?? 0;
       tally.rescued += t.lastTrip.rescued?.length ?? 0;
       tally.earned += t.lastTrip.goldEarned;
+      tally.trips++;
+      tally.injuries += Object.keys(t.lastTrip.injuries ?? {}).length;
     }
     for (const c of CHECKPOINTS)
       if (c <= days && t.day >= c && !seen.has(c)) {
@@ -226,6 +270,8 @@ if (runs === 1) {
     tally.rescued = tally.trapped = 0;
   }
   const earned = tally.earned / runs;
+  const trips = tally.trips / runs;
+  const injuries = tally.injuries / runs;
   firstRaid.sort((a, b) => a - b);
   const median = firstRaid[Math.floor(runs / 2)]!;
   console.log(
@@ -237,6 +283,7 @@ if (runs === 1) {
       `  on the roster at the end: level ${(levelSum / Math.max(1, heroes)).toFixed(1)} on average, ` +
       `morale ${(moraleSum / Math.max(1, heroes)).toFixed(0)}, ${((unhappy / Math.max(1, heroes)) * 100).toFixed(0)}% unhappy\n` +
       `  overflow strength on the last night: ${(strength / runs).toFixed(1)}\n` +
+      `  trips per town: ${trips.toFixed(1)}, injuries on trips: ${injuries.toFixed(1)}\n` +
       `  buildings: ${(built / runs).toFixed(1)} of ${levels} levels built; ` +
       `${(unpaid / runs).toFixed(1)} days with unpaid wages\n` +
       `  gold from trips per town: ${earned.toFixed(0)}; gold in hand (median) ` +

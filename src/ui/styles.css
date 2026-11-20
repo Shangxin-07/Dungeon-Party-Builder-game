@@ -1078,6 +1078,19 @@ sup.down {
   background: #8fd49a;
 }
 
+.fatigue-fill {
+  background: #9aa3b5;
+}
+
+.fatigue-fill.low {
+  background: #e4b27a;
+}
+
+.injuries {
+  margin: 2px 0 0;
+  padding-left: 18px;
+}
+
 .xp-fill {
   background: #7fa6d9;
 }
@@ -1224,4 +1237,40 @@ sup.down {
 .log-x-site {
   color: var(--accent);
   font-weight: 600;
+}
+
+.restock {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.report {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.report h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+.report-monsters {
+  margin: 0 0 6px;
+  padding-left: 18px;
+}
+
+.raise {
+  padding: 8px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+}
+
+.raise p {
+  margin: 0 0 6px;
 }

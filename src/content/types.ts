@@ -256,6 +256,15 @@ export const MORALE_FACTS = [
   "levelUp",
   /** 1 if the guild couldn't pay their wages today. */
   "unpaid",
+  /** 1 if they were sent down tired (at the first fatigue tier or worse). */
+  "sentTired",
+  /** 1 if they came home with a new injury. */
+  "injured",
+  /** 1 if they asked for a raise and got it, or were turned down. */
+  "raiseGiven",
+  "raiseRefused",
+  /** 1 if a party went down without them while they were fit to go. */
+  "benched",
 ] as const;
 export type MoraleFact = (typeof MORALE_FACTS)[number];
 
@@ -355,12 +364,63 @@ export interface RescueRules {
   rescuedHpPercent: number;
 }
 
+/**
+ * A lasting wound (M6): the hero can't go down the pit until it heals, a day
+ * at a time in town. The penalties still count if they defend the town in a raid.
+ */
+export interface InjuryDef {
+  id: string;
+  name: string;
+  /** Shown on the hero card, e.g. "−3 STR, −2 attack". */
+  description: string;
+  passives: readonly PassiveEffect[];
+  /** Days in town it takes to heal. */
+  days: number;
+  /** Relative chance of being the injury picked. */
+  weight: number;
+}
+
+/** A level of tiredness and what it does to a hero in a fight. */
+export interface FatigueTier {
+  /** Applies at this much fatigue or more. */
+  at: number;
+  /** "tired", "exhausted". */
+  name: string;
+  passives: readonly PassiveEffect[];
+}
+
+/**
+ * Wear and tear (M6): what makes a guild rotate its heroes. Fatigue builds up
+ * on trips and wears off in town; being knocked down can leave an injury.
+ */
+export interface WearRules {
+  /** Fatigue (0-100) gained for each day on a trip, and for each fight. */
+  fatiguePerTripDay: number;
+  fatiguePerFight: number;
+  /** Fatigue lost for each day in town (rest days, and days the party is away). */
+  restPerDay: number;
+  /** Lowest first. */
+  tiers: readonly FatigueTier[];
+  /** Chance a hero who was knocked down (to 0 HP) comes home injured. */
+  injuryChance: number;
+  /** Chance for a hero who stayed up but fell below `woundedBelow` of max HP in a fight. */
+  woundedInjuryChance: number;
+  woundedBelow: number;
+  /** Taken off the chance per point of END above 10 (added below). */
+  injuryPerEnd: number;
+}
+
 export interface EncounterDef {
   id: string;
   /** Floors this group can appear on, inclusive. */
   floors: readonly [number, number];
   /** Relative chance of being picked. */
   weight: number;
+  /**
+   * A different weight on particular floors (by depth), for the monsters a
+   * floor is known for (M6): spiders in the Warrens, skeletons in the Bone Halls.
+   */
+  weightOn?: Readonly<Record<number, number>>;
   groups: readonly { monster: string; count: readonly [number, number] }[];
 }
 
@@ -510,6 +570,12 @@ export interface TownRules {
    * perLevel for each level. Heroes who can't be paid lose morale ("unpaid").
    */
   wages: { base: number; perLevel: number };
+  /**
+   * Veterans ask for raises (M6): every `everyLevels` levels since their last
+   * raise talk, a hero asks for `amount` more gold a day (Gold-motivated
+   * heroes ask for double). Unanswered after `patienceDays`, it counts as a no.
+   */
+  raises: { everyLevels: number; amount: number; patienceDays: number };
 }
 
 /**
@@ -562,6 +628,8 @@ export interface Library {
   morale: MoraleRulesDef;
   levels: LevelRules;
   rescue: RescueRules;
+  wear: WearRules;
+  injuries: readonly InjuryDef[];
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -582,4 +650,6 @@ export const defineDungeonRules = (def: DungeonRules): DungeonRules => def;
 export const defineMotivation = (def: MotivationDef): MotivationDef => def;
 export const defineMoraleRules = (def: MoraleRulesDef): MoraleRulesDef => def;
 export const defineLevelRules = (def: LevelRules): LevelRules => def;
+export const defineWearRules = (def: WearRules): WearRules => def;
+export const defineInjury = (def: InjuryDef): InjuryDef => def;
 export const defineRescueRules = (def: RescueRules): RescueRules => def;

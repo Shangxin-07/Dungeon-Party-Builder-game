@@ -82,6 +82,28 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
   },
   // M6: the guild keeps accounts (wages are worked out from content, not saved).
   4: (_ix, old) => ({ ...old, version: 5, ledger: [] }),
+  // M6: heroes get tired and hurt, and veterans ask for raises. Everyone
+  // starts rested and whole, and nobody asks until they've gained more levels.
+  5: (_ix, old) => {
+    const fresh = (h: Hero): Hero => ({
+      ...h,
+      fatigue: h.fatigue ?? 0,
+      injuries: h.injuries ?? [],
+      pay: h.pay ?? 0,
+      payLevel: h.payLevel ?? h.level,
+    });
+    const sites = (old.sites as { trapped: { hero: Hero }[] }[]).map((s) => ({
+      ...s,
+      trapped: s.trapped.map((x) => ({ ...x, hero: fresh(x.hero) })),
+    }));
+    return {
+      ...old,
+      version: 6,
+      roster: (old.roster as Hero[]).map(fresh),
+      recruits: (old.recruits as Hero[]).map(fresh),
+      sites,
+    };
+  },
 };
 
 /**

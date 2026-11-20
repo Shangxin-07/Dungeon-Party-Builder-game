@@ -10,6 +10,8 @@ export default defineMotivation({
     { fact: "newFloors", amount: 4, cap: 8, reason: "went deeper than ever" },
     { fact: "retreated", amount: -5, reason: "hated turning back" },
     { fact: "sameOldFloor", amount: -3, reason: "bored of the same old floor" },
+    // M6: a glory hound hates watching others go down without them.
+    { fact: "benched", amount: -3, reason: "left behind while others went down" },
   ],
   favourites: [
     { building: "training-yard", weight: 3 },
