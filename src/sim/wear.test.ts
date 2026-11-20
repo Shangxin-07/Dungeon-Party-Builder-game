@@ -7,6 +7,7 @@ import { fatigueTier, heroSheet, type Hero } from "./hero";
 import { indexLibrary } from "./library";
 import { migrateTown } from "./save";
 import {
+  cantLaunch,
   launch,
   launchWarnings,
   newTown,
@@ -67,11 +68,13 @@ describe("fatigue", () => {
 });
 
 describe("injuries", () => {
-  it("weaken a hero, and heal a day at a time in town", () => {
+  it("keep a hero out of the pit, weaken them, and heal a day at a time in town", () => {
     const t = withHero(fresh(), 0, (h) => ({ ...h, injuries: [{ id: "broken-arm", days: 2 }] }));
     const h = t.roster[0]!;
     expect(heroSheet(ix, h).stats.STR).toBe(heroSheet(ix, fresh().roster[0]!).stats.STR - 3);
-    expect(launchWarnings(ix, t).some((x) => x.includes("broken arm"))).toBe(true);
+    // Laid up: they can't go down the pit until it heals.
+    const inParty = { ...t, party: [h.id] };
+    expect(cantLaunch(ix, inParty)).toMatch(/broken arm for 2 more days/);
     const day1 = rest(ix, t, heroNames);
     expect(day1.roster[0]!.injuries).toEqual([{ id: "broken-arm", days: 1 }]);
     const day2 = rest(ix, day1, heroNames);

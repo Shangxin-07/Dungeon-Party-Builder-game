@@ -258,10 +258,13 @@ export const MORALE_FACTS = [
   "unpaid",
   /** 1 if they were sent down tired (at the first fatigue tier or worse). */
   "sentTired",
-  /** 1 if they were sent down carrying an injury. */
-  "sentInjured",
   /** 1 if they came home with a new injury. */
   "injured",
+  /** 1 if they asked for a raise and got it, or were turned down. */
+  "raiseGiven",
+  "raiseRefused",
+  /** 1 if a party went down without them while they were fit to go. */
+  "benched",
 ] as const;
 export type MoraleFact = (typeof MORALE_FACTS)[number];
 
@@ -361,7 +364,10 @@ export interface RescueRules {
   rescuedHpPercent: number;
 }
 
-/** A lasting wound (M6): weaker until it heals, a day at a time in town. */
+/**
+ * A lasting wound (M6): the hero can't go down the pit until it heals, a day
+ * at a time in town. The penalties still count if they defend the town in a raid.
+ */
 export interface InjuryDef {
   id: string;
   name: string;
@@ -410,6 +416,11 @@ export interface EncounterDef {
   floors: readonly [number, number];
   /** Relative chance of being picked. */
   weight: number;
+  /**
+   * A different weight on particular floors (by depth), for the monsters a
+   * floor is known for (M6): spiders in the Warrens, skeletons in the Bone Halls.
+   */
+  weightOn?: Readonly<Record<number, number>>;
   groups: readonly { monster: string; count: readonly [number, number] }[];
 }
 
@@ -559,6 +570,12 @@ export interface TownRules {
    * perLevel for each level. Heroes who can't be paid lose morale ("unpaid").
    */
   wages: { base: number; perLevel: number };
+  /**
+   * Veterans ask for raises (M6): every `everyLevels` levels since their last
+   * raise talk, a hero asks for `amount` more gold a day (Gold-motivated
+   * heroes ask for double). Unanswered after `patienceDays`, it counts as a no.
+   */
+  raises: { everyLevels: number; amount: number; patienceDays: number };
 }
 
 /**

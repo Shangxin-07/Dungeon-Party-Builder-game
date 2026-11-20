@@ -8,6 +8,6 @@ export default defineInjury({
     { type: "modifyStat", stat: "DEX", amount: -3 },
     { type: "modifyStat", stat: "evasion", amount: -3 },
   ],
-  days: 3,
+  days: 5,
   weight: 3,
 });

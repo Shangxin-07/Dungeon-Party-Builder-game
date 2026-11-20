@@ -12,6 +12,7 @@ import type { ItemDef, Row } from "../content/types";
 import { describeRetreat, type LootRule } from "../sim/expedition";
 import { EQUIP_SLOTS, heroSheet, type EquipSlot, type Hero } from "../sim/hero";
 import {
+  answerRaise,
   buy,
   buyPrice,
   cantLaunch,
@@ -65,6 +66,7 @@ import {
 import { DERIVED_LABELS, HeroBars, Results, StatSheet, TripPlayer } from "./Watch";
 import { LevelUpPicker, MoraleBar, PerkList, Personality, WearBar, XpBar } from "./Heroes";
 import { RestockPanel } from "./Restock";
+import { ScoutingReport } from "./Report";
 import { Departed, LostPanel, TalkPanel } from "./Lost";
 import { Accounts } from "./Accounts";
 
@@ -644,6 +646,7 @@ function PartyPanel({ town, act, onLaunch }: { town: TownState; act: Act; onLaun
         </label>
       </div>
 
+      <ScoutingReport town={town} party={party} />
       {warnings.length ? (
         <ul className="warnings">
           {warnings.map((w) => (
@@ -710,6 +713,29 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
       <XpBar hero={h} />
       <Personality hero={h} town={town} />
       <LevelUpPicker key={h.levelUps[0]?.level ?? 0} hero={h} act={act} />
+      {h.raiseAsk ? (
+        <div className="raise">
+          <p>
+            <strong>{h.name} wants a raise</strong> of {h.raiseAsk.amount} gold a day (now paid{" "}
+            {wage(ix, h)}). They'll take silence as a no after {ix.lib.town.raises.patienceDays}{" "}
+            days.
+          </p>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => act((t) => answerRaise(ix, t, h.id, true))}
+          >
+            Agree
+          </button>{" "}
+          <button
+            type="button"
+            className="btn"
+            onClick={() => act((t) => answerRaise(ix, t, h.id, false))}
+          >
+            Refuse
+          </button>
+        </div>
+      ) : null}
       <div className="hero-actions">
         <button
           type="button"

@@ -55,6 +55,12 @@ export interface Hero {
   fatigue: number;
   /** Lasting wounds and the days in town left until each heals. */
   injuries: { id: string; days: number }[];
+  /** Extra gold a day on top of the usual wage, from raises. */
+  pay: number;
+  /** Level at their last raise talk; they ask again a few levels on. */
+  payLevel: number;
+  /** A raise they've asked for and not had an answer to yet. */
+  raiseAsk?: { amount: number; day: number };
 }
 
 /** The fatigue tier a hero is in ("tired", "exhausted"), if any. */
@@ -154,6 +160,8 @@ export function createHero(
     moraleLog: [],
     fatigue: 0,
     injuries: [],
+    pay: 0,
+    payLevel: 1,
     ...rollPersonality(ix, opts.id, opts.name, stats, cls.id),
   };
   for (const itemId of cls.startingKit) {

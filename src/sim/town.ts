@@ -272,7 +272,7 @@ export const vaultShare = (ix: Index, town: TownState) =>
 
 /** A hero's daily wage (content/town.ts). */
 export const wage = (ix: Index, h: Hero) =>
-  ix.lib.town.wages.base + ix.lib.town.wages.perLevel * h.level;
+  ix.lib.town.wages.base + ix.lib.town.wages.perLevel * h.level + (h.pay ?? 0);
 /** What the whole roster costs a day. */
 export const wageBill = (ix: Index, town: TownState) =>
   town.roster.reduce((s, h) => s + wage(ix, h), 0);
@@ -347,10 +347,6 @@ export function launchWarnings(ix: Index, town: TownState): string[] {
   for (const h of party) {
     const tier = fatigueTier(ix, h);
     if (tier) out.push(`${h.name} is ${tier.name} (fatigue ${h.fatigue}) and will fight worse.`);
-    for (const inj of h.injuries ?? [])
-      out.push(
-        `${h.name} has a ${ix.injury(inj.id).name.toLowerCase()} (${ix.injury(inj.id).description}, ${inj.days} more ${inj.days === 1 ? "day" : "days"} to heal).`,
-      );
     if (h.levelUps.length) out.push(`${h.name} has a level-up to spend.`);
     if (isLow(ix, h)) {
       const low = ix.motivation(h.motivation).lowMorale;
@@ -412,6 +408,9 @@ export function cantLaunch(ix: Index, town: TownState): string | undefined {
     const h = findHero(town, id);
     if (!h) return "Someone in the party has left the guild.";
     if (h.condition !== "ok" || h.hp <= 0) return `${h.name} can't walk yet. Let them rest.`;
+    const inj = h.injuries?.[0];
+    if (inj)
+      return `${h.name} is laid up with a ${ix.injury(inj.id).name.toLowerCase()} for ${inj.days} more ${inj.days === 1 ? "day" : "days"}. Pick someone else.`;
   }
   return undefined;
 }
@@ -1124,11 +1123,48 @@ function payWages(ix: Index, t: TownState): void {
   news(t, `The guild couldn't pay ${listWords(unpaid.map((h) => h.name))} today.`, "bad");
 }
 
+/**
+ * Veterans ask for raises (M6, content/town.ts `raises`). A hero who has
+ * gained enough levels since their last raise talk asks; one who's been kept
+ * waiting too long takes it as a no.
+ */
+function raiseTalk(ix: Index, t: TownState): void {
+  const r = ix.lib.town.raises;
+  for (const h of t.roster) {
+    if (h.raiseAsk) {
+      if (t.day - h.raiseAsk.day >= r.patienceDays) {
+        h.raiseAsk = undefined;
+        h.payLevel = h.level;
+        applyMorale(ix, h, { raiseRefused: 1 }, t.day);
+        news(t, `${h.name} gave up waiting for an answer about a raise.`, "bad");
+      }
+      continue;
+    }
+    if (h.level < (h.payLevel ?? 1) + r.everyLevels) continue;
+    const amount = r.amount * (h.motivation === "gold" ? 2 : 1);
+    h.raiseAsk = { amount, day: t.day };
+    news(t, `${h.name} (level ${h.level}) asks for a raise of ${amount} gold a day.`);
+  }
+}
+
+/** Say yes or no to a hero's request for a raise. */
+export function answerRaise(ix: Index, town: TownState, heroId: string, agree: boolean): TownState {
+  const t = edit(town);
+  const h = hero(t, heroId);
+  if (!h.raiseAsk) throw new TownError(`${h.name} hasn't asked for a raise.`);
+  if (agree) h.pay = (h.pay ?? 0) + h.raiseAsk.amount;
+  h.raiseAsk = undefined;
+  h.payLevel = h.level;
+  applyMorale(ix, h, agree ? { raiseGiven: 1 } : { raiseRefused: 1 }, t.day);
+  return t;
+}
+
 /** The end of a day in town: wages, builders, rest, morale, the lost, and anyone who's had enough. */
 function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): void {
   // Anyone already at the end of their tether goes before the day starts.
   quitters(ix, t);
   payWages(ix, t);
+  raiseTalk(ix, t);
   t.day += 1;
   buildersWork(t);
   for (const h of t.roster) {
@@ -1350,7 +1386,6 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
       dislikedGear: before.dislikes && tags.has(before.dislikes) ? 1 : 0,
       levelUp: levels[h.id] ?? 0,
       sentTired: fatigueTier(ix, before) ? 1 : 0,
-      sentInjured: before.injuries?.length ? 1 : 0,
       injured: injuries[h.id]?.length ? 1 : 0,
     };
     morale[h.id] = moraleChanges(ix, h, facts, { leaderCha });
@@ -1367,6 +1402,12 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     { fallenComrades: fallen, rescuedComrades: rescued.length },
     new Set([...away, ...rescued.map((h) => h.id)]),
   );
+  // Fit heroes left at home while the party went down (Glory heroes mind).
+  for (const h of t.roster) {
+    if (away.has(h.id) || rescued.some((r) => r.id === h.id)) continue;
+    const fit = h.condition === "ok" && !(h.injuries ?? []).length && !fatigueTier(ix, h);
+    if (fit) applyMorale(ix, h, { benched: 1 }, startDay);
+  }
   for (const n of trappedNames)
     news(
       t,

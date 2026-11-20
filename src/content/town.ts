@@ -17,4 +17,6 @@ export default defineTownRules({
   // M6 balance pass: a level-4 hero costs 6 gold a day, so a full roster eats
   // about a third of what floor-1 trips bring in.
   wages: { base: 2, perLevel: 1 },
+  // Every 3 levels a hero asks for 2 more gold a day (Gold heroes ask for 4).
+  raises: { everyLevels: 3, amount: 2, patienceDays: 3 },
 });

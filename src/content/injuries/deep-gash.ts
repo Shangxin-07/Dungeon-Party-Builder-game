@@ -5,6 +5,6 @@ export default defineInjury({
   name: "Deep gash",
   description: "−12 HP",
   passives: [{ type: "modifyStat", stat: "maxHp", amount: -12 }],
-  days: 3,
+  days: 5,
   weight: 3,
 });

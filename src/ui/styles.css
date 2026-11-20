@@ -1247,3 +1247,30 @@ sup.down {
   flex-direction: column;
   gap: 4px;
 }
+
+.report {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.report h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+.report-monsters {
+  margin: 0 0 6px;
+  padding-left: 18px;
+}
+
+.raise {
+  padding: 8px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+}
+
+.raise p {
+  margin: 0 0 6px;
+}

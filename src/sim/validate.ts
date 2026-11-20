@@ -164,6 +164,8 @@ export function validateLibrary(lib: Library): string[] {
     const w = `encounter "${e.id}"`;
     const [lo, hi] = e.floors;
     if (lo < 1 || hi < lo) err(`${w}: bad floor range [${lo}, ${hi}]`);
+    for (const v of Object.values(e.weightOn ?? {}))
+      if (v <= 0) err(`${w}: weightOn weights must be positive`);
     if (e.weight <= 0) err(`${w}: weight must be positive`);
     if (!e.groups.length) err(`${w}: needs at least one group`);
     for (const g of e.groups) {

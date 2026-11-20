@@ -548,8 +548,8 @@ A guild that builds now has about two-thirds of the town by day 60 instead of al
 
 - **Restocking.** Potions and bandages a hero used on a trip have to be replaced. After each trip the town shows a *Restock* list: each used item, for whom, from the store room if there's a spare or bought at the Market. Untick anything you don't want, then okay it. Nothing is bought without the okay.
 - **Fatigue** (0-100). A trip adds 8 per day and 5 per fight. A day in town takes off 15. At 35 a hero is **tired** (−2 accuracy and evasion, −3 initiative); at 70 **exhausted** (−5 accuracy and evasion, −6 initiative, −2 attack and spell power). Sent down tired: −3 morale. The same party sent to floor 1 every day is tired within a week; a floor-2 trip (about 3 days, 5 fights) tires a hero out in one go.
-- **Injuries.** A hero knocked down in a fight has a 50% chance of coming home injured. A hero who dropped below a third of their HP has a 30% chance. END lowers both, by 3% a point. Raid defenders can be injured too. Five injuries to start: broken arm, cracked ribs, twisted ankle, concussion and deep gash, each with its own penalty, lasting 3 to 6 days in town. Getting injured costs 2 morale; being sent down still injured costs 4.
-- **In town:** each hero card has a fatigue bar and lists their injuries with the days left. Launch warnings name tired and injured heroes. Trip results show each hero's fatigue and new injuries. Saves are version 6; older saves start everyone rested and whole.
+- **Injuries** are rare and serious (Mike: "injuries that prevent delving"). A hero knocked down in a fight has a 50% chance of coming home injured; one who dropped below a third of their HP, 30%. END lowers both, by 3% a point. Raid defenders can be injured too. **An injured hero can't go down the pit until it heals**, a day at a time in town: broken arm 12 days, cracked ribs 8, concussion 6, twisted ankle 5, deep gash 5. The injury's penalties still apply if they have to defend the town in a raid. Getting injured costs 2 morale.
+- **In town:** each hero card has a fatigue bar and lists their injuries with the days left. Launch warnings name tired heroes; an injured hero in the party stops the launch. Trip results show each hero's fatigue and new injuries. Saves are version 6; older saves start everyone rested and whole.
 
 The bot now restocks, keeps a hero on the bench and sends the freshest heroes (`--static` keeps the same party). Over 60 days (40 towns each, building):
 
@@ -560,9 +560,17 @@ The bot now restocks, keeps a hero on the bench and sends the freshest heroes (`
 | Floor 2, rotating | 20 | 2,950 | 9.5 | 4.8 |
 | Floor 2, same party | 16 | 2,400 | 7.8 | 4.2 |
 
-Rotating gets about a quarter more trips and gold out of the same 60 days. Injuries are occasional: about one per town over 60 days on floors 1 to 3.
+Rotating gets about a quarter more trips and gold out of the same 60 days. Injuries are rare: about one per town over 60 days on floors 1 to 3.
 
-**More pressure (ideas, not built yet):** floors whose monsters suit different parties, such as spiders that punish having no scout and skeletons that punish having no crushing or holy damage, with a scouting report before launch; veterans who demand raises or want to retire; and Glory heroes who sulk on the bench while others go down.
+**Floors that suit different parties.** Encounters can weigh more on particular floors (`weightOn`): spider nests are twice as likely in the Warrens (floor 2), and skeleton patrols dominate the Bone Halls (floor 3, half of all monster groups). Without a scout, floor-2 trips get home 73% of the time instead of 83%. Fighter, cleric and scout do best on floor 3.
+
+**The scouting report.** Under the party, before launch: each monster on the target floor and what share of the monster groups there include it, its weaknesses, what it shrugs off, and whether it ambushes. Monsters nobody in the guild has met show as "???". It warns when this party is a bad fit, for example: "Cave Spiders lie in wait in 29% of the groups here, and nobody in this party scouts well (best 48)", or "Skeletons are in 50% of the groups here and nobody brings crushing or holy damage, which hurts them most". Worked out from content in `src/sim/report.ts`.
+
+**Veterans ask for raises.** Every 3 levels since their last raise talk, a hero asks for 2 more gold a day (Gold heroes ask for 4; `town.raises`). Agree: their wage goes up for good, +5 morale. Refuse: −8 morale, and a Gold hero takes another −6. Ignore it for 3 days and it counts as a no. Strong veterans get expensive, so a cheaper, newer hero can be the better pick.
+
+**The bench.** A Glory hero who was fit to go and was left at home while the party went down loses 3 morale ("left behind while others went down"). Rotating keeps them happy; benching them costs.
+
+Saves stay at version 6 (this all landed before version 6 shipped): heroes get fatigue, injuries and a pay record.
 
 Still to come in M6+: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters and floors, the 2D watch view and multiple parties.
 

@@ -8,6 +8,6 @@ export default defineInjury({
     { type: "modifyStat", stat: "END", amount: -2 },
     { type: "modifyStat", stat: "maxHp", amount: -8 },
   ],
-  days: 5,
+  days: 8,
   weight: 3,
 });

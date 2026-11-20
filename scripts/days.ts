@@ -21,6 +21,7 @@ import { heroNames, library } from "../src/content";
 import { fatigueTier, heroSheet, type Hero } from "../src/sim/hero";
 import { indexLibrary } from "../src/sim/library";
 import {
+  answerRaise,
   cancelRescue,
   cantLaunch,
   chooseLevelUp,
@@ -99,6 +100,10 @@ function step(t: TownState): TownState {
   const site = t.sites.find((s) => s.trapped.some((x) => x.until >= t.day + s.floor - 1));
   if (site && !t.orders.rescue) t = planRescue(ix, t, site.id);
   if (!site && t.orders.rescue) t = cancelRescue(ix, t);
+  // Agree to raises while the gold holds out (a month of the new wage bill).
+  for (const h of t.roster)
+    if (h.raiseAsk)
+      t = answerRaise(ix, t, h.id, t.gold > 30 * (wageBill(ix, t) + h.raiseAsk.amount));
   // Put back what the last trip used up, as far as the gold goes.
   const plan = restockPlan(ix, t);
   let budget = t.gold - 2 * wageBill(ix, t);
