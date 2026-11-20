@@ -10,8 +10,8 @@ describe("content library", () => {
     expect(validateLibrary(library)).toEqual([]);
   });
 
-  it("has the first-slice classes and monsters", () => {
-    expect(library.classes.map((c) => c.id)).toEqual(["fighter", "scout", "mage"]);
+  it("has the first-slice classes (then the Cleric) and monsters", () => {
+    expect(library.classes.map((c) => c.id)).toEqual(["fighter", "scout", "mage", "cleric"]);
     for (const id of ["slime", "giant-rat", "goblin", "cave-spider", "skeleton"]) {
       expect(library.monsters.map((m) => m.id)).toContain(id);
     }

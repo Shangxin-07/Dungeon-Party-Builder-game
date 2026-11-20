@@ -196,10 +196,16 @@ export function rollPersonality(
 }
 
 /** One of each class, named from the given list. Handy for tests and demos. */
-export function createStarterParty(ix: Index, names: readonly string[], rng: Rng): Hero[] {
+export function createStarterParty(
+  ix: Index,
+  names: readonly string[],
+  rng: Rng,
+  /** Defaults to the first three classes: the first slice's Fighter, Scout and Mage. */
+  classIds: readonly string[] = ix.lib.classes.slice(0, 3).map((c) => c.id),
+): Hero[] {
   const pool = [...names];
-  return ix.lib.classes.map((cls, i) => {
+  return classIds.map((classId, i) => {
     const name = pool.length ? pool.splice(rng.int(0, pool.length - 1), 1)[0]! : `Hero ${i + 1}`;
-    return createHero(ix, { id: `hero-${i + 1}`, name, classId: cls.id }, rng);
+    return createHero(ix, { id: `hero-${i + 1}`, name, classId }, rng);
   });
 }

@@ -41,6 +41,8 @@ export function balanceReport(
   floor: number,
   trips: number,
   fightsPerTrip = 3,
+  /** Class ids of the party. Defaults to Fighter, Scout and Mage. */
+  classIds?: readonly string[],
 ): FloorReport {
   const ix = indexLibrary(lib);
   let survived = 0;
@@ -48,7 +50,7 @@ export function balanceReport(
   let deaths = 0;
   for (let trip = 1; trip <= trips; trip++) {
     const rng = createRng(trip * 7919 + floor);
-    const start = createStarterParty(ix, names, rng);
+    const start = createStarterParty(ix, names, rng, classIds);
     let party = start;
     let won = true;
     for (let f = 0; f < fightsPerTrip && won; f++) {
@@ -96,6 +98,7 @@ export function expeditionReport(
   names: readonly string[],
   orders: StandingOrders,
   trips: number,
+  classIds?: readonly string[],
 ): ExpeditionReport {
   const ix = indexLibrary(lib);
   const r: ExpeditionReport = {
@@ -111,7 +114,7 @@ export function expeditionReport(
   };
   for (let trip = 1; trip <= trips; trip++) {
     const seed = trip * 7919 + orders.targetFloor;
-    const party = createStarterParty(ix, names, createRng(seed));
+    const party = createStarterParty(ix, names, createRng(seed), classIds);
     const result = runExpedition(ix, party, orders, seed);
     r[result.outcome]++;
     r.deaths += result.party.filter((h) => h.condition === "dead").length;

@@ -4,6 +4,7 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DERIVED, STATS, type Derived } from "../content/types";
+import type { FoeSheet } from "../sim/combat";
 import type { ExpeditionEvent, ExpeditionResult } from "../sim/expedition";
 import { heroSheet, type Hero } from "../sim/hero";
 import { ix } from "./game";
@@ -24,8 +25,10 @@ export const DERIVED_LABELS: Record<Derived, string> = {
   carrySlots: "Carry",
 };
 
-interface Bar {
+export interface Bar {
   uid: string;
+  /** Monsters: how they squared up at the start of the fight (absent in old saves). */
+  sheet?: FoeSheet;
   name: string;
   hp: number;
   max: number;
@@ -59,7 +62,12 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
     if (e.kind === "home") where = "Back in town";
     if (e.kind === "raid") where = "At the edge of the pit";
     if (e.kind === "fight" && e.monsters) {
-      monsters = new Map(e.monsters.map((m) => [m.uid, { ...m, state: "up" as const }]));
+      monsters = new Map(
+        e.monsters.map((m) => [
+          m.uid,
+          { uid: m.uid, name: m.name, hp: m.hp, max: m.max, sheet: m, state: "up" as const },
+        ]),
+      );
     }
     const c = e.combat;
     if (!c) continue;
@@ -179,6 +187,65 @@ export function StatSheet({ hero, full = false }: { hero: Hero; full?: boolean }
         ))}
       </p>
     </>
+  );
+}
+
+/** The numbers shown on a monster card: the ones that decide a fight. */
+const FOE_DERIVED: readonly Derived[] = [
+  "attack",
+  "accuracy",
+  "evasion",
+  "armor",
+  "resist",
+  "initiative",
+];
+
+/** A monster's bar plus its stats, weapon and tags, as seen while watching. */
+export function FoeCard({ bar }: { bar: Bar }) {
+  const s = bar.sheet;
+  const def = s?.monsterId ? ix.monster(s.monsterId) : undefined;
+  return (
+    <li className="hero foe">
+      <HpBar bar={bar} />
+      {s?.stats && s.derived ? (
+        <>
+          <p className="hero-class">
+            {s.row === "back" ? "Back row" : "Front row"}
+            {s.weapon ? (
+              <span className="muted">
+                {" "}
+                · {s.weapon.name} ({s.weapon.damageType}
+                {s.weapon.ranged ? ", ranged" : ""})
+              </span>
+            ) : null}
+            {def?.tags.length ? <span className="muted"> · {def.tags.join(", ")}</span> : null}
+          </p>
+          <dl className="stat-grid">
+            {STATS.map((st) => (
+              <div key={st}>
+                <dt>{st}</dt>
+                <dd>{s.stats![st]}</dd>
+              </div>
+            ))}
+          </dl>
+          <dl className="derived-grid">
+            {FOE_DERIVED.map((d) => (
+              <div key={d}>
+                <dt>{DERIVED_LABELS[d]}</dt>
+                <dd>{s.derived![d]}</dd>
+              </div>
+            ))}
+          </dl>
+          {def?.abilities?.length ? (
+            <p className="skills">
+              {def.abilities.map((a) => (
+                <span key={a}>{ix.ability(a).name}</span>
+              ))}
+            </p>
+          ) : null}
+        </>
+      ) : null}
+    </li>
   );
 }
 
@@ -364,13 +431,17 @@ export function TripPlayer({
             <WatchCard key={h.id} hero={h} bar={state.party.find((b) => b.uid === h.id)} />
           ))}
         </ul>
-        <div className="bars" aria-label="Monsters">
-          {state.monsters?.length ? (
-            state.monsters.map((b) => <HpBar key={b.uid} bar={b} />)
-          ) : (
+        {state.monsters?.length ? (
+          <ul className="bars heroes foes" aria-label="Monsters">
+            {state.monsters.map((b) => (
+              <FoeCard key={b.uid} bar={b} />
+            ))}
+          </ul>
+        ) : (
+          <div className="bars" aria-label="Monsters">
             <p className="muted quiet">No monsters in sight.</p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <ol className="log" aria-live="polite" ref={logRef}>

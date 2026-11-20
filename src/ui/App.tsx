@@ -50,9 +50,9 @@ export function App() {
 
       <footer>
         <p>
-          Heroes now have minds of their own: keep their morale up, spend their level-ups, and send
-          a rescue party when a party falls. Next up: a balance pass, then more classes, monsters
-          and buildings.
+          New: heroes draw wages, the Market takes a cut of the haul, the Cleric joins the recruits,
+          and you can see every monster's stats while you watch. Next up: more monsters, floors and
+          buildings.
         </p>
       </footer>
     </main>

@@ -80,6 +80,8 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
       news: [],
     };
   },
+  // M6: the guild keeps accounts (wages are worked out from content, not saved).
+  4: (_ix, old) => ({ ...old, version: 5, ledger: [] }),
 };
 
 /**

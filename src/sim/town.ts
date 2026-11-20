@@ -27,7 +27,7 @@ import { resolveRaid, type RaidReport } from "./raid";
 import { createRng, type Rng } from "./rng";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 4;
+export const TOWN_VERSION = 5;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 const PIT_HISTORY = 60;
@@ -174,7 +174,30 @@ export interface TownState {
   nextThingId: number;
   /** What happened in town lately ("Wren quit", "Bram died waiting"), newest last. */
   news: News[];
+  /** The last few weeks of gold in and out, by day and kind. */
+  ledger: LedgerLine[];
 }
+
+/** What the guild's gold went on, or came from. */
+export type LedgerKind =
+  | "haul"
+  | "sold"
+  | "bought"
+  | "hired"
+  | "wages"
+  | "built"
+  | "repairs"
+  | "stolen";
+
+/** Gold in (positive) or out (negative) of one kind on one day. */
+export interface LedgerLine {
+  day: number;
+  kind: LedgerKind;
+  amount: number;
+}
+
+/** How many days of accounts the town keeps. */
+export const LEDGER_DAYS = 30;
 
 /** One line of town news. */
 export interface News {
@@ -242,6 +265,13 @@ export const vaultShare = (ix: Index, town: TownState) =>
     effects(ix, town).reduce((m, e) => (e.type === "vault" ? Math.max(m, e.amount) : m), 0),
   );
 
+/** A hero's daily wage (content/town.ts). */
+export const wage = (ix: Index, h: Hero) =>
+  ix.lib.town.wages.base + ix.lib.town.wages.perLevel * h.level;
+/** What the whole roster costs a day. */
+export const wageBill = (ix: Index, town: TownState) =>
+  town.roster.reduce((s, h) => s + wage(ix, h), 0);
+
 /** Whether a building is up and working (built and not damaged). */
 export const standing = (town: TownState, id: string) =>
   (town.buildings[id] ?? 0) > 0 && !town.damaged.includes(id);
@@ -281,6 +311,11 @@ export function shopStock(ix: Index, town: TownState): string[] {
 }
 
 export const buyPrice = (item: ItemDef) => item.value;
+/** What the Market pays for one piece of a trip's haul worth `value`. Coins are coins. */
+export const haulPrice = (ix: Index, itemId: string, value: number) =>
+  ix.item(itemId).tags.includes("coins")
+    ? value
+    : Math.max(1, Math.floor(value * ix.lib.town.haulRate));
 export const sellPrice = (ix: Index, item: ItemDef) =>
   Math.max(1, Math.floor(item.value * ix.lib.town.sellRate));
 
@@ -389,6 +424,16 @@ function news(t: TownState, text: string, tone?: News["tone"]): void {
   t.news = [...t.news, { day: t.day, text, tone }].slice(-NEWS_LENGTH);
 }
 
+/** Move gold in or out and write it in the accounts. */
+function book(t: TownState, kind: LedgerKind, amount: number): void {
+  if (!amount) return;
+  t.gold += amount;
+  const line = t.ledger.find((l) => l.day === t.day && l.kind === kind);
+  if (line) line.amount += amount;
+  else t.ledger.push({ day: t.day, kind, amount });
+  t.ledger = t.ledger.filter((l) => l.day > t.day - LEDGER_DAYS);
+}
+
 /** Take the next random roll from the town's seed. */
 function roll<T>(town: TownState, use: (rng: Rng) => T): T {
   const rng = createRng(town.seed);
@@ -462,6 +507,7 @@ export function newTown(ix: Index, names: readonly string[], seed: number): Town
     departed: [],
     nextThingId: 1,
     news: [],
+    ledger: [],
   };
   for (const classId of rules.startingRoster) {
     const hero = makeHero(ix, town, names, classId);
@@ -503,7 +549,7 @@ export function hire(ix: Index, town: TownState, recruitId: string): TownState {
     throw new TownError("The roster is full. Upgrade the Guild Hall or dismiss someone.");
   if (t.gold < ix.lib.town.hireCost) throw new TownError("Not enough gold.");
   const [recruit] = t.recruits.splice(i, 1);
-  t.gold -= ix.lib.town.hireCost;
+  book(t, "hired", -ix.lib.town.hireCost);
   t.roster.push(recruit!);
   t.records[recruit!.id] = newRecord(t.day);
   if (t.party.length < partySlots(ix, t)) t.party.push(recruit!.id);
@@ -526,7 +572,7 @@ export function buy(ix: Index, town: TownState, itemId: string): TownState {
   const price = buyPrice(ix.item(itemId));
   if (town.gold < price) throw new TownError("Not enough gold.");
   const t = edit(town);
-  t.gold -= price;
+  book(t, "bought", -price);
   t.stash.push(itemId);
   return t;
 }
@@ -534,7 +580,7 @@ export function buy(ix: Index, town: TownState, itemId: string): TownState {
 export function sell(ix: Index, town: TownState, itemId: string): TownState {
   const t = edit(town);
   takeFromStash(t, itemId);
-  t.gold += sellPrice(ix, ix.item(itemId));
+  book(t, "sold", sellPrice(ix, ix.item(itemId)));
   return t;
 }
 
@@ -681,7 +727,7 @@ export function upgrade(ix: Index, town: TownState, buildingId: string): TownSta
   if (town.damaged.includes(buildingId)) throw new TownError("Repair it first.");
   if (town.gold < next.cost) throw new TownError("Not enough gold.");
   const t = edit(town);
-  t.gold -= next.cost;
+  book(t, "built", -next.cost);
   const level = (t.buildings[buildingId] ?? 0) + 1;
   if (next.days <= 0) t.buildings[buildingId] = level;
   else t.construction.push({ building: buildingId, level, daysLeft: next.days, started: t.day });
@@ -703,7 +749,7 @@ export function repair(ix: Index, town: TownState, buildingId: string): TownStat
   const cost = repairCost(ix, town, buildingId);
   if (town.gold < cost) throw new TownError("Not enough gold.");
   const t = edit(town);
-  t.gold -= cost;
+  book(t, "repairs", -cost);
   t.damaged = t.damaged.filter((id) => id !== buildingId);
   return t;
 }
@@ -795,7 +841,7 @@ function nightfall(ix: Index, t: TownState, away: ReadonlySet<string>): RaidRepo
     }
   }
   if (died) guildFeels(ix, t, { fallenComrades: died }, new Set());
-  t.gold -= raid.goldStolen;
+  book(t, "stolen", -raid.goldStolen);
   t.damaged = [...t.damaged, ...raid.damaged];
   t.raids = [...t.raids, raid].slice(-RAID_HISTORY);
   return raid;
@@ -916,10 +962,27 @@ function gearOf(ix: Index, h: Hero): HaulItem[] {
   });
 }
 
-/** The end of a day in town: builders, rest, morale, the lost, and anyone who's had enough. */
+/**
+ * Pay the day's wages, in roster order, while the gold lasts. Anyone who
+ * can't be paid takes it badly (the "unpaid" morale fact).
+ */
+function payWages(ix: Index, t: TownState): void {
+  const unpaid: Hero[] = [];
+  for (const h of t.roster) {
+    const w = wage(ix, h);
+    if (t.gold >= w) book(t, "wages", -w);
+    else unpaid.push(h);
+  }
+  if (!unpaid.length) return;
+  for (const h of unpaid) applyMorale(ix, h, { unpaid: 1 }, t.day);
+  news(t, `The guild couldn't pay ${listWords(unpaid.map((h) => h.name))} today.`, "bad");
+}
+
+/** The end of a day in town: wages, builders, rest, morale, the lost, and anyone who's had enough. */
 function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): void {
   // Anyone already at the end of their tether goes before the day starts.
   quitters(ix, t);
+  payWages(ix, t);
   t.day += 1;
   buildersWork(t);
   for (const h of t.roster) {
@@ -985,8 +1048,10 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   // The Market pays the real value for the haul, whatever the party guessed.
   // Heroes' own gear goes back in the store room.
   const recovered = result.haul.filter((h) => h.keep);
-  const goldEarned = result.haul.filter((h) => !h.keep).reduce((s, h) => s + h.value, 0);
-  t.gold += goldEarned;
+  const goldEarned = result.haul
+    .filter((h) => !h.keep)
+    .reduce((s, h) => s + haulPrice(ix, h.item, h.value), 0);
+  book(t, "haul", goldEarned);
   t.stash.push(...recovered.map((h) => h.item));
   t.scavenged = t.scavenged.filter((g) => !result.gearTaken.includes(g.id));
 

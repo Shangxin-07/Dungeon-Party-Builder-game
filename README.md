@@ -24,7 +24,9 @@ npm run days       # play a town for 40 days with a simple bot and print the dun
 
 `npm run expedition` takes `--floor 3` (how deep to go), `--seed 42`, `--retreat hp-30|downed|potions|never` and `--loot everything|valuable`.
 
-`npm run days` takes `--days 60`, `--policy idle|1|2|3` (never go down, or which floor to send the party to), `--build` (build defences when affordable, then favourite buildings), `--seed 7` and `--runs 100` (summary over many towns). The bot spends level-ups and sends rescue parties; a single run ends with each hero's level, morale history and the town news.
+`npm run days` takes `--days 60`, `--policy idle|1|2|3` (never go down, or which floor to send the party to), `--build` (build defences when affordable, then build and upgrade everything else, keeping a few days' wages in hand), `--seed 7` and `--runs 100` (summary over many towns, including gold earned, gold in hand at checkpoints, buildings built and days with unpaid wages). The bot spends level-ups and sends rescue parties; a single run ends with each hero's level, morale history and the town news.
+
+`npm run balance` takes a run count and a party: `npm run balance -- 300 fighter,cleric,scout`.
 
 Every push to `main` is deployed to GitHub Pages by `.github/workflows/deploy.yml`.
 
