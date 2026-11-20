@@ -238,7 +238,9 @@ Starting list (more later):
 | Library | Identify trinkets; Knowledge heroes like it; teaches the Lore skill | Later |
 | Pit defences | Hold back monsters climbing out of the pit (see below) | Later (M4, with raids) |
 | Vault | Protects your stash from raids | Later |
-| Temple / Black Market | Alignment services for Good / Evil heroes (§7) | With alignment |
+| Temple | Resurrection (§10); cheaper healing for Good heroes (§7) | Later (M6+) |
+| Graveyard | Bury the fallen: friends' morale recovers faster (§10) | Later (M6+) |
+| Black Market | Alignment services for Evil heroes (§7) | With alignment |
 
 ### Defences around the pit
 
@@ -368,7 +370,28 @@ export default defineClass({
 - A **recovery run** is a normal expedition with the target "recover lost party on floor N". It brings back surviving heroes (injured) and whatever gear is still there.
 - Over time, monsters **pick up gear from the site**. Those monsters get stronger, and killing one drops the gear. This makes delay costly and gives a great "we got Bram's sword back" moment.
 
-✅ **DECIDED 6: permadeath.** Decision: yes, dead heroes stay dead, but the rescue window means a quick recovery run can save some. Alternative: nobody dies, only "lost until rescued".
+### Later: what happens to the fallen
+
+> Added 2026-11-20. **Not in the first playable version** (M3 shows dead heroes on a memorial). This builds on rescue runs (M5) and needs the Temple and Graveyard buildings, so it lands in M6+.
+
+A dead hero leaves a **body**, and the body matters. Recovery runs (above) can bring bodies home as well as survivors and gear. Once a body is in town, you choose:
+
+| Choice | Needs | Result |
+|---|---|---|
+| **Resurrect** | A **Temple** (§8), plus a cost: gold and rare materials | The hero comes back. Suggested: with a lasting scar or a lost level, so death still costs something |
+| **Bury** | A **Graveyard** (§8) | The hero is laid to rest. Their friends' morale recovers faster, and Comrades-motivated heroes especially care that it was done |
+
+**If neither happens**, because the body is never recovered or there's nowhere to bury it, the dungeon keeps it. After a while it rises as an **undead version of the hero**. It has their name ("Bram, Risen"), their class and fighting style, and the gear they died in. It joins the population of the floor where it fell, and pushes upward like any other monster (§4). A later party might run into it:
+
+- Heroes who knew the fallen hero lose morale fighting them, and Good heroes especially.
+- Killing it returns the gear and the body. The body can then only be buried, not resurrected.
+- A scouting or lore check might recognise it before the fight ("That's... Bram's shield").
+
+This gives every death a story and a reason to run a recovery, without making death meaningless.
+
+**Built to grow:** "rising" is a transform applied to a snapshot of the dead hero (adds the `undead` tag and an undead stat template, and keeps class AI and gear), defined in `content/transforms/`. Resurrection and burial are building actions with costs and effects in the building definitions. Rise time, resurrection cost and morale effects are all numbers in data.
+
+✅ **DECIDED 6: permadeath.** Decision: yes, dead heroes stay dead, but the rescue window means a quick recovery run can save some. Later, a recovered body can be resurrected at a Temple, at a cost (above). Alternative: nobody dies, only "lost until rescued".
 
 ## 11. How an expedition is simulated
 
@@ -541,7 +564,7 @@ Each milestone ends with something you can run.
 | M3 | Town UI: roster, recruit, equip, formation, launch, watch the log, results screen (built, see §11 "As built in M3") | Actually play a loop in the browser |
 | M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load | Feel the dungeon getting worse over time |
 | M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs | Play the full design in miniature |
-| M6+ | Balance pass, then grow content: Cleric, freeform classes (§9), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |
+| M6+ | Balance pass, then grow content: Cleric, freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |
 
 ## 16. Decisions (agreed 2026-11-20)
 
@@ -563,3 +586,4 @@ Each milestone ends with something you can run.
 | 14 | Dungeon entrance and defences | An open pit dug by the original mining camp. Defences around it (walls, gate, watchtowers) soak up overflow; what gets past becomes a raid |
 | 15 | Game opening (later) | Start at an undefended mining site, assign heroes to makeshift defences, gather materials, build up, then unlock delving. The first playable version is unchanged |
 | 16 | Classes and levels (later) | Freeform: hero level up to ~50; each level-up goes into a known class of your choice; class levels uncapped. Advanced and combo classes unlock at class-level and stat thresholds (optionally buildings, alignment). Depth rewarded through class-level scaling and milestone perks. Forward only, never swap. Class names are examples only |
+| 17 | The fallen (later) | Bodies can be recovered. In town: resurrect (Temple, costly) or bury (Graveyard). Left in the dungeon, a body rises as an undead version of the hero that later parties can meet |
