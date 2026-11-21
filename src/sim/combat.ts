@@ -73,6 +73,8 @@ export type CombatEventKind =
   | "died"
   | "revived"
   | "summon"
+  /** The party's front row has all fallen: melee can now reach the back row. */
+  | "exposed"
   | "end";
 
 /** One line of the battle report. `hp` is the affected creature's HP afterwards. */
@@ -189,6 +191,8 @@ class Battle {
   private nameCounts = new Map<string, number>();
   private ambushing = new Set<string>();
   private nextUid = 1;
+  /** Whether the party's back row is currently open to melee (so we warn once). */
+  private exposed = false;
 
   constructor(
     private ix: Index,
@@ -308,6 +312,7 @@ class Battle {
         .map((f) => f.name)
         .join(", ");
     this.emit({ kind: "start", text: `${names("party")} face ${names("monsters")}.` });
+    this.checkExposed();
 
     if (this.surprise) this.partySurprise();
     else this.ambushCheck();
@@ -644,6 +649,7 @@ class Battle {
         target.bleed = BLEED_ROUNDS;
         target.statuses = [];
         this.emit({ kind: "downed", target: target.uid, text: `${target.name} goes down!` });
+        this.checkExposed();
       } else {
         target.state = "dead";
         if (target.monsterId) this.kills.push(target.monsterId);
@@ -656,6 +662,24 @@ class Battle {
       }
     }
     this.fireTriggers(target, amount);
+  }
+
+  /**
+   * Warn when nobody in the party's front row is standing but someone in the
+   * back row is: monsters' melee attacks can reach the back row now. Warns
+   * again if the front row gets back up and falls a second time.
+   */
+  private checkExposed(): void {
+    const party = this.fighters.filter((f) => f.side === "party" && f.state === "up");
+    const open = !party.some((f) => f.row === "front") && party.some((f) => f.row === "back");
+    if (open && !this.exposed && this.winner() === "none") {
+      const anyFront = this.fighters.some((f) => f.side === "party" && f.row === "front");
+      const text = anyFront
+        ? "The front row has fallen: the back row is exposed!"
+        : "Nobody holds the front row: the back row is exposed!";
+      this.emit({ kind: "exposed", text });
+    }
+    this.exposed = open;
   }
 
   private fireTriggers(f: Fighter, amount: number): void {
@@ -685,6 +709,7 @@ class Battle {
         text: `${target.name} is back on their feet (+${gained} HP).`,
         hp: this.hp(target),
       });
+      this.checkExposed();
       return;
     }
     this.emit({
