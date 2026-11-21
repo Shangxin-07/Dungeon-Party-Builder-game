@@ -52,6 +52,14 @@ export function Accounts({ town }: { town: TownState }) {
           ))}
         </p>
       ) : null}
+      {town.secrets?.found || town.secrets?.missed ? (
+        <p className="small">
+          Hidden caches: the guild has found <strong>{town.secrets.found}</strong>, worth{" "}
+          <strong>{town.secrets.gold}</strong> gold, and walked past about{" "}
+          <strong>{town.secrets.missed}</strong> more without noticing. A sharp scout (Scouting)
+          finds more.
+        </p>
+      ) : null}
       {rows.length ? (
         <table className="haul">
           <caption className="muted small">The last {WEEK} days</caption>

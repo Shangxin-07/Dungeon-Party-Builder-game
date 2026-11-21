@@ -19,7 +19,17 @@ import {
   type StandingOrders,
 } from "./expedition";
 import { applyKills, dungeonDay, newDungeon, type DungeonState } from "./dungeon";
-import { createHero, EQUIP_SLOTS, fatigueTier, heroSheet, type EquipSlot, type Hero } from "./hero";
+import {
+  createHero,
+  EQUIP_SLOTS,
+  fatigueTier,
+  heroSheet,
+  rollRecruit,
+  trainRecruit,
+  classFit,
+  type EquipSlot,
+  type Hero,
+} from "./hero";
 import { gainXp, spendLevelUp } from "./levels";
 import type { Index } from "./library";
 import type { HaulItem } from "./loot";
@@ -28,7 +38,7 @@ import { resolveRaid, type RaidReport } from "./raid";
 import { createRng, type Rng } from "./rng";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 6;
+export const TOWN_VERSION = 7;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 const PIT_HISTORY = 60;
@@ -115,6 +125,11 @@ export interface TripReport {
   result: ExpeditionResult;
   /** Gold the Market paid for the haul. */
   goldEarned: number;
+  /** Who haggled with the Market, and the share of loot value it paid (M6). */
+  haggledBy?: string;
+  lootRate?: number;
+  /** Gold from hidden caches the party found (part of goldEarned). */
+  hiddenGold?: number;
   /** Kills per hero id. */
   kills: Record<string, number>;
   /** Raids on the town while the party was away (not "held" nights). */
@@ -181,6 +196,13 @@ export interface TownState {
   news: News[];
   /** The last few weeks of gold in and out, by day and kind. */
   ledger: LedgerLine[];
+  /** Recruits the guild can still sign for nothing (the starting heroes). */
+  freeHires: number;
+  /**
+   * Hidden caches (M6) over the guild's whole history: found, walked past
+   * without noticing, and gold the Market paid for what was in them.
+   */
+  secrets: { found: number; missed: number; gold: number };
 }
 
 /** What the guild's gold went on, or came from. */
@@ -316,13 +338,36 @@ export function shopStock(ix: Index, town: TownState): string[] {
 }
 
 export const buyPrice = (item: ItemDef) => item.value;
+
+/**
+ * The guild's best haggler (M6): whoever in town gets the Market to pay most,
+ * by Appraisal and CHA (content/town.ts `haggle`). `bonus` is added to the
+ * Market's usual rates.
+ */
+export function haggler(ix: Index, town: TownState): { hero?: Hero; bonus: number } {
+  const h = ix.lib.town.haggle;
+  let best: { hero?: Hero; bonus: number } = { bonus: 0 };
+  for (const x of town.roster) {
+    const sheet = heroSheet(ix, x);
+    const bonus =
+      Math.max(0, (sheet.skills.appraisal ?? 0) - 50) * h.perAppraisal +
+      Math.max(0, sheet.stats.CHA - 10) * h.perCha;
+    if (bonus > best.bonus) best = { hero: x, bonus };
+  }
+  return best;
+}
+
+/** The share of value the Market pays, after haggling. Never above haggle.max. */
+export const marketRate = (ix: Index, base: number, bonus = 0) =>
+  Math.min(Math.max(base, ix.lib.town.haggle.max), base + bonus);
+
 /** What the Market pays for one piece of a trip's haul worth `value`. Coins are coins. */
-export const haulPrice = (ix: Index, itemId: string, value: number) =>
+export const haulPrice = (ix: Index, itemId: string, value: number, bonus = 0) =>
   ix.item(itemId).tags.includes("coins")
     ? value
-    : Math.max(1, Math.floor(value * ix.lib.town.haulRate));
-export const sellPrice = (ix: Index, item: ItemDef) =>
-  Math.max(1, Math.floor(item.value * ix.lib.town.sellRate));
+    : Math.max(1, Math.floor(value * marketRate(ix, ix.lib.town.haulRate, bonus)));
+export const sellPrice = (ix: Index, item: ItemDef, bonus = 0) =>
+  Math.max(1, Math.floor(item.value * marketRate(ix, ix.lib.town.sellRate, bonus)));
 
 export const findHero = (town: TownState, id: string) => town.roster.find((h) => h.id === id);
 
@@ -482,12 +527,27 @@ function makeHero(
   });
 }
 
-/** A fresh batch of recruits looking for work. */
+/** Someone untrained looking for work (M6). */
+function makeRecruit(ix: Index, town: TownState, names: readonly string[], picks = 1): Hero {
+  return roll(town, (rng) => {
+    const id = `h${town.nextHeroId++}`;
+    return rollRecruit(ix, { id, name: pickName(town, names, rng) }, rng, picks);
+  });
+}
+
+/**
+ * A fresh batch of recruits looking for work: untrained, except for those a
+ * good Tavern sends trained and kitted. The starting recruits wait until signed.
+ */
 function freshRecruits(ix: Index, town: TownState, names: readonly string[]): void {
+  if ((town.freeHires ?? 0) > 0) return;
   town.recruits = [];
+  const trained = total(ix, town, "trainedRecruits");
   for (let i = 0; i < recruitsToday(ix, town); i++) {
-    const classId = roll(town, (rng) => rng.pick(ix.lib.classes).id);
-    town.recruits.push(makeHero(ix, town, names, classId, recruitPicks(ix, town)));
+    if (i < trained) {
+      const classId = roll(town, (rng) => rng.pick(ix.lib.classes).id);
+      town.recruits.push(makeHero(ix, town, names, classId, recruitPicks(ix, town)));
+    } else town.recruits.push(makeRecruit(ix, town, names, recruitPicks(ix, town)));
   }
 }
 
@@ -518,15 +578,12 @@ export function newTown(ix: Index, names: readonly string[], seed: number): Town
     nextThingId: 1,
     news: [],
     ledger: [],
+    freeHires: rules.startingRecruits,
+    secrets: { found: 0, missed: 0, gold: 0 },
   };
-  for (const classId of rules.startingRoster) {
-    const hero = makeHero(ix, town, names, classId);
-    town.roster.push(hero);
-    town.records[hero.id] = newRecord(1);
-  }
-  // Fill the party with one of each role where we can, as a sensible default.
-  town.party = town.roster.slice(0, partySlots(ix, town)).map((h) => h.id);
-  freshRecruits(ix, town, names);
+  // M6: the first heroes turn up untrained. The player picks their classes
+  // and kits them out from the store room (or calls autoStart).
+  for (let i = 0; i < rules.startingRecruits; i++) town.recruits.push(makeRecruit(ix, town, names));
   return town;
 }
 
@@ -551,18 +608,98 @@ function takeFromStash(town: TownState, itemId: string): void {
   town.stash.splice(i, 1);
 }
 
-export function hire(ix: Index, town: TownState, recruitId: string): TownState {
+/** Gold to sign this recruit: free while the starting heroes are signing up. */
+export function hirePrice(ix: Index, town: TownState, recruit: Hero): number {
+  if ((town.freeHires ?? 0) > 0) return 0;
+  const kit = recruit.untrained
+    ? 0
+    : [...EQUIP_SLOTS.map((s) => recruit.equipment[s]), ...recruit.pack]
+        .filter((id): id is string => !!id)
+        .reduce((s, id) => s + ix.item(id).value, 0);
+  return ix.lib.town.hireCost + kit;
+}
+
+/**
+ * Sign a recruit. An untrained one (M6) is trained in `classId` (default: the
+ * class their stats suit best) and joins with no gear; kit them out from the
+ * store room or the Market. A trained one (the Tavern) comes with their kit.
+ */
+export function hire(ix: Index, town: TownState, recruitId: string, classId?: string): TownState {
   const t = edit(town);
   const i = t.recruits.findIndex((r) => r.id === recruitId);
   if (i < 0) throw new TownError("That recruit has moved on.");
   if (t.roster.length >= rosterSize(ix, t))
     throw new TownError("The roster is full. Upgrade the Guild Hall or dismiss someone.");
-  if (t.gold < ix.lib.town.hireCost) throw new TownError("Not enough gold.");
+  const price = hirePrice(ix, t, t.recruits[i]!);
+  if (t.gold < price) throw new TownError("Not enough gold.");
   const [recruit] = t.recruits.splice(i, 1);
-  book(t, "hired", -ix.lib.town.hireCost);
-  t.roster.push(recruit!);
-  t.records[recruit!.id] = newRecord(t.day);
-  if (t.party.length < partySlots(ix, t)) t.party.push(recruit!.id);
+  const h = recruit!.untrained ? trainRecruit(ix, recruit!, classId ?? recruit!.classId) : recruit!;
+  if ((t.freeHires ?? 0) > 0) t.freeHires -= 1;
+  else book(t, "hired", -price);
+  t.roster.push(h);
+  t.records[h.id] = newRecord(t.day);
+  if (t.party.length < partySlots(ix, t)) t.party.push(h.id);
+  return t;
+}
+
+/**
+ * Give a hero their class's usual kit (content/classes/*.ts startingKit):
+ * from the store room first, then, if `buy`, from the Market while the gold
+ * lasts. Slots they already have filled are left alone.
+ */
+export function kitOut(ix: Index, town: TownState, heroId: string, buy = true): TownState {
+  let t = edit(town);
+  const h = hero(t, heroId);
+  const stock = shopStock(ix, t);
+  const pack = [...h.pack];
+  for (const id of ix.cls(h.classId).startingKit) {
+    const item = ix.item(id);
+    const slot = item.slot as EquipSlot;
+    const wearable = (EQUIP_SLOTS as readonly string[]).includes(item.slot);
+    if (wearable ? h.equipment[slot] : pack.includes(id)) {
+      if (!wearable) pack.splice(pack.indexOf(id), 1);
+      continue;
+    }
+    if (!t.stash.includes(id)) {
+      if (!buy || !stock.includes(id) || t.gold < buyPrice(item)) continue;
+      book(t, "bought", -buyPrice(item));
+      t.stash.push(id);
+    }
+    t = wearable ? equip(ix, t, heroId, id) : packItem(ix, t, heroId, id);
+  }
+  return t;
+}
+
+/**
+ * Sign up all the starting recruits and kit them out from the store room, as
+ * a player who wants to get going might ("pick for me"). Classes come from
+ * `classIds`, less any already signed, each going to the recruit whose stats
+ * suit it best; anyone left over takes the class that suits them.
+ */
+export function autoStart(
+  ix: Index,
+  town: TownState,
+  classIds: readonly string[] = ix.lib.town.startingRoster,
+): TownState {
+  const wanted = [...classIds];
+  for (const h of town.roster) {
+    const i = wanted.indexOf(h.classId);
+    if (i >= 0) wanted.splice(i, 1);
+  }
+  let t = town;
+  const sign = (id: string, classId?: string) => {
+    t = hire(ix, t, id, classId);
+    t = kitOut(ix, t, t.roster.at(-1)!.id, false);
+  };
+  for (const classId of wanted) {
+    const open = t.recruits.filter((r) => r.untrained);
+    if (!(t.freeHires > 0) || !open.length) break;
+    const best = open.reduce((a, b) =>
+      classFit(ix, b.stats, classId) > classFit(ix, a.stats, classId) ? b : a,
+    );
+    sign(best.id, classId);
+  }
+  while (t.freeHires > 0 && t.recruits.length) sign(t.recruits[0]!.id);
   return t;
 }
 
@@ -590,7 +727,7 @@ export function buy(ix: Index, town: TownState, itemId: string): TownState {
 export function sell(ix: Index, town: TownState, itemId: string): TownState {
   const t = edit(town);
   takeFromStash(t, itemId);
-  book(t, "sold", sellPrice(ix, ix.item(itemId)));
+  book(t, "sold", sellPrice(ix, ix.item(itemId), haggler(ix, t).bonus));
   return t;
 }
 
@@ -1227,13 +1364,29 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
       kills[c.actor] = (kills[c.actor] ?? 0) + 1;
   }
 
-  // The Market pays the real value for the haul, whatever the party guessed.
+  // The Market pays the real value for the haul, whatever the party guessed,
+  // less its cut, which the guild's best haggler talks down. The party is
+  // still in town's roster as it left, so they can do the haggling (unless
+  // they didn't make it back).
+  const back = (h: Hero) =>
+    !t.party.includes(h.id) ||
+    (!wiped && result.party.some((p) => p.id === h.id && p.condition !== "dead"));
+  const haggle = haggler(ix, { ...t, roster: t.roster.filter(back) });
   // Heroes' own gear goes back in the store room.
   const recovered = result.haul.filter((h) => h.keep);
   const goldEarned = result.haul
     .filter((h) => !h.keep)
-    .reduce((s, h) => s + haulPrice(ix, h.item, h.value), 0);
+    .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggle.bonus), 0);
   book(t, "haul", goldEarned);
+  const hiddenGold = result.haul
+    .filter((h) => h.hidden && !h.keep)
+    .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggle.bonus), 0);
+  const tally = t.secrets ?? { found: 0, missed: 0, gold: 0 };
+  t.secrets = {
+    found: tally.found + result.secrets.found,
+    missed: tally.missed + result.secrets.missed,
+    gold: tally.gold + hiddenGold,
+  };
   t.stash.push(...recovered.map((h) => h.item));
   t.scavenged = t.scavenged.filter((g) => !result.gearTaken.includes(g.id));
 
@@ -1460,6 +1613,9 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     quit,
     injuries,
     fatigue,
+    haggledBy: haggle.hero?.name,
+    lootRate: marketRate(ix, ix.lib.town.haulRate, haggle.bonus),
+    hiddenGold,
   };
   return t;
 }

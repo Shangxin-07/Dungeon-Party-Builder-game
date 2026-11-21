@@ -61,6 +61,11 @@ export interface Hero {
   payLevel: number;
   /** A raise they've asked for and not had an answer to yet. */
   raiseAsk?: { amount: number; day: number };
+  /**
+   * A recruit who hasn't picked a class yet (M6): `stats` are their own,
+   * before training, and `classId` is only the best fit. Hiring trains them.
+   */
+  untrained?: boolean;
 }
 
 /** The fatigue tier a hero is in ("tired", "exhausted"), if any. */
@@ -216,6 +221,98 @@ export function rollPersonality(
   const dislikes =
     others.length && rng.chance(lib.morale.dislikeChance) ? rng.pick(others) : undefined;
   return { motivation: motivation.id, favourite, morale, likes, dislikes };
+}
+
+/** How well raw stats suit a class: the sum of its main stats. */
+export const classFit = (ix: Index, stats: StatBlock, classId: string) =>
+  ix.cls(classId).mainStats.reduce((s, st) => s + stats[st], 0);
+
+/** The class a recruit's own stats suit best. */
+export function bestClass(ix: Index, stats: StatBlock): string {
+  let best = ix.lib.classes[0]!.id;
+  for (const c of ix.lib.classes)
+    if (classFit(ix, stats, c.id) > classFit(ix, stats, best)) best = c.id;
+  return best;
+}
+
+/**
+ * Someone looking for work, before any training (M6): stats of their own
+ * (10 ± 2 each, plus a talent: +2 on one), no class, no gear. With `picks`
+ * above 1, the best of that many by their two best stats.
+ */
+export function rollRecruit(
+  ix: Index,
+  opts: { id: string; name: string },
+  rng: Rng,
+  picks = 1,
+): Hero {
+  const roll = () => {
+    const stats = {} as Record<Stat, number>;
+    for (const s of STATS) stats[s] = 10 + rng.int(-2, 2);
+    stats[rng.pick(STATS)] += 2;
+    return stats;
+  };
+  const score = (st: StatBlock) =>
+    [...STATS]
+      .map((s) => st[s])
+      .sort((a, b) => b - a)
+      .slice(0, 2)
+      .reduce((a, b) => a + b, 0);
+  let stats = roll();
+  for (let i = 1; i < picks; i++) {
+    const other = roll();
+    if (score(other) > score(stats)) stats = other;
+  }
+  const classId = bestClass(ix, stats);
+  return {
+    id: opts.id,
+    name: opts.name,
+    classId,
+    level: 1,
+    stats,
+    perks: [],
+    equipment: {},
+    pack: [],
+    row: ix.cls(classId).row,
+    hp: 0,
+    mana: 0,
+    condition: "ok",
+    xp: 0,
+    levelUps: [],
+    moraleLog: [],
+    fatigue: 0,
+    injuries: [],
+    pay: 0,
+    payLevel: 1,
+    untrained: true,
+    ...rollPersonality(ix, opts.id, opts.name, stats),
+  };
+}
+
+/**
+ * Train a recruit in a class: the class's training moves their stats
+ * (class base stats − 10 on each), they take its row, and they pick up its
+ * likes. Their motivation and favourite building stay their own. No gear.
+ */
+export function trainRecruit(ix: Index, recruit: Hero, classId: string): Hero {
+  const cls = ix.cls(classId);
+  const stats = {} as Record<Stat, number>;
+  for (const s of STATS)
+    stats[s] = Math.max(1, Math.min(20, recruit.stats[s] + cls.baseStats[s] - 10));
+  const p = rollPersonality(ix, recruit.id, recruit.name, recruit.stats, classId);
+  const hero: Hero = {
+    ...recruit,
+    classId,
+    stats,
+    row: cls.row,
+    likes: p.likes,
+    dislikes: p.dislikes,
+  };
+  delete hero.untrained;
+  const { derived } = heroSheet(ix, hero);
+  hero.hp = derived.maxHp;
+  hero.mana = derived.mana;
+  return hero;
 }
 
 /** One of each class, named from the given list. Handy for tests and demos. */

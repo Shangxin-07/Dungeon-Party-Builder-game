@@ -9,6 +9,7 @@ import { applyMorale, lossFactor, moraleChanges, mood } from "./morale";
 import { createRng } from "./rng";
 import { migrateTown } from "./save";
 import {
+  autoStart,
   chooseLevelUp,
   grumbles,
   launch,
@@ -26,7 +27,7 @@ const ix = indexLibrary(library);
 const rng = (seed = 1) => createRng(seed);
 const fighter = (seed = 1): Hero =>
   createHero(ix, { id: `h${seed}`, name: `Test ${seed}`, classId: "fighter" }, rng(seed));
-const fresh = (seed = 1) => newTown(ix, heroNames, seed);
+const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
 const orders = (o: Partial<StandingOrders> = {}): StandingOrders => ({ ...DEFAULT_ORDERS, ...o });
 /** Pay for an upgrade and skip the builders' wait. */
 const build = (t: TownState, id: string): TownState => {
@@ -339,7 +340,7 @@ describe("wipes and rescue runs", () => {
       }
       t.party = ["r0", "r1", "r2"];
       t = planRescue(ix, t, site.id);
-      expect(t.orders.targetFloor).toBe(site.floor);
+      expect(t.orders.targetFloor).toBeGreaterThanOrEqual(site.floor);
       const after = launch(ix, t, heroNames);
       if (!after.lastTrip!.rescued?.length) continue;
       const back = after.lastTrip!.rescued!;

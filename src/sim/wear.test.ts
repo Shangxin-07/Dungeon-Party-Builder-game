@@ -7,6 +7,7 @@ import { fatigueTier, heroSheet, type Hero } from "./hero";
 import { indexLibrary } from "./library";
 import { migrateTown } from "./save";
 import {
+  autoStart,
   cantLaunch,
   launch,
   launchWarnings,
@@ -19,7 +20,7 @@ import {
 } from "./town";
 
 const ix = indexLibrary(library);
-const fresh = (seed = 1) => newTown(ix, heroNames, seed);
+const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
 const w = library.wear;
 const withHero = (t: TownState, i: number, f: (h: Hero) => Hero): TownState => ({
   ...t,

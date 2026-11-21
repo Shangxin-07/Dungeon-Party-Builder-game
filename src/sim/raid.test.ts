@@ -4,6 +4,7 @@ import { dungeonDay, type DungeonState } from "./dungeon";
 import { indexLibrary } from "./library";
 import { exportSave, importSave, migrateTown, summarise } from "./save";
 import {
+  autoStart,
   defence,
   forecast,
   launch,
@@ -21,7 +22,7 @@ import {
 } from "./town";
 
 const ix = indexLibrary(library);
-const fresh = (seed = 1) => newTown(ix, heroNames, seed);
+const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
 
 /** A dungeon left alone for `n` days: floor 1 is spilling over. */
 function neglected(n = 30): DungeonState {
@@ -145,7 +146,7 @@ describe("nights at the pit", () => {
 describe("new buildings", () => {
   it("Tavern brings more recruits, picked from more candidates", () => {
     let t = { ...fresh(), gold: 1000 };
-    const base = t.recruits.length;
+    const base = ix.lib.town.recruitsOnOffer;
     t = rest(ix, build(t, "tavern"), heroNames);
     expect(t.recruits).toHaveLength(base + 1);
     t = rest(ix, build({ ...t, gold: 1000 }, "tavern"), heroNames);

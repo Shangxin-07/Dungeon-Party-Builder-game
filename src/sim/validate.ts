@@ -160,6 +160,22 @@ export function validateLibrary(lib: Library): string[] {
   for (const k of ["injuryChance", "woundedInjuryChance"] as const)
     if (wear[k] < 0 || wear[k] > 1) err(`wear: ${k} must be 0-1`);
 
+  const hunting = lib.dungeon.hunting;
+  if (hunting.roomsPerDay < 1 || hunting.maxRooms < 0)
+    err("dungeon: hunting needs at least 1 room a day, and maxRooms can't be negative");
+  ids("secret", lib.secrets);
+  for (const x of lib.secrets) {
+    const w = `secret "${x.id}"`;
+    if (x.floors[0] < 1 || x.floors[1] < x.floors[0]) err(`${w}: bad floor range`);
+    if (x.weight <= 0) err(`${w}: weight must be positive`);
+    if (!lootIds.has(x.loot)) err(`${w}: unknown loot table "${x.loot}"`);
+  }
+  const search = lib.searching;
+  if (search.chancePerRoom < 0 || search.chancePerRoom > 1)
+    err("searching: chancePerRoom must be 0-1");
+  if (search.spread <= 0) err("searching: spread must be positive");
+  if (search.maxChance < 0 || search.maxChance > 1) err("searching: maxChance must be 0-1");
+
   for (const e of lib.encounters) {
     const w = `encounter "${e.id}"`;
     const [lo, hi] = e.floors;
@@ -297,6 +313,9 @@ export function validateLibrary(lib: Library): string[] {
 
   const t = lib.town;
   for (const id of t.startingRoster) if (!classIds.has(id)) err(`town: unknown class "${id}"`);
+  if (t.startingRecruits < 1) err("town: startingRecruits must be at least 1");
+  if (t.haggle.perAppraisal < 0 || t.haggle.perCha < 0) err("town: haggle rates can't be negative");
+  if (t.haggle.max < 0 || t.haggle.max > 1) err("town: haggle.max must be 0-1");
   for (const id of t.startingStash) if (!itemIds.has(id)) err(`town: unknown item "${id}"`);
   if (t.sellRate < 0 || t.sellRate > 1) err("town: sellRate must be between 0 and 1");
   if (t.haulRate < 0 || t.haulRate > 1) err("town: haulRate must be between 0 and 1");
