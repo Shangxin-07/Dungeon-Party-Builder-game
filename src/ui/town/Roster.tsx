@@ -203,8 +203,9 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
         <div className="raise">
           <p>
             <strong>{h.name} wants a raise</strong> of {h.raiseAsk.amount} gold a day (now paid{" "}
-            {wage(ix, h)}). They'll take silence as a no after {ix.lib.town.raises.patienceDays}{" "}
-            days.
+            {wage(ix, h)}). They'll take silence as a no after{" "}
+            {Math.max(1, ix.lib.town.raises.patienceDays - (h.raiseAsk.waited ?? 0))} more days in
+            town.
           </p>
           <button
             type="button"
