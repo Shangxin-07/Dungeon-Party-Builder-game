@@ -6,7 +6,9 @@
  * The loop only knows about effect *types* (weaponAttack, dealDamage, heal,
  * applyStatus, summon). Classes, monsters, abilities and statuses are all data.
  *
- * types.ts: fighters, the fight log and results. battle.ts: the fight itself.
+ * types.ts: fighters, the fight log and results. The fight is one class in
+ * layers, each extending the one before: base.ts (fighters, stats, the log),
+ * effects.ts (what abilities and statuses do), battle.ts (turns, start to finish).
  */
 export { BASIC_ATTACK, foeSheet } from "./types";
 export type {

@@ -37,11 +37,13 @@ src/
   sim/       Pure TypeScript simulation. No UI code, no Math.random (use the seeded Rng).
     stats.ts      primary stats -> secondary stats and skills
     hero.ts       heroes, recruits, starting kit
-    combat/       the automatic fight loop (battle.ts) and the battle log's types (types.ts)
+    combat/       the automatic fight, in layers: base.ts (fighters, stats, log), effects.ts
+                  (what abilities do), battle.ts (turns, start to finish); types.ts (the log)
     ai.ts         combat AIs, registered by id
     encounter.ts  floor power (×1.3 per floor) and rolling monster groups
-    expedition/   a full trip: floors, rooms, first aid, carrying (run.ts); standing orders
-                  (orders.ts); the trip report (report.ts)
+    expedition/   a full trip, in layers: trip.ts (state, party, log), care.ts (wounds, first
+                  aid, packs), fights.ts (rooms, fights, the risen), rescue.ts (lost parties,
+                  porters), run.ts (start to finish); tuning.ts; orders.ts; report.ts
     rooms.ts      room behaviours (fight, trap, treasure, rest, quiet), registered by id
     dungeon.ts    the population over time: breeding, push-up, overflow out of the pit
     raid.ts       what gets past the pit defences, and the fight in town
