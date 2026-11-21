@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CrashGuard } from "./Crash";
 import { ExpeditionView } from "./Expedition";
 import { TestFight } from "./TestFight";
-import { TownGame } from "./Town";
+import { TownGame } from "./town";
 import { BUILD_COMMIT, GAME_VERSION } from "../version";
 
 type Tab = "town" | "sandbox";

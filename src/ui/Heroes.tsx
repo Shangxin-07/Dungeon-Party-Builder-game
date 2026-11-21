@@ -1,7 +1,7 @@
 /**
  * Hero personality and progress in town (M5): morale and why it moved,
  * motivation, likes, favourite building, XP, perks, abilities, and the level-up picker.
- * Rules live in src/sim (morale.ts, levels.ts, town.ts); this only shows them.
+ * Rules live in src/sim (morale.ts, levels.ts, town/); this only shows them.
  */
 import { useState } from "react";
 import { STATS, type PassiveEffect, type Stat } from "../content/types";

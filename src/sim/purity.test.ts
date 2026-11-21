@@ -6,7 +6,9 @@ import { describe, expect, it } from "vitest";
 // and stay deterministic. See docs/DESIGN.md §12.
 describe("src/sim purity", () => {
   const dir = import.meta.dirname;
-  const files = readdirSync(dir).filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"));
+  const files = readdirSync(dir, { recursive: true, encoding: "utf8" }).filter(
+    (f) => f.endsWith(".ts") && !f.endsWith(".test.ts"),
+  );
 
   it.each(files)("%s has no UI imports or Math.random", (file) => {
     // Strip comments so docs can mention what's banned.
@@ -14,7 +16,7 @@ describe("src/sim purity", () => {
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/\/\/.*$/gm, "");
     expect(src).not.toMatch(/from\s+["'](react|react-dom)/);
-    expect(src).not.toMatch(/from\s+["']\.\.\/ui/);
+    expect(src).not.toMatch(/from\s+["'](\.\.\/)+ui/);
     expect(src).not.toMatch(/Math\.random/);
   });
 });
