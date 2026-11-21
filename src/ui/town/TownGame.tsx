@@ -40,8 +40,10 @@ import { Recruits } from "./Recruits";
 import { Market } from "./Market";
 import { Buildings } from "./Buildings";
 import { Memorial } from "./Memorial";
+import { CampPanel, PostsPanel } from "./Posts";
 
-export const freshTown = () => newTown(ix, heroNames, Date.now() % 2 ** 31);
+/** A new game starts at the mining camp (the opening, DESIGN.md §8); it can be skipped on day 1. */
+export const freshTown = () => newTown(ix, heroNames, Date.now() % 2 ** 31, { camp: true });
 
 export type Game = { slot: number; town: TownState };
 
@@ -213,26 +215,30 @@ export function TownPlay({ initial }: { initial: Game }) {
         </p>
       ) : null}
       {trip ? <LastTrip town={town} onWatch={() => setWatching("trip")} /> : null}
+      <CampPanel town={town} act={act} />
       {town.freeHires > 0 ? <Recruits town={town} act={act} /> : null}
+      {town.camp ? <PostsPanel town={town} act={act} /> : null}
       <RestockPanel town={town} act={act} />
       <TalkPanel town={town} />
       <LostPanel town={town} act={act} />
       <FallenPanel town={town} act={act} />
-      <PartyPanel
-        town={town}
-        act={act}
-        onLaunch={(prep) => {
-          try {
-            setTown(launch(ix, prep ? prep(town) : town, heroNames));
-            setError(undefined);
-            setWatching("trip");
-            window.scrollTo({ top: 0 });
-          } catch (e) {
-            if (e instanceof TownError) setError(e.message);
-            else throw e;
-          }
-        }}
-      />
+      {town.camp ? null : (
+        <PartyPanel
+          town={town}
+          act={act}
+          onLaunch={(prep) => {
+            try {
+              setTown(launch(ix, prep ? prep(town) : town, heroNames));
+              setError(undefined);
+              setWatching("trip");
+              window.scrollTo({ top: 0 });
+            } catch (e) {
+              if (e instanceof TownError) setError(e.message);
+              else throw e;
+            }
+          }}
+        />
+      )}
       <PitPanel
         town={town}
         onWatchRaid={(r) => {
@@ -240,6 +246,7 @@ export function TownPlay({ initial }: { initial: Game }) {
           window.scrollTo({ top: 0 });
         }}
       />
+      {town.camp ? null : <PostsPanel town={town} act={act} />}
       <Roster town={town} act={act} />
       {town.freeHires > 0 ? null : <Recruits town={town} act={act} />}
       <Market town={town} act={act} />
@@ -275,9 +282,13 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
       <span>
         Roster <strong>{town.roster.length}</strong>/{rosterSize(ix, town)}
       </span>
-      <span>
-        Party slots <strong>{partySlots(ix, town)}</strong>
-      </span>
+      {town.camp ? (
+        <span>At the mining camp</span>
+      ) : (
+        <span>
+          Party slots <strong>{partySlots(ix, town)}</strong>
+        </span>
+      )}
       <span>
         Defence <strong>{defence(ix, town)}</strong>
       </span>

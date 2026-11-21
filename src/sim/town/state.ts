@@ -9,7 +9,7 @@ import type { HaulItem } from "../loot";
 import type { RaidReport } from "../raid";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 13;
+export const TOWN_VERSION = 14;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 export const PIT_HISTORY = 60;
@@ -193,6 +193,15 @@ export interface TownState {
   risen: Risen[];
   /** Materials in the guild's store, by item id (DESIGN.md §8): kept to build with. */
   materials: Record<string, number>;
+  /** Heroes on each post round the pit (DESIGN.md §8), by post id. */
+  posts: Record<string, string[]>;
+  /**
+   * The opening (DESIGN.md §8): true while the guild is still holding the
+   * mining camp, before it can send parties down. Missing in older saves.
+   */
+  camp?: boolean;
+  /** What the posts brought in yesterday: materials by id, and gold. */
+  gathered?: { day: number; materials: Record<string, number>; gold: number };
 }
 
 /** A party on file: who goes, who carries, and their orders. Gear stays on the heroes. */
@@ -215,7 +224,9 @@ export type LedgerKind =
   | "repairs"
   | "stolen"
   | "temple"
-  | "burials";
+  | "burials"
+  | "gathered"
+  | "spoils";
 
 /** Gold in (positive) or out (negative) of one kind on one day. */
 export interface LedgerLine {

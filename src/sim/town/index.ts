@@ -11,7 +11,8 @@
  * Actions return a new state, or throw a TownError saying why not. One file
  * per topic: state.ts (the TownState shape), read.ts (reading the town, no
  * changes), start.ts, roster.ts, gear.ts, market.ts, parties.ts, buildings.ts,
- * wounds.ts, days.ts (a day passing), bodies.ts (the fallen), launch.ts.
+ * wounds.ts, days.ts (a day passing), bodies.ts (the fallen), posts.ts (posts
+ * round the pit and the opening), launch.ts.
  * internal.ts holds shared helpers and isn't re-exported here.
  */
 export { TOWN_VERSION, LEDGER_DAYS, TownError, newRecord } from "./state";
@@ -53,6 +54,11 @@ export {
   marketRate,
   haulPrice,
   materialWords,
+  postWorkers,
+  openPosts,
+  postEffects,
+  fitForPost,
+  campNeeds,
   materialsShort,
   sellPrice,
   findHero,
@@ -94,3 +100,4 @@ export { nextLevel, underConstruction, upgrade, builderHands, repair } from "./b
 export { answerRaise, rest } from "./days";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
 export { launch } from "./launch";
+export { assignPost, postOf } from "./posts";

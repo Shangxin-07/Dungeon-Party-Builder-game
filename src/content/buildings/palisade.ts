@@ -9,6 +9,7 @@ export default defineBuilding({
   levels: [
     {
       cost: 80,
+      materials: { timber: 4 },
       days: 2,
       summary: "Wooden palisade: holds back 6 strength a night",
       effects: [{ type: "defence", amount: 6 }],

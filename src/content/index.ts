@@ -18,6 +18,7 @@ import type {
   MonsterDef,
   MotivationDef,
   PerkDef,
+  PostDef,
   RoomDef,
   SecretDef,
   SkillDef,
@@ -189,6 +190,18 @@ import oreSeamRoom from "./rooms/ore-seam";
 import ironOreMaterial from "./materials/iron-ore";
 import spiderSilkMaterial from "./materials/spider-silk";
 import boneDustMaterial from "./materials/bone-dust";
+import timberMaterial from "./materials/timber";
+import pickAxeItem from "./items/pick-axe";
+import slingItem from "./items/sling";
+import workLeathersItem from "./items/work-leathers";
+import campSalvageLoot from "./loot/camp-salvage";
+import seamWorkLoot from "./loot/seam-work";
+import pitSpoilsLoot from "./loot/pit-spoils";
+import barricadePost from "./posts/barricade";
+import lookoutPost from "./posts/lookout";
+import salvagePost from "./posts/salvage";
+import seamPost from "./posts/seam";
+import openingRules from "./opening";
 import brokenArmInjury from "./injuries/broken-arm";
 import crackedRibsInjury from "./injuries/cracked-ribs";
 import twistedAnkleInjury from "./injuries/twisted-ankle";
@@ -210,10 +223,14 @@ export const classes: readonly ClassDef[] = [
 ];
 /** Building materials and rarer things: items the guild keeps rather than sells. */
 export const materials: readonly ItemDef[] = [
+  timberMaterial,
   ironOreMaterial,
   spiderSilkMaterial,
   boneDustMaterial,
 ];
+
+/** Posts round the pit (DESIGN.md §8): duties for heroes at home. */
+export const posts: readonly PostDef[] = [barricadePost, lookoutPost, salvagePost, seamPost];
 
 export const items: readonly ItemDef[] = [
   axeItem,
@@ -238,6 +255,10 @@ export const items: readonly ItemDef[] = [
   scaleMailItem,
   ironStaffItem,
   maceItem,
+  // Makeshift kit from the mining camp (the opening, DESIGN.md §8).
+  pickAxeItem,
+  slingItem,
+  workLeathersItem,
   // Materials (DESIGN.md §8): the guild keeps them to build with. See materials/.
   ...materials,
 ];
@@ -349,6 +370,9 @@ export const lootTables: readonly LootTableDef[] = [
   spiderLoot,
   hiddenCacheLoot,
   oreSeamLoot,
+  campSalvageLoot,
+  seamWorkLoot,
+  pitSpoilsLoot,
 ];
 export const rooms: readonly RoomDef[] = [
   dartTrapRoom,
@@ -419,6 +443,8 @@ export const library: Library = {
   searching: searchRules,
   fallen: fallenRules,
   transforms,
+  posts,
+  opening: openingRules,
 };
 
 export { heroNames } from "./names";

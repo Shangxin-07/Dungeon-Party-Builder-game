@@ -315,6 +315,36 @@ export function validateLibrary(lib: Library): string[] {
     }
   };
 
+  // Posts and the opening (DESIGN.md §8).
+  ids("post", lib.posts ?? []);
+  for (const p of lib.posts ?? []) {
+    const w = `post "${p.id}"`;
+    if (!Number.isInteger(p.slots) || p.slots < 1)
+      err(`${w}: slots must be a whole number, 1 or more`);
+    if (!p.effects.length) err(`${w}: needs at least one effect`);
+    for (const e of p.effects) {
+      if (e.type === "gather") {
+        if (!lootIds.has(e.loot)) err(`${w}: unknown loot table "${e.loot}"`);
+        if (!Number.isInteger(e.rolls) || e.rolls < 1) err(`${w}: gather rolls must be 1 or more`);
+      } else if (e.type === "raidWarning" ? e.days < 1 : e.amount < 0) err(`${w}: bad ${e.type}`);
+    }
+  }
+  if (lib.town.raidSpoils && !lootIds.has(lib.town.raidSpoils))
+    err(`town: unknown raidSpoils loot table "${lib.town.raidSpoils}"`);
+  const op = lib.opening;
+  if (op) {
+    for (const id of [...op.startingStash, ...op.heldStash])
+      if (!lib.items.some((i) => i.id === id)) err(`opening: unknown starting item "${id}"`);
+    for (const id of [...op.unbuilt, ...Object.keys(op.unlock)])
+      if (!lib.buildings.some((b) => b.id === id)) err(`opening: unknown building "${id}"`);
+    for (const [id, level] of Object.entries(op.unlock)) {
+      const b = lib.buildings.find((x) => x.id === id);
+      if (b && (level < 1 || level > b.levels.length))
+        err(`opening: "${id}" has no level ${level}`);
+    }
+    if (op.campRoster < 1) err("opening: campRoster must be 1 or more");
+  }
+
   ids("building", lib.buildings);
   for (const b of lib.buildings) {
     const w = `building "${b.id}"`;
