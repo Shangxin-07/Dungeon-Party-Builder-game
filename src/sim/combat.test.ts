@@ -194,3 +194,30 @@ describe("downed heroes (custom content)", () => {
     expect(texts(r.log)).not.toContain("Victim has bled out.");
   });
 });
+
+describe("the back row", () => {
+  it("gets a loud warning once the front row has all fallen", () => {
+    let warned = 0;
+    for (let seed = 0; seed < 200; seed++) {
+      const heroes = party(seed);
+      const r = runCombat(ix, heroes, ["skeleton", "skeleton", "skeleton", "skeleton"], {
+        seed,
+        level: 3,
+      });
+      const i = r.log.findIndex((e) => e.kind === "exposed");
+      if (i < 0) continue;
+      warned++;
+      // Every front-row hero is down by then.
+      const fronts = heroes.filter((h) => h.row === "front").map((h) => h.id);
+      for (const id of fronts)
+        expect(r.log.slice(0, i).some((e) => e.kind === "downed" && e.target === id)).toBe(true);
+    }
+    expect(warned).toBeGreaterThan(0);
+  });
+
+  it("warns at the start if nobody is in the front row", () => {
+    const heroes = party().map((h) => ({ ...h, row: "back" as const }));
+    const r = runCombat(ix, heroes, ["goblin"], { seed: 1 });
+    expect(r.log[1]?.kind).toBe("exposed");
+  });
+});

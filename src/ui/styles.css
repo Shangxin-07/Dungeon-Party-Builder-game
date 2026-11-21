@@ -338,6 +338,12 @@ footer {
   color: var(--text);
 }
 
+/* The party's front row is down: the back row can be hit. Mike wants it loud. */
+.log-combat.log-exposed {
+  color: #ff4d4d;
+  font-weight: 700;
+}
+
 .log-round-small {
   font-size: 0.75rem;
   opacity: 0.8;
