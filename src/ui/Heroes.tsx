@@ -1,10 +1,11 @@
 /**
  * Hero personality and progress in town (M5): morale and why it moved,
- * motivation, likes, favourite building, XP, perks, and the level-up picker.
+ * motivation, likes, favourite building, XP, perks, abilities, and the level-up picker.
  * Rules live in src/sim (morale.ts, levels.ts, town.ts); this only shows them.
  */
 import { useState } from "react";
 import { STATS, type Stat } from "../content/types";
+import { abilitiesAtLevel, abilityCost, knownAbilities, upcomingAbilities } from "../sim/abilities";
 import { fatigueTier, type Hero } from "../sim/hero";
 import { xpProgress } from "../sim/levels";
 import { lossFactor, mood } from "../sim/morale";
@@ -114,6 +115,37 @@ export function PerkList({ hero }: { hero: Hero }) {
   );
 }
 
+/**
+ * What the hero can do in a fight, and where each move comes from: their
+ * class, the gear in their hands, or a perk. Plus the next class ability.
+ */
+export function AbilityList({ hero }: { hero: Hero }) {
+  const known = knownAbilities(ix, hero);
+  const next = upcomingAbilities(ix, hero)[0];
+  return (
+    <p className="perks small">
+      Abilities: {known.length ? null : <span className="muted">just a basic attack</span>}
+      {known.map(({ ability: a, source, from }) => {
+        const cost = abilityCost(a);
+        const tip = [a.description, cost, `From ${source === "class" ? "class" : from}`]
+          .filter(Boolean)
+          .join(" · ");
+        return (
+          <span key={a.id} className={`perk ability-${source}`} title={tip}>
+            {a.name}
+            {source === "class" ? null : <span className="muted"> ({from})</span>}
+          </span>
+        );
+      })}
+      {next ? (
+        <span className="muted" title={next.ability.description}>
+          Next: {next.ability.name} at level {next.level}
+        </span>
+      ) : null}
+    </p>
+  );
+}
+
 /** Spend the oldest level-up: one perk from those on offer, and the free point if there is one. */
 export function LevelUpPicker({ hero, act }: { hero: Hero; act: Act }) {
   const up = hero.levelUps[0];
@@ -123,12 +155,17 @@ export function LevelUpPicker({ hero, act }: { hero: Hero; act: Act }) {
   const chosen = perk && up.offers.includes(perk) ? perk : undefined;
   const ready = (!up.offers.length || chosen) && (!up.freeStat || stat);
   const more = hero.levelUps.length - 1;
+  const learned = abilitiesAtLevel(ix, hero.classId, up.level);
   return (
     <div className="levelup">
       <h4>
         Level {up.level}!{" "}
         <span className="muted small">
-          {ix.cls(hero.classId).name} gains are in. Pick a perk
+          {ix.cls(hero.classId).name} gains are in
+          {learned.length
+            ? ` and ${hero.name} learns ${learned.map((a) => a.name).join(" and ")}`
+            : ""}
+          . Pick a perk
           {up.freeStat ? " and a stat for the free point" : ""}.
           {more ? ` ${more} more level-up${more > 1 ? "s" : ""} after this.` : ""}
         </span>

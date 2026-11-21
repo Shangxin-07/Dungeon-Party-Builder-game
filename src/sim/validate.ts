@@ -80,7 +80,11 @@ export function validateLibrary(lib: Library): string[] {
     if (!c.mainStats.length) err(`${w}: needs at least one main stat`);
     for (const s of c.mainStats) if (!STATS.includes(s)) err(`${w}: unknown main stat "${s}"`);
     if (!hasAi(c.ai)) err(`${w}: unknown AI "${c.ai}"`);
-    for (const a of c.abilities) if (!abilityIds.has(a)) err(`${w}: unknown ability "${a}"`);
+    for (const [a, level] of Object.entries(c.abilities)) {
+      if (!abilityIds.has(a)) err(`${w}: unknown ability "${a}"`);
+      if (!Number.isInteger(level) || level < 1)
+        err(`${w}: ability "${a}" needs a level of 1 or more`);
+    }
     for (const [s, v] of Object.entries(c.growth)) {
       if (!STATS.includes(s as never)) err(`${w}: growth in unknown stat "${s}"`);
       if (!Number.isInteger(v) || v < 0) err(`${w}: growth must be whole numbers, 0 or more`);
@@ -112,6 +116,9 @@ export function validateLibrary(lib: Library): string[] {
       err(`${w}: size must be a whole number of at least 1`);
     passives(w, i.passives);
     actives(w, i.use);
+    if (i.abilities?.length && i.slot !== "weapon" && i.slot !== "offhand")
+      err(`${w}: only weapons and offhands can grant abilities`);
+    for (const a of i.abilities ?? []) if (!abilityIds.has(a)) err(`${w}: unknown ability "${a}"`);
   }
 
   for (const a of lib.abilities) {
@@ -119,6 +126,11 @@ export function validateLibrary(lib: Library): string[] {
     if (RESERVED_ABILITY_IDS.includes(a.id))
       err(`${w}: "${a.id}" is reserved for the basic attack`);
     if (!a.effects.length) err(`${w}: needs at least one effect`);
+    for (const k of ["cooldown", "perFight"] as const) {
+      const v = a[k];
+      if (v !== undefined && (!Number.isInteger(v) || v < 1))
+        err(`${w}: ${k} must be a whole number of at least 1`);
+    }
     actives(w, a.effects);
   }
 
@@ -141,7 +153,10 @@ export function validateLibrary(lib: Library): string[] {
   for (const p of lib.perks) {
     for (const c of p.classes) if (!classIds.has(c)) err(`perk "${p.id}": unknown class "${c}"`);
     passives(`perk "${p.id}"`, p.passives);
-    if (!p.passives.length) err(`perk "${p.id}": needs at least one passive`);
+    for (const a of p.abilities ?? [])
+      if (!abilityIds.has(a)) err(`perk "${p.id}": unknown ability "${a}"`);
+    if (!p.passives.length && !p.abilities?.length)
+      err(`perk "${p.id}": needs at least one passive or ability`);
   }
 
   ids("injury", lib.injuries);

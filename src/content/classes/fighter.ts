@@ -9,7 +9,7 @@ export default defineClass({
   likes: ["sword", "axe", "shield"],
   row: "front",
   ai: "fighter",
-  abilities: [],
+  abilities: { "power-strike": 1, "second-wind": 4, whirlwind: 7 },
   startingKit: ["sword", "chainmail", "wooden-shield", "healing-potion"],
   growth: { STR: 1, END: 1 },
 });

@@ -25,7 +25,7 @@ export interface BattleView {
   readonly rng: Rng;
   /** Abilities this fighter knows, plus the basic "attack". */
   abilities(): AbilityDef[];
-  /** Enough mana for it? */
+  /** Ready to use: enough mana, off cooldown, not used up for this fight. */
   canAfford(ability: AbilityDef): boolean;
   /** Fighters this ability could be aimed at right now. */
   targets(ability: AbilityDef): Fighter[];
@@ -79,6 +79,47 @@ function healSelfWithItem(view: BattleView, threshold: number): Action | undefin
 const byTag = (view: BattleView, tag: string) =>
   view.abilities().filter((a) => a.tags.includes(tag) && view.canAfford(a));
 
+/** Most expensive first: the bigger spell is usually the better one. */
+const priciest = (abilities: AbilityDef[]) =>
+  [...abilities].sort((a, b) => (b.cost ?? 0) - (a.cost ?? 0));
+
+const statusesOf = (a: AbilityDef) =>
+  a.effects.flatMap((e) => (e.type === "applyStatus" ? [e.status] : []));
+
+const hurts = (a: AbilityDef) =>
+  a.effects.some((e) => e.type === "weaponAttack" || e.type === "dealDamage");
+
+/** A once-a-fight pick-me-up such as Second Wind (tag "recover"), when hurt. */
+function recover(view: BattleView, threshold: number): Action | undefined {
+  if (hpFraction(view.self) >= threshold) return undefined;
+  const a = byTag(view, "recover").find((x) => x.target === "self");
+  return a ? { kind: "ability", ability: a.id, target: view.self.uid } : undefined;
+}
+
+/**
+ * Martial techniques (tag "martial"), from the class list or the weapon in
+ * hand: a sweeping attack if two or more foes are in reach, otherwise one of
+ * the ready moves at random. Moves that only weaken (Mark Prey) go on the
+ * biggest foe not already suffering it; moves that hurt use `choose`.
+ */
+function technique(
+  view: BattleView,
+  choose: (targets: Fighter[]) => Fighter | undefined,
+): Action | undefined {
+  const moves = byTag(view, "martial").filter(
+    (a) => a.target !== "self" && !a.tags.includes("recover"),
+  );
+  const sweep = moves.find((a) => a.target === "all-enemies" && view.targets(a).length >= 2);
+  if (sweep) return { kind: "ability", ability: sweep.id, target: view.targets(sweep)[0]!.uid };
+  const single = moves.filter((a) => a.target === "enemy");
+  if (!single.length) return undefined;
+  const move = view.rng.pick(single);
+  const fresh = (f: Fighter) => !statusesOf(move).some((s) => f.statuses.some((x) => x.id === s));
+  const targets = view.targets(move).filter(fresh);
+  const target = hurts(move) ? choose(targets) : lowest(targets, (f) => -f.hp);
+  return target ? { kind: "ability", ability: move.id, target: target.uid } : undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Built-in AIs
 // ---------------------------------------------------------------------------
@@ -97,35 +138,58 @@ registerAi("brute", (view) => {
 
 /** Front-liners: go for the biggest threat in reach. */
 registerAi("fighter", (view) => {
-  return healSelfWithItem(view, 0.35) ?? attack(view, (t) => lowest(t, (f) => -f.derived.attack));
+  const threat = (t: Fighter[]) => lowest(t, (f) => -f.derived.attack);
+  return (
+    recover(view, 0.35) ??
+    healSelfWithItem(view, 0.35) ??
+    technique(view, threat) ??
+    attack(view, threat)
+  );
 });
 
 /** Ranged: pick off the most wounded enemy. */
 registerAi("archer", (view) => {
-  return healSelfWithItem(view, 0.35) ?? attack(view, (t) => lowest(t, (f) => f.hp));
+  const weakest = (t: Fighter[]) => lowest(t, (f) => f.hp);
+  return (
+    recover(view, 0.35) ??
+    healSelfWithItem(view, 0.35) ??
+    technique(view, weakest) ??
+    attack(view, weakest)
+  );
 });
+
+/** Heal a group if two or more are hurt, else the worst-off (downed first). */
+function healSomeone(view: BattleView, below: number): Action | undefined {
+  const { allies } = view;
+  const heals = priciest(byTag(view, "heal"));
+  const hurt = allies.filter((a) => a.state === "up" && hpFraction(a) < below);
+  const group = heals.find((a) => a.target === "all-allies");
+  if (group && hurt.length >= 2)
+    return { kind: "ability", ability: group.id, target: hurt[0]!.uid };
+  const heal = heals.find((a) => a.target === "ally");
+  if (!heal) return undefined;
+  const patient = allies.find((a) => a.state === "downed") ?? lowest(hurt, hpFraction);
+  return patient ? { kind: "ability", ability: heal.id, target: patient.uid } : undefined;
+}
+
+/** Mana to keep back for one single-target heal. */
+const healReserve = (view: BattleView) =>
+  view.abilities().find((a) => a.tags.includes("heal") && a.target === "ally")?.cost ?? 0;
 
 /** Casters: heal first, then area spells on groups, then single-target spells. */
 registerAi("caster", (view) => {
-  const { self, allies, enemies } = view;
-  const heals = byTag(view, "heal");
-  const heal = heals[0];
-  if (heal) {
-    const downed = allies.find((a) => a.state === "downed");
-    const hurt = lowest(
-      allies.filter((a) => a.state === "up" && hpFraction(a) < 0.45),
-      hpFraction,
-    );
-    const patient = downed ?? hurt;
-    if (patient) return { kind: "ability", ability: heal.id, target: patient.uid };
-  }
+  const { self, enemies } = view;
+  const healing = healSomeone(view, 0.45);
+  if (healing) return healing;
   const drink = healSelfWithItem(view, 0.3);
   if (drink) return drink;
 
   // Keep enough mana back for one heal.
-  const reserve = view.abilities().find((a) => a.tags.includes("heal"))?.cost ?? 0;
+  const reserve = healReserve(view);
   const spare = (a: AbilityDef) => self.mana - (a.cost ?? 0) >= reserve;
-  const damage = byTag(view, "damage").filter((a) => a.id !== "attack" && spare(a));
+  const damage = priciest(
+    byTag(view, "spell").filter((a) => a.tags.includes("damage") && spare(a)),
+  );
 
   const aoe = damage.find((a) => a.target === "all-enemies");
   if (aoe && enemies.length >= 2)
@@ -136,7 +200,8 @@ registerAi("caster", (view) => {
     const target = lowest(view.targets(single), (f) => f.hp);
     if (target) return { kind: "ability", ability: single.id, target: target.uid };
   }
-  return attack(view, (t) => lowest(t, (f) => f.hp));
+  const weakest = (t: Fighter[]) => lowest(t, (f) => f.hp);
+  return technique(view, weakest) ?? attack(view, weakest);
 });
 
 /**
@@ -144,24 +209,19 @@ registerAi("caster", (view) => {
  * spells for the undead (or a full mana pool), and otherwise swing a weapon.
  */
 registerAi("healer", (view) => {
-  const { self, allies } = view;
-  const heal = byTag(view, "heal")[0];
-  if (heal) {
-    const downed = allies.find((a) => a.state === "downed");
-    const hurt = lowest(
-      allies.filter((a) => a.state === "up" && hpFraction(a) < 0.6),
-      hpFraction,
-    );
-    const patient = downed ?? hurt;
-    if (patient) return { kind: "ability", ability: heal.id, target: patient.uid };
-  }
+  const { self } = view;
+  const healing = healSomeone(view, 0.6);
+  if (healing) return healing;
   const drink = healSelfWithItem(view, 0.3);
   if (drink) return drink;
 
-  const healCost = view.abilities().find((a) => a.tags.includes("heal"))?.cost ?? 0;
+  const healCost = healReserve(view);
   const flush = self.mana >= self.derived.mana * 0.75;
-  const spell = byTag(view, "damage").find(
-    (a) => a.id !== "attack" && a.target === "enemy" && self.mana - (a.cost ?? 0) >= healCost * 2,
+  const spell = byTag(view, "spell").find(
+    (a) =>
+      a.tags.includes("damage") &&
+      a.target === "enemy" &&
+      self.mana - (a.cost ?? 0) >= healCost * 2,
   );
   if (spell) {
     const targets = view.targets(spell);
@@ -172,5 +232,6 @@ registerAi("healer", (view) => {
     const target = undead ?? (flush ? lowest(targets, (f) => f.hp) : undefined);
     if (target) return { kind: "ability", ability: spell.id, target: target.uid };
   }
-  return attack(view, (t) => lowest(t, (f) => f.hp));
+  const weakest = (t: Fighter[]) => lowest(t, (f) => f.hp);
+  return technique(view, weakest) ?? attack(view, weakest);
 });

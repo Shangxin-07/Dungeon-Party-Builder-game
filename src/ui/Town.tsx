@@ -64,7 +64,15 @@ import {
   writeSlot,
 } from "./saves";
 import { DERIVED_LABELS, HeroBars, Results, StatSheet, TripPlayer } from "./Watch";
-import { LevelUpPicker, MoraleBar, PerkList, Personality, WearBar, XpBar } from "./Heroes";
+import {
+  AbilityList,
+  LevelUpPicker,
+  MoraleBar,
+  PerkList,
+  Personality,
+  WearBar,
+  XpBar,
+} from "./Heroes";
 import { RestockPanel } from "./Restock";
 import { ScoutingReport } from "./Report";
 import { Departed, LostPanel, TalkPanel } from "./Lost";
@@ -761,6 +769,7 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
       </div>
       <StatSheet hero={h} full />
       <PerkList hero={h} />
+      <AbilityList hero={h} />
 
       <h4>Gear</h4>
       <ul className="gear">

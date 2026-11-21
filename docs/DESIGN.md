@@ -574,6 +574,42 @@ Saves stay at version 6 (this all landed before version 6 shipped): heroes get f
 
 Still to come in M6+: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters and floors, the 2D watch view and multiple parties.
 
+### As built in M6: class abilities and weapon moves
+
+> Added 2026-11-21. Mike: "start looking at spell / ability lists for classes... and / or abilities that are weapon specific." Both, as data. Code in `src/sim/abilities.ts`; abilities are files in `src/content/abilities/`.
+
+A hero's abilities come from three places, worked out fresh before every fight (nothing is stored on the hero, so swapping gear changes what they can do next time):
+
+1. **The class list, by level.** A class lists `abilities: { id: level }`. Until freeform classes (§9) the level is the hero's level; after that it becomes the level in that class, so depth in one class is how you reach its best moves.
+2. **The gear in their hands.** Weapons and offhands list `abilities`. Anyone holding the item can use them: a cleric with an axe cleaves.
+3. **Perks.** A perk can list `abilities` too (supported, none use it yet).
+
+**Paying for them.** Spells cost mana as before. Martial moves have a `cooldown` (usable once every N of the hero's turns) and/or `perFight` (at most N uses per fight). A new target, `all-allies`, covers group heals. A melee `all-enemies` weapon attack (Cleave, Whirlwind) only reaches the front row while it stands.
+
+| Class | Level 1 | Later |
+|---|---|---|
+| Fighter | Power Strike (+50% hit, every 3 turns) | Second Wind (4: once a fight, heal 10 when badly hurt), Whirlwind (7: whole front row at 80%) |
+| Scout | Mark Prey (a hit, and −5 evasion for 3 turns so everyone hits it) | Flurry (5: two hits at 65%) |
+| Mage | Firebolt, Flame Wave, Mend | Frost Lance (4: cold damage, chills), Fireball (7: big fire on every monster) |
+| Cleric | Prayer of Mending, Smite | Circle of Healing (5: heal the whole party a little) |
+
+| Gear | Move |
+|---|---|
+| Axe, War Axe | Cleave: whole front row at 75%, every 3 turns |
+| Short Bow, Longbow | Aimed Shot: +60%, every 3 turns |
+| Mace | Crush: a hit that cracks armour (−3 armour, 3 turns) |
+| Sword, Iron Sword | Disarm: a hit, and −4 attack for 2 turns |
+| Dagger | Backstab: +80%, every 3 turns |
+| Wooden Shield, Iron Shield | Shield Bash: 75% hit that dazes (−4 accuracy and initiative), every 4 turns |
+
+New statuses: marked, sundered, disarmed, dazed, chilled. New damage type: cold.
+
+**The AIs** read tags, not ids. Fighters, scouts, casters and healers use a ready `martial` move before a basic attack: a sweep if two or more foes are in reach, otherwise a random ready move, aimed at a foe not already suffering its status. `recover` moves (Second Wind) come before potions. Casters and healers use a group heal when two or more allies are hurt, and prefer the bigger spell they can afford.
+
+**In town** each hero card lists their abilities (gear ones say which item), with cost and description on hover, and the next class ability ("Next: Frost Lance at level 4"). The level-up picker says what's learned at that level.
+
+**Balance** (`npm run balance`, 500 runs, starter party, retreat below 30%): floor 1 unchanged (99-100% home). Floor 2 81% → 86% home, floor 3 28% → 38%. Fighter, cleric, scout: floor 3 41% → 58%. Heroes are a bit stronger at level 1, mostly from Mark Prey and the weapon moves; monsters have no new tricks yet. Saves are unchanged (no version bump).
+
 ## 12. First playable slice
 
 Small on purpose. Everything here is data, so adding more later means adding entries, not rewriting code.

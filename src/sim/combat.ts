@@ -17,6 +17,7 @@ import type {
   Trigger,
 } from "../content/types";
 import { getAi, type Action, type BattleView } from "./ai";
+import { knownAbilityIds } from "./abilities";
 import { heroSheet, type Hero } from "./hero";
 import type { Index } from "./library";
 import { createRng, type Rng } from "./rng";
@@ -39,6 +40,10 @@ export interface Fighter {
   tags: string[];
   weapon: { name: string; damageType: DamageType; ranged: boolean };
   abilities: string[];
+  /** Turns until each ability on cooldown is ready again. */
+  cooldowns: Record<string, number>;
+  /** Times each ability has been used this fight. */
+  used: Record<string, number>;
   ai: string;
   hp: number;
   mana: number;
@@ -225,7 +230,9 @@ class Battle {
             ranged: !!weaponDef.ranged,
           }
         : { name: "fists", damageType: "crushing", ranged: false },
-      abilities: [...cls.abilities],
+      abilities: knownAbilityIds(this.ix, hero),
+      cooldowns: {},
+      used: {},
       ai: cls.ai,
       hp: Math.min(hero.hp, sheet.derived.maxHp),
       mana: Math.min(hero.mana, sheet.derived.mana),
@@ -267,6 +274,8 @@ class Battle {
         ? { name: item.name.toLowerCase(), damageType: item.damageType ?? "crushing", ranged }
         : { name: def.weapon.name, damageType: def.weapon.damageType, ranged },
       abilities: [...(def.abilities ?? [])],
+      cooldowns: {},
+      used: {},
       ai: def.ai,
       hp: derived.maxHp,
       mana: derived.mana,
@@ -400,6 +409,7 @@ class Battle {
       this.tickStatuses(f);
       if (f.state !== "up") return;
     }
+    for (const id in f.cooldowns) if (f.cooldowns[id]! > 0) f.cooldowns[id]!--;
     const action = getAi(f.ai)(this.view(f));
     this.perform(f, action);
   }
@@ -433,9 +443,16 @@ class Battle {
       ix: this.ix,
       rng: this.rng,
       abilities: () => [BASIC_ATTACK, ...self.abilities.map((id) => this.ix.ability(id))],
-      canAfford: (a) => self.mana >= (a.cost ?? 0),
+      canAfford: (a) => this.ready(self, a),
       targets: (a) => this.targetsFor(self, a),
     };
+  }
+
+  /** Enough mana, off cooldown, and not used up for this fight. */
+  private ready(self: Fighter, a: AbilityDef): boolean {
+    if (self.mana < (a.cost ?? 0)) return false;
+    if ((self.cooldowns[a.id] ?? 0) > 0) return false;
+    return a.perFight === undefined || (self.used[a.id] ?? 0) < a.perFight;
   }
 
   private targetsFor(self: Fighter, ability: AbilityDef): Fighter[] {
@@ -443,13 +460,15 @@ class Battle {
       case "self":
         return [self];
       case "ally":
+      case "all-allies":
         return this.fighters.filter((f) => f.side === self.side && f.state !== "dead");
       case "all-enemies":
       case "enemy": {
         const enemies = this.fighters.filter((f) => f.side !== self.side && f.state === "up");
-        // Melee weapon attacks can only reach the front row while it stands.
+        // Melee weapon attacks can only reach the front row while it stands
+        // (a sweeping blow like Cleave hits the whole front row).
         const melee = ability.effects.some((e) => e.type === "weaponAttack") && !self.weapon.ranged;
-        if (!melee || ability.target === "all-enemies") return enemies;
+        if (!melee) return enemies;
         const front = enemies.filter((f) => f.row === "front");
         return front.length ? front : enemies;
       }
@@ -486,7 +505,10 @@ class Battle {
 
     const ability = action.ability === "attack" ? BASIC_ATTACK : this.ix.ability(action.ability);
     actor.mana -= ability.cost ?? 0;
-    const targets = ability.target === "all-enemies" ? this.targetsFor(actor, ability) : [target];
+    if (ability.cooldown) actor.cooldowns[ability.id] = ability.cooldown;
+    actor.used[ability.id] = (actor.used[ability.id] ?? 0) + 1;
+    const group = ability.target === "all-enemies" || ability.target === "all-allies";
+    const targets = group ? this.targetsFor(actor, ability) : [target];
     const isBasic = ability === BASIC_ATTACK;
     if (!isBasic) {
       const aimed = ability.target === "enemy" || (ability.target === "ally" && target !== actor);

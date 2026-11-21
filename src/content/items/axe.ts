@@ -8,6 +8,7 @@ export default defineItem({
   value: 30,
   tags: ["axe", "heavy", "melee"],
   damageType: "slashing",
+  abilities: ["cleave"],
   passives: [
     { type: "modifyStat", stat: "attack", amount: 5 },
     { type: "bonusVsTag", tag: "undead", percent: 50 },

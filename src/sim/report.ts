@@ -5,6 +5,7 @@
  * the floor. Everything here is worked out from content; nothing is rolled.
  */
 import type { DamageType } from "../content/types";
+import { knownAbilities } from "./abilities";
 import { floorOdds } from "./encounter";
 import { heroSheet, type Hero } from "./hero";
 import type { Index } from "./library";
@@ -45,8 +46,8 @@ export function damageTypes(ix: Index, hero: Hero): Set<DamageType> {
   const out = new Set<DamageType>();
   const w = hero.equipment.weapon ? ix.item(hero.equipment.weapon) : undefined;
   out.add(w?.damageType ?? "crushing");
-  for (const a of ix.cls(hero.classId).abilities)
-    for (const e of ix.ability(a).effects) if (e.type === "dealDamage") out.add(e.damageType);
+  for (const { ability } of knownAbilities(ix, hero))
+    for (const e of ability.effects) if (e.type === "dealDamage") out.add(e.damageType);
   return out;
 }
 
