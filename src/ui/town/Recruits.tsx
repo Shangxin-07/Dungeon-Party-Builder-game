@@ -1,6 +1,7 @@
 /**
  * Today's recruits and hiring them.
  */
+import { Fold } from "../Fold";
 import { useState } from "react";
 import { library } from "../../content";
 import { baseClasses, bestClass, trainRecruit, type Hero } from "../../sim/hero";
@@ -23,17 +24,23 @@ export function Recruits({ town, act }: { town: TownState; act: Act }) {
   const free = town.freeHires > 0;
   const trained = town.recruits.some((h) => !h.untrained);
   return (
-    <section aria-labelledby="recruits-heading" className="panel">
-      <h2 id="recruits-heading">
-        Looking for work{" "}
-        <span className="muted">
-          (
-          {free
-            ? `${town.freeHires} will sign for nothing`
-            : `${library.town.hireCost} gold to sign`}
-          )
-        </span>
-      </h2>
+    <Fold
+      id="recruits"
+      title={
+        <>
+          Looking for work{" "}
+          <span className="muted">
+            (
+            {free
+              ? `${town.freeHires} will sign for nothing`
+              : `${library.town.hireCost} gold to sign`}
+            )
+          </span>
+        </>
+      }
+      defaultOpen={free}
+      summary={`${town.recruits.length} waiting`}
+    >
       {free ? (
         <p className="small">
           Your first heroes. They have stats but no training and no gear: pick each one's class,
@@ -57,7 +64,7 @@ export function Recruits({ town, act }: { town: TownState; act: Act }) {
           <RecruitCard key={h.id} town={town} recruit={h} act={act} full={full} />
         ))}
       </ul>
-    </section>
+    </Fold>
   );
 }
 

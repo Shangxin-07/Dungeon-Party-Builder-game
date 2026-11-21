@@ -1,6 +1,7 @@
 /**
  * The Market: buy, sell and haggle.
  */
+import { Fold } from "../Fold";
 import { heroSheet } from "../../sim/hero";
 import {
   buy,
@@ -20,8 +21,7 @@ export function Market({ town, act }: { town: TownState; act: Act }) {
   const haggle = haggler(ix, town);
   const stash = tally(town.stash);
   return (
-    <section aria-labelledby="market-heading" className="panel">
-      <h2 id="market-heading">Market</h2>
+    <Fold id="market" title="Market" summary={`${stash.length} in the store room`}>
       <p className="small">
         The Market pays{" "}
         <strong>{Math.round(marketRate(ix, ix.lib.town.haulRate, haggle.bonus) * 100)}%</strong> of
@@ -104,6 +104,6 @@ export function Market({ town, act }: { town: TownState; act: Act }) {
           )}
         </div>
       </div>
-    </section>
+    </Fold>
   );
 }

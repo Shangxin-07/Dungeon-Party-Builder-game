@@ -1349,3 +1349,213 @@ sup.down {
   flex-wrap: wrap;
   gap: 0.25rem 1.25rem;
 }
+
+/* Watching: Party and Opposition, one line per combatant; click for details. */
+
+.side {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.side h3 {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.combatants {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.combatant-row {
+  display: block;
+  width: 100%;
+  padding: 3px 6px;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.combatant-row:hover,
+.combatant.open .combatant-row {
+  border-color: var(--border);
+  background: var(--bg);
+}
+
+.combatant-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.combatant-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 6px 10px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--border);
+}
+
+/* Folding panels (Fold.tsx): click the heading to open; the summary stays visible. */
+
+.fold.panel {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 55%, var(--bg));
+}
+
+.fold.panel.open {
+  background: none;
+}
+
+.fold-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.fold-2 > .fold-head {
+  padding: 6px 12px;
+}
+
+.fold-head h2,
+.fold-head h3 {
+  margin: 0;
+}
+
+.fold-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.fold-toggle:hover {
+  color: var(--accent);
+}
+
+.fold-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.chev {
+  display: inline-block;
+  width: 1em;
+  color: var(--muted);
+  font-size: 0.8em;
+  transition: transform 0.15s;
+}
+
+.fold.open > .fold-head .chev {
+  transform: rotate(90deg);
+}
+
+.fold-summary {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.fold-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.fold-2 > .fold-body {
+  padding: 4px 12px 14px;
+}
+
+.fold-3 {
+  margin: 8px 0;
+}
+
+.fold-3 > .fold-body {
+  padding: 4px 0 4px 18px;
+}
+
+/* Roster: compact hero cards that open into the full sheet. */
+
+.hero-cards {
+  align-items: start;
+}
+
+.hero-card.compact {
+  gap: 6px;
+  padding: 10px 12px;
+}
+
+.hero-card.open {
+  grid-column: 1 / -1;
+}
+
+.hero-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  width: 100%;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.hero-toggle h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.hero-toggle:hover h3 {
+  text-decoration: underline;
+}
+
+.hero-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.hero-toggle .badge {
+  margin-left: auto;
+}
+
+.hero-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 8px 24px;
+  align-items: start;
+}
+
+.hero-body > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}

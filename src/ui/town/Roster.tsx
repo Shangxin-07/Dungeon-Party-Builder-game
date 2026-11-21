@@ -1,11 +1,13 @@
 /**
  * The roster: each hero's card, gear, pack and porter training.
  */
+import { Fold } from "../Fold";
 import { useState } from "react";
 import {
   baseClasses,
   bestClass,
   EQUIP_SLOTS,
+  fatigueTier,
   heroSheet,
   heroTitle,
   inCampClass,
@@ -30,6 +32,8 @@ import {
 } from "../../sim/town";
 import { ix } from "../game";
 import { HeroBars, StatSheet } from "../Watch";
+import { useFold } from "../Fold";
+import { mood } from "../../sim/morale";
 import {
   AbilityList,
   ClassList,
@@ -40,12 +44,11 @@ import {
   WearBar,
   XpBar,
 } from "../Heroes";
-import { SLOT_NAMES, describeItem, tally, type Act } from "./shared";
+import { SLOT_NAMES, describeItem, describeKit, tally, type Act } from "./shared";
 
 export function Roster({ town, act }: { town: TownState; act: Act }) {
   return (
-    <section aria-labelledby="roster-heading" className="panel">
-      <h2 id="roster-heading">Roster</h2>
+    <Fold id="roster" title="Roster" defaultOpen summary={`${town.roster.length} in the guild`}>
       {!town.camp && town.roster.some((h) => !h.porter && inCampClass(ix, h)) ? (
         <p className="small">
           The camp is held, and the miners can train for the dungeon. Pick each one's class on their
@@ -65,7 +68,7 @@ export function Roster({ town, act }: { town: TownState; act: Act }) {
       ) : (
         <p className="muted">Nobody is left in the guild. Hire someone below.</p>
       )}
-    </section>
+    </Fold>
   );
 }
 
@@ -145,6 +148,10 @@ export function MinerTraining({ town, hero: h, act }: { town: TownState; hero: H
   );
 }
 
+/**
+ * A hero on the roster: a compact card (name, bars, anything that needs an
+ * answer, party and row buttons) that opens into the full sheet on click.
+ */
 export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Act }) {
   const inParty = town.party.includes(h.id) || (town.porters ?? []).includes(h.id);
   const rec = town.records[h.id];
@@ -152,23 +159,45 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
   const supplies = tally(town.stash.filter((id) => ix.item(id).slot === "consumable"));
   const packFull = h.pack.length >= sheet.derived.carrySlots;
   const miner = inCampClass(ix, h);
+  const [open, toggle] = useFold(`hero-${h.id}`, false);
+  const tier = fatigueTier(ix, h);
+  const low = h.morale < ix.lib.morale.low;
+  const trainReady = h.porter && !fightsToTrain(ix, h);
 
   return (
-    <li className={`hero-card${inParty ? " in-party" : ""}`}>
-      <div className="hero-head">
+    <li className={`hero-card compact${inParty ? " in-party" : ""}${open ? " open" : ""}`}>
+      <button
+        type="button"
+        className="hero-toggle"
+        aria-expanded={open}
+        title={open ? "Hide the full sheet" : "Show the full sheet"}
+        onClick={toggle}
+      >
         <h3>{h.name}</h3>
         <span className="muted small">
-          {h.porter ? "Porter" : heroTitle(ix, h)},{" "}
-          {town.camp ? "working for their keep" : `paid ${wage(ix, h)} gold a day`}
+          {h.porter ? "Porter" : heroTitle(ix, h)}
+          {town.camp ? "" : `, ${wage(ix, h)}g/day`}
         </span>
         {h.levelUps.length ? <span className="badge">Level up!</span> : null}
-      </div>
+        {h.raiseAsk ? <span className="badge">Wants a raise</span> : null}
+      </button>
       <HeroBars hero={h} />
-      <MoraleBar hero={h} log />
-      <WearBar hero={h} />
-      {h.porter ? <PorterTraining hero={h} act={act} /> : <XpBar hero={h} />}
-      {miner ? <MinerTraining town={town} hero={h} act={act} /> : null}
-      <Personality hero={h} town={town} />
+      <p className="small quiet">
+        <span className={low ? "warn" : "muted"}>
+          Morale {h.morale} {mood(ix, h)}
+        </span>
+        {tier ? <span className="warn"> · {tier.name}</span> : null}
+        {h.injuries?.length ? (
+          <span className="warn">
+            {" "}
+            ·{" "}
+            {h.injuries.map((i) => `${ix.injury(i.id).name.toLowerCase()} (${i.days}d)`).join(", ")}
+          </span>
+        ) : null}
+        {open ? null : <span className="muted"> · {describeKit(h)}</span>}
+      </p>
+      {miner && !town.camp ? <MinerTraining town={town} hero={h} act={act} /> : null}
+      {trainReady ? <PorterTraining hero={h} act={act} /> : null}
       <LevelUpPicker key={h.levelUps[0]?.level ?? 0} hero={h} town={town} act={act} />
       {h.raiseAsk ? (
         <div className="raise">
@@ -222,12 +251,71 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
             </button>
           ))}
         </div>
+        <button type="button" className="link small" aria-expanded={open} onClick={toggle}>
+          {open ? "Less" : "Stats, gear and more"}
+        </button>
       </div>
-      <StatSheet hero={h} full />
-      <ClassList hero={h} town={town} />
-      <PerkList hero={h} />
-      <AbilityList hero={h} />
 
+      {open ? (
+        <div className="hero-body">
+          <div>
+            <MoraleBar hero={h} log />
+            <WearBar hero={h} />
+            {h.porter ? (
+              trainReady ? null : (
+                <PorterTraining hero={h} act={act} />
+              )
+            ) : (
+              <XpBar hero={h} />
+            )}
+            {miner && town.camp ? <MinerTraining town={town} hero={h} act={act} /> : null}
+            <StatSheet hero={h} full />
+            <Personality hero={h} town={town} />
+          </div>
+          <div>
+            <ClassList hero={h} town={town} />
+            <PerkList hero={h} />
+            <AbilityList hero={h} />
+            <HeroGear town={town} hero={h} act={act} supplies={supplies} packFull={packFull} />
+            <p className="record muted small">
+              {rec
+                ? `${rec.trips} ${rec.trips === 1 ? "trip" : "trips"}, ${rec.kills} kills, joined day ${rec.joined}.`
+                : null}{" "}
+              <button
+                type="button"
+                className="link danger"
+                onClick={() => {
+                  if (confirm(`Dismiss ${h.name}? Their gear stays with the guild.`))
+                    act((t) => dismiss(ix, t, h.id));
+                }}
+              >
+                Dismiss
+              </button>
+            </p>
+          </div>
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
+/** Equipment slots with swap/take off, and the pack. */
+function HeroGear({
+  town,
+  hero: h,
+  act,
+  supplies,
+  packFull,
+}: {
+  town: TownState;
+  hero: Hero;
+  act: Act;
+  supplies: [string, number][];
+  packFull: boolean;
+}) {
+  const sheet = heroSheet(ix, h);
+  return (
+    <>
       <h4>
         Gear{" "}
         <button
@@ -326,22 +414,6 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
         ) : null}
         {!h.pack.length && !supplies.length ? <span className="muted small">Empty.</span> : null}
       </div>
-
-      <p className="record muted small">
-        {rec
-          ? `${rec.trips} ${rec.trips === 1 ? "trip" : "trips"}, ${rec.kills} kills, joined day ${rec.joined}.`
-          : null}{" "}
-        <button
-          type="button"
-          className="link danger"
-          onClick={() => {
-            if (confirm(`Dismiss ${h.name}? Their gear stays with the guild.`))
-              act((t) => dismiss(ix, t, h.id));
-          }}
-        >
-          Dismiss
-        </button>
-      </p>
-    </li>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 /**
  * Party, formation and orders, and the saved parties A and B.
  */
+import { Fold } from "../Fold";
 import { library } from "../../content";
 import type { Row } from "../../content/types";
 import { describeParty, partyAlignment } from "../../sim/alignment";
@@ -47,13 +48,29 @@ export function PartyPanel({
   const site = rescueSite(town);
 
   return (
-    <section aria-labelledby="party-heading" className="panel">
-      <h2 id="party-heading">
-        The party{" "}
-        <span className="muted">
-          ({party.length}/{slots})
-        </span>
-      </h2>
+    <Fold
+      id="party"
+      defaultOpen
+      actions={
+        <button
+          type="button"
+          className="btn btn-main"
+          disabled={!!why}
+          title={why}
+          onClick={() => onLaunch()}
+        >
+          Send them down
+        </button>
+      }
+      title={
+        <>
+          The party{" "}
+          <span className="muted">
+            ({party.length}/{slots})
+          </span>
+        </>
+      }
+    >
       {site ? (
         <p className="mission">
           Rescue run: down to floor {site.floor} to find{" "}
@@ -203,7 +220,7 @@ export function PartyPanel({
         Send them down
       </button>
       {why ? <span className="muted small"> {why}</span> : null}
-    </section>
+    </Fold>
   );
 }
 
@@ -226,9 +243,38 @@ export function PartiesOnFile({
   onLaunch: (prep?: (t: TownState) => TownState) => void;
 }) {
   const slots = Array.from({ length: ix.lib.town.savedParties }, (_, i) => i);
+  // One-click sends, usable with the list folded away.
+  const quick = slots.flatMap((slot) => {
+    const p = savedParty(town, slot);
+    if (!p || !partyOnFile(town, slot).heroes.length) return [];
+    let why: string | undefined;
+    try {
+      why = cantLaunch(ix, pickParty(ix, town, slot));
+    } catch (e) {
+      why = (e as Error).message;
+    }
+    return [
+      <button
+        key={slot}
+        type="button"
+        className="btn"
+        disabled={!!why}
+        title={why}
+        onClick={() => onLaunch((t) => pickParty(ix, t, slot))}
+      >
+        Send {p.name}
+      </button>,
+    ];
+  });
   return (
-    <div className="parties-on-file">
-      <h3>Parties on file</h3>
+    <Fold
+      id="parties-on-file"
+      level={3}
+      className="parties-on-file"
+      title="Parties on file"
+      summary={quick.length ? undefined : "none kept yet"}
+      actions={quick.length ? quick : undefined}
+    >
       <ul className="cards">
         {slots.map((slot) => {
           const p = savedParty(town, slot);
@@ -339,6 +385,6 @@ export function PartiesOnFile({
           );
         })}
       </ul>
-    </div>
+    </Fold>
   );
 }
