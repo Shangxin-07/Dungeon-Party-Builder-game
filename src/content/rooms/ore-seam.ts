@@ -5,7 +5,7 @@ export default defineRoom({
   id: "ore-seam",
   name: "Ore seam",
   behaviour: "treasure",
-  floors: [1, 3],
+  floors: [1, 4],
   weight: 1,
   descriptions: [
     "A seam of iron ore glints in the wall, half dug out before the miners fled.",

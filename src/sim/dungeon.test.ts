@@ -24,7 +24,7 @@ describe("the dungeon over time", () => {
   it("starts from the floors' content", () => {
     const d = newDungeon(ix);
     expect(d.floors.map((f) => f.population)).toEqual(library.floors.map((f) => f.startPopulation));
-    expect(d.floors.map((f) => f.level)).toEqual([1, 2, 3]);
+    expect(d.floors.map((f) => f.level)).toEqual(library.floors.map((f) => f.depth));
     expect(spawnRate(ix, d)).toBe(rules.spawnPerDay);
   });
 

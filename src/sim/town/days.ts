@@ -12,6 +12,7 @@ import { PIT_HISTORY, RAID_HISTORY, type TownState, TownError, newRecord } from 
 import {
   defence,
   restMorale,
+  healingBonus,
   trainingXp,
   vaultShare,
   wage,
@@ -134,7 +135,7 @@ export function nightfall(
 
 /** A day in town for a hero who isn't away: morale from the town, and training. */
 export function dayInTown(ix: Index, t: TownState, h: Hero): void {
-  const healed = healInjuries(ix, h);
+  const healed = healInjuries(ix, h, healingBonus(ix, t));
   if (healed.length)
     news(
       t,

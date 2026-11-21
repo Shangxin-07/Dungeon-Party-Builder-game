@@ -5,7 +5,7 @@ export default defineRoom({
   id: "monster-lair",
   name: "Occupied chamber",
   behaviour: "fight",
-  floors: [1, 3],
+  floors: [1, 5],
   weight: 6,
   descriptions: [
     "Something is moving in the next chamber.",

@@ -106,6 +106,13 @@ export const trainingXp = (ix: Index, town: TownState) => total(ix, town, "train
 /** Extra XP from trips, in percent (the Library). */
 export const xpBonus = (ix: Index, town: TownState) => total(ix, town, "xpPercent");
 
+/** Extra days every injury mends for each day in town (the Apothecary). */
+export const healingBonus = (ix: Index, town: TownState) => total(ix, town, "healing");
+
+/** Floors the parties ride the cage down past (the Mine Cage). */
+export const liftFloors = (ix: Index, town: TownState) =>
+  effects(ix, town).reduce((m, e) => (e.type === "lift" ? Math.max(m, e.floors) : m), 0);
+
 /** Percent of the guild's gold that raiders can't get at (the Vault). */
 export const vaultShare = (ix: Index, town: TownState) =>
   Math.min(

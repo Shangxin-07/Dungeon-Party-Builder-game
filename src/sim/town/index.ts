@@ -41,6 +41,8 @@ export {
   restMorale,
   trainingXp,
   xpBonus,
+  healingBonus,
+  liftFloors,
   vaultShare,
   wage,
   wageBill,

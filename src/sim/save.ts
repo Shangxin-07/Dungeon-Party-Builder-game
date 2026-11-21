@@ -9,7 +9,7 @@
  * file only reads, upgrades and writes them.
  */
 import { rollAlignment } from "./alignment";
-import { newDungeon } from "./dungeon";
+import { addNewFloors, newDungeon } from "./dungeon";
 import { rollPersonality, type Hero } from "./hero";
 import type { Index } from "./library";
 import { TOWN_VERSION, tidyFreeHires, type TownState } from "./town";
@@ -206,6 +206,9 @@ export function migrateTown(ix: Index, raw: unknown): TownState | undefined {
   // Not a change of shape, so no new version: just un-stick saves where a
   // starting recruit was signed as a porter (see tidyFreeHires).
   tidyFreeHires(t);
+  // New floors are content, not a change of shape: older dungeons get them as
+  // a new game would start them.
+  if (t.dungeon) addNewFloors(ix, t.dungeon);
   return t;
 }
 

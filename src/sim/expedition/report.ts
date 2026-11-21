@@ -145,4 +145,6 @@ export interface ExpeditionExtras {
   porters?: readonly Hero[];
   /** Risen guild mates haunting the floors (DESIGN.md §10). */
   risen?: readonly Risen[];
+  /** Floors the Mine Cage carries the party past, down and back up (M6.21). */
+  lift?: number;
 }

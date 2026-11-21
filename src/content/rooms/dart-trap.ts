@@ -4,7 +4,7 @@ export default defineRoom({
   id: "dart-trap",
   name: "Narrow corridor",
   behaviour: "trap",
-  floors: [1, 3],
+  floors: [1, 5],
   weight: 1.5,
   descriptions: ["The corridor narrows. The walls are full of little holes."],
   trap: {

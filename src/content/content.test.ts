@@ -108,7 +108,7 @@ describe("validateLibrary", () => {
         'floor "deep": unknown room "nowhere"',
         'floor "deep": no rooms can appear at depth 9',
         'floor "deep": startPopulation must be between 0 and capacity',
-        "floors: depth 4 is missing",
+        "floors: depth 6 is missing",
       ]),
     );
   });
