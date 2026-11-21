@@ -1,6 +1,6 @@
 /**
  * Lost parties and rescue runs (M5, DESIGN.md §10), the guild's news, and the
- * talk around town. Rules live in src/sim/town.ts.
+ * talk around town. Rules live in src/sim/town/.
  */
 import { library } from "../content";
 import {

@@ -1,237 +1,48 @@
 /**
- * Expeditions (DESIGN.md §11). A party walks down through the floors one room
- * at a time, following the standing orders it was given in town, then climbs
- * back out. Fully automatic and deterministic: same seed + same party + same
- * orders = the same trip, room for room.
- *
- * Floors, rooms, loot and traps are content. Room behaviours are registered
- * in rooms.ts. This file only knows the shape of a trip: down, room by room,
- * look after the party between rooms, check orders, come home.
+ * Running a trip: down, room by room, look after the party between rooms,
+ * check orders, come home. Tuning numbers are at the top.
  */
-import type { DamageType } from "../content/types";
-import { foeSheet, runCombat, type CombatEvent, type FoeSheet, type Side } from "./combat";
-import type { FloorPressure } from "./dungeon";
-import { rollEncounter } from "./encounter";
-import { risenHero, risenName, type Body, type Risen } from "./fallen";
-import { heroSheet, type Hero } from "./hero";
-import type { Index } from "./library";
-import { appraise, itemSize, rollLootTable, rollValue, worthPerSlot, type HaulItem } from "./loot";
-import { createRng, type Rng } from "./rng";
-import { getRoom, type RoomContext } from "./rooms";
-import { resistance } from "./stats";
-
-// ---------------------------------------------------------------------------
-// Standing orders (DESIGN.md §2): the player's only say once the party leaves.
-// ---------------------------------------------------------------------------
-
-export type RetreatRule =
-  | { kind: "never" }
-  /** Turn back when any hero drops below this share of max HP, or goes down. */
-  | { kind: "hero-hp-below"; percent: number }
-  /** Turn back as soon as anyone goes down. */
-  | { kind: "hero-downed" }
-  /** Turn back when the last potion is gone. */
-  | { kind: "out-of-potions" };
-
-/** "everything": carry anything that fits. "valuable": leave cheap junk behind. */
-export type LootRule = "everything" | "valuable";
-
-export interface StandingOrders {
-  /** Clear down to this floor, then come home. */
-  targetFloor: number;
-  retreat: RetreatRule;
-  loot: LootRule;
-  /** A rescue run: the id of the lost party's site to reach (DESIGN.md §10). */
-  rescue?: string;
-  /**
-   * Clear the target floor (M6): after walking it, stay and hunt until this
-   * percent of the monsters living there are dead. Retreat orders still apply.
-   */
-  clearPercent?: number;
-}
-
-export const DEFAULT_ORDERS: StandingOrders = {
-  targetFloor: 1,
-  retreat: { kind: "hero-hp-below", percent: 30 },
-  loot: "everything",
-};
-
-export function describeRetreat(rule: RetreatRule): string {
-  switch (rule.kind) {
-    case "never":
-      return "never turn back";
-    case "hero-hp-below":
-      return `turn back if anyone drops below ${rule.percent}% HP`;
-    case "hero-downed":
-      return "turn back if anyone goes down";
-    case "out-of-potions":
-      return "turn back when the potions run out";
-  }
-}
-
-// ---------------------------------------------------------------------------
-// The trip report
-// ---------------------------------------------------------------------------
-
-export type ExpeditionEventKind =
-  | "depart"
-  | "floor"
-  | "room"
-  | "scout"
-  | "trap"
-  | "fight"
-  | "combat"
-  | "loot"
-  | "drop"
-  | "medicine"
-  | "rest"
-  | "retreat"
-  | "wander"
-  | "home"
-  | "wipe"
-  /** A fight room with nothing left alive in it. */
-  | "quiet"
-  /** A low-morale hero ignores the standing orders (DESIGN.md §6). */
-  | "disobey"
-  /** A porter's run for home after a wipe (M6). */
-  | "porter"
-  /** A hidden cache found by the party's best scout (M6). */
-  | "secret"
-  /** A rescue party reaches where a lost party fell (DESIGN.md §10). */
-  | "site"
-  /** Raids on the town reuse the trip log format. */
-  | "raid";
-
-/** A hero's condition at a point in the trip. */
-export interface HeroStatus {
-  uid: string;
-  name: string;
-  hp: number;
-  maxHp: number;
-  mana: number;
-  maxMana: number;
-  condition: Hero["condition"];
-}
-
-export interface ExpeditionEvent {
-  kind: ExpeditionEventKind;
-  text: string;
-  /** Floor depth (0 = in town). */
-  floor: number;
-  /** Room number on this floor, from 1 (0 = between rooms). */
-  room: number;
-  /** "combat" events: the line from the battle report. */
-  combat?: CombatEvent;
-  /** "fight" events: the monsters at the start of the fight, with their stats. */
-  monsters?: FoeSheet[];
-  /** Every event except "combat": the party after it happened. */
-  party?: HeroStatus[];
-}
-
-export interface ExpeditionResult {
-  /**
-   * "returned": did what it was told. "retreated": turned back early.
-   * "wiped": nobody left standing.
-   */
-  outcome: "returned" | "retreated" | "wiped";
-  orders: StandingOrders;
-  deepestFloor: number;
-  /** In-game days the trip took (DESIGN.md decision 2). */
-  days: number;
-  roomsVisited: number;
-  /** The heroes as they came home (or where they fell). */
-  party: Hero[];
-  /** Loot carried out. Empty after a wipe: it stays with the fallen. */
-  haul: HaulItem[];
-  /** Haul left at the wipe site, for a rescue party to recover later. */
-  leftBehind: HaulItem[];
-  kills: string[];
-  /** Monsters killed on each floor (summoned ones don't count), for the dungeon's population. */
-  floorKills: Record<number, number>;
-  log: ExpeditionEvent[];
-  /** Where the party fell, if it was wiped. */
-  wipeSite?: { floor: number; room: number };
-  /** Kinds of monster the party fought. */
-  seen: string[];
-  /** Trapped heroes the party found and freed. After a wipe they're lost again. */
-  rescued: Hero[];
-  /** The lost party's site the party reached, if any. */
-  siteVisited?: string;
-  /** What the party couldn't carry away from that site. */
-  siteLeft: HaulItem[];
-  /** Ids of scavenged gear taken back from the monsters carrying it. */
-  gearTaken: string[];
-  /**
-   * Bodies the party picked up (DESIGN.md §10): from a lost party's site, and
-   * risen guild mates put down. After a wipe they lie where the party fell.
-   */
-  bodies: Body[];
-  /** Ids of risen guild mates the party fought, and of those it put down. */
-  risenMet: string[];
-  risenSlain: string[];
-  /** Times a hero ignored orders. */
-  disobeyed: number;
-  /** Extra rooms spent hunting under a "clear the floor" order. */
-  huntRooms: number;
-  /** Porters who went along, and whether they got home. */
-  porters: { id: string; name: string; home: boolean }[];
-  /** Loot porters ran home with after a wipe (not in `haul` or `leftBehind`). */
-  porterHaul: HaulItem[];
-  /** Hidden caches found, and those walked past without anyone noticing. */
-  secrets: { found: number; missed: number };
-}
-
-/** Where a lost party fell, as a rescue party will find it (DESIGN.md §10). */
-export interface SiteVisit {
-  id: string;
-  floor: number;
-  /** The room they fell in. The rescue party gets there after that many rooms. */
-  room: number;
-  /** Trapped heroes still alive when the rescue party arrives. */
-  trapped: Hero[];
-  /** The bodies of those who died there. */
-  bodies: Body[];
-  /** Their gear and the haul they were carrying. */
-  items: HaulItem[];
-}
-
-/** A lost hero's gear that monsters carried off from a site, now loose on a floor. */
-export interface CarriedGear {
-  id: string;
-  item: string;
-  owner?: string;
-}
-
-/** What the dungeon holds besides monsters: a site to reach, gear being carried about. */
-export interface ExpeditionExtras {
-  site?: SiteVisit;
-  /** Scavenged gear by floor depth. */
-  gear?: Readonly<Record<number, readonly CarriedGear[]>>;
-  /** Porters (M6): they carry loot, never fight, and run for it if the party falls. */
-  porters?: readonly Hero[];
-  /** Risen guild mates haunting the floors (DESIGN.md §10). */
-  risen?: readonly Risen[];
-}
-
-// ---------------------------------------------------------------------------
-// Tuning
-// ---------------------------------------------------------------------------
+import type { DamageType } from "../../content/types";
+import { foeSheet, runCombat, type Side } from "../combat";
+import type { FloorPressure } from "../dungeon";
+import { rollEncounter } from "../encounter";
+import { risenHero, risenName, type Body, type Risen } from "../fallen";
+import { heroSheet, type Hero } from "../hero";
+import type { Index } from "../library";
+import { appraise, itemSize, rollLootTable, rollValue, worthPerSlot, type HaulItem } from "../loot";
+import { createRng, type Rng } from "../rng";
+import { getRoom, type RoomContext } from "../rooms";
+import { resistance } from "../stats";
+import { type StandingOrders, describeRetreat } from "./orders";
+import type {
+  ExpeditionEventKind,
+  HeroStatus,
+  ExpeditionEvent,
+  ExpeditionResult,
+  SiteVisit,
+  CarriedGear,
+  ExpeditionExtras,
+} from "./report";
 
 /** Carry slots a downed hero takes up when someone has to carry them. */
 export const DOWNED_LOAD = 4;
-/** Chance per floor of meeting wandering monsters on the way back up. */
-const WANDER_CHANCE = 0.2;
-/** Mana regained per room walked: WIL ÷ this, rounded up. */
-const MANA_REGEN_DIVISOR = 4;
-/** Bandages are used on heroes below this share of max HP. */
-const BANDAGE_BELOW = 0.6;
-/** Chance to get a downed hero up = BASE + SCALE × Medicine/100. */
-const REVIVE_BASE = 0.3;
-const REVIVE_SCALE = 0.6;
-/** With the "valuable" loot rule, finds worth less than this per slot are left. */
-const VALUABLE_PER_SLOT = 8;
 
-// ---------------------------------------------------------------------------
+/** Chance per floor of meeting wandering monsters on the way back up. */
+export const WANDER_CHANCE = 0.2;
+
+/** Mana regained per room walked: WIL ÷ this, rounded up. */
+export const MANA_REGEN_DIVISOR = 4;
+
+/** Bandages are used on heroes below this share of max HP. */
+export const BANDAGE_BELOW = 0.6;
+
+/** Chance to get a downed hero up = BASE + SCALE × Medicine/100. */
+export const REVIVE_BASE = 0.3;
+
+export const REVIVE_SCALE = 0.6;
+
+/** With the "valuable" loot rule, finds worth less than this per slot are left. */
+export const VALUABLE_PER_SLOT = 8;
 
 /**
  * Simulate a whole trip. `floors` is the dungeon as it is today (index 0 =
@@ -273,11 +84,12 @@ export function planFloor(ix: Index, depth: number, rng: Rng): string[] {
   return rooms;
 }
 
-const an = (name: string) => (/^[aeiou]/i.test(name) ? `an ${name}` : `a ${name}`);
-const list = (items: string[]) =>
+export const an = (name: string) => (/^[aeiou]/i.test(name) ? `an ${name}` : `a ${name}`);
+
+export const list = (items: string[]) =>
   items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items.at(-1)}` : (items[0] ?? "");
 
-class Expedition {
+export class Expedition {
   private party: Hero[];
   private haul: HaulItem[] = [];
   private kills: string[] = [];

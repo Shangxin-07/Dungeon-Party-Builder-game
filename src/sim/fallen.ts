@@ -6,7 +6,7 @@
  * style and whatever of their gear is still lying there.
  *
  * This file holds the plain data and the hero-level rules. The town actions
- * (resurrect, bury) and the passing of days live in town.ts.
+ * (resurrect, bury) and the passing of days live in town/ (bodies.ts, days.ts).
  */
 import type { StatBlock } from "../content/types";
 import { STATS } from "../content/types";

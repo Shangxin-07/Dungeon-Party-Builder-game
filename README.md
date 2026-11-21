@@ -37,20 +37,26 @@ src/
   sim/       Pure TypeScript simulation. No UI code, no Math.random (use the seeded Rng).
     stats.ts      primary stats -> secondary stats and skills
     hero.ts       heroes, recruits, starting kit
-    combat.ts     the automatic fight loop and battle log
+    combat/       the automatic fight loop (battle.ts) and the battle log's types (types.ts)
     ai.ts         combat AIs, registered by id
     encounter.ts  floor power (×1.3 per floor) and rolling monster groups
-    expedition.ts a full trip: floors, rooms, first aid, carrying, standing orders
+    expedition/   a full trip: floors, rooms, first aid, carrying (run.ts); standing orders
+                  (orders.ts); the trip report (report.ts)
     rooms.ts      room behaviours (fight, trap, treasure, rest, quiet), registered by id
     dungeon.ts    the population over time: breeding, push-up, overflow out of the pit
     raid.ts       what gets past the pit defences, and the fight in town
-    town.ts       town actions: hire, kit out, build, repair, rest, launch; nights at the pit
+    town/         town actions, one file per topic: state.ts (TownState), read.ts (prices,
+                  effects, warnings), roster.ts, gear.ts, market.ts, parties.ts, buildings.ts,
+                  days.ts (rest, nights at the pit, wages), bodies.ts, launch.ts
     save.ts       versioned saves, migrations, save files
     loot.ts       loot tables, item values and appraisal
     validate.ts   content checks (broken ids, bad stats, missing references)
     balance.ts    headless balance runs
-  content/   Game content as typed data.
-  ui/        React screens.
+  content/   Game content as typed data. Its types are in content/types/, one file per area.
+  ui/        React screens. The town screen is split into panels under ui/town/.
+
+Each folder (sim/town/, sim/expedition/, sim/combat/, content/types/, ui/town/) has an
+index.ts that re-exports its public names, so imports stay `from "../sim/town"` etc.
 scripts/     Command-line tools (fight, expedition, balance).
 ```
 

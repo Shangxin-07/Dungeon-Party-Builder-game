@@ -1,0 +1,129 @@
+/**
+ * Picking the party, standing orders, saved parties A/B and rescue plans.
+ */
+import { DEFAULT_ORDERS, type StandingOrders } from "../expedition";
+import type { Hero } from "../hero";
+import type { Index } from "../library";
+import { type TownState, type SavedParty, TownError } from "./state";
+import { partySlots, findHero } from "./read";
+import { edit, hero } from "./internal";
+
+/** Add a hero to the party, or take them out of it. */
+export function toggleParty(ix: Index, town: TownState, heroId: string): TownState {
+  const t = edit(town);
+  const h = hero(t, heroId);
+  if (h.porter) {
+    const slots = ix.lib.town.porters.slots;
+    t.porters ??= [];
+    if (t.porters.includes(heroId)) t.porters = t.porters.filter((id) => id !== heroId);
+    else if (t.porters.length >= slots)
+      throw new TownError(`Only ${slots} porters can go with one party.`);
+    else t.porters.push(heroId);
+    return t;
+  }
+  if (t.party.includes(heroId)) {
+    t.party = t.party.filter((id) => id !== heroId);
+  } else {
+    if (t.party.length >= partySlots(ix, t))
+      throw new TownError(`The party is full (${partySlots(ix, t)} slots).`);
+    t.party.push(heroId);
+  }
+  return t;
+}
+
+export function setOrders(_ix: Index, town: TownState, orders: StandingOrders): TownState {
+  return { ...town, orders };
+}
+
+/** The saved party in this slot, if there's one on file. */
+export const savedParty = (town: TownState, slot: number): SavedParty | undefined =>
+  (town.parties ?? [])[slot];
+
+/** Default name for a party slot: Party A, Party B, ... */
+export const partyLetter = (slot: number) => `Party ${String.fromCharCode(65 + slot)}`;
+
+/** Keep the current party, porters and orders on file in a slot. */
+export function saveParty(ix: Index, town: TownState, slot: number, name?: string): TownState {
+  if (slot < 0 || slot >= ix.lib.town.savedParties)
+    throw new TownError(`The guild keeps ${ix.lib.town.savedParties} parties on file.`);
+  if (!town.party.length) throw new TownError("Pick some heroes first.");
+  const t = edit(town);
+  t.parties ??= [];
+  const { rescue: _, ...orders } = t.orders;
+  const old = t.parties[slot];
+  while (t.parties.length < slot) t.parties.push(emptyParty(t.parties.length));
+  t.parties[slot] = {
+    name: name?.trim() || old?.name || partyLetter(slot),
+    heroes: [...t.party],
+    porters: [...(t.porters ?? [])],
+    orders,
+  };
+  return t;
+}
+
+export const emptyParty = (slot: number): SavedParty => ({
+  name: partyLetter(slot),
+  heroes: [],
+  porters: [],
+  orders: DEFAULT_ORDERS,
+});
+
+/** Rename a party on file. */
+export function renameParty(_ix: Index, town: TownState, slot: number, name: string): TownState {
+  if (!savedParty(town, slot)) throw new TownError("Nothing on file there yet.");
+  const t = edit(town);
+  t.parties[slot]!.name = name.trim() || partyLetter(slot);
+  return t;
+}
+
+/** Who from a party on file is still with the guild (the dead, lost and departed drop out). */
+export function partyOnFile(town: TownState, slot: number): { heroes: Hero[]; porters: Hero[] } {
+  const p = savedParty(town, slot);
+  const get = (ids: readonly string[]) =>
+    ids.map((id) => findHero(town, id)).filter((h): h is Hero => !!h);
+  return { heroes: get(p?.heroes ?? []), porters: get(p?.porters ?? []).filter((h) => !!h.porter) };
+}
+
+/**
+ * Make a party on file the next party: its heroes, porters and orders. Anyone
+ * no longer with the guild is left out. A rescue run already planned stays planned.
+ */
+export function pickParty(ix: Index, town: TownState, slot: number): TownState {
+  const p = savedParty(town, slot);
+  if (!p) throw new TownError("Nothing on file there yet.");
+  const { heroes, porters } = partyOnFile(town, slot);
+  if (!heroes.length) throw new TownError(`Nobody from ${p.name} is still with the guild.`);
+  const t = edit(town);
+  t.party = heroes
+    .filter((h) => !h.porter)
+    .slice(0, partySlots(ix, t))
+    .map((h) => h.id);
+  t.porters = porters.slice(0, ix.lib.town.porters.slots).map((h) => h.id);
+  const rescue = t.orders.rescue;
+  t.orders = { ...p.orders, ...(rescue ? { rescue } : {}) };
+  if (rescue) {
+    const site = t.sites.find((s) => s.id === rescue);
+    if (site) t.orders.targetFloor = Math.max(t.orders.targetFloor, site.floor);
+  }
+  return t;
+}
+
+/** Make the next trip a rescue run to a lost party's site (DESIGN.md §10). */
+export function planRescue(_ix: Index, town: TownState, siteId: string): TownState {
+  const site = town.sites.find((s) => s.id === siteId);
+  if (!site) throw new TownError("Nobody is waiting there any more.");
+  return {
+    ...town,
+    orders: {
+      ...town.orders,
+      rescue: site.id,
+      targetFloor: Math.max(town.orders.targetFloor, site.floor),
+    },
+  };
+}
+
+/** Back to an ordinary trip. */
+export function cancelRescue(_ix: Index, town: TownState): TownState {
+  const { rescue: _, ...orders } = town.orders;
+  return { ...town, orders };
+}
