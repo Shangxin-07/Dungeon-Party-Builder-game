@@ -8,6 +8,7 @@
  *   npm run days -- --policy 2 --build         # floor 2 trips, build defences when affordable
  *   npm run days -- --days 60 --seed 7 --runs 200   # summary over many towns
  *   npm run days -- --policy 2 --build --static     # never rotate the party
+ *   npm run days -- --policy 1 --clear 50           # thin floor 1 out by half each trip
  *
  * The bot restocks used supplies, keeps one hero on the bench and sends the
  * freshest heroes (unless --static), and rests until the party is at 90% HP
@@ -22,6 +23,9 @@ import { fatigueTier, heroSheet, type Hero } from "../src/sim/hero";
 import { indexLibrary } from "../src/sim/library";
 import {
   answerRaise,
+  autoStart,
+  hirePrice,
+  kitOut,
   cancelRescue,
   cantLaunch,
   chooseLevelUp,
@@ -66,10 +70,18 @@ const build = flag("build");
 const rotate = !flag("static");
 const runs = Number(arg("runs") ?? 1);
 const seed0 = Number(arg("seed") ?? 1);
+const clear = Number(arg("clear") ?? 0);
 
 const DEFENCES = ["palisade", "gate", "watchtower"];
 
 /** One bot decision. Returns the next state. */
+/** Sign the first recruit in the class they suit best, and kit them out. */
+function signUp(t: TownState): TownState {
+  const r = t.recruits[0]!;
+  t = hire(ix, t, r.id, r.classId);
+  return kitOut(ix, t, t.roster.at(-1)!.id);
+}
+
 function step(t: TownState): TownState {
   // Repair anything raided, then build defences, cheapest first.
   if (build) {
@@ -115,9 +127,9 @@ function step(t: TownState): TownState {
     t.roster.length < partySlots(ix, t) + 1 &&
     t.roster.length < rosterSize(ix, t) &&
     t.recruits.length &&
-    t.gold >= library.town.hireCost + 60
+    t.gold >= hirePrice(ix, t, t.recruits[0]!) + 60
   )
-    t = hire(ix, t, t.recruits[0]!.id);
+    t = signUp(t);
   // Pick the party: with --static, the same heroes every time (topped up if
   // someone's gone); otherwise the freshest heroes, injuries last.
   const fit = (h: Hero) => h.condition === "ok" && h.hp >= heroSheet(ix, h).derived.maxHp * 0.9;
@@ -137,8 +149,7 @@ function step(t: TownState): TownState {
   while (t.party.length < partySlots(ix, t)) {
     const spare = t.roster.find((h) => !t.party.includes(h.id));
     if (spare) t = toggleParty(ix, t, spare.id);
-    else if (t.recruits.length && t.gold >= library.town.hireCost + 30)
-      t = hire(ix, t, t.recruits[0]!.id);
+    else if (t.recruits.length && t.gold >= hirePrice(ix, t, t.recruits[0]!) + 30) t = signUp(t);
     else break;
   }
   if (policy === "idle") return rest(ix, t, heroNames);
@@ -152,6 +163,7 @@ function step(t: TownState): TownState {
   t = setOrders(ix, t, {
     ...t.orders,
     targetFloor: Math.max(Number(policy), site2?.floor ?? 0),
+    clearPercent: clear || undefined,
   });
   return launch(ix, t, heroNames);
 }
@@ -163,7 +175,7 @@ const CHECKPOINTS = [10, 20, 40, 60, 90];
 const goldAt: Record<number, number[]> = {};
 
 function play(seed: number, print: boolean) {
-  let t = newTown(ix, heroNames, seed);
+  let t = autoStart(ix, newTown(ix, heroNames, seed));
   let printed = 0;
   const seen = new Set<number>();
   const unpaidDays = new Set<number>();
@@ -246,6 +258,7 @@ if (runs === 1) {
   let trapped = 0;
   let built = 0;
   let unpaid = 0;
+  const secrets = { found: 0, missed: 0, gold: 0 };
   const levels = library.buildings.reduce((s, b) => s + b.levels.length - b.startLevel, 0);
   for (let i = 0; i < runs; i++) {
     const t = play(seed0 + i, false);
@@ -265,6 +278,9 @@ if (runs === 1) {
       moraleSum += h.morale;
       if (h.morale < library.morale.low) unhappy++;
     }
+    secrets.found += t.secrets.found;
+    secrets.missed += t.secrets.missed;
+    secrets.gold += t.secrets.gold;
     rescued += tally.rescued;
     trapped += tally.trapped;
     tally.rescued = tally.trapped = 0;
@@ -286,6 +302,8 @@ if (runs === 1) {
       `  trips per town: ${trips.toFixed(1)}, injuries on trips: ${injuries.toFixed(1)}\n` +
       `  buildings: ${(built / runs).toFixed(1)} of ${levels} levels built; ` +
       `${(unpaid / runs).toFixed(1)} days with unpaid wages\n` +
+      `  hidden caches per town: ${(secrets.found / runs).toFixed(1)} found, ` +
+      `${(secrets.missed / runs).toFixed(1)} walked past, worth ${(secrets.gold / runs).toFixed(0)} gold\n` +
       `  gold from trips per town: ${earned.toFixed(0)}; gold in hand (median) ` +
       Object.entries(goldAt)
         .map(([d, g]) => `day ${d}: ${[...g].sort((a, b) => a - b)[Math.floor(g.length / 2)]}`)

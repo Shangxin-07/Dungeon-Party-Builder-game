@@ -18,6 +18,8 @@ export interface HaulItem {
   keep?: boolean;
   /** Whose it was, for recovered gear ("Bram's Sword"). */
   owner?: string;
+  /** Came out of a hidden cache (M6), for the guild's tally. */
+  hidden?: boolean;
 }
 
 /** How far off a guess can be with Appraisal 0 (±90%). Shrinks to 0 at Appraisal 100. */

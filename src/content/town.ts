@@ -3,14 +3,36 @@ import { defineTownRules } from "./types";
 /** How a new game starts, and the guild's house rules. Tune freely. */
 export default defineTownRules({
   startingGold: 100,
-  // DESIGN.md §12: a starting roster of 4 recruits, one more than fits in a party.
+  // DESIGN.md §12: 4 heroes to start, one more than fits in a party. They turn
+  // up untrained: you pick their classes and kit them out from the store room.
+  startingRecruits: 4,
   startingRoster: ["fighter", "scout", "mage", "fighter"],
-  startingStash: ["bandages", "bandages"],
+  // Enough basic kit for two fighters, a scout and a mage, or a cleric instead.
+  startingStash: [
+    "sword",
+    "sword",
+    "short-bow",
+    "staff",
+    "mace",
+    "chainmail",
+    "leather-armor",
+    "leather-armor",
+    "wooden-shield",
+    "wooden-shield",
+    "healing-potion",
+    "healing-potion",
+    "healing-potion",
+    "bandages",
+    "bandages",
+    "bandages",
+  ],
   recruitsOnOffer: 3,
   hireCost: 60,
   sellRate: 0.5,
   // M6 balance pass: the Market takes a cut of loot (coins excepted).
   haulRate: 0.7,
+  // A haggler with Appraisal 70 and CHA 14 gets 8% more; never above 90%.
+  haggle: { perAppraisal: 0.002, perCha: 0.01, max: 0.9 },
   restPercent: 40,
   // A raid-damaged building costs a quarter of its build price to fix.
   repairRate: 0.25,

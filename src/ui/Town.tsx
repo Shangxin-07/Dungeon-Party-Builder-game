@@ -10,18 +10,30 @@ import { useEffect, useState } from "react";
 import { heroNames, library } from "../content";
 import type { ItemDef, Row } from "../content/types";
 import { describeRetreat, type LootRule } from "../sim/expedition";
-import { EQUIP_SLOTS, heroSheet, type EquipSlot, type Hero } from "../sim/hero";
+import {
+  bestClass,
+  EQUIP_SLOTS,
+  heroSheet,
+  trainRecruit,
+  type EquipSlot,
+  type Hero,
+} from "../sim/hero";
 import {
   answerRaise,
+  autoStart,
   buy,
   buyPrice,
   cantLaunch,
   defence,
   dismiss,
   equip,
+  haggler,
   hire,
+  hirePrice,
+  kitOut,
   launch,
   launchWarnings,
+  marketRate,
   newTown,
   nextLevel,
   packItem,
@@ -203,6 +215,7 @@ export function TownGame() {
         </p>
       ) : null}
       {trip ? <LastTrip town={town} onWatch={() => setWatching("trip")} /> : null}
+      {town.freeHires > 0 ? <Recruits town={town} act={act} /> : null}
       <RestockPanel town={town} act={act} />
       <TalkPanel town={town} />
       <LostPanel town={town} act={act} />
@@ -229,7 +242,7 @@ export function TownGame() {
         }}
       />
       <Roster town={town} act={act} />
-      <Recruits town={town} act={act} />
+      {town.freeHires > 0 ? null : <Recruits town={town} act={act} />}
       <Market town={town} act={act} />
       <Buildings town={town} act={act} />
       <Accounts town={town} />
@@ -423,10 +436,17 @@ function TripTown({ town }: { town: TownState }) {
       {trip.goldEarned ? (
         <p>
           The Market pays <strong>{trip.goldEarned}</strong> gold for the haul
-          {ix.lib.town.haulRate < 1
-            ? ` (coins at face value, ${Math.round(ix.lib.town.haulRate * 100)}% of the rest)`
+          {(trip.lootRate ?? ix.lib.town.haulRate) < 1
+            ? ` (coins at face value, ${Math.round((trip.lootRate ?? ix.lib.town.haulRate) * 100)}% of the rest` +
+              `${trip.haggledBy && (trip.lootRate ?? 0) > ix.lib.town.haulRate ? `, haggled up by ${trip.haggledBy}` : ""})`
             : ""}
           .
+          {trip.hiddenGold ? (
+            <>
+              {" "}
+              <strong>{trip.hiddenGold}</strong> of it came from hidden caches.
+            </>
+          ) : null}
         </p>
       ) : null}
       {trip.recovered?.length ? (
@@ -652,6 +672,29 @@ function PartyPanel({ town, act, onLaunch }: { town: TownState; act: Act; onLaun
             <option value="valuable">leave the junk</option>
           </select>
         </label>
+        <label
+          title={`After walking floor ${town.orders.targetFloor}, stay and hunt until this share of its monsters are dead. Each ${ix.lib.dungeon.hunting.roomsPerDay} extra rooms take a day; retreat orders still apply.`}
+        >
+          Hunting{" "}
+          <select
+            value={town.orders.clearPercent ?? 0}
+            onChange={(e) =>
+              act((t) =>
+                setOrders(ix, t, {
+                  ...t.orders,
+                  clearPercent: Number(e.target.value) || undefined,
+                }),
+              )
+            }
+          >
+            <option value={0}>just walk the floor</option>
+            {[25, 50, 75, 100].map((p) => (
+              <option key={p} value={p}>
+                thin floor {town.orders.targetFloor} out by {p}%
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <ScoutingReport town={town} party={party} />
@@ -771,7 +814,20 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
       <PerkList hero={h} />
       <AbilityList hero={h} />
 
-      <h4>Gear</h4>
+      <h4>
+        Gear{" "}
+        <button
+          type="button"
+          className="link small"
+          title={`Fill in the ${ix.cls(h.classId).name.toLowerCase()}'s usual kit (${ix
+            .cls(h.classId)
+            .startingKit.map((id) => ix.item(id).name)
+            .join(", ")}): from the store room first, then the Market.`}
+          onClick={() => act((t) => kitOut(ix, t, h.id))}
+        >
+          Kit out
+        </button>
+      </h4>
       <ul className="gear">
         {EQUIP_SLOTS.map((slot) => {
           const id = h.equipment[slot];
@@ -879,50 +935,142 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
 // ---------------------------------------------------------------------------
 
 function Recruits({ town, act }: { town: TownState; act: Act }) {
-  const cost = library.town.hireCost;
   const full = town.roster.length >= rosterSize(ix, town);
+  const free = town.freeHires > 0;
+  const trained = town.recruits.some((h) => !h.untrained);
   return (
     <section aria-labelledby="recruits-heading" className="panel">
       <h2 id="recruits-heading">
-        Looking for work <span className="muted">({cost} gold to sign)</span>
+        Looking for work{" "}
+        <span className="muted">
+          (
+          {free
+            ? `${town.freeHires} will sign for nothing`
+            : `${library.town.hireCost} gold to sign`}
+          )
+        </span>
       </h2>
-      <p className="muted small">
-        New faces turn up every day. Each brings their own starting kit.
-        {full ? " The roster is full: upgrade the Guild Hall or dismiss someone." : ""}
-      </p>
+      {free ? (
+        <p className="small">
+          Your first heroes. They have stats but no training and no gear: pick each one's class,
+          then kit them out from the store room (the <em>Kit out</em> button on their card).{" "}
+          <button type="button" className="link" onClick={() => act((t) => autoStart(ix, t))}>
+            Pick for me
+          </button>
+        </p>
+      ) : (
+        <p className="muted small">
+          New faces turn up every day, untrained and empty-handed: you pick their class and buy
+          their gear.
+          {trained
+            ? " Thanks to the Tavern, some arrive trained and kitted, for the price of their kit."
+            : ""}
+          {full ? " The roster is full: upgrade the Guild Hall or dismiss someone." : ""}
+        </p>
+      )}
       <ul className="hero-cards">
         {town.recruits.map((h) => (
-          <li key={h.id} className="hero-card recruit">
-            <div className="hero-head">
-              <h3>{h.name}</h3>
-              <span className="muted small">{ix.cls(h.classId).name}</span>
-            </div>
-            <p className="muted small quiet">{ix.cls(h.classId).blurb}</p>
-            <Personality hero={h} town={town} />
-            <MoraleBar hero={h} />
-            <StatSheet hero={h} full />
-            <p className="small quiet">Brings: {describeKit(h)}</p>
-            <button
-              type="button"
-              className="btn"
-              disabled={full || town.gold < cost}
-              onClick={() => act((t) => hire(ix, t, h.id))}
-            >
-              Hire for {cost} gold
-            </button>
-          </li>
+          <RecruitCard key={h.id} town={town} recruit={h} act={act} full={full} />
         ))}
       </ul>
     </section>
   );
 }
 
+const STAT_ORDER = ["STR", "DEX", "END", "PER", "INT", "WIL", "CHA"] as const;
+
+function RecruitCard({
+  town,
+  recruit: h,
+  act,
+  full,
+}: {
+  town: TownState;
+  recruit: Hero;
+  act: Act;
+  full: boolean;
+}) {
+  const fit = h.untrained ? bestClass(ix, h.stats) : h.classId;
+  const [classId, setClassId] = useState(fit);
+  const hero = h.untrained ? trainRecruit(ix, h, classId) : h;
+  const price = hirePrice(ix, town, h);
+  return (
+    <li className="hero-card recruit">
+      <div className="hero-head">
+        <h3>{h.name}</h3>
+        <span className="muted small">{h.untrained ? "untrained" : ix.cls(h.classId).name}</span>
+      </div>
+      {h.untrained ? (
+        <>
+          <p className="small quiet">
+            Raw: {STAT_ORDER.map((k) => `${k} ${h.stats[k]}`).join(", ")}
+          </p>
+          <label className="small">
+            Train as{" "}
+            <select value={classId} onChange={(e) => setClassId(e.target.value)}>
+              {ix.lib.classes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                  {c.id === fit ? " (best fit)" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      ) : null}
+      <p className="muted small quiet">{ix.cls(hero.classId).blurb}</p>
+      <Personality hero={hero} town={town} />
+      <MoraleBar hero={hero} />
+      <StatSheet hero={hero} full />
+      {h.untrained ? (
+        <p className="small quiet">
+          Comes with nothing. Their usual kit:{" "}
+          {ix
+            .cls(classId)
+            .startingKit.map((id) => ix.item(id).name)
+            .join(", ")}
+          .
+        </p>
+      ) : (
+        <p className="small quiet">Brings: {describeKit(h)}</p>
+      )}
+      <button
+        type="button"
+        className="btn"
+        disabled={full || town.gold < price}
+        onClick={() => act((t) => hire(ix, t, h.id, h.untrained ? classId : undefined))}
+      >
+        {price ? `Hire for ${price} gold` : `Sign up as a ${ix.cls(classId).name.toLowerCase()}`}
+      </button>
+    </li>
+  );
+}
+
 function Market({ town, act }: { town: TownState; act: Act }) {
   const stock = shopStock(ix, town);
+  const haggle = haggler(ix, town);
   const stash = tally(town.stash);
   return (
     <section aria-labelledby="market-heading" className="panel">
       <h2 id="market-heading">Market</h2>
+      <p className="small">
+        The Market pays{" "}
+        <strong>{Math.round(marketRate(ix, ix.lib.town.haulRate, haggle.bonus) * 100)}%</strong> of
+        the value of loot from the pit (coins at face value) and{" "}
+        <strong>{Math.round(marketRate(ix, ix.lib.town.sellRate, haggle.bonus) * 100)}%</strong> for
+        gear from the store room.{" "}
+        {haggle.hero ? (
+          <>
+            {haggle.hero.name} does the haggling (Appraisal{" "}
+            {heroSheet(ix, haggle.hero).skills.appraisal ?? 0}, CHA{" "}
+            {heroSheet(ix, haggle.hero).stats.CHA}).
+          </>
+        ) : (
+          <span className="muted">
+            Nobody in the guild can talk the price up. Appraisal and CHA help.
+          </span>
+        )}
+      </p>
       <div className="market">
         <div>
           <h3>For sale</h3>
@@ -974,7 +1122,7 @@ function Market({ town, act }: { town: TownState; act: Act }) {
                           className="btn"
                           onClick={() => act((t) => sell(ix, t, id))}
                         >
-                          Sell for {sellPrice(ix, item)}
+                          Sell for {sellPrice(ix, item, haggle.bonus)}
                         </button>
                       </td>
                     </tr>

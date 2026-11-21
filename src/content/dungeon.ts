@@ -12,6 +12,9 @@ export default defineDungeonRules({
   evictedLevelDrop: 0.5,
   // Each day a floor settles 5% of the way back to its usual level.
   settlePerDay: 0.05,
+  // "Clear the floor by N%": each day of hunting searches 4 more rooms for
+  // monsters, and a party gives up after 12 rooms (3 extra days).
+  hunting: { roomsPerDay: 4, maxRooms: 12 },
   raids: {
     // 1 point of strength that gets past the walls is about one floor-1 monster.
     powerPerStrength: 3,

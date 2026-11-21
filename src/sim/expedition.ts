@@ -42,6 +42,11 @@ export interface StandingOrders {
   loot: LootRule;
   /** A rescue run: the id of the lost party's site to reach (DESIGN.md §10). */
   rescue?: string;
+  /**
+   * Clear the target floor (M6): after walking it, stay and hunt until this
+   * percent of the monsters living there are dead. Retreat orders still apply.
+   */
+  clearPercent?: number;
 }
 
 export const DEFAULT_ORDERS: StandingOrders = {
@@ -87,6 +92,8 @@ export type ExpeditionEventKind =
   | "quiet"
   /** A low-morale hero ignores the standing orders (DESIGN.md §6). */
   | "disobey"
+  /** A hidden cache found by the party's best scout (M6). */
+  | "secret"
   /** A rescue party reaches where a lost party fell (DESIGN.md §10). */
   | "site"
   /** Raids on the town reuse the trip log format. */
@@ -153,6 +160,10 @@ export interface ExpeditionResult {
   gearTaken: string[];
   /** Times a hero ignored orders. */
   disobeyed: number;
+  /** Extra rooms spent hunting under a "clear the floor" order. */
+  huntRooms: number;
+  /** Hidden caches found, and those walked past without anyone noticing. */
+  secrets: { found: number; missed: number };
 }
 
 /** Where a lost party fell, as a rescue party will find it (DESIGN.md §10). */
@@ -215,7 +226,7 @@ export function runExpedition(
   floors?: readonly FloorPressure[],
   extras: ExpeditionExtras = {},
 ): ExpeditionResult {
-  return new Expedition(ix, party, orders, createRng(seed), floors, extras).run();
+  return new Expedition(ix, party, orders, createRng(seed), floors, extras, seed).run();
 }
 
 /** Pick the rooms for one floor: random rooms, with the floor's fixed rooms placed mid-floor. */
@@ -268,6 +279,13 @@ class Expedition {
   private siteLeft: HaulItem[] = [];
   private gearTaken: string[] = [];
   private disobeyed = 0;
+  private secretRng: Rng;
+  /** "Clear the floor" orders: the target floor's population on arrival, and rooms hunted. */
+  private huntStart = 0;
+  private hunts = 0;
+  private secrets = { found: 0, missed: 0 };
+  /** True while rolling a hidden cache's loot, so its items are marked. */
+  private searching = false;
   /** Hero id → floor they last refused to turn back on (once per floor each). */
   private refused = new Map<string, number>();
 
@@ -278,7 +296,11 @@ class Expedition {
     private rng: Rng,
     private floors?: readonly FloorPressure[],
     private extras: ExpeditionExtras = {},
+    seed = 0,
   ) {
+    // Hidden caches roll on their own stream, so adding or tuning them
+    // doesn't change what happens in the rest of the trip.
+    this.secretRng = createRng((seed ^ 0x5ec2e7) >>> 0);
     this.floors = floors?.map((f) => ({ ...f }));
     this.party = party.map((h) => ({
       ...h,
@@ -304,13 +326,15 @@ class Expedition {
     this.emit(
       "depart",
       `${names} set off for ${mission}. Orders: ${describeRetreat(retreat)}; ` +
-        `${loot === "everything" ? "carry everything" : "leave the junk"}.`,
+        `${loot === "everything" ? "carry everything" : "leave the junk"}` +
+        `${this.huntGoal() ? `; thin out floor ${targetFloor} by ${this.orders.clearPercent}%` : ""}.`,
     );
 
     for (let depth = 1; depth <= targetFloor; depth++) {
       const floor = this.ix.floor(depth);
       const rooms = planFloor(this.ix, depth, this.rng);
       this.depth = depth;
+      if (depth === targetFloor) this.huntStart = this.floors?.[depth - 1]?.population ?? 0;
       this.deepest = depth;
       this.roomNo = 0;
       this.emit("floor", `Floor ${depth}: ${floor.name}.`);
@@ -321,6 +345,7 @@ class Expedition {
         this.roomsVisited++;
         this.emit("room", `${room.name}. ${this.rng.pick(room.descriptions)}`);
         getRoom(room.behaviour)(this.context(room.id));
+        if (!this.wiped) this.search();
         if (!this.wiped) this.betweenRooms();
         if (this.wiped) return this.finish("wiped");
 
@@ -329,7 +354,7 @@ class Expedition {
           if (i + 1 === Math.max(1, Math.min(site.room, rooms.length))) this.visitSite(site);
         }
 
-        const lastRoom = depth === targetFloor && i === rooms.length - 1;
+        const lastRoom = depth === targetFloor && i === rooms.length - 1 && !this.huntGoal();
         const reason = lastRoom ? undefined : this.retreatReason();
         if (reason) {
           const rebel = this.refuser();
@@ -346,8 +371,72 @@ class Expedition {
         }
       }
     }
+    const hunted = this.hunt();
+    if (hunted) return hunted;
     this.roomNo = 0;
     this.emit("retreat", `Floor ${targetFloor} is done. The party heads for home.`);
+    return this.goHome("returned");
+  }
+
+  /** Kills on the target floor a "clear the floor" order asks for (0: no such order). */
+  private huntGoal(): number {
+    const pct = this.orders.clearPercent ?? 0;
+    if (pct <= 0 || this.orders.rescue || !this.floors) return 0;
+    const pop =
+      this.depth === this.orders.targetFloor
+        ? this.huntStart
+        : (this.floors[this.orders.targetFloor - 1]?.population ?? 0);
+    return Math.ceil((pop * Math.min(100, pct)) / 100);
+  }
+
+  /**
+   * "Clear the floor by N%" (M6): stay on the target floor, searching room
+   * after room for monsters, until enough are dead, the floor is empty, the
+   * party has hunted as long as it can, or the retreat orders say go home.
+   * Returns the trip's result if it ended here, else undefined.
+   */
+  private hunt(): ExpeditionResult | undefined {
+    const goal = this.huntGoal();
+    if (!goal) return undefined;
+    const rules = this.ix.lib.dungeon.hunting;
+    const depth = this.depth;
+    const killed = () => this.floorKills[depth] ?? 0;
+    const lair = this.ix.lib.rooms.find(
+      (r) => r.behaviour === "fight" && r.floors[0] <= depth && depth <= r.floors[1],
+    );
+    let rooms = this.roomNo;
+    while (killed() < goal && this.hunts < rules.maxRooms) {
+      const left = this.floors?.[depth - 1]?.population ?? 0;
+      if (left <= 0) break;
+      const reason = this.retreatReason();
+      if (reason) {
+        this.emit("retreat", `${reason}. Following orders, the party stops hunting.`);
+        return this.goHome("retreated");
+      }
+      this.hunts++;
+      this.roomNo = ++rooms;
+      this.roomsVisited++;
+      this.emit(
+        "room",
+        `Hunting: ${killed()} of ${goal} killed. The party searches the side tunnels.`,
+      );
+      if (lair) getRoom(lair.behaviour)(this.context(lair.id));
+      else {
+        const monsters = this.rollMonsters();
+        if (monsters.length) this.fight(monsters);
+      }
+      if (!this.wiped) this.search();
+      if (!this.wiped) this.betweenRooms();
+      if (this.wiped) return this.finish("wiped");
+    }
+    this.roomNo = 0;
+    const done = killed() >= goal;
+    this.emit(
+      "retreat",
+      done
+        ? `Floor ${depth} is thinned out: ${killed()} monsters killed. The party heads for home.`
+        : `The party has hunted as long as it can (${killed()} of ${goal} killed) and heads for home.`,
+    );
     return this.goHome("returned");
   }
 
@@ -379,7 +468,9 @@ class Expedition {
       outcome,
       orders: this.orders,
       deepestFloor: this.deepest,
-      days: Math.max(1, this.deepest),
+      days:
+        Math.max(1, this.deepest) +
+        Math.ceil(this.hunts / Math.max(1, this.ix.lib.dungeon.hunting.roomsPerDay)),
       roomsVisited: this.roomsVisited,
       party: this.party,
       haul: wiped ? [] : this.haul,
@@ -394,7 +485,46 @@ class Expedition {
       siteLeft: this.siteLeft,
       gearTaken: this.gearTaken,
       disobeyed: this.disobeyed,
+      secrets: this.secrets,
+      huntRooms: this.hunts,
     };
+  }
+
+  /**
+   * Hidden treasure (M6, content/secrets/): some rooms hide a cache that only
+   * the party's best Scouting can find. Missed caches are counted but never
+   * logged: the party doesn't know what it walked past.
+   */
+  private search(): void {
+    const rules = this.ix.lib.searching;
+    const rng = this.secretRng;
+    if (!rng.chance(rules.chancePerRoom)) return;
+    const options = this.ix.lib.secrets.filter(
+      (x) => x.floors[0] <= this.depth && this.depth <= x.floors[1],
+    );
+    if (!options.length) return;
+    let roll = rng.next() * options.reduce((t, x) => t + x.weight, 0);
+    const secret = options.find((x) => (roll -= x.weight) < 0) ?? options.at(-1)!;
+    const scout = this.best("scouting");
+    const chance = Math.min(
+      rules.maxChance,
+      Math.max(0, ((scout?.value ?? 0) - secret.hidden) / rules.spread),
+    );
+    if (!scout || !rng.chance(chance)) {
+      this.secrets.missed++;
+      return;
+    }
+    this.secrets.found++;
+    this.emit("secret", `${scout.hero.name} notices ${secret.spotted}.`);
+    const main = this.rng;
+    this.rng = rng;
+    this.searching = true;
+    try {
+      this.findLoot(secret.loot, "in the hiding place", true);
+    } finally {
+      this.rng = main;
+      this.searching = false;
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -739,6 +869,7 @@ class Expedition {
       const value = rollValue(def, this.rng);
       const estimate = appraise(value, appraiser?.value ?? 0, this.rng);
       const item: HaulItem = { item: id, value, estimate };
+      if (this.searching) item.hidden = true;
       this.emit("loot", `Found ${an(def.name)} ${from} (worth about ${item.estimate}).`);
       if (this.orders.loot === "valuable" && worthPerSlot(this.ix, item) < VALUABLE_PER_SLOT) {
         const grabber = this.greedy();

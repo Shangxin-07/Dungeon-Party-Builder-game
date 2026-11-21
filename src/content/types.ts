@@ -521,6 +521,38 @@ export interface RoomDef {
   rest?: RestSpec;
 }
 
+/**
+ * Hidden treasure (M6): a cache tucked away somewhere on a floor. Only a party
+ * with a sharp enough Scouting skill notices it; nobody else ever knows it was
+ * there. Add one by creating a file in content/secrets/.
+ */
+export interface SecretDef {
+  id: string;
+  name: string;
+  /** Floors it can turn up on, inclusive. */
+  floors: readonly [number, number];
+  /** Relative chance of being the cache in a room. */
+  weight: number;
+  /** How well hidden: the Scouting it takes to have any chance of finding it. */
+  hidden: number;
+  /** Logged when it's found: "Mara notices <spotted>." */
+  spotted: string;
+  /** Loot table rolled for what's inside. */
+  loot: string;
+}
+
+/** How often hidden caches turn up, and how Scouting finds them (content/searching.ts). */
+export interface SearchRules {
+  /** Chance each room the party walks through (and survives) has a cache. */
+  chancePerRoom: number;
+  /**
+   * Find chance = (best Scouting − cache's `hidden`) / spread, capped at
+   * maxChance. Bigger spread: Scouting has to be much higher to find most.
+   */
+  spread: number;
+  maxChance: number;
+}
+
 /** The shape of one dungeon floor. */
 export interface FloorDef {
   id: string;
@@ -553,8 +585,13 @@ export type BuildingEffect =
   | { type: "raidWarning"; days: number }
   /** Extra recruits looking for work each day. */
   | { type: "recruitOffers"; amount: number }
-  /** Each recruit is the best of this many extra candidates (by their class's main stats). */
+  /** Each recruit is the best of this many extra candidates (by their two best stats). */
   | { type: "recruitPicks"; amount: number }
+  /**
+   * This many of each day's recruits come already trained: a class and its
+   * starting kit, for the hire cost plus the kit's value (M6).
+   */
+  | { type: "trainedRecruits"; amount: number }
   /** Morale for each hero on every rest day in town. */
   | { type: "restMorale"; amount: number }
   /** XP for each hero on every rest day in town. */
@@ -593,14 +630,28 @@ export interface BuildingDef {
 /** How a new town starts and the house rules of the guild. */
 export interface TownRules {
   startingGold: number;
-  /** Class ids of the recruits already on the books at the start. */
+  /**
+   * How many untrained recruits are waiting on day 1, free to sign: the player
+   * picks each one's class and kits them out from the store room (M6).
+   */
+  startingRecruits: number;
+  /**
+   * Classes `autoStart` gives the starting recruits, in order ("pick for me",
+   * the bot and tests). The player is free to choose others.
+   */
   startingRoster: readonly string[];
   /** Item ids in the guild's store room at the start. */
   startingStash: readonly string[];
   /** Fresh faces looking for work each day. */
   recruitsOnOffer: number;
-  /** Gold to sign a recruit, who brings their class's starting kit. */
+  /** Gold to sign an untrained recruit (no class, no gear). */
   hireCost: number;
+  /**
+   * The Market pays more for a haul, and for anything sold, the better the
+   * guild's best haggler: (Appraisal − 50) × perAppraisal + (CHA − 10) × perCha
+   * on top of the usual rate, never above `max` (M6).
+   */
+  haggle: { perAppraisal: number; perCha: number; max: number };
   /** Share of an item's value the Market pays when you sell it. */
   sellRate: number;
   /**
@@ -640,6 +691,15 @@ export interface DungeonRules {
   /** Each day a floor's level moves this share of the way back towards its own depth. */
   settlePerDay: number;
   raids: RaidRules;
+  /** "Clear the floor" orders (M6): the party stays on its target floor and hunts. */
+  hunting: HuntRules;
+}
+
+export interface HuntRules {
+  /** Extra rooms the party can search for monsters in one day. */
+  roomsPerDay: number;
+  /** Most extra rooms one trip spends hunting, whatever the order says. */
+  maxRooms: number;
 }
 
 export interface RaidRules {
@@ -677,6 +737,8 @@ export interface Library {
   rescue: RescueRules;
   wear: WearRules;
   injuries: readonly InjuryDef[];
+  secrets: readonly SecretDef[];
+  searching: SearchRules;
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -698,5 +760,7 @@ export const defineMotivation = (def: MotivationDef): MotivationDef => def;
 export const defineMoraleRules = (def: MoraleRulesDef): MoraleRulesDef => def;
 export const defineLevelRules = (def: LevelRules): LevelRules => def;
 export const defineWearRules = (def: WearRules): WearRules => def;
+export const defineSecret = (def: SecretDef): SecretDef => def;
+export const defineSearchRules = (def: SearchRules): SearchRules => def;
 export const defineInjury = (def: InjuryDef): InjuryDef => def;
 export const defineRescueRules = (def: RescueRules): RescueRules => def;

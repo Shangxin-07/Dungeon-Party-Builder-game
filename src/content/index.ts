@@ -1,6 +1,6 @@
 /**
  * The content library. To add content, create a file in the matching folder
- * (classes/, items/, monsters/, rooms/, loot/, floors/, buildings/, perks/,
+ * (classes/, items/, monsters/, rooms/, loot/, floors/, buildings/, perks/, secrets/,
  * motivations/, ...) and add it to the
  * list below. No engine code changes are needed. The content tests check every id and reference.
  */
@@ -18,6 +18,7 @@ import type {
   MotivationDef,
   PerkDef,
   RoomDef,
+  SecretDef,
   SkillDef,
   StatusDef,
 } from "./types";
@@ -154,6 +155,11 @@ import moraleRules from "./morale";
 import levelRules from "./levels";
 import rescueRules from "./rescue";
 import wearRules from "./wear";
+import searchRules from "./searching";
+import minersCacheSecret from "./secrets/miners-cache";
+import falseFloorSecret from "./secrets/false-floor";
+import sealedNicheSecret from "./secrets/sealed-niche";
+import hiddenCacheLoot from "./loot/hidden-cache";
 import brokenArmInjury from "./injuries/broken-arm";
 import crackedRibsInjury from "./injuries/cracked-ribs";
 import twistedAnkleInjury from "./injuries/twisted-ankle";
@@ -280,6 +286,7 @@ export const lootTables: readonly LootTableDef[] = [
   slimeLoot,
   smallChestLoot,
   spiderLoot,
+  hiddenCacheLoot,
 ];
 export const rooms: readonly RoomDef[] = [
   dartTrapRoom,
@@ -313,6 +320,12 @@ export const injuries: readonly InjuryDef[] = [
   deepGashInjury,
 ];
 
+export const secrets: readonly SecretDef[] = [
+  minersCacheSecret,
+  falseFloorSecret,
+  sealedNicheSecret,
+];
+
 export const library: Library = {
   classes,
   items,
@@ -334,6 +347,8 @@ export const library: Library = {
   rescue: rescueRules,
   wear: wearRules,
   injuries,
+  secrets,
+  searching: searchRules,
 };
 
 export { heroNames } from "./names";

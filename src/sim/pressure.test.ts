@@ -10,10 +10,10 @@ import { createHero, type Hero } from "./hero";
 import { indexLibrary } from "./library";
 import { scoutingReport } from "./report";
 import { createRng } from "./rng";
-import { answerRaise, launch, newTown, rest, wage, type TownState } from "./town";
+import { answerRaise, autoStart, launch, newTown, rest, wage, type TownState } from "./town";
 
 const ix = indexLibrary(library);
-const fresh = (seed = 1) => newTown(ix, heroNames, seed);
+const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
 const hero = (classId: string, over: Partial<Hero> = {}): Hero => ({
   ...createHero(ix, { id: `x-${classId}`, name: classId, classId }, createRng(3)),
   ...over,
