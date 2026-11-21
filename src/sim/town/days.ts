@@ -275,13 +275,18 @@ export function payWages(ix: Index, t: TownState): void {
 /**
  * Veterans ask for raises (M6, content/town.ts `raises`). A hero who has
  * gained enough levels since their last raise talk asks; one who's been kept
- * waiting too long takes it as a no.
+ * waiting too long takes it as a no. Only days in town count: a hero away in
+ * the dungeon neither asks nor runs out of patience, so the player always gets
+ * `patienceDays` days between trips to answer.
  */
-export function raiseTalk(ix: Index, t: TownState): void {
+export function raiseTalk(ix: Index, t: TownState, away: ReadonlySet<string> = new Set()): void {
   const r = ix.lib.town.raises;
   for (const h of t.roster) {
+    if (away.has(h.id)) continue;
     if (h.raiseAsk) {
-      if (t.day - h.raiseAsk.day >= r.patienceDays) {
+      const waited = (h.raiseAsk.waited ?? 0) + 1;
+      h.raiseAsk = { ...h.raiseAsk, waited };
+      if (waited >= r.patienceDays) {
         h.raiseAsk = undefined;
         h.payLevel = h.level;
         applyMorale(ix, h, { raiseRefused: 1 }, t.day);
@@ -291,7 +296,7 @@ export function raiseTalk(ix: Index, t: TownState): void {
     }
     if (h.level < (h.payLevel ?? 1) + r.everyLevels) continue;
     const amount = r.amount * (h.motivation === "gold" ? 2 : 1);
-    h.raiseAsk = { amount, day: t.day };
+    h.raiseAsk = { amount, day: t.day, waited: 0 };
     news(t, `${h.name} (level ${h.level}) asks for a raise of ${amount} gold a day.`);
   }
 }
@@ -313,7 +318,7 @@ export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
   // Anyone already at the end of their tether goes before the day starts.
   quitters(ix, t);
   payWages(ix, t);
-  raiseTalk(ix, t);
+  raiseTalk(ix, t, away);
   t.day += 1;
   buildersWork(ix, t, away);
   workPosts(ix, t, away);
