@@ -123,7 +123,7 @@ describe("porters", () => {
         }).bonus;
         expect(after.lastTrip!.goldEarned).toBe(
           r.porterHaul
-            .filter((h) => !h.keep)
+            .filter((h) => !h.keep && ix.item(h.item).slot !== "material")
             .reduce((s, h) => s + haulPrice(ix, h.item, h.value, bonus), 0),
         );
         expect(after.news.some((n) => n.text.includes(run.name))).toBe(true);

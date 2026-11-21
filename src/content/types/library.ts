@@ -64,6 +64,15 @@ export const defineClass = (def: ClassDef): ClassDef => def;
 
 export const defineItem = (def: ItemDef): ItemDef => def;
 
+/**
+ * A material (DESIGN.md §8): an item in the "material" slot. Parties carry it
+ * home like loot (it takes carry slots, and `value` is what it's worth to them
+ * when packs are full); the guild keeps it to build with.
+ */
+export const defineMaterial = (
+  def: Omit<ItemDef, "slot" | "tags"> & { tags?: readonly string[]; blurb: string },
+): ItemDef => ({ ...def, slot: "material", tags: ["material", ...(def.tags ?? [])] });
+
 export const defineAbility = (def: AbilityDef): AbilityDef => def;
 
 export const defineStatus = (def: StatusDef): StatusDef => def;

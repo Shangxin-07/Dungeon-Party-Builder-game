@@ -15,6 +15,7 @@ export default defineBuilding({
     },
     {
       cost: 180,
+      materials: { "iron-ore": 2 },
       days: 3,
       summary: "Iron-bound gate: holds back 6 strength a night",
       effects: [{ type: "defence", amount: 6 }],

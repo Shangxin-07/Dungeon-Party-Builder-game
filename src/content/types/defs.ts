@@ -84,7 +84,11 @@ export interface ClassDef {
   milestones?: Readonly<Record<number, readonly string[]>>;
 }
 
-export type ItemSlot = "weapon" | "offhand" | "armor" | "consumable" | "loot";
+/**
+ * "material" (DESIGN.md §8): building stuff and rarer things the Temple needs.
+ * Found and carried home like loot, but the guild keeps it instead of selling it.
+ */
+export type ItemSlot = "weapon" | "offhand" | "armor" | "consumable" | "loot" | "material";
 
 export interface ItemDef {
   id: string;
@@ -113,6 +117,8 @@ export interface ItemDef {
   valueRange?: readonly [number, number];
   /** Carry slots it takes up. Defaults to 1. */
   size?: number;
+  /** Materials only: one line for the town's store, e.g. where it turns up. */
+  blurb?: string;
 }
 
 export interface AbilityDef {

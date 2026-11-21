@@ -31,6 +31,7 @@ export default defineBuilding({
     },
     {
       cost: 600,
+      materials: { "iron-ore": 6, "spider-silk": 3 },
       days: 5,
       summary: "5 heroes per party, 10 on the roster",
       effects: [
@@ -40,6 +41,7 @@ export default defineBuilding({
     },
     {
       cost: 1000,
+      materials: { "iron-ore": 10, "spider-silk": 6 },
       days: 7,
       summary: "6 heroes per party, 12 on the roster",
       effects: [

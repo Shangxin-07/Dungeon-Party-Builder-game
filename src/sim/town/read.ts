@@ -1,7 +1,7 @@
 /**
  * Reading the town: building effects, prices, wages, warnings. Nothing here changes state.
  */
-import type { BuildingEffect, ItemDef } from "../../content/types";
+import type { BuildingEffect, ItemDef, MaterialCost } from "../../content/types";
 import { dungeonDay } from "../dungeon";
 import { describeParty, partyAlignment } from "../alignment";
 import { fatigueTier, heroSheet, type Hero } from "../hero";
@@ -143,6 +143,30 @@ export const haulPrice = (ix: Index, itemId: string, value: number, bonus = 0) =
 
 export const sellPrice = (ix: Index, item: ItemDef, bonus = 0) =>
   Math.max(1, Math.floor(item.value * marketRate(ix, ix.lib.town.sellRate, bonus)));
+
+/** Materials in words: "4 iron ore and 3 spider silk". */
+export function materialWords(ix: Index, cost: MaterialCost | undefined): string {
+  const parts = Object.entries(cost ?? {}).map(
+    ([id, n]) => `${n} ${ix.item(id).name.toLowerCase()}`,
+  );
+  return parts.length > 1
+    ? `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`
+    : (parts[0] ?? "");
+}
+
+/** What's missing from the store for this cost ("2 iron ore"), or undefined if it's all there. */
+export function materialsShort(
+  ix: Index,
+  town: TownState,
+  cost: MaterialCost | undefined,
+): string | undefined {
+  const short: Record<string, number> = {};
+  for (const [id, n] of Object.entries(cost ?? {})) {
+    const lack = n - (town.materials?.[id] ?? 0);
+    if (lack > 0) short[id] = lack;
+  }
+  return Object.keys(short).length ? materialWords(ix, short) : undefined;
+}
 
 export const findHero = (town: TownState, id: string) => town.roster.find((h) => h.id === id);
 

@@ -22,7 +22,8 @@ import {
   rescueSite,
   cantLaunch,
 } from "./read";
-import { news, book, roll, edit, hero, listWords, gearOf } from "./internal";
+import { news, book, roll, edit, hero, listWords, gearOf, addMaterials } from "./internal";
+import type { HaulItem } from "../loot";
 import { freshRecruits } from "./start";
 import { cancelRescue } from "./parties";
 import { restHero, lowestHp, wasDowned, maybeInjure } from "./wounds";
@@ -82,14 +83,20 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     !t.party.includes(h.id) ||
     (!wiped && result.party.some((p) => p.id === h.id && p.condition !== "dead"));
   const haggle = haggler(ix, { ...t, roster: t.roster.filter(back) });
-  // Heroes' own gear goes back in the store room.
+  // Heroes' own gear goes back in the store room, and materials into the
+  // guild's store (DESIGN.md §8): neither is sold.
   const recovered = result.haul.filter((h) => h.keep);
+  const isMaterial = (h: HaulItem) => ix.item(h.item).slot === "material";
+  const materials: Record<string, number> = {};
+  for (const h of [...result.haul, ...result.porterHaul])
+    if (!h.keep && isMaterial(h)) materials[h.item] = (materials[h.item] ?? 0) + 1;
+  addMaterials(t, materials);
   const goldEarned = [...result.haul, ...result.porterHaul]
-    .filter((h) => !h.keep)
+    .filter((h) => !h.keep && !isMaterial(h))
     .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggle.bonus), 0);
   book(t, "haul", goldEarned);
   const hiddenGold = result.haul
-    .filter((h) => h.hidden && !h.keep)
+    .filter((h) => h.hidden && !h.keep && !isMaterial(h))
     .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggle.bonus), 0);
   const tally = t.secrets ?? { found: 0, missed: 0, gold: 0 };
   t.secrets = {
@@ -297,7 +304,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     const tags = gearTags(ix, before);
     const facts: Facts = {
       goldShare: share,
-      emptyHanded: goldEarned + recovered.length === 0 ? 1 : 0,
+      emptyHanded: goldEarned + recovered.length + Object.keys(materials).length === 0 ? 1 : 0,
       kills: kills[h.id] ?? 0,
       newFloors: Math.max(0, result.deepestFloor - prevDeepest),
       sameOldFloor: result.deepestFloor <= prevDeepest ? 1 : 0,
@@ -399,6 +406,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     haggledBy: haggle.hero?.name,
     lootRate: marketRate(ix, ix.lib.town.haulRate, haggle.bonus),
     hiddenGold,
+    materials,
   };
   return t;
 }

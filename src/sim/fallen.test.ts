@@ -23,12 +23,13 @@ import {
   upgrade,
   type TownState,
 } from "./town";
+import { stocked } from "./stocked";
 
 const ix = indexLibrary(library);
 const rng = (seed = 1) => createRng(seed);
 const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
 const build = (t: TownState, id: string): TownState => {
-  const u = upgrade(ix, { ...t, gold: t.gold + 10_000 }, id);
+  const u = upgrade(ix, stocked({ ...t, gold: t.gold + 10_000 }), id);
   const done = Object.fromEntries(u.construction.map((c) => [c.building, c.level]));
   return { ...u, gold: t.gold, buildings: { ...u.buildings, ...done }, construction: [] };
 };
@@ -132,16 +133,22 @@ describe("bodies brought home", () => {
     expect(t.roster.some((h) => h.id === b.hero.id)).toBe(false);
   });
 
-  it("the Temple brings them back, for gold and levels", () => {
+  it("the Temple brings them back, for gold, bone dust and levels", () => {
     let t = deathOnTrip();
     const b = t.bodies[0]!;
     expect(() => resurrect(ix, t, b.id)).toThrow(TownError);
     t = build(t, "temple");
-    t = { ...t, gold: 5000, roster: t.roster.slice(0, 1) };
+    t = { ...t, gold: 5000, roster: t.roster.slice(0, 1), materials: { "bone-dust": 2 } };
     b.hero.level = 1;
+    // The priests want 3 bone dust (content/buildings/temple.ts).
+    expect(resurrectQuote(ix, t, b.id).terms!.materials).toEqual({ "bone-dust": 3 });
+    expect(resurrectQuote(ix, t, b.id).why).toMatch(/short of 1 bone dust/);
+    expect(() => resurrect(ix, t, b.id)).toThrow(/bone dust/);
+    t = { ...t, materials: { "bone-dust": 3, "iron-ore": 1 } };
     const q = resurrectQuote(ix, t, b.id);
     expect(q.why).toBeUndefined();
     const after = resurrect(ix, t, b.id);
+    expect(after.materials).toEqual({ "iron-ore": 1 });
     const h = after.roster.find((x) => x.id === b.hero.id)!;
     expect(h.condition).toBe("ok");
     expect(h.hp).toBeGreaterThan(0);
@@ -194,7 +201,7 @@ describe("bodies left in the dungeon", () => {
   });
 
   it("a rescue run carries the bodies home", () => {
-    for (let seed = 0; seed < 200; seed++) {
+    for (let seed = 0; seed < 1000; seed++) {
       const t0 = setOrders(ix, fresh(seed), {
         ...DEFAULT_ORDERS,
         targetFloor: 3,

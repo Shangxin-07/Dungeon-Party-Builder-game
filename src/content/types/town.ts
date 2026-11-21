@@ -3,6 +3,9 @@
  */
 import type { PorterRules } from "./dungeon";
 
+/** Materials by item id, e.g. { "iron-ore": 4 } (DESIGN.md §8, content/materials/). */
+export type MaterialCost = Readonly<Record<string, number>>;
+
 /** What a building level gives the town. Each level lists its full effects. */
 export type BuildingEffect =
   /** Heroes that can go on one expedition. */
@@ -34,15 +37,25 @@ export type BuildingEffect =
   | { type: "vault"; amount: number }
   /**
    * Bring the dead back (DESIGN.md §10): gold plus goldPerLevel × the hero's
-   * level, and they lose max(levels, percent% of their level) off the top.
+   * level, plus `materials`, and they lose max(levels, percent% of their
+   * level) off the top.
    */
-  | { type: "resurrect"; gold: number; goldPerLevel: number; levels: number; percent: number }
+  | {
+      type: "resurrect";
+      gold: number;
+      goldPerLevel: number;
+      levels: number;
+      percent: number;
+      materials?: MaterialCost;
+    }
   /** Lay the dead to rest, for this much gold (DESIGN.md §10). */
   | { type: "burial"; gold: number };
 
 export interface BuildingLevel {
   /** Gold to build or upgrade to this level. */
   cost: number;
+  /** Materials it also needs, used up when the work starts. */
+  materials?: MaterialCost;
   /**
    * Days the builders need. The building keeps working at its old level until
    * the work is done (0 = ready at once).

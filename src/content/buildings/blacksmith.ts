@@ -9,12 +9,14 @@ export default defineBuilding({
   levels: [
     {
       cost: 200,
+      materials: { "iron-ore": 3 },
       days: 3,
       summary: "Sells iron swords, war axes, longbows and iron shields",
       effects: [{ type: "sells", items: ["iron-sword", "war-axe", "longbow", "iron-shield"] }],
     },
     {
       cost: 450,
+      materials: { "iron-ore": 6 },
       days: 5,
       summary: "Also sells scale mail and iron-shod staves",
       effects: [

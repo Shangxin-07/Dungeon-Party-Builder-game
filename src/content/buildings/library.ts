@@ -18,6 +18,7 @@ export default defineBuilding({
     },
     {
       cost: 380,
+      materials: { "spider-silk": 4 },
       days: 5,
       summary: "+20% XP from every trip",
       effects: [{ type: "xpPercent", amount: 20 }],

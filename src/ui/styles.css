@@ -1336,3 +1336,16 @@ sup.down {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* The guild's store of materials (Buildings panel). */
+.store h3 {
+  margin: 0 0 0.25rem;
+}
+.store-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+}

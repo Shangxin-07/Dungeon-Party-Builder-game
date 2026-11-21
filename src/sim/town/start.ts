@@ -109,6 +109,7 @@ export function newTown(ix: Index, names: readonly string[], seed: number): Town
     parties: [],
     bodies: [],
     risen: [],
+    materials: {},
   };
   // M6: the first heroes turn up untrained. The player picks their classes
   // and kits them out from the store room (or calls autoStart).

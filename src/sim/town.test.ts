@@ -32,6 +32,7 @@ import {
   wageBill,
   type TownState,
 } from "./town";
+import { stocked } from "./stocked";
 
 const ix = indexLibrary(library);
 const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
@@ -39,7 +40,7 @@ const rules = library.town;
 
 /** Pay for an upgrade and skip the builders' wait (tests of what the building does). */
 const build = (t: TownState, id: string): TownState => {
-  const u = upgrade(ix, t, id);
+  const u = upgrade(ix, stocked(t), id);
   const done = Object.fromEntries(u.construction.map((c) => [c.building, c.level]));
   return { ...u, buildings: { ...u.buildings, ...done }, construction: [] };
 };
@@ -207,12 +208,18 @@ describe("launching a party", () => {
     const trip = after.lastTrip!;
     expect(trip.result.outcome).toBe("returned");
     expect(after.day).toBe(t.day + trip.result.days);
+    // Materials go to the guild's store instead of the Market.
+    const isMaterial = (id: string) => ix.item(id).slot === "material";
     expect(trip.goldEarned).toBe(
-      trip.result.haul.reduce(
-        (s, h) => s + haulPrice(ix, h.item, h.value, haggler(ix, t).bonus),
-        0,
-      ),
+      trip.result.haul
+        .filter((h) => !isMaterial(h.item))
+        .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggler(ix, t).bonus), 0),
     );
+    const found: Record<string, number> = {};
+    for (const h of trip.result.haul)
+      if (isMaterial(h.item)) found[h.item] = (found[h.item] ?? 0) + 1;
+    expect(trip.materials).toEqual(found);
+    expect(after.materials).toEqual(found);
     // The Market takes its cut of the loot, and everyone gets paid each day.
     expect(trip.goldEarned).toBeLessThanOrEqual(trip.result.haul.reduce((s, h) => s + h.value, 0));
     const wages = after.ledger.filter((l) => l.kind === "wages").reduce((s, l) => s + l.amount, 0);

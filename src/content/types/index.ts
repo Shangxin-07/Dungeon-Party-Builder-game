@@ -57,10 +57,11 @@ export type {
   HuntRules,
   RaidRules,
 } from "./dungeon";
-export type { BuildingEffect, BuildingLevel, BuildingDef, TownRules } from "./town";
+export type { BuildingEffect, BuildingLevel, BuildingDef, MaterialCost, TownRules } from "./town";
 export {
   defineClass,
   defineItem,
+  defineMaterial,
   defineAbility,
   defineStatus,
   defineMonster,

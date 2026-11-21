@@ -14,8 +14,8 @@ import { loseLevels } from "../levels";
 import type { Index } from "../library";
 import { applyMorale } from "../morale";
 import { type LostSite, type TownState, TownError, newRecord } from "./state";
-import { effects, rosterSize, maxHp } from "./read";
-import { news, book, edit } from "./internal";
+import { effects, rosterSize, maxHp, materialsShort, materialWords } from "./read";
+import { news, book, edit, useMaterials } from "./internal";
 import { guildFeels } from "./days";
 
 /** A body taken from where it lies, for the town's lists. */
@@ -78,6 +78,12 @@ export function resurrectQuote(
   if (town.roster.length >= rosterSize(ix, town))
     return { terms, why: "The guild has no room on the roster." };
   if (town.gold < terms.gold) return { terms, why: `The priests want ${terms.gold} gold.` };
+  const short = materialsShort(ix, town, terms.materials);
+  if (short)
+    return {
+      terms,
+      why: `The priests need ${materialWords(ix, terms.materials)} (short of ${short}).`,
+    };
   return { terms };
 }
 
@@ -92,6 +98,7 @@ export function resurrect(ix: Index, town: TownState, bodyId: string): TownState
   const t = edit(town);
   const b = t.bodies.find((x) => x.id === bodyId)!;
   book(t, "temple", -terms.gold);
+  useMaterials(t, terms.materials);
   const h = structuredClone(b.hero);
   const lost = loseLevels(ix, h, terms.levels);
   h.condition = "ok";

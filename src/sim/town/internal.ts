@@ -26,6 +26,24 @@ export function book(t: TownState, kind: LedgerKind, amount: number): void {
   t.ledger = t.ledger.filter((l) => l.day > t.day - LEDGER_DAYS);
 }
 
+/** Use up materials from the store (check materialsShort first). */
+export function useMaterials(
+  t: TownState,
+  cost: Readonly<Record<string, number>> | undefined,
+): void {
+  for (const [id, n] of Object.entries(cost ?? {})) {
+    const left = (t.materials[id] ?? 0) - n;
+    if (left < 0) throw new TownError("Not enough materials.");
+    if (left) t.materials[id] = left;
+    else delete t.materials[id];
+  }
+}
+
+/** Put materials in the store. */
+export function addMaterials(t: TownState, found: Readonly<Record<string, number>>): void {
+  for (const [id, n] of Object.entries(found)) if (n) t.materials[id] = (t.materials[id] ?? 0) + n;
+}
+
 /** Take the next random roll from the town's seed. */
 export function roll<T>(town: TownState, use: (rng: Rng) => T): T {
   const rng = createRng(town.seed);

@@ -4,8 +4,8 @@
 import type { Hero } from "../hero";
 import type { Index } from "../library";
 import { type TownState, TownError } from "./state";
-import { repairCost } from "./read";
-import { book, edit } from "./internal";
+import { materialsShort, repairCost } from "./read";
+import { book, edit, useMaterials } from "./internal";
 
 /** The next level of a building, if there is one. */
 export function nextLevel(ix: Index, town: TownState, buildingId: string) {
@@ -19,7 +19,7 @@ export const underConstruction = (town: TownState, buildingId: string) =>
   town.construction.find((c) => c.building === buildingId);
 
 /**
- * Pay for the next level and set the builders to work. It takes the level's
+ * Pay for the next level (gold and any materials) and set the builders to work. It takes the level's
  * `days` to finish; until then the building works at its old level. One job
  * per building at a time, but different buildings can go up together.
  */
@@ -29,8 +29,11 @@ export function upgrade(ix: Index, town: TownState, buildingId: string): TownSta
   if (underConstruction(town, buildingId)) throw new TownError("The builders are already at it.");
   if (town.damaged.includes(buildingId)) throw new TownError("Repair it first.");
   if (town.gold < next.cost) throw new TownError("Not enough gold.");
+  const short = materialsShort(ix, town, next.materials);
+  if (short) throw new TownError(`Not enough materials: short of ${short}.`);
   const t = edit(town);
   book(t, "built", -next.cost);
+  useMaterials(t, next.materials);
   const level = (t.buildings[buildingId] ?? 0) + 1;
   if (next.days <= 0) t.buildings[buildingId] = level;
   else t.construction.push({ building: buildingId, level, daysLeft: next.days, started: t.day });

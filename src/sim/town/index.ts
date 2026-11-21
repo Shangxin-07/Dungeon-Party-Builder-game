@@ -52,6 +52,8 @@ export {
   haggler,
   marketRate,
   haulPrice,
+  materialWords,
+  materialsShort,
   sellPrice,
   findHero,
   maxHp,
