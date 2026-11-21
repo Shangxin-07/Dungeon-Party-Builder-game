@@ -99,6 +99,8 @@ export function validateLibrary(lib: Library): string[] {
       if (!STATS.includes(s as never)) err(`${w}: requires unknown stat "${s}"`);
       if (!Number.isInteger(v) || v! < 1 || v! > 30) err(`${w}: required ${s} must be 1-30`);
     }
+    for (const a of c.requires?.alignments ?? [])
+      if (!lib.alignments.some((x) => x.id === a)) err(`${w}: requires unknown alignment "${a}"`);
     if (c.requires?.building && !lib.buildings.some((b) => b.id === c.requires!.building))
       err(`${w}: requires unknown building "${c.requires.building}"`);
     passives(`${w} perLevel`, c.perLevel);
@@ -341,6 +343,18 @@ export function validateLibrary(lib: Library): string[] {
     }
   };
   if (!lib.motivations.length) err("motivations: need at least one");
+  ids("alignment", lib.alignments);
+  if (!lib.alignments.length) err("needs at least one alignment");
+  const positions = new Set<number>();
+  for (const a of lib.alignments) {
+    const w = `alignment "${a.id}"`;
+    if (!Number.isInteger(a.position)) err(`${w}: position must be a whole number of steps`);
+    if (positions.has(a.position)) err(`${w}: another alignment has the same position`);
+    positions.add(a.position);
+    if (a.weight <= 0) err(`${w}: weight must be positive`);
+    rules(w, a.rules);
+  }
+
   for (const m of lib.motivations) {
     const w = `motivation "${m.id}"`;
     if (m.weight <= 0) err(`${w}: weight must be positive`);

@@ -97,6 +97,8 @@ export function classOptions(
           missing.push(`${st} ${need} (has ${hero.stats[st]})`);
       }
       if (r.building && !built(r.building)) missing.push(`a ${ix.building(r.building).name}`);
+      if (r.alignments && !r.alignments.includes(hero.alignment))
+        missing.push(`to be ${r.alignments.map((a) => ix.alignment(a).name).join(" or ")}`);
     }
     return { cls, level, ok: !missing.length, missing };
   });

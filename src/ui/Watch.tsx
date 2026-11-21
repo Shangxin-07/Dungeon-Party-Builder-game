@@ -260,6 +260,7 @@ function WatchCard({ hero, bar: raw }: { hero: Hero; bar?: Bar }) {
       {bar ? <HpBar bar={bar} /> : null}
       <p className="hero-class">
         {heroTitle(ix, hero)}, {hero.row} row
+        {hero.alignment ? `, ${ix.alignment(hero.alignment).name}` : ""}
         {hero.morale !== undefined ? <span className="muted"> · morale {hero.morale}</span> : null}
         {fatigueTier(ix, hero) ? (
           <span className="warn"> · {fatigueTier(ix, hero)!.name}</span>

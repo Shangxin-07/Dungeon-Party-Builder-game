@@ -25,9 +25,13 @@ export function lossFactor(ix: Index, hero: Hero, leaderCha = 10): number {
   return Math.max(0.5, Math.min(1.5, f));
 }
 
-/** The rules that apply to a hero: everyone's, then their motivation's. */
+/** The rules that apply to a hero: everyone's, their motivation's, then their alignment's. */
 export function moraleRules(ix: Index, hero: Hero): readonly MoraleRule[] {
-  return [...ix.lib.morale.rules, ...ix.motivation(hero.motivation).rules];
+  return [
+    ...ix.lib.morale.rules,
+    ...ix.motivation(hero.motivation).rules,
+    ...(hero.alignment ? ix.alignment(hero.alignment).rules : []),
+  ];
 }
 
 /** What these facts would do to a hero's morale, rule by rule. Doesn't change the hero. */

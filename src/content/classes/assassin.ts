@@ -7,7 +7,12 @@ export default defineClass({
   name: "Assassin",
   kind: "advanced",
   blurb: "Front row. Finds the gap in the armour, then finds another.",
-  requires: { classLevels: { scout: 10 }, stats: { DEX: 16 }, building: "training-yard" },
+  requires: {
+    classLevels: { scout: 10 },
+    stats: { DEX: 16 },
+    building: "training-yard",
+    alignments: ["neutral", "evil"],
+  },
   mainStats: ["DEX", "PER"],
   likes: ["dagger"],
   row: "front",
