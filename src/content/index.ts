@@ -26,6 +26,21 @@ import fighterClass from "./classes/fighter";
 import scoutClass from "./classes/scout";
 import mageClass from "./classes/mage";
 import clericClass from "./classes/cleric";
+import spellbladeClass from "./classes/spellblade";
+import paladinClass from "./classes/paladin";
+import frostMageClass from "./classes/frost-mage";
+import assassinClass from "./classes/assassin";
+import flameBladeAbility from "./abilities/flame-blade";
+import arcaneWardAbility from "./abilities/arcane-ward";
+import holyStrikeAbility from "./abilities/holy-strike";
+import layOnHandsAbility from "./abilities/lay-on-hands";
+import blizzardAbility from "./abilities/blizzard";
+import shadowStrikeAbility from "./abilities/shadow-strike";
+import fighterMilestones from "./perks/milestones/fighter";
+import mageMilestones from "./perks/milestones/mage";
+import scoutMilestones from "./perks/milestones/scout";
+import clericMilestones from "./perks/milestones/cleric";
+import advancedMilestones from "./perks/milestones/advanced";
 import maceItem from "./items/mace";
 import prayerAbility from "./abilities/prayer";
 import smiteAbility from "./abilities/smite";
@@ -168,7 +183,17 @@ import deepGashInjury from "./injuries/deep-gash";
 import townRules from "./town";
 import dungeonRules from "./dungeon";
 
-export const classes: readonly ClassDef[] = [fighterClass, scoutClass, mageClass, clericClass];
+export const classes: readonly ClassDef[] = [
+  fighterClass,
+  scoutClass,
+  mageClass,
+  clericClass,
+  // Advanced and combo classes (DESIGN.md §9): learned at a level-up, never recruited.
+  spellbladeClass,
+  paladinClass,
+  frostMageClass,
+  assassinClass,
+];
 export const items: readonly ItemDef[] = [
   axeItem,
   bandagesItem,
@@ -219,6 +244,12 @@ export const abilities: readonly AbilityDef[] = [
   webAbility,
   warCryAbility,
   callTheBroodAbility,
+  flameBladeAbility,
+  arcaneWardAbility,
+  holyStrikeAbility,
+  layOnHandsAbility,
+  blizzardAbility,
+  shadowStrikeAbility,
 ];
 export const statuses: readonly StatusDef[] = [
   poisonedStatus,
@@ -265,6 +296,12 @@ export const perks: readonly PerkDef[] = [
   devoutPerk,
   turnUndeadPerk,
   rallyingVoicePerk,
+  // Milestone perks (DESIGN.md §9), one file per class.
+  ...fighterMilestones,
+  ...mageMilestones,
+  ...scoutMilestones,
+  ...clericMilestones,
+  ...advancedMilestones,
 ];
 export const motivations: readonly MotivationDef[] = [
   goldMotivation,

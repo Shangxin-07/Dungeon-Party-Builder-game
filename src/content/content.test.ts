@@ -11,7 +11,8 @@ describe("content library", () => {
   });
 
   it("has the first-slice classes (then the Cleric) and monsters", () => {
-    expect(library.classes.map((c) => c.id)).toEqual(["fighter", "scout", "mage", "cleric"]);
+    const base = library.classes.filter((c) => (c.kind ?? "base") === "base");
+    expect(base.map((c) => c.id)).toEqual(["fighter", "scout", "mage", "cleric"]);
     for (const id of ["slime", "giant-rat", "goblin", "cave-spider", "skeleton"]) {
       expect(library.monsters.map((m) => m.id)).toContain(id);
     }
@@ -49,7 +50,7 @@ describe("validateLibrary", () => {
   it("catches out-of-range stats and the reserved attack id", () => {
     const [fighter] = library.classes;
     const errors = broken({
-      classes: [{ ...fighter!, baseStats: { ...fighter!.baseStats, STR: 25 } }],
+      classes: [{ ...fighter!, baseStats: { ...fighter!.baseStats!, STR: 25 } }],
       abilities: [
         ...library.abilities,
         { id: "attack", name: "X", target: "enemy", tags: [], effects: [{ type: "weaponAttack" }] },

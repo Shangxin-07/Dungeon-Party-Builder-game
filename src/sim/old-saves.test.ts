@@ -38,6 +38,11 @@ describe("saves from earlier versions", () => {
       expect(typeof h.fatigue).toBe("number");
       expect(typeof h.morale).toBe("number");
       expect(Array.isArray(h.levelUps)).toBe(true);
+      // Freeform classes: every level so far went into their one class.
+      if (!h.untrained && !h.porter) {
+        expect(h.classes).toEqual({ [h.classId]: h.level });
+        for (const up of h.levelUps) expect(up.classId).toBe(h.classId);
+      }
     }
     // And it plays on: a few days' rest, then a trip.
     let next = t;

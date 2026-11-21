@@ -151,13 +151,36 @@ registerAi("brute", (view) => {
   return attack(view, (t) => (t.length ? view.rng.pick(t) : undefined));
 });
 
+/**
+ * Spells for heroes whose main style isn't casting (a Fighter with Mage levels,
+ * DESIGN.md §9): pull a downed friend back up, or cast a damage spell after
+ * techniques, an area one on a group. Heroes with no spells skip all this.
+ */
+function rescueSpell(view: BattleView): Action | undefined {
+  if (!view.allies.some((a) => a.state === "downed")) return undefined;
+  return healSomeone(view, 0);
+}
+function damageSpell(view: BattleView, choose: (t: Fighter[]) => Fighter | undefined) {
+  const spells = priciest(byTag(view, "spell").filter((a) => a.tags.includes("damage")));
+  const aoe = spells.find((a) => a.target === "all-enemies");
+  if (aoe && view.enemies.length >= 2)
+    return { kind: "ability", ability: aoe.id, target: view.enemies[0]!.uid } as Action;
+  const single = spells.find((a) => a.target === "enemy");
+  const target = single && choose(view.targets(single));
+  return target
+    ? ({ kind: "ability", ability: single!.id, target: target.uid } as Action)
+    : undefined;
+}
+
 /** Front-liners: go for the biggest threat in reach. */
 registerAi("fighter", (view) => {
   const threat = (t: Fighter[]) => lowest(t, (f) => -f.derived.attack);
   return (
     recover(view, 0.35) ??
     healSelfWithItem(view, 0.35) ??
+    rescueSpell(view) ??
     technique(view, threat) ??
+    damageSpell(view, threat) ??
     attack(view, threat)
   );
 });
@@ -168,7 +191,9 @@ registerAi("archer", (view) => {
   return (
     recover(view, 0.35) ??
     healSelfWithItem(view, 0.35) ??
+    rescueSpell(view) ??
     technique(view, weakest) ??
+    damageSpell(view, weakest) ??
     attack(view, weakest)
   );
 });

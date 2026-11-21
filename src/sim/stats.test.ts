@@ -77,7 +77,7 @@ describe("heroes", () => {
     for (let i = 0; i < 50; i++) {
       const h = createHero(ix, { id: "h", name: "X", classId: "scout" }, rng);
       for (const [k, v] of Object.entries(h.stats)) {
-        expect(Math.abs(v - ix.cls("scout").baseStats[k as keyof StatBlock])).toBeLessThanOrEqual(
+        expect(Math.abs(v - ix.cls("scout").baseStats![k as keyof StatBlock])).toBeLessThanOrEqual(
           2,
         );
       }

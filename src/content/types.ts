@@ -87,16 +87,45 @@ export interface Trigger {
 // Definitions
 // ---------------------------------------------------------------------------
 
+/**
+ * What a hero needs before they can put a level into a class they don't have
+ * yet (DESIGN.md §9). Everything is optional; a base class usually only asks
+ * for a stat or two. Stats are the hero's own, before gear and perks.
+ */
+export interface ClassRequirements {
+  /** Class levels the hero must already have, e.g. { fighter: 5, mage: 5 }. */
+  classLevels?: Readonly<Record<string, number>>;
+  /** Minimum stats, e.g. { INT: 16 }. */
+  stats?: Readonly<Partial<Record<Stat, number>>>;
+  /** A building the town must have standing to train it. */
+  building?: string;
+}
+
+/**
+ * Base classes can be recruited into, or learned at any level-up. Advanced
+ * classes grow out of one class, combo classes out of two or more; neither
+ * can be recruited into.
+ */
+export type ClassKind = "base" | "advanced" | "combo";
+
 export interface ClassDef {
   /** Unique kebab-case id, referenced from other content. */
   id: string;
   name: string;
+  /** Defaults to "base". */
+  kind?: ClassKind;
   /** One-line description shown in town. */
   blurb: string;
+  /** What it takes to learn this class at a level-up (a recruit's first class has no requirements). */
+  requires?: ClassRequirements;
   /** The stats this class grows fastest in. */
   mainStats: readonly Stat[];
-  /** Typical recruit stats. Recruits roll a little either side. */
-  baseStats: StatBlock;
+  /**
+   * Base classes: typical recruit stats, and training moves a recruit's stats
+   * by (base − 10). Advanced and combo classes can't be recruited into, so
+   * they leave it out.
+   */
+  baseStats?: StatBlock;
   /** Tags of gear this class likes using (affects morale later). */
   likes: readonly string[];
   /** Default row in the formation. */
@@ -104,16 +133,27 @@ export interface ClassDef {
   /** Id of the combat AI that picks this class's actions. */
   ai: string;
   /**
-   * The class's ability list: ability id -> the level it's learned at, e.g.
-   * { firebolt: 1, "frost-lance": 4 }. "attack" is always available. In the
-   * first slice the level is the hero's level; with freeform classes
-   * (DESIGN.md §9) it becomes the level in this class.
+   * The class's ability list: ability id -> the class level it's learned at,
+   * e.g. { firebolt: 1, "frost-lance": 4 }. "attack" is always available.
    */
   abilities: Readonly<Record<string, number>>;
-  /** Item ids a new recruit starts with. */
+  /** Item ids a new recruit starts with, and the usual kit to fill in. */
   startingKit: readonly string[];
-  /** Fixed stat gains every time a hero of this class levels up (DESIGN.md §9). */
+  /** Fixed stat gains every time a level goes into this class (DESIGN.md §9). */
   growth: Partial<Record<Stat, number>>;
+  /**
+   * Depth (DESIGN.md §9): bonuses for every class level past the first.
+   * Amounts are per level and can be fractions; the total is rounded down,
+   * so { stat: "attack", amount: 0.4 } is +1 attack at class level 4 and
+   * +19 at 49.
+   */
+  perLevel?: readonly PassiveEffect[];
+  /**
+   * Milestone perks: reaching this class level offers these perks instead of
+   * the usual random ones, e.g. { 5: ["a", "b"], 50: ["capstone"] }. Perks
+   * listed here are never offered at random.
+   */
+  milestones?: Readonly<Record<number, readonly string[]>>;
 }
 
 export type ItemSlot = "weapon" | "offhand" | "armor" | "consumable" | "loot";
@@ -239,7 +279,7 @@ export interface PerkDef {
    * offered more often than general ones (LevelRules.classPerkWeight).
    */
   classes: readonly string[];
-  /** Not offered before this hero level. Defaults to 2 (the first level-up). */
+  /** Not offered at random before this hero level. Defaults to 2 (the first level-up). */
   minLevel?: number;
   passives: readonly PassiveEffect[];
   /** Abilities the perk teaches. */
@@ -376,6 +416,8 @@ export interface MoraleRulesDef {
 /** How heroes earn experience and level up (DESIGN.md §9). */
 export interface LevelRules {
   maxLevel: number;
+  /** Max HP for every hero level past the first, whatever the class. */
+  hpPerLevel: number;
   /** XP for each point of monster power killed, shared by the party. */
   xpPerPower: number;
   /** XP each hero gets per floor reached. */

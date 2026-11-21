@@ -20,6 +20,7 @@ import {
 } from "./expedition";
 import { applyKills, dungeonDay, newDungeon, type DungeonState } from "./dungeon";
 import {
+  baseClasses,
   createHero,
   EQUIP_SLOTS,
   fatigueTier,
@@ -30,7 +31,7 @@ import {
   type EquipSlot,
   type Hero,
 } from "./hero";
-import { gainXp, spendLevelUp } from "./levels";
+import { chooseClass, gainXp, spendLevelUp } from "./levels";
 import type { Index } from "./library";
 import type { HaulItem } from "./loot";
 import { applyMorale, gearTags, isLow, moraleChanges, type Facts } from "./morale";
@@ -38,7 +39,7 @@ import { resolveRaid, type RaidReport } from "./raid";
 import { createRng, type Rng } from "./rng";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 9;
+export const TOWN_VERSION = 10;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 const PIT_HISTORY = 60;
@@ -320,6 +321,9 @@ export const wageBill = (ix: Index, town: TownState) =>
 export const standing = (town: TownState, id: string) =>
   (town.buildings[id] ?? 0) > 0 && !town.damaged.includes(id);
 
+/** "Does the town have this building standing?", for class requirements. */
+export const built = (town: TownState) => (id: string) => standing(town, id);
+
 /**
  * What the next nights at the pit will bring if nobody kills anything, as far
  * ahead as the watchtowers can see. The dungeon has no dice, so this is exact.
@@ -564,7 +568,7 @@ function freshRecruits(ix: Index, town: TownState, names: readonly string[]): vo
   const trained = total(ix, town, "trainedRecruits");
   for (let i = 0; i < recruitsToday(ix, town); i++) {
     if (i < trained) {
-      const classId = roll(town, (rng) => rng.pick(ix.lib.classes).id);
+      const classId = roll(town, (rng) => rng.pick(baseClasses(ix)).id);
       town.recruits.push(makeHero(ix, town, names, classId, recruitPicks(ix, town)));
     } else town.recruits.push(makeRecruit(ix, town, names, recruitPicks(ix, town)));
   }
@@ -653,6 +657,8 @@ export function hire(ix: Index, town: TownState, recruitId: string, classId?: st
     throw new TownError("The roster is full. Upgrade the Guild Hall or dismiss someone.");
   const price = hirePrice(ix, t, t.recruits[i]!);
   if (t.gold < price) throw new TownError("Not enough gold.");
+  if (classId && !baseClasses(ix).some((c) => c.id === classId))
+    throw new TownError("Recruits can only start in a base class.");
   const [recruit] = t.recruits.splice(i, 1);
   const h = recruit!.untrained ? trainRecruit(ix, recruit!, classId ?? recruit!.classId) : recruit!;
   if ((t.freeHires ?? 0) > 0) t.freeHires -= 1;
@@ -709,10 +715,12 @@ export function trainPorter(
     throw new TownError(
       `${h.name} needs to watch ${left} more ${left === 1 ? "fight" : "fights"}.`,
     );
+  if (!baseClasses(ix).some((c) => c.id === classId))
+    throw new TownError("Porters can only train in a base class.");
   const banked = h.porter.xp;
   const trained = trainRecruit(ix, h, classId);
   delete trained.porter;
-  roll(t, (rng) => gainXp(ix, trained, banked, rng));
+  roll(t, (rng) => gainXp(ix, trained, banked, rng, built(t)));
   t.roster[t.roster.findIndex((x) => x.id === heroId)] = trained;
   t.porters = (t.porters ?? []).filter((id) => id !== heroId);
   if (t.party.length < partySlots(ix, t)) t.party.push(heroId);
@@ -1049,6 +1057,29 @@ export function cancelRescue(_ix: Index, town: TownState): TownState {
 }
 
 /**
+ * Put a hero's oldest level-up into a class (DESIGN.md §9): one they have, or
+ * a new one they meet the requirements for. Its stat gains come in now and
+ * the perk offers are rolled. There's no taking it back.
+ */
+export function chooseLevelClass(
+  ix: Index,
+  town: TownState,
+  heroId: string,
+  classId: string,
+): TownState {
+  const t = edit(town);
+  const h = hero(t, heroId);
+  const isNew = !(h.classes ?? {})[classId];
+  try {
+    roll(t, (rng) => chooseClass(ix, h, classId, rng, built(t)));
+  } catch (e) {
+    throw new TownError((e as Error).message);
+  }
+  if (isNew) news(t, `${h.name} has started training as a ${ix.cls(classId).name}.`, "good");
+  return keepHpInBounds(ix, t, h);
+}
+
+/**
  * Spend a hero's oldest level-up (DESIGN.md §9): learn one of the perks on
  * offer and, every few levels, add a free stat point. Granting the perk they
  * wanted cheers them up.
@@ -1064,7 +1095,7 @@ export function chooseLevelUp(
   const h = hero(t, heroId);
   let wanted = false;
   try {
-    wanted = roll(t, (rng) => spendLevelUp(ix, h, perk, stat, rng)).wanted;
+    wanted = roll(t, (rng) => spendLevelUp(ix, h, perk, stat, rng, built(t))).wanted;
   } catch (e) {
     throw new TownError((e as Error).message);
   }
@@ -1291,7 +1322,7 @@ function nightfall(ix: Index, t: TownState, away: ReadonlySet<string>): RaidRepo
       t.party = t.party.filter((id) => id !== after.id);
     } else {
       const h = structuredClone(after);
-      const levels = roll(t, (rng) => gainXp(ix, h, xpEach, rng));
+      const levels = roll(t, (rng) => gainXp(ix, h, xpEach, rng, built(t)));
       if (levels) applyMorale(ix, h, { levelUp: levels }, t.day);
       if (wasDowned(raid.log, h.id)) {
         const inj = maybeInjure(ix, t, h);
@@ -1337,7 +1368,7 @@ function dayInTown(ix: Index, t: TownState, h: Hero): void {
   );
   const xp = trainingXp(ix, t);
   if (xp) {
-    const levels = roll(t, (rng) => gainXp(ix, h, xp, rng));
+    const levels = roll(t, (rng) => gainXp(ix, h, xp, rng, built(t)));
     if (levels) {
       applyMorale(ix, h, { levelUp: levels }, t.day);
       news(t, `${h.name} reached level ${h.level} in the Training Yard.`, "good");
@@ -1605,7 +1636,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   const levels: Record<string, number> = {};
   for (const h of living) {
     xp[h.id] = Math.round(xpEach);
-    levels[h.id] = roll(t, (rng) => gainXp(ix, h, xpEach, rng));
+    levels[h.id] = roll(t, (rng) => gainXp(ix, h, xpEach, rng, built(t)));
   }
 
   // The rescued walk home with the party, unless the party fell too.

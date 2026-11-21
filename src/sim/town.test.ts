@@ -78,7 +78,7 @@ describe("a new town", () => {
     expect(after.gold).toBe(t.gold);
     expect(after.freeHires).toBe(t.freeHires - 1);
     // Mage training: INT goes up by the mage's (base - 10) offset.
-    const off = ix.cls("mage").baseStats.INT - 10;
+    const off = ix.cls("mage").baseStats!.INT - 10;
     expect(h.stats.INT).toBe(Math.max(1, Math.min(20, r0.stats.INT + off)));
     // Kit comes from the store room.
     const kitted = kitOut(ix, after, h.id, false);

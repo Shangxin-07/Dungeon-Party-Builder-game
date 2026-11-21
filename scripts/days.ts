@@ -11,6 +11,7 @@
  *   npm run days -- --policy 1 --clear 50           # thin floor 1 out by half each trip
  *   npm run days -- --policy 2 --porters 2          # keep two porters (trained when the party is short)
  *   npm run days -- --policy 2 --build --parties    # two fixed parties, sending whichever is fresher
+ *   npm run days -- --policy 2 --build --multiclass # each hero picks up a second class (and any combo)
  *
  * The bot restocks used supplies, keeps one hero on the bench and sends the
  * freshest heroes (unless --static), and rests until the party is at 90% HP
@@ -22,7 +23,9 @@
  * the defences are up, cheapest first, keeping a few days' wages in hand.
  */
 import { heroNames, library } from "../src/content";
-import { bestClass, fatigueTier, heroSheet, type Hero } from "../src/sim/hero";
+import { STATS } from "../src/content/types";
+import { bestClass, fatigueTier, heroSheet, heroTitle, type Hero } from "../src/sim/hero";
+import { openClasses } from "../src/sim/levels";
 import { indexLibrary } from "../src/sim/library";
 import {
   answerRaise,
@@ -35,6 +38,8 @@ import {
   cancelRescue,
   cantLaunch,
   chooseLevelUp,
+  chooseLevelClass,
+  built,
   planRescue,
   findHero,
   hire,
@@ -78,6 +83,7 @@ const runs = Number(arg("runs") ?? 1);
 const seed0 = Number(arg("seed") ?? 1);
 const clear = Number(arg("clear") ?? 0);
 const porterCount = Number(arg("porters") ?? 0);
+const multiclass = flag("multiclass");
 const twoParties = flag("parties");
 
 const DEFENCES = ["palisade", "gate", "watchtower"];
@@ -108,11 +114,26 @@ function step(t: TownState): TownState {
       .sort((a, b) => a.lvl!.cost - b.lvl!.cost)[0];
     if (defended && more && t.gold >= more.lvl!.cost + reserve) t = upgrade(ix, t, more.id);
   }
-  // Spend level-ups.
+  // Spend level-ups: into the main class, or with --multiclass into any
+  // advanced or combo class that's open, else one second base class.
   for (const h of t.roster) {
     while (findHero(t, h.id)?.levelUps.length) {
-      const up = findHero(t, h.id)!.levelUps[0]!;
-      const stat = up.freeStat ? ix.cls(h.classId).mainStats[0] : undefined;
+      let up = findHero(t, h.id)!.levelUps[0]!;
+      if (!up.classId) {
+        const hero = findHero(t, h.id)!;
+        const open = openClasses(ix, hero, built(t));
+        const pick =
+          (multiclass &&
+            (open.find((o) => !o.level && (o.cls.kind ?? "base") !== "base") ??
+              (Object.keys(hero.classes).length < 2 ? open.find((o) => !o.level) : undefined))) ||
+          open.find((o) => o.cls.id === hero.classId)!;
+        t = chooseLevelClass(ix, t, h.id, pick.cls.id);
+        up = findHero(t, h.id)!.levelUps[0]!;
+      }
+      const now = findHero(t, h.id)!;
+      const stat = up.freeStat
+        ? ([...ix.cls(now.classId).mainStats, ...STATS].find((s) => now.stats[s] < 30) ?? "CHA")
+        : undefined;
       t = chooseLevelUp(ix, t, h.id, up.wants ?? up.offers[0], stat);
     }
   }
@@ -271,7 +292,7 @@ if (runs === 1) {
   );
   for (const h of t.roster)
     console.log(
-      `  ${h.name.padEnd(8)} ${ix.cls(h.classId).name.padEnd(8)} level ${h.level}, ` +
+      `  ${h.name.padEnd(8)} ${heroTitle(ix, h, true).padEnd(20)}, ` +
         `morale ${h.morale} (${h.motivation}, loves the ${h.favourite}), perks: ${h.perks.join(", ") || "none"}\n` +
         h.moraleLog
           .map(

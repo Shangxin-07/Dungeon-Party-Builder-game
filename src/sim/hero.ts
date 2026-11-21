@@ -22,8 +22,19 @@ export const EQUIP_SLOTS: readonly EquipSlot[] = ["weapon", "offhand", "armor"];
 export interface Hero {
   id: string;
   name: string;
+  /**
+   * Their main class: the one with the most levels (the first learned, on a
+   * tie). It picks their fighting style and usual kit.
+   */
   classId: string;
+  /** Hero level: the sum of their class levels, plus any level-ups not yet put into a class. */
   level: number;
+  /**
+   * Class levels (DESIGN.md §9), in the order they were learned, e.g.
+   * { fighter: 6, mage: 3 }. Empty for recruits and porters who haven't
+   * been trained.
+   */
+  classes: Record<string, number>;
   /** Primary stats before gear and perks. */
   stats: StatBlock;
   perks: string[];
@@ -84,7 +95,12 @@ export function fatigueTier(ix: Index, hero: Hero) {
 /** A level gained but not yet spent. */
 export interface LevelUp {
   level: number;
-  /** Perk ids on offer. Rolled when this becomes the next level-up to spend. */
+  /**
+   * The class this level went into. Picked by the player (or for them, when
+   * there's only one choice); its stat gains come in at that moment.
+   */
+  classId?: string;
+  /** Perk ids on offer. Rolled when the class is picked. */
   offers: string[];
   /** One free stat point comes with this level. */
   freeStat: boolean;
@@ -118,9 +134,63 @@ export function heroPassives(ix: Index, hero: Hero): PassiveEffect[] {
     if (id) out.push(...(ix.item(id).passives ?? []));
   }
   for (const id of hero.perks) out.push(...ix.perk(id).passives);
+  out.push(...depthPassives(ix, hero));
   for (const inj of hero.injuries ?? []) out.push(...ix.injury(inj.id).passives);
   out.push(...(fatigueTier(ix, hero)?.passives ?? []));
   return out;
+}
+
+/**
+ * What levels give on top of stat gains (DESIGN.md §9): max HP for every
+ * hero level, and each class's `perLevel` bonuses for every class level past
+ * the first, rounded down.
+ */
+export function depthPassives(ix: Index, hero: Hero): PassiveEffect[] {
+  const out: PassiveEffect[] = [];
+  const hp = Math.floor((hero.level - 1) * ix.lib.levels.hpPerLevel);
+  if (hp > 0) out.push({ type: "modifyStat", stat: "maxHp", amount: hp });
+  for (const [id, level] of Object.entries(hero.classes ?? {}))
+    out.push(...classDepth(ix, id, level));
+  return out;
+}
+
+/** A class's `perLevel` bonuses at this class level, rounded down. */
+export function classDepth(ix: Index, classId: string, level: number): PassiveEffect[] {
+  const out: PassiveEffect[] = [];
+  for (const p of ix.cls(classId).perLevel ?? []) {
+    if (p.type === "modifyStat" || p.type === "modifySkill") {
+      const amount = Math.floor(p.amount * (level - 1));
+      if (amount) out.push({ ...p, amount });
+    } else {
+      const percent = Math.floor(p.percent * (level - 1));
+      if (percent) out.push({ ...p, percent });
+    }
+  }
+  return out;
+}
+
+/** "Fighter 6 / Mage 3", deepest first; "Fighter" for a level-1 hero. */
+export function classLine(ix: Index, hero: Hero): string {
+  if (hero.untrained || hero.porter) return hero.porter ? "Porter" : "untrained";
+  const entries = Object.entries(hero.classes ?? {}).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) return ix.cls(hero.classId).name;
+  return entries.map(([id, l]) => `${ix.cls(id).name} ${l}`).join(" / ");
+}
+
+/**
+ * "Fighter, level 3", or "Fighter 4 / Mage 2, level 6" for a hero with more
+ * than one class. `short` gives "Fighter 3" for a hero with one class.
+ */
+export function heroTitle(ix: Index, hero: Hero, short = false): string {
+  if (hero.porter) return "Porter";
+  if (hero.untrained) return "untrained";
+  const classes = Object.entries(hero.classes ?? {});
+  const placed = classes.reduce((s, [, l]) => s + l, 0);
+  if (classes.length <= 1 && placed === hero.level)
+    return short
+      ? `${ix.cls(hero.classId).name} ${hero.level}`
+      : `${ix.cls(hero.classId).name}, level ${hero.level}`;
+  return `${classLine(ix, hero)}, level ${hero.level}`;
 }
 
 export function heroSheet(ix: Index, hero: Hero): HeroSheet {
@@ -137,7 +207,7 @@ export function heroSheet(ix: Index, hero: Hero): HeroSheet {
     derived,
     skills,
     passives,
-    tags: ["hero", ix.cls(hero.classId).id],
+    tags: ["hero", ...new Set([ix.cls(hero.classId).id, ...Object.keys(hero.classes ?? {})])],
   };
 }
 
@@ -152,12 +222,14 @@ export function createHero(
 ): Hero {
   const cls = ix.cls(opts.classId);
   const stats = {} as Record<Stat, number>;
-  for (const s of STATS) stats[s] = Math.max(1, Math.min(20, cls.baseStats[s] + rng.int(-2, 2)));
+  for (const s of STATS)
+    stats[s] = Math.max(1, Math.min(20, (cls.baseStats?.[s] ?? 10) + rng.int(-2, 2)));
   const hero: Hero = {
     id: opts.id,
     name: opts.name,
     classId: cls.id,
     level: 1,
+    classes: { [cls.id]: 1 },
     stats,
     perks: [],
     equipment: {},
@@ -233,10 +305,14 @@ export function rollPersonality(
 export const classFit = (ix: Index, stats: StatBlock, classId: string) =>
   ix.cls(classId).mainStats.reduce((s, st) => s + stats[st], 0);
 
+/** Classes a recruit can be trained in: the base ones. */
+export const baseClasses = (ix: Index) =>
+  ix.lib.classes.filter((c) => (c.kind ?? "base") === "base");
+
 /** The class a recruit's own stats suit best. */
 export function bestClass(ix: Index, stats: StatBlock): string {
-  let best = ix.lib.classes[0]!.id;
-  for (const c of ix.lib.classes)
+  let best = baseClasses(ix)[0]!.id;
+  for (const c of baseClasses(ix))
     if (classFit(ix, stats, c.id) > classFit(ix, stats, best)) best = c.id;
   return best;
 }
@@ -275,6 +351,7 @@ export function rollRecruit(
     name: opts.name,
     classId,
     level: 1,
+    classes: {},
     stats,
     perks: [],
     equipment: {},
@@ -304,11 +381,12 @@ export function trainRecruit(ix: Index, recruit: Hero, classId: string): Hero {
   const cls = ix.cls(classId);
   const stats = {} as Record<Stat, number>;
   for (const s of STATS)
-    stats[s] = Math.max(1, Math.min(20, recruit.stats[s] + cls.baseStats[s] - 10));
+    stats[s] = Math.max(1, Math.min(20, recruit.stats[s] + (cls.baseStats?.[s] ?? 10) - 10));
   const p = rollPersonality(ix, recruit.id, recruit.name, recruit.stats, classId);
   const hero: Hero = {
     ...recruit,
     classId,
+    classes: { [classId]: 1 },
     stats,
     row: cls.row,
     likes: p.likes,

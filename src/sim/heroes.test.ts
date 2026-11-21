@@ -27,6 +27,12 @@ const ix = indexLibrary(library);
 const rng = (seed = 1) => createRng(seed);
 const fighter = (seed = 1): Hero =>
   createHero(ix, { id: `h${seed}`, name: `Test ${seed}`, classId: "fighter" }, rng(seed));
+/** A fighter who can't learn any other class, so every level goes straight into Fighter. */
+const onlyFighter = (seed = 1): Hero => {
+  const h = fighter(seed);
+  h.stats = { ...h.stats, DEX: 8, INT: 8, WIL: 8 };
+  return h;
+};
 const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
 const orders = (o: Partial<StandingOrders> = {}): StandingOrders => ({ ...DEFAULT_ORDERS, ...o });
 /** Pay for an upgrade and skip the builders' wait. */
@@ -77,7 +83,7 @@ describe("levelling up", () => {
   });
 
   it("gives the class's stat gains at once and queues a perk choice", () => {
-    const h = fighter();
+    const h = onlyFighter();
     const before = { ...h.stats };
     expect(gainXp(ix, h, xpForLevel(ix, 2), rng())).toBe(1);
     expect(h.level).toBe(2);
@@ -97,7 +103,7 @@ describe("levelling up", () => {
   });
 
   it("can gain several levels at once, with a free stat point every third", () => {
-    const h = fighter();
+    const h = onlyFighter();
     expect(gainXp(ix, h, xpForLevel(ix, 3), rng())).toBe(2);
     expect(h.levelUps.map((u) => [u.level, u.freeStat])).toEqual([
       [2, false],
@@ -109,14 +115,14 @@ describe("levelling up", () => {
   });
 
   it("stops at the level cap", () => {
-    const h = fighter();
+    const h = onlyFighter();
     gainXp(ix, h, 10_000_000, rng());
     expect(h.level).toBe(library.levels.maxLevel);
     expect(xpProgress(ix, h).max).toBe(true);
   });
 
   it("spends a level-up: one perk on offer, and the free point when there is one", () => {
-    const h = fighter();
+    const h = onlyFighter();
     gainXp(ix, h, xpForLevel(ix, 3), rng());
     const first = h.levelUps[0]!;
     expect(badChoice(h, "not-on-offer", undefined)).toMatch(/perks on offer/);
@@ -134,12 +140,13 @@ describe("levelling up", () => {
   });
 
   it("never offers a perk twice", () => {
-    const h = fighter();
+    const h = onlyFighter();
     gainXp(ix, h, xpForLevel(ix, 10), rng());
     let r = 10;
     while (h.levelUps.length) {
       const up = h.levelUps[0]!;
       spendLevelUp(ix, h, up.offers[0], up.freeStat ? "END" : undefined, rng(r++));
+      expect(h.classes).toEqual({ fighter: h.level - h.levelUps.filter((u) => !u.classId).length });
     }
     expect(new Set(h.perks).size).toBe(h.perks.length);
     expect(perkPool(ix, h).map((p) => p.id)).not.toContain(h.perks[0]);
