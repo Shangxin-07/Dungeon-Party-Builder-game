@@ -4,6 +4,7 @@ import { defineMonster, definePerk, type Library } from "../content/types";
 import { abilitiesAtLevel, knownAbilities, knownAbilityIds, upcomingAbilities } from "./abilities";
 import { registerAi } from "./ai";
 import { runCombat } from "./combat";
+import { rollEncounter } from "./encounter";
 import { createHero, type Hero } from "./hero";
 import { indexLibrary } from "./library";
 import { createRng } from "./rng";
@@ -160,5 +161,29 @@ describe("ability validation", () => {
         expect.stringContaining('unknown ability "fly"'),
       ]),
     );
+  });
+});
+
+describe("monster moves", () => {
+  it("unlock with the floor's monster level", () => {
+    const run = (level: number) =>
+      runCombat(ix, [], ["giant-rat"], { seed: 1, level }).fighters[0]!.abilities;
+    expect(run(1)).toEqual([]);
+    expect(run(2)).toEqual(["gnaw"]);
+  });
+
+  it("variants stand in for their base monster, at most one per fight", () => {
+    let seen = 0;
+    const rng = createRng(5);
+    for (let i = 0; i < 300; i++) {
+      const m = rollEncounter(ix, 2, rng);
+      const variants = m.filter((id) => ix.monster(id).variant);
+      expect(variants.length).toBeLessThanOrEqual(1);
+      seen += variants.length;
+    }
+    expect(seen).toBeGreaterThan(0);
+    // Never on a floor-1 fight at its usual level.
+    for (let i = 0; i < 300; i++)
+      expect(rollEncounter(ix, 1, rng).some((id) => ix.monster(id).variant)).toBe(false);
   });
 });
