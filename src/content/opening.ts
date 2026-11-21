@@ -7,6 +7,8 @@ import { defineOpening } from "./types";
  * then start sending parties down.
  */
 export default defineOpening({
+  // Nobody is paid at the camp (wages start when delving opens), so this is
+  // the palisade's 80 and a little over, topped up by the seam.
   startingGold: 120,
   // Whatever the miners had to hand: whoever holds the pick-axe is the fighter.
   startingStash: [
@@ -23,6 +25,8 @@ export default defineOpening({
   unbuilt: ["guild-hall"],
   campRoster: 5,
   unlock: { "guild-hall": 1, palisade: 1 },
+  // The miners will swap timber for ore, so the build never stalls on luck.
+  trades: [{ give: { "iron-ore": 2 }, get: { timber: 1 } }],
   // Once the road is safe, the guild's own wagons get through: proper kit
   // for the first parties to go down.
   heldStash: [

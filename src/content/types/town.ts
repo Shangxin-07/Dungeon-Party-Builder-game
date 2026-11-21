@@ -191,4 +191,9 @@ export interface OpeningRules {
   unlock: Readonly<Record<string, number>>;
   /** Items that arrive in the store room when the camp is held (the guild's proper kit). */
   heldStash: readonly string[];
+  /**
+   * Swaps the miners will make at the camp, so a run of bad luck in what the
+   * posts bring in can't stall the build, e.g. 2 iron ore for 1 timber.
+   */
+  trades: readonly { give: MaterialCost; get: MaterialCost }[];
 }

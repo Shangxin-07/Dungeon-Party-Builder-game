@@ -100,4 +100,4 @@ export { nextLevel, underConstruction, upgrade, builderHands, repair } from "./b
 export { answerRaise, rest } from "./days";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
 export { launch } from "./launch";
-export { assignPost, postOf } from "./posts";
+export { assignPost, postOf, trade } from "./posts";

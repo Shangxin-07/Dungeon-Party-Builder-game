@@ -20,6 +20,7 @@ import {
   postOf,
   rest,
   rosterSize,
+  trade,
   upgrade,
   warningDays,
   type TownState,
@@ -75,6 +76,67 @@ describe("the mining camp", () => {
     // Nobody was picked at the camp (no party slots); now a party can go.
     expect(cantLaunch(ix, t)).toMatch(/Pick at least one/);
     expect(cantLaunch(ix, { ...t, party: ids(t).slice(0, 3) })).toBeUndefined();
+  });
+});
+
+describe("no dead ends at the camp", () => {
+  it("nobody is paid until the camp is held", () => {
+    let t = camp();
+    const gold = t.gold;
+    for (let d = 0; d < 5; d++) t = rest(ix, t, heroNames);
+    expect(t.ledger.some((l) => l.kind === "wages")).toBe(false);
+    expect(t.gold).toBeGreaterThanOrEqual(gold);
+    t = build(build(t, "guild-hall"), "palisade");
+    t = rest(ix, t, heroNames);
+    expect(t.camp).toBeUndefined();
+    t = rest(ix, t, heroNames);
+    expect(t.ledger.some((l) => l.kind === "wages")).toBe(true);
+  });
+
+  it("the Guild Hall costs timber, not gold, so it can be built with an empty purse", () => {
+    const t = { ...camp(), gold: 0, materials: { timber: 6 } };
+    const after = upgrade(ix, t, "guild-hall");
+    expect(after.gold).toBe(0);
+    expect(after.materials).toEqual({});
+  });
+
+  it("the miners swap ore for timber, only at the camp", () => {
+    const t = { ...camp(), materials: { "iron-ore": 3 } };
+    const after = trade(ix, t, 0);
+    expect(after.materials).toEqual({ "iron-ore": 1, timber: 1 });
+    expect(() => trade(ix, after, 0)).toThrow(/short of 1 iron ore/);
+    expect(() => trade(ix, { ...t, camp: undefined }, 0)).toThrow(/only trade while the camp/);
+  });
+
+  it("is held even when the posts never turn up timber, walls first", () => {
+    // Bad luck at its worst: salvage and spoils only ever give ore.
+    const lib: Library = {
+      ...library,
+      lootTables: library.lootTables.map((l) => ({
+        ...l,
+        entries: l.entries.map((e) => (e.item === "timber" ? { ...e, item: "iron-ore" } : e)),
+      })),
+    };
+    const ux = indexLibrary(lib);
+    for (const seed of [1, 2, 3]) {
+      let t = autoStart(ux, newTown(ux, heroNames, seed, { camp: true }));
+      const [a, b, c, d] = ids(t);
+      t = assignPost(ux, assignPost(ux, t, a!, "salvage"), b!, "salvage");
+      t = assignPost(ux, assignPost(ux, t, c!, "seam"), d!, "barricade");
+      for (let day = 0; day < 40 && t.camp; day++) {
+        while ((t.materials["iron-ore"] ?? 0) >= 2) t = trade(ux, t, 0);
+        for (const id of ["palisade", "guild-hall"]) {
+          try {
+            if (!t.buildings[id] && !t.construction.some((c2) => c2.building === id))
+              t = upgrade(ux, t, id);
+          } catch {
+            // Not yet affordable.
+          }
+        }
+        t = rest(ux, t, heroNames);
+      }
+      expect(t.camp, `seed ${seed}`).toBeUndefined();
+    }
   });
 });
 

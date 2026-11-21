@@ -10,8 +10,8 @@ import type { Index } from "../library";
 import type { RaidReport } from "../raid";
 import { type TownState, TownError } from "./state";
 import { campNeeds, findHero, haulPrice, openPosts, postWorkers } from "./read";
-import { addMaterials, book, edit, listWords, news, roll } from "./internal";
-import { materialWords } from "./read";
+import { addMaterials, book, edit, listWords, news, roll, useMaterials } from "./internal";
+import { materialWords, materialsShort } from "./read";
 
 /**
  * Put a hero on a post, or take them off (`postId` undefined). A hero holds
@@ -94,6 +94,22 @@ export function raidSpoils(ix: Index, t: TownState, raid: RaidReport): void {
     ...(got.gold ? [`${got.gold} gold`] : []),
   ];
   if (words.length) news(t, `Picked off the dead raiders: ${listWords(words)}.`, "good");
+}
+
+/**
+ * Swap materials with the miners at the camp (content/opening.ts `trades`),
+ * so bad luck in what the posts bring in can't stall the build.
+ */
+export function trade(ix: Index, town: TownState, index: number): TownState {
+  if (!town.camp) throw new TownError("The miners only trade while the camp lasts.");
+  const deal = ix.lib.opening.trades[index];
+  if (!deal) throw new TownError("The miners don't make that swap.");
+  const short = materialsShort(ix, town, deal.give);
+  if (short) throw new TownError(`Not enough to swap: short of ${short}.`);
+  const t = edit(town);
+  useMaterials(t, deal.give);
+  addMaterials(t, deal.get);
+  return t;
 }
 
 /** The opening ends once everything in content/opening.ts `unlock` is built. */
