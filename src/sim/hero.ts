@@ -66,6 +66,12 @@ export interface Hero {
    * before training, and `classId` is only the best fit. Hiring trains them.
    */
   untrained?: boolean;
+  /**
+   * A porter (M6): signed untrained to carry loot. Porters don't fight; they
+   * watch, and once they've seen enough fights they can be trained in a class.
+   * `xp` waits until then.
+   */
+  porter?: { watched: number; xp: number };
 }
 
 /** The fatigue tier a hero is in ("tired", "exhausted"), if any. */

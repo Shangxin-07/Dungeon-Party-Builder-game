@@ -38,7 +38,7 @@ import { resolveRaid, type RaidReport } from "./raid";
 import { createRng, type Rng } from "./rng";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 7;
+export const TOWN_VERSION = 8;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 const PIT_HISTORY = 60;
@@ -203,6 +203,8 @@ export interface TownState {
    * without noticing, and gold the Market paid for what was in them.
    */
   secrets: { found: number; missed: number; gold: number };
+  /** Porters going down with the next party (hero ids, M6). They don't take party slots. */
+  porters: string[];
 }
 
 /** What the guild's gold went on, or came from. */
@@ -294,7 +296,9 @@ export const vaultShare = (ix: Index, town: TownState) =>
 
 /** A hero's daily wage (content/town.ts). */
 export const wage = (ix: Index, h: Hero) =>
-  ix.lib.town.wages.base + ix.lib.town.wages.perLevel * h.level + (h.pay ?? 0);
+  h.porter
+    ? ix.lib.town.porters.wage + (h.pay ?? 0)
+    : ix.lib.town.wages.base + ix.lib.town.wages.perLevel * h.level + (h.pay ?? 0);
 /** What the whole roster costs a day. */
 export const wageBill = (ix: Index, town: TownState) =>
   town.roster.reduce((s, h) => s + wage(ix, h), 0);
@@ -449,7 +453,9 @@ export function cantLaunch(ix: Index, town: TownState): string | undefined {
   if (!town.party.length) return "Pick at least one hero for the party.";
   if (town.party.length > partySlots(ix, town))
     return `The Guild Hall only has room for ${partySlots(ix, town)} in a party.`;
-  for (const id of town.party) {
+  if ((town.porters ?? []).length > ix.lib.town.porters.slots)
+    return `Only ${ix.lib.town.porters.slots} porters can go with one party.`;
+  for (const id of [...town.party, ...(town.porters ?? [])]) {
     const h = findHero(town, id);
     if (!h) return "Someone in the party has left the guild.";
     if (h.condition !== "ok" || h.hp <= 0) return `${h.name} can't walk yet. Let them rest.`;
@@ -580,6 +586,7 @@ export function newTown(ix: Index, names: readonly string[], seed: number): Town
     ledger: [],
     freeHires: rules.startingRecruits,
     secrets: { found: 0, missed: 0, gold: 0 },
+    porters: [],
   };
   // M6: the first heroes turn up untrained. The player picks their classes
   // and kits them out from the store room (or calls autoStart).
@@ -639,6 +646,62 @@ export function hire(ix: Index, town: TownState, recruitId: string, classId?: st
   t.roster.push(h);
   t.records[h.id] = newRecord(t.day);
   if (t.party.length < partySlots(ix, t)) t.party.push(h.id);
+  return t;
+}
+
+/**
+ * Sign an untrained recruit as a porter (M6): cheap, carries loot, never
+ * fights. They watch, and after enough fights can be trained (trainPorter).
+ */
+export function hirePorter(ix: Index, town: TownState, recruitId: string): TownState {
+  const t = edit(town);
+  const rules = ix.lib.town.porters;
+  const i = t.recruits.findIndex((r) => r.id === recruitId);
+  if (i < 0) throw new TownError("That recruit has moved on.");
+  if (!t.recruits[i]!.untrained) throw new TownError("A trained hero won't carry bags.");
+  if (t.roster.length >= rosterSize(ix, t))
+    throw new TownError("The roster is full. Upgrade the Guild Hall or dismiss someone.");
+  if (t.gold < rules.hireCost) throw new TownError("Not enough gold.");
+  const [p] = t.recruits.splice(i, 1);
+  p!.porter = { watched: 0, xp: 0 };
+  p!.hp = heroSheet(ix, p!).derived.maxHp;
+  book(t, "hired", -rules.hireCost);
+  t.roster.push(p!);
+  t.records[p!.id] = newRecord(t.day);
+  t.porters ??= [];
+  if (t.porters.length < rules.slots) t.porters.push(p!.id);
+  return t;
+}
+
+/** Fights a porter still has to watch before they can be trained (0: ready). */
+export const fightsToTrain = (ix: Index, h: Hero) =>
+  h.porter ? Math.max(0, ix.lib.town.porters.trainAfterFights - h.porter.watched) : 0;
+
+/**
+ * Train a porter who has watched enough fights in a class (M6). They keep
+ * their name, mood and record, and the XP they banked watching is paid out.
+ */
+export function trainPorter(
+  ix: Index,
+  town: TownState,
+  heroId: string,
+  classId: string,
+): TownState {
+  const t = edit(town);
+  const h = hero(t, heroId);
+  if (!h.porter) throw new TownError(`${h.name} isn't a porter.`);
+  const left = fightsToTrain(ix, h);
+  if (left)
+    throw new TownError(
+      `${h.name} needs to watch ${left} more ${left === 1 ? "fight" : "fights"}.`,
+    );
+  const banked = h.porter.xp;
+  const trained = trainRecruit(ix, h, classId);
+  delete trained.porter;
+  roll(t, (rng) => gainXp(ix, trained, banked, rng));
+  t.roster[t.roster.findIndex((x) => x.id === heroId)] = trained;
+  t.porters = (t.porters ?? []).filter((id) => id !== heroId);
+  if (t.party.length < partySlots(ix, t)) t.party.push(heroId);
   return t;
 }
 
@@ -711,6 +774,7 @@ export function dismiss(_ix: Index, town: TownState, heroId: string): TownState 
   t.stash.push(...h.pack);
   t.roster = t.roster.filter((x) => x.id !== heroId);
   t.party = t.party.filter((id) => id !== heroId);
+  t.porters = (t.porters ?? []).filter((id) => id !== heroId);
   return t;
 }
 
@@ -853,7 +917,16 @@ export function setRow(_ix: Index, town: TownState, heroId: string, row: Row): T
 /** Add a hero to the party, or take them out of it. */
 export function toggleParty(ix: Index, town: TownState, heroId: string): TownState {
   const t = edit(town);
-  hero(t, heroId);
+  const h = hero(t, heroId);
+  if (h.porter) {
+    const slots = ix.lib.town.porters.slots;
+    t.porters ??= [];
+    if (t.porters.includes(heroId)) t.porters = t.porters.filter((id) => id !== heroId);
+    else if (t.porters.length >= slots)
+      throw new TownError(`Only ${slots} porters can go with one party.`);
+    else t.porters.push(heroId);
+    return t;
+  }
   if (t.party.includes(heroId)) {
     t.party = t.party.filter((id) => id !== heroId);
   } else {
@@ -1336,6 +1409,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   if (why) throw new TownError(why);
   const t = edit(town);
   const party = structuredClone(t.party.map((id) => hero(t, id)));
+  const porters = structuredClone((t.porters ?? []).map((id) => hero(t, id)));
   const seed = roll(t, (rng) => rng.int(0, 2 ** 31 - 1));
   const startDay = t.day;
 
@@ -1352,7 +1426,11 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   const gear: Record<number, ScavengedGear[]> = {};
   for (const g of t.scavenged) (gear[g.floor] ??= []).push(g);
 
-  const result = runExpedition(ix, party, t.orders, seed, t.dungeon.floors, { site: visit, gear });
+  const result = runExpedition(ix, party, t.orders, seed, t.dungeon.floors, {
+    site: visit,
+    gear,
+    porters,
+  });
   const wiped = result.outcome === "wiped";
   const backDay = startDay + result.days;
 
@@ -1374,7 +1452,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   const haggle = haggler(ix, { ...t, roster: t.roster.filter(back) });
   // Heroes' own gear goes back in the store room.
   const recovered = result.haul.filter((h) => h.keep);
-  const goldEarned = result.haul
+  const goldEarned = [...result.haul, ...result.porterHaul]
     .filter((h) => !h.keep)
     .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggle.bonus), 0);
   book(t, "haul", goldEarned);
@@ -1426,7 +1504,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     };
   }
 
-  const away = new Set(t.party);
+  const away = new Set([...t.party, ...porters.map((p) => p.id)]);
   let fallen = 0;
   for (const after of fallenOnTrip) {
     const rec = t.records[after.id] ?? newRecord(startDay);
@@ -1512,6 +1590,44 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     }
   }
 
+  // Porters: they watched the fights and bank some XP for when they train.
+  // After a wipe, the ones who didn't make it home are gone.
+  for (const run of result.porters) {
+    const p = findHero(t, run.id);
+    if (!p?.porter) continue;
+    const rec = t.records[p.id] ?? newRecord(startDay);
+    rec.trips += 1;
+    rec.deepest = Math.max(rec.deepest, result.deepestFloor);
+    t.records[p.id] = rec;
+    if (!run.home) {
+      t.roster = t.roster.filter((h) => h.id !== p.id);
+      t.memorial.push({
+        name: p.name,
+        classId: p.classId,
+        day: backDay,
+        floor: lostSite?.floor ?? result.deepestFloor,
+        fate: "dead",
+        record: rec,
+      });
+      fallen++;
+      continue;
+    }
+    p.porter.watched += fights;
+    p.porter.xp += Math.round(xpEach * ix.lib.town.porters.xpShare);
+    p.fatigue = Math.min(100, (p.fatigue ?? 0) + tiredBy);
+    fatigue[p.id] = p.fatigue;
+  }
+  if (wiped) {
+    const ran = result.porters.filter((r) => r.home).map((r) => r.name);
+    if (ran.length)
+      news(
+        t,
+        `${listWords(ran)} ran back from floor ${lostSite?.floor ?? result.deepestFloor} with news of the party` +
+          `${result.porterHaul.length ? " and what loot they could carry" : ""}.`,
+        "bad",
+      );
+  }
+
   // How everyone feels about it (DESIGN.md §6).
   const morale: Record<string, { amount: number; reason: string }[]> = {};
   const leaderCha = Math.max(10, ...party.map((h) => heroSheet(ix, h).stats.CHA));
@@ -1557,7 +1673,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   );
   // Fit heroes left at home while the party went down (Glory heroes mind).
   for (const h of t.roster) {
-    if (away.has(h.id) || rescued.some((r) => r.id === h.id)) continue;
+    if (away.has(h.id) || h.porter || rescued.some((r) => r.id === h.id)) continue;
     const fit = h.condition === "ok" && !(h.injuries ?? []).length && !fatigueTier(ix, h);
     if (fit) applyMorale(ix, h, { benched: 1 }, startDay);
   }
@@ -1592,6 +1708,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   }
   const quit = quitters(ix, t);
   t.party = t.party.filter((id) => findHero(t, id));
+  t.porters = (t.porters ?? []).filter((id) => findHero(t, id));
   if (result.siteVisited || (t.orders.rescue && !rescueSite(t)))
     t.orders = cancelRescue(ix, t).orders;
   freshRecruits(ix, t, names);

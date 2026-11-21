@@ -185,6 +185,10 @@ export function validateLibrary(lib: Library): string[] {
   for (const k of ["injuryChance", "woundedInjuryChance"] as const)
     if (wear[k] < 0 || wear[k] > 1) err(`wear: ${k} must be 0-1`);
 
+  const porters = lib.town.porters;
+  if (porters.hireCost < 0 || porters.wage < 0 || porters.slots < 0)
+    err("town: porter costs and slots can't be negative");
+  if (porters.xpShare < 0 || porters.xpShare > 1) err("town: porters.xpShare must be 0-1");
   const hunting = lib.dungeon.hunting;
   if (hunting.roomsPerDay < 1 || hunting.maxRooms < 0)
     err("dungeon: hunting needs at least 1 room a day, and maxRooms can't be negative");

@@ -585,9 +585,17 @@ Saves stay at version 6 (this all landed before version 6 shipped): heroes get f
 
 Saves are version 7. Older saves keep their heroes, with no free hires and an empty cache tally.
 
-### Next: porters (Mike, 2026-11-21)
+### As built in M6 (part 4): porters
 
-Non-combatants who go down with the party only to carry loot. They don't fight (monsters may still go for them) and they watch and learn: a way to train a class after the intro (§8, §9), for example a porter who has watched enough fights may train as a fighter. On a party wipe they run for it and try to get back to town on their own, a dangerous climb that a good END or DEX helps; the ones who make it bring back what they carry and news of where the party fell.
+> Mike, 2026-11-21: "Pack mule characters. People that can't fight and are just there to watch (learning classes after the intro?) And carry loot." And: "They'll run on a party wipe, and try to get back to town." Rules in `content/town.ts` (`porters`).
+
+- **Signing a porter.** Any untrained recruit can sign as a porter instead of training: 20 gold, and 1 gold a day in wages (a fighter starts at 3). Porters count towards the roster but not the party: up to 2 go down with each party, on top of its fighters.
+- **Carrying.** A porter adds their carry slots (about 7) to the party's, so the party leaves less loot behind. They never fight; monsters ignore them (for now), and they don't defend the town in raids. The trip still tires them.
+- **Watch and learn.** A porter counts the fights they've watched and banks half a fighter's XP for each trip. After 8 fights they can be **trained** in any class, like a recruit (best fit marked). They keep their name, mood and record, and the banked XP is paid out at once, so a long-serving porter can start at level 2 or 3.
+- **When the party falls,** each porter runs for it. Chance of getting home = 60% + 2% per point of DEX + END above 20, − 15% per floor below the first (5-95%). A porter who makes it carries home the most valuable loot they have room for, and the town hears where the party fell. One who doesn't is dead.
+- **In town:** "or sign as a porter" under each untrained recruit; porter cards show fights watched, XP banked and, once ready, a *Train as* picker; the party panel lists the porters going along and the extra carry room. Saves are version 8 (older saves start with no porters).
+
+The bot can keep porters (`npm run days -- --porters 2`, training one when it is short of fighters). Over 60 days they add little on floors 1 and 2, where the party rarely fills its packs, and about a fifth more gold on floor 3, where hauls are big and wipes are common.
 
 Still to come in M6+: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters and floors, the 2D watch view and multiple parties.
 
