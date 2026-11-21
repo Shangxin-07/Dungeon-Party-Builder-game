@@ -51,4 +51,8 @@ export default defineTownRules({
   wages: { base: 2, perLevel: 1 },
   // Every 3 levels a hero asks for 2 more gold a day (Gold heroes ask for 4).
   raises: { everyLevels: 3, amount: 2, patienceDays: 3 },
+  // Two parties on file, so one can rest while the other goes down.
+  savedParties: 2,
+  // Five average heroes resting in town double the builders' pace; never more.
+  helpers: { perHero: 0.2, perStr: 0.05, maxPerDay: 1 },
 });

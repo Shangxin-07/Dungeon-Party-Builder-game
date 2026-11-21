@@ -1274,3 +1274,48 @@ sup.down {
 .raise p {
   margin: 0 0 6px;
 }
+
+/* Parties on file (M6): two parties to alternate. */
+.parties-on-file {
+  margin: 0 0 16px;
+}
+
+.parties-on-file h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.party-card h4 {
+  margin: 0 0 6px;
+}
+
+.party-card p {
+  margin: 0 0 6px;
+}
+
+.party-card.in-party {
+  border-color: var(--accent);
+}
+
+.party-name {
+  width: 9rem;
+  padding: 2px 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+}
+
+.party-name:hover,
+.party-name:focus {
+  border-color: var(--border);
+  background: var(--bg);
+}
+
+.row-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
