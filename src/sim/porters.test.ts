@@ -148,4 +148,23 @@ describe("porters", () => {
     expect(up.version).toBe(TOWN_VERSION);
     expect(up.porters).toEqual([]);
   });
+
+  it("who quit come off the porter list, so the party can still leave", () => {
+    const t = withPorter();
+    const p = t.roster.at(-1)!;
+    p.morale = 0;
+    const after = rest(ix, t, heroNames);
+    expect(after.roster.map((h) => h.id)).not.toContain(p.id);
+    expect(after.porters).not.toContain(p.id);
+    expect(cantLaunch(ix, after)).toBeUndefined();
+  });
+
+  it("left on the list by an older game are tidied away by a day's rest", () => {
+    const t = withPorter();
+    const gone = { ...t, porters: [...t.porters, "h999"] };
+    expect(cantLaunch(ix, gone)).toMatch(/left the guild/);
+    const after = rest(ix, gone, heroNames);
+    expect(after.porters).not.toContain("h999");
+    expect(cantLaunch(ix, after)).toBeUndefined();
+  });
 });
