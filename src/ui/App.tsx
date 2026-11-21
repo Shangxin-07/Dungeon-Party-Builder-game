@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ExpeditionView } from "./Expedition";
 import { TestFight } from "./TestFight";
 import { TownGame } from "./Town";
+import { BUILD_COMMIT, GAME_VERSION } from "../version";
 
 type Tab = "town" | "sandbox";
 
@@ -10,7 +11,12 @@ export function App() {
   return (
     <main className="page">
       <header>
-        <p className="eyebrow">Work in progress</p>
+        <p className="eyebrow">
+          Work in progress{" "}
+          <span className="version" title={`Build ${BUILD_COMMIT}`}>
+            ({GAME_VERSION})
+          </span>
+        </p>
         <h1>Dungeon Party Builder</h1>
         <p className="lede">
           Recruit a party, gear them up, and send them into the dungeon. Once they leave town,
