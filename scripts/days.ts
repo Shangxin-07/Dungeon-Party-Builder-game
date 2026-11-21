@@ -12,6 +12,8 @@
  *   npm run days -- --policy 2 --porters 2          # keep two porters (trained when the party is short)
  *   npm run days -- --policy 2 --build --parties    # two fixed parties, sending whichever is fresher
  *   npm run days -- --policy 2 --build --multiclass # each hero picks up a second class (and any combo)
+ *   npm run days -- --camp --policy 1 --build       # start at the mining camp (the opening)
+ *   npm run days -- --camp --unlucky --palisade-first # no timber ever drops: trade ore for it
  *
  * The bot restocks used supplies, keeps one hero on the bench and sends the
  * freshest heroes (unless --static), and rests until the party is at 90% HP
@@ -63,6 +65,7 @@ import {
   underConstruction,
   upgrade,
   assignPost,
+  trade,
   buy,
   equip,
   wageBill,
@@ -82,7 +85,20 @@ if (errors.length) {
   process.exit(1);
 }
 
-const ix = indexLibrary(library);
+// --unlucky: the camp's posts and raid spoils never turn up timber, only ore,
+// so the camp can only be held by trading ore for timber with the miners.
+const unlucky = process.argv.includes("--unlucky");
+const ix = indexLibrary(
+  unlucky
+    ? {
+        ...library,
+        lootTables: library.lootTables.map((l) => ({
+          ...l,
+          entries: l.entries.map((e) => (e.item === "timber" ? { ...e, item: "iron-ore" } : e)),
+        })),
+      }
+    : library,
+);
 const days = Number(arg("days") ?? 40);
 const policy = arg("policy") ?? "1";
 const build = flag("build");
@@ -166,8 +182,14 @@ function properKit(t: TownState): TownState {
 
 function step(t: TownState): TownState {
   t = properKit(t);
-  // The opening: build what holds the camp, as soon as it can be paid for.
-  for (const id of Object.keys(library.opening.unlock)) {
+  // The opening: swap ore for timber when the store is short of it, then
+  // build what holds the camp as soon as it can be paid for (--palisade-first
+  // builds the walls before the Guild Hall).
+  while (t.camp && (t.materials.timber ?? 0) < 10 && (t.materials["iron-ore"] ?? 0) >= 2)
+    t = trade(ix, t, 0);
+  const unlockOrder = Object.keys(library.opening.unlock);
+  if (flag("palisade-first")) unlockOrder.reverse();
+  for (const id of unlockOrder) {
     if (!t.camp) break;
     const lvl = nextLevel(ix, t, id);
     if (

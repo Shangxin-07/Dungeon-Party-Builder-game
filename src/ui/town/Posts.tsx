@@ -11,7 +11,9 @@ import {
   defence,
   fitForPost,
   materialWords,
+  materialsShort,
   newTown,
+  trade,
   openPosts,
   postOf,
   underConstruction,
@@ -20,6 +22,12 @@ import {
 } from "../../sim/town";
 import { ix } from "../game";
 import type { Act } from "./shared";
+
+/** "80 gold and 4 timber", "6 timber", "60 gold". */
+export const costWords = (gold: number, materials?: Readonly<Record<string, number>>) =>
+  [...(gold ? [`${gold} gold`] : []), ...(materials ? [materialWords(ix, materials)] : [])].join(
+    " and ",
+  ) || "nothing";
 
 /** While the guild holds the mining camp: what happened, and what's left to build. */
 export function CampPanel({ town, act }: { town: TownState; act: Act }) {
@@ -31,7 +39,8 @@ export function CampPanel({ town, act }: { town: TownState; act: Act }) {
       <p>
         The miners dug too deep. Something is climbing out of the pit every night, and there are no
         walls, no Guild Hall, and nobody trained to go down. Put your people on the posts round the
-        pit, gather what you can, and build.
+        pit, gather what you can, and build. Everyone works for their keep here: wages start once
+        the camp is held.
       </p>
       <p>
         Nobody goes down until the camp is held. Still to build:{" "}
@@ -47,12 +56,36 @@ export function CampPanel({ town, act }: { town: TownState; act: Act }) {
                 ? "(built)"
                 : work
                   ? `(builders at work, ${work.daysLeft} ${work.daysLeft === 1 ? "day" : "days"} left)`
-                  : `(${lvl.cost} gold${lvl.materials ? ` and ${materialWords(ix, lvl.materials)}` : ""})`}
+                  : `(${costWords(lvl.cost, lvl.materials)})`}
               {i < all.length - 1 ? ", " : "."}
             </span>
           );
         })}
       </p>
+      {ix.lib.opening.trades.length ? (
+        <p className="small">
+          The miners will swap:{" "}
+          {ix.lib.opening.trades.map((d, i) => (
+            <button
+              key={i}
+              type="button"
+              className="btn"
+              disabled={!!materialsShort(ix, town, d.give)}
+              title={
+                materialsShort(ix, town, d.give)
+                  ? `Short of ${materialsShort(ix, town, d.give)}.`
+                  : undefined
+              }
+              onClick={() => act((t) => trade(ix, t, i))}
+            >
+              {materialWords(ix, d.give)} for {materialWords(ix, d.get)}
+            </button>
+          ))}{" "}
+          <span className="muted">
+            Store: {materialWords(ix, town.materials) || "nothing yet"}.
+          </span>
+        </p>
+      ) : null}
       {needs.length ? (
         <p className="small muted">
           Build them in the Buildings panel. When the camp is held, the guild's wagons bring proper

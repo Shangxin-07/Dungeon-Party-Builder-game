@@ -343,6 +343,10 @@ export function validateLibrary(lib: Library): string[] {
         err(`opening: "${id}" has no level ${level}`);
     }
     if (op.campRoster < 1) err("opening: campRoster must be 1 or more");
+    op.trades.forEach((d, i) => {
+      materialCost(`opening trade ${i + 1} give`, d.give);
+      materialCost(`opening trade ${i + 1} get`, d.get);
+    });
   }
 
   ids("building", lib.buildings);

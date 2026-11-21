@@ -258,6 +258,9 @@ export function sitesNight(ix: Index, t: TownState): void {
  * can't be paid takes it badly (the "unpaid" morale fact).
  */
 export function payWages(ix: Index, t: TownState): void {
+  // At the mining camp (DESIGN.md §8) everyone works for their keep: pay
+  // starts when the camp is held and the guild proper opens its books.
+  if (t.camp) return;
   const unpaid: Hero[] = [];
   for (const h of t.roster) {
     const w = wage(ix, h);

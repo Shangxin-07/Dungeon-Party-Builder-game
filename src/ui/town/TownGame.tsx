@@ -276,9 +276,13 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
       <span>
         <strong>{town.gold}</strong> gold
       </span>
-      <span title="What the roster is paid each day">
-        Wages <strong>{wageBill(ix, town)}</strong>/day
-      </span>
+      {town.camp ? (
+        <span title="Wages start once the camp is held">No wages at the camp</span>
+      ) : (
+        <span title="What the roster is paid each day">
+          Wages <strong>{wageBill(ix, town)}</strong>/day
+        </span>
+      )}
       <span>
         Roster <strong>{town.roster.length}</strong>/{rosterSize(ix, town)}
       </span>

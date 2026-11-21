@@ -16,6 +16,7 @@ import {
 } from "../../sim/town";
 import { ix } from "../game";
 import type { Act } from "./shared";
+import { costWords } from "./Posts";
 
 export function Buildings({ town, act }: { town: TownState; act: Act }) {
   return (
@@ -81,8 +82,7 @@ export function Buildings({ town, act }: { town: TownState; act: Act }) {
                     title={short ? `Short of ${short}.` : undefined}
                     onClick={() => act((t) => upgrade(ix, t, b.id))}
                   >
-                    {level ? "Upgrade" : "Build"} for {next.cost} gold
-                    {next.materials ? ` and ${materialWords(ix, next.materials)}` : ""}
+                    {level ? "Upgrade" : "Build"} for {costWords(next.cost, next.materials)}
                     {next.days ? `, ${next.days} ${next.days === 1 ? "day" : "days"}` : ""}
                   </button>
                 </>
