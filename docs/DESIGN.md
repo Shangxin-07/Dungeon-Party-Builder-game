@@ -310,7 +310,7 @@ Optional twist that ties into morale: a hero may *want* a particular perk ("Bram
 
 > Added 2026-11-20. Class names below are examples only, not commitments. Numbers are starting points to tune.
 >
-> **Built in M6.09 (2026-11-21).** What's in the game now:
+> **Built in M6.10 (2026-11-21).** What's in the game now:
 > - Hero level goes to **50**, with +1 max HP per hero level. Each level-up first asks which class gets the level (skipped when only one is open), and that class's stat gains come in then. Old saves put every past level into the hero's one class.
 > - **Base classes** open at a stat minimum: Fighter STR 12, Scout DEX 12, Mage INT 12, Cleric WIL 12 (the hero's own stats, before gear). Free stat points can open a new class.
 > - **Depth**: each class has `perLevel` bonuses for every class level past the first (Fighter +0.4 attack and +1 HP, Mage +0.4 spell power and +1 mana, Scout accuracy/evasion/scouting, Cleric spell power/resist/medicine), and **milestone perks** at class levels 5 and 10 (pick 1 of 2), 20, 30, 40 and 50 (one each, the capstone last). Milestone perks are never offered at random. Class abilities key on class level.
