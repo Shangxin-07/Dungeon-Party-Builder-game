@@ -38,7 +38,7 @@ import { resolveRaid, type RaidReport } from "./raid";
 import { createRng, type Rng } from "./rng";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 8;
+export const TOWN_VERSION = 9;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 const PIT_HISTORY = 60;
@@ -205,6 +205,17 @@ export interface TownState {
   secrets: { found: number; missed: number; gold: number };
   /** Porters going down with the next party (hero ids, M6). They don't take party slots. */
   porters: string[];
+  /** Parties kept on file (M6), so the player can swap a rested one in with one click. */
+  parties: SavedParty[];
+}
+
+/** A party on file: who goes, who carries, and their orders. Gear stays on the heroes. */
+export interface SavedParty {
+  name: string;
+  heroes: string[];
+  porters: string[];
+  /** Orders for this party, without any rescue (that belongs to the moment). */
+  orders: StandingOrders;
 }
 
 /** What the guild's gold went on, or came from. */
@@ -244,6 +255,8 @@ export interface Construction {
   daysLeft: number;
   /** Day the work started. */
   started: number;
+  /** Part of a day's work done by heroes lending a hand, not yet a whole day. */
+  helped?: number;
 }
 
 /** Why an action can't happen right now, in words for the player. */
@@ -587,6 +600,7 @@ export function newTown(ix: Index, names: readonly string[], seed: number): Town
     freeHires: rules.startingRecruits,
     secrets: { found: 0, missed: 0, gold: 0 },
     porters: [],
+    parties: [],
   };
   // M6: the first heroes turn up untrained. The player picks their classes
   // and kits them out from the store room (or calls autoStart).
@@ -941,6 +955,79 @@ export function setOrders(_ix: Index, town: TownState, orders: StandingOrders): 
   return { ...town, orders };
 }
 
+/** The saved party in this slot, if there's one on file. */
+export const savedParty = (town: TownState, slot: number): SavedParty | undefined =>
+  (town.parties ?? [])[slot];
+
+/** Default name for a party slot: Party A, Party B, ... */
+export const partyLetter = (slot: number) => `Party ${String.fromCharCode(65 + slot)}`;
+
+/** Keep the current party, porters and orders on file in a slot. */
+export function saveParty(ix: Index, town: TownState, slot: number, name?: string): TownState {
+  if (slot < 0 || slot >= ix.lib.town.savedParties)
+    throw new TownError(`The guild keeps ${ix.lib.town.savedParties} parties on file.`);
+  if (!town.party.length) throw new TownError("Pick some heroes first.");
+  const t = edit(town);
+  t.parties ??= [];
+  const { rescue: _, ...orders } = t.orders;
+  const old = t.parties[slot];
+  while (t.parties.length < slot) t.parties.push(emptyParty(t.parties.length));
+  t.parties[slot] = {
+    name: name?.trim() || old?.name || partyLetter(slot),
+    heroes: [...t.party],
+    porters: [...(t.porters ?? [])],
+    orders,
+  };
+  return t;
+}
+
+const emptyParty = (slot: number): SavedParty => ({
+  name: partyLetter(slot),
+  heroes: [],
+  porters: [],
+  orders: DEFAULT_ORDERS,
+});
+
+/** Rename a party on file. */
+export function renameParty(_ix: Index, town: TownState, slot: number, name: string): TownState {
+  if (!savedParty(town, slot)) throw new TownError("Nothing on file there yet.");
+  const t = edit(town);
+  t.parties[slot]!.name = name.trim() || partyLetter(slot);
+  return t;
+}
+
+/** Who from a party on file is still with the guild (the dead, lost and departed drop out). */
+export function partyOnFile(town: TownState, slot: number): { heroes: Hero[]; porters: Hero[] } {
+  const p = savedParty(town, slot);
+  const get = (ids: readonly string[]) =>
+    ids.map((id) => findHero(town, id)).filter((h): h is Hero => !!h);
+  return { heroes: get(p?.heroes ?? []), porters: get(p?.porters ?? []).filter((h) => !!h.porter) };
+}
+
+/**
+ * Make a party on file the next party: its heroes, porters and orders. Anyone
+ * no longer with the guild is left out. A rescue run already planned stays planned.
+ */
+export function pickParty(ix: Index, town: TownState, slot: number): TownState {
+  const p = savedParty(town, slot);
+  if (!p) throw new TownError("Nothing on file there yet.");
+  const { heroes, porters } = partyOnFile(town, slot);
+  if (!heroes.length) throw new TownError(`Nobody from ${p.name} is still with the guild.`);
+  const t = edit(town);
+  t.party = heroes
+    .filter((h) => !h.porter)
+    .slice(0, partySlots(ix, t))
+    .map((h) => h.id);
+  t.porters = porters.slice(0, ix.lib.town.porters.slots).map((h) => h.id);
+  const rescue = t.orders.rescue;
+  t.orders = { ...p.orders, ...(rescue ? { rescue } : {}) };
+  if (rescue) {
+    const site = t.sites.find((s) => s.id === rescue);
+    if (site) t.orders.targetFloor = Math.max(t.orders.targetFloor, site.floor);
+  }
+  return t;
+}
+
 /** Make the next trip a rescue run to a lost party's site (DESIGN.md §10). */
 export function planRescue(_ix: Index, town: TownState, siteId: string): TownState {
   const site = town.sites.find((s) => s.id === siteId);
@@ -1015,10 +1102,42 @@ export function upgrade(ix: Index, town: TownState, buildingId: string): TownSta
   return t;
 }
 
-/** A day's building work. Finished jobs take effect straight away. */
-function buildersWork(t: TownState): void {
+/**
+ * Heroes resting in town who can lend the builders a hand (not away, not
+ * injured, not knocked out), and how many days of work they add each day
+ * between them (content/town.ts `helpers`).
+ */
+export function builderHands(
+  ix: Index,
+  town: TownState,
+  away: ReadonlySet<string> = new Set(),
+): { heroes: Hero[]; work: number } {
+  const rules = ix.lib.town.helpers;
+  const heroes = town.roster.filter(
+    (h) => !away.has(h.id) && h.condition === "ok" && h.hp > 0 && !h.injuries?.length,
+  );
+  const raw = heroes.reduce(
+    (s, h) => s + rules.perHero * Math.max(0, 1 + (h.stats.STR - 10) * rules.perStr),
+    0,
+  );
+  return { heroes, work: Math.min(rules.maxPerDay, raw) };
+}
+
+/**
+ * A day's building work: a day off every job, plus whatever the heroes at
+ * home add, oldest job first. Finished jobs take effect straight away.
+ */
+function buildersWork(ix: Index, t: TownState, away: ReadonlySet<string>): void {
+  let extra = t.construction.length ? builderHands(ix, t, away).work : 0;
   for (const c of t.construction) {
     c.daysLeft -= 1;
+    if (extra > 0 && c.daysLeft > 0) {
+      const banked = (c.helped ?? 0) + extra;
+      const whole = Math.min(c.daysLeft, Math.floor(banked + 1e-9));
+      c.daysLeft -= whole;
+      c.helped = c.daysLeft > 0 ? banked - whole : 0;
+      extra = 0;
+    }
     if (c.daysLeft <= 0) t.buildings[c.building] = c.level;
   }
   t.construction = t.construction.filter((c) => c.daysLeft > 0);
@@ -1376,7 +1495,7 @@ function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): void {
   payWages(ix, t);
   raiseTalk(ix, t);
   t.day += 1;
-  buildersWork(t);
+  buildersWork(ix, t, away);
   for (const h of t.roster) {
     if (away.has(h.id)) continue;
     restHero(ix, h, 1);

@@ -112,6 +112,8 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
     secrets: { found: 0, missed: 0, gold: 0 },
   }),
   7: (_ix, old) => ({ ...old, version: 8, porters: [] }),
+  // M6: parties on file.
+  8: (_ix, old) => ({ ...old, version: 9, parties: [] }),
 };
 
 /**

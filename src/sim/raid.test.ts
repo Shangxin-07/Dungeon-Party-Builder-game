@@ -5,6 +5,7 @@ import { indexLibrary } from "./library";
 import { exportSave, importSave, migrateTown, summarise } from "./save";
 import {
   autoStart,
+  builderHands,
   defence,
   forecast,
   launch,
@@ -163,7 +164,8 @@ describe("new buildings", () => {
 
 describe("building work", () => {
   it("takes the level's days, and the old level keeps working meanwhile", () => {
-    let t = { ...fresh(), gold: 1000 };
+    // Nobody at home to lend a hand: just the builders.
+    let t: TownState = { ...fresh(), gold: 1000, roster: [], party: [] };
     const days = library.buildings.find((b) => b.id === "guild-hall")!.levels[1]!.days;
     expect(days).toBeGreaterThan(0);
     t = upgrade(ix, t, "guild-hall");
@@ -187,6 +189,37 @@ describe("building work", () => {
     const days = t.lastTrip!.result.days;
     expect(t.buildings.gate).toBe(1); // 1 day of work
     expect(t.buildings.palisade).toBe(days >= 2 ? 1 : 0);
+  });
+
+  it("goes faster with heroes resting in town, up to the cap", () => {
+    const days = library.buildings.find((b) => b.id === "guild-hall")!.levels[1]!.days;
+    const base = { ...fresh(), gold: 1000 };
+    const timeTo = (t: TownState) => {
+      t = upgrade(ix, t, "guild-hall");
+      let n = 0;
+      while (t.buildings["guild-hall"] === 1) {
+        t = rest(ix, t, heroNames);
+        n++;
+      }
+      return n;
+    };
+    const hands = builderHands(ix, base);
+    expect(hands.heroes).toHaveLength(base.roster.length);
+    expect(hands.work).toBeGreaterThan(0);
+    expect(hands.work).toBeLessThanOrEqual(library.town.helpers.maxPerDay);
+    expect(timeTo({ ...base, roster: [], party: [] })).toBe(days);
+    const helped = timeTo(base);
+    expect(helped).toBeLessThan(days);
+    expect(helped).toBeGreaterThanOrEqual(Math.ceil(days / (1 + library.town.helpers.maxPerDay)));
+    // Injured heroes rest instead.
+    const laidUp = {
+      ...base,
+      roster: base.roster.map((h) => ({
+        ...h,
+        injuries: [{ id: library.injuries[0]!.id, days: 9 }],
+      })),
+    };
+    expect(builderHands(ix, laidUp).heroes).toEqual([]);
   });
 
   it("doesn't defend the night it was paid for", () => {

@@ -21,6 +21,7 @@ import {
 import {
   answerRaise,
   autoStart,
+  builderHands,
   buy,
   buyPrice,
   cantLaunch,
@@ -39,7 +40,12 @@ import {
   newTown,
   nextLevel,
   packItem,
+  partyOnFile,
   partySlots,
+  pickParty,
+  renameParty,
+  saveParty,
+  savedParty,
   cancelRescue,
   repair,
   repairCost,
@@ -225,9 +231,9 @@ export function TownGame() {
       <PartyPanel
         town={town}
         act={act}
-        onLaunch={() => {
+        onLaunch={(prep) => {
           try {
-            setTown(launch(ix, town, heroNames));
+            setTown(launch(ix, prep ? prep(town) : town, heroNames));
             setError(undefined);
             setWatching("trip");
             window.scrollTo({ top: 0 });
@@ -574,7 +580,16 @@ function LastTrip({ town, onWatch }: { town: TownState; onWatch: () => void }) {
 // Party, formation and orders
 // ---------------------------------------------------------------------------
 
-function PartyPanel({ town, act, onLaunch }: { town: TownState; act: Act; onLaunch: () => void }) {
+function PartyPanel({
+  town,
+  act,
+  onLaunch,
+}: {
+  town: TownState;
+  act: Act;
+  /** Send the party, after `prep` (e.g. picking a party on file) if given. */
+  onLaunch: (prep?: (t: TownState) => TownState) => void;
+}) {
   const party = town.party.map((id) => town.roster.find((h) => h.id === id)!).filter(Boolean);
   const slots = partySlots(ix, town);
   const why = cantLaunch(ix, town);
@@ -605,6 +620,7 @@ function PartyPanel({ town, act, onLaunch }: { town: TownState; act: Act; onLaun
           </button>
         </p>
       ) : null}
+      <PartiesOnFile town={town} act={act} onLaunch={onLaunch} />
       <div className="formation">
         {(["front", "back"] as const).map((r) => (
           <div key={r} className="formation-row">
@@ -728,11 +744,149 @@ function PartyPanel({ town, act, onLaunch }: { town: TownState; act: Act; onLaun
           ))}
         </ul>
       ) : null}
-      <button type="button" className="btn btn-main" disabled={!!why} onClick={onLaunch}>
+      <button type="button" className="btn btn-main" disabled={!!why} onClick={() => onLaunch()}>
         Send them down
       </button>
       {why ? <span className="muted small"> {why}</span> : null}
     </section>
+  );
+}
+
+/** Same heroes, any order. */
+const sameIds = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && a.every((id) => b.includes(id));
+
+/**
+ * Parties on file (M6): keep two parties and alternate them, so one rests
+ * while the other is down there. Pick one to make it the party, or pick and
+ * send it in one go.
+ */
+function PartiesOnFile({
+  town,
+  act,
+  onLaunch,
+}: {
+  town: TownState;
+  act: Act;
+  onLaunch: (prep?: (t: TownState) => TownState) => void;
+}) {
+  const slots = Array.from({ length: ix.lib.town.savedParties }, (_, i) => i);
+  return (
+    <div className="parties-on-file">
+      <h3>Parties on file</h3>
+      <ul className="cards">
+        {slots.map((slot) => {
+          const p = savedParty(town, slot);
+          const { heroes, porters } = partyOnFile(town, slot);
+          let why: string | undefined;
+          let tired: string[] = [];
+          if (p && heroes.length) {
+            try {
+              const picked = pickParty(ix, town, slot);
+              why = cantLaunch(ix, picked);
+              tired = launchWarnings(ix, picked).filter((w) => /fatigue|% HP/.test(w));
+            } catch (e) {
+              why = (e as Error).message;
+            }
+          }
+          const current =
+            !!p &&
+            heroes.length > 0 &&
+            sameIds(
+              town.party,
+              heroes.map((h) => h.id),
+            );
+          return (
+            <li key={slot} className={`card party-card${current ? " in-party" : ""}`}>
+              {p ? (
+                <>
+                  <h4>
+                    <input
+                      key={p.name}
+                      className="party-name"
+                      aria-label={`Name of party ${slot + 1}`}
+                      defaultValue={p.name}
+                      maxLength={24}
+                      onBlur={(e) => {
+                        if (e.target.value.trim() !== p.name)
+                          act((t) => renameParty(ix, t, slot, e.target.value));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                      }}
+                    />
+                    {current ? <span className="muted small"> (picked)</span> : null}
+                  </h4>
+                  <p className="small">
+                    {heroes.length
+                      ? heroes
+                          .map((h) => `${h.name} (${ix.cls(h.classId).name} ${h.level})`)
+                          .join(", ")
+                      : "Nobody from it is left in the guild."}
+                    {porters.length
+                      ? `, carried for by ${porters.map((h) => h.name).join(", ")}`
+                      : ""}
+                  </p>
+                  <p className="small muted">
+                    Floor {p.orders.targetFloor}, {describeRetreat(p.orders.retreat)}
+                    {p.orders.clearPercent ? `, thinning it out by ${p.orders.clearPercent}%` : ""}.
+                  </p>
+                  {why ? (
+                    <p className="small warn">{why}</p>
+                  ) : tired.length ? (
+                    <p className="small warn">{tired.join(" ")}</p>
+                  ) : heroes.length ? (
+                    <p className="small good">Rested and ready.</p>
+                  ) : null}
+                  <div className="row-buttons">
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={!heroes.length || current}
+                      onClick={() => act((t) => pickParty(ix, t, slot))}
+                    >
+                      Pick
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-main"
+                      disabled={!!why || !heroes.length}
+                      onClick={() => onLaunch((t) => pickParty(ix, t, slot))}
+                    >
+                      Send {p.name}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={!town.party.length}
+                      title="Keep the party below, its porters and orders, in this slot"
+                      onClick={() => act((t) => saveParty(ix, t, slot))}
+                    >
+                      {current ? "Save changes" : "Replace with current"}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h4>{`Party ${String.fromCharCode(65 + slot)}`}</h4>
+                  <p className="small muted">
+                    Empty. Pick heroes and orders below, then keep them here.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={!town.party.length}
+                    onClick={() => act((t) => saveParty(ix, t, slot))}
+                  >
+                    Keep the current party here
+                  </button>
+                </>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
@@ -1226,6 +1380,7 @@ function Buildings({ town, act }: { town: TownState; act: Act }) {
   return (
     <section aria-labelledby="buildings-heading" className="panel">
       <h2 id="buildings-heading">Buildings</h2>
+      <Helpers town={town} />
       <ul className="cards">
         {library.buildings.map((b) => {
           const level = town.buildings[b.id] ?? 0;
@@ -1291,6 +1446,41 @@ function Buildings({ town, act }: { town: TownState; act: Act }) {
   );
 }
 
+/** Heroes resting in town lend the builders a hand. */
+function Helpers({ town }: { town: TownState }) {
+  const hands = builderHands(ix, town);
+  const rules = ix.lib.town.helpers;
+  if (!hands.heroes.length) return null;
+  const pct = Math.round(hands.work * 100);
+  const names = hands.heroes.map((h) => h.name);
+  return (
+    <p className="small muted">
+      Heroes resting in town lend the builders a hand (stronger ones more), up to{" "}
+      {Math.round(rules.maxPerDay * 100)}% faster, on the oldest job first.{" "}
+      {town.construction.length
+        ? `Right now ${names.join(", ")} ${names.length === 1 ? "adds" : "add"} ${pct}% to the builders' pace while they're home.`
+        : `${names.join(", ")} would add ${pct}% to the builders' pace.`}
+    </p>
+  );
+}
+
+/** Days until a job is done, counting the help from heroes at home (oldest job only). */
+function daysToFinish(town: TownState, work: Construction): number {
+  const help = town.construction[0] === work ? builderHands(ix, town).work : 0;
+  let left = work.daysLeft;
+  let banked = work.helped ?? 0;
+  let n = 0;
+  while (left > 0) {
+    n++;
+    left -= 1;
+    banked += help;
+    const whole = Math.min(left, Math.floor(banked + 1e-9));
+    left -= whole;
+    banked -= whole;
+  }
+  return n;
+}
+
 /** Builders at work: progress and when it'll be done. */
 function Works({
   building,
@@ -1304,11 +1494,13 @@ function Works({
   town: TownState;
 }) {
   const done = total - work.daysLeft;
+  const eta = daysToFinish(town, work);
   return (
     <div className="works">
       <p className="small">
         Builders at work on level {work.level}: {work.daysLeft}{" "}
-        {work.daysLeft === 1 ? "day" : "days"} left, ready on day {town.day + work.daysLeft}.
+        {work.daysLeft === 1 ? "day" : "days"} of work left, ready on day {town.day + eta}
+        {eta < work.daysLeft ? " with the heroes helping" : ""}.
         {work.level > 1
           ? ` The ${building} keeps working at level ${work.level - 1} until then.`
           : ""}
