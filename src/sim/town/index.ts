@@ -60,7 +60,7 @@ export {
   grumbles,
   cantLaunch,
 } from "./read";
-export { newTown } from "./start";
+export { newTown, tidyFreeHires } from "./start";
 export {
   hirePrice,
   hire,
@@ -69,6 +69,7 @@ export {
   trainPorter,
   autoStart,
   dismiss,
+  porterPrice,
   chooseLevelClass,
   chooseLevelUp,
 } from "./roster";

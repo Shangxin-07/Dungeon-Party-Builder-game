@@ -12,7 +12,7 @@ import { rollAlignment } from "./alignment";
 import { newDungeon } from "./dungeon";
 import { rollPersonality, type Hero } from "./hero";
 import type { Index } from "./library";
-import { TOWN_VERSION, type TownState } from "./town";
+import { TOWN_VERSION, tidyFreeHires, type TownState } from "./town";
 
 /** What goes in an exported save file. */
 export interface SaveFile {
@@ -197,7 +197,12 @@ export function migrateTown(ix: Index, raw: unknown): TownState | undefined {
     if (!step) return undefined;
     town = step(ix, structuredClone(town));
   }
-  return town.version === TOWN_VERSION ? (town as unknown as TownState) : undefined;
+  if (town.version !== TOWN_VERSION) return undefined;
+  const t = town as unknown as TownState;
+  // Not a change of shape, so no new version: just un-stick saves where a
+  // starting recruit was signed as a porter (see tidyFreeHires).
+  tidyFreeHires(t);
+  return t;
 }
 
 export function exportSave(town: TownState, now: Date): string {
