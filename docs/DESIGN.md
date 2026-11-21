@@ -389,6 +389,13 @@ export default defineClass({
 ### Later: what happens to the fallen
 
 > Added 2026-11-20. **Not in the first playable version** (M3 shows dead heroes on a memorial). This builds on rescue runs (M5) and needs the Temple and Graveyard buildings, so it lands in M6+.
+>
+> **Built in M6.12 (2026-11-21).** What's in the game now (numbers in `content/fallen.ts`, the Temple and Graveyard building files, and `content/transforms/risen.ts`):
+> - Every dead hero leaves a **body**. A party that comes home carries its dead with it; after a wipe the bodies lie at the site with their gear. A rescue run (now also offered for sites with only bodies) carries every body it finds home. Raid dead are carried indoors.
+> - **Temple** (220 gold): resurrect for 100 + 20 × level gold, losing max(2 levels, 20%) off the top; level 2 (450 gold) makes it 80 + 15 × level and max(1, 10%). The hero comes back at 30% HP with no gear, no injuries, and a −10 morale shock. Each level a hero gains is now recorded (class, stat gains, perk, free stat), so lost levels come back exactly as they were, in order, as the XP is re-earned. Levels from older saves come off the main class with its usual gains, and keep their perks.
+> - **Graveyard** (60 gold): bury for 5 gold. Everyone in town +2 morale, Comrades heroes +4 more. Bodies wait in town until you decide.
+> - A body left in the dungeon **rises after 7 days** as "Bram, Risen": their class, AI, perks and whatever of their own gear still lies at the site, plus the risen transform (+50% HP, undead tag and weaknesses, a little stronger and slower). They haunt that floor and climb one floor every 10 days. A fight on their floor has a 35% chance of them joining it (once per trip); the best scout may recognise them first. Heroes who knew them lose 6 morale (Good heroes 4 more), and the whole guild loses 3 when one rises (Good 4 more). Put down, they drop their gear, and their body comes home: it can only be buried.
+> - Not yet: rare materials for resurrection (there's no materials system yet), risen joining raids, and a body in town without a Graveyard costing anything.
 
 A dead hero leaves a **body**, and the body matters. Recovery runs (above) can bring bodies home as well as survivors and gear. Once a body is in town, you choose:
 

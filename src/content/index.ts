@@ -22,8 +22,13 @@ import type {
   SecretDef,
   SkillDef,
   StatusDef,
+  TransformDef,
 } from "./types";
 import fighterClass from "./classes/fighter";
+import templeBuilding from "./buildings/temple";
+import graveyardBuilding from "./buildings/graveyard";
+import fallenRules from "./fallen";
+import risenTransform from "./transforms/risen";
 import scoutClass from "./classes/scout";
 import mageClass from "./classes/mage";
 import clericClass from "./classes/cleric";
@@ -352,7 +357,11 @@ export const buildings: readonly BuildingDef[] = [
   libraryBuilding,
   trainingYardBuilding,
   vaultBuilding,
+  templeBuilding,
+  graveyardBuilding,
 ];
+
+export const transforms: readonly TransformDef[] = [risenTransform];
 
 export const injuries: readonly InjuryDef[] = [
   brokenArmInjury,
@@ -392,6 +401,8 @@ export const library: Library = {
   injuries,
   secrets,
   searching: searchRules,
+  fallen: fallenRules,
+  transforms,
 };
 
 export { heroNames } from "./names";

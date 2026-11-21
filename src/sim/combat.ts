@@ -18,6 +18,7 @@ import type {
 } from "../content/types";
 import { getAi, type Action, type BattleView } from "./ai";
 import { knownAbilityIds } from "./abilities";
+import { risenAi, risenSheet } from "./fallen";
 import { heroSheet, type Hero } from "./hero";
 import type { Index } from "./library";
 import { createRng, type Rng } from "./rng";
@@ -33,6 +34,8 @@ export interface Fighter {
   row: Row;
   heroId?: string;
   monsterId?: string;
+  /** A risen guild mate fighting for the dungeon (DESIGN.md §10). */
+  risenId?: string;
   stats: StatBlock;
   derived: DerivedBlock;
   passives: PassiveEffect[];
@@ -104,6 +107,8 @@ export interface CombatResult {
   kills: string[];
   /** Every creature as it ended the fight, for result screens. */
   fighters: Fighter[];
+  /** Ids of risen heroes put down in this fight. */
+  risenSlain: string[];
 }
 
 export interface CombatOptions {
@@ -122,6 +127,11 @@ export interface CombatOptions {
   carrying?: { index: number; item: string };
   /** Monster level for this fight (the floor's level). Unlocks monster abilities. Defaults to 1. */
   level?: number;
+  /**
+   * Risen guild mates fighting on the monsters' side (DESIGN.md §10), as
+   * risenHero() makes them. They join the end of the monster list.
+   */
+  risen?: readonly Hero[];
 }
 
 /** The basic weapon attack every fighter has. Not a content file, so "attack" is a reserved id. */
@@ -184,6 +194,7 @@ export function runCombat(
     !!opts.noBleeding,
     opts.carrying,
     opts.level ?? 1,
+    opts.risen ?? [],
   ).run(opts.maxRounds ?? MAX_ROUNDS);
 }
 
@@ -192,6 +203,7 @@ class Battle {
   private log: CombatEvent[] = [];
   private round = 0;
   private kills: string[] = [];
+  private risenSlain: string[] = [];
   private nameCounts = new Map<string, number>();
   private ambushing = new Set<string>();
   private nextUid = 1;
@@ -207,6 +219,7 @@ class Battle {
     private noBleeding = false,
     carrying?: { index: number; item: string },
     private level = 1,
+    risen: readonly Hero[] = [],
   ) {
     for (const hero of party) {
       if (hero.condition === "ok") this.fighters.push(this.fromHero(hero));
@@ -217,6 +230,31 @@ class Battle {
       const item = carrying?.index === i ? carrying.item : undefined;
       this.fighters.push(this.fromMonster(id, "monsters", totals.get(id)! > 1, item));
     });
+    for (const r of risen) this.fighters.push(this.fromRisen(r));
+  }
+
+  /** A risen hero: their own class, perks and gear, with the undead transform on top. */
+  private fromRisen(hero: Hero): Fighter {
+    const f = this.fromHero(hero);
+    const sheet = risenSheet(this.ix, hero);
+    return {
+      ...f,
+      uid: `r${this.nextUid++}`,
+      side: "monsters",
+      heroId: undefined,
+      risenId: hero.id,
+      stats: sheet.stats,
+      derived: sheet.derived,
+      passives: sheet.passives,
+      skills: sheet.skills,
+      tags: sheet.tags,
+      ai: risenAi(this.ix, hero),
+      hp: sheet.derived.maxHp,
+      mana: sheet.derived.mana,
+      state: "up",
+      bleed: 0,
+      pack: [],
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -353,6 +391,7 @@ class Battle {
       party: this.party.map((h) => this.heroAfter(h)),
       kills: this.kills,
       fighters: this.fighters,
+      risenSlain: this.risenSlain,
     };
   }
 
@@ -666,6 +705,7 @@ class Battle {
       } else {
         target.state = "dead";
         if (target.monsterId) this.kills.push(target.monsterId);
+        if (target.risenId) this.risenSlain.push(target.risenId);
         this.emit({
           kind: "killed",
           actor: source?.uid,

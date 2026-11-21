@@ -32,7 +32,15 @@ import {
   type EquipSlot,
   type Hero,
 } from "./hero";
-import { chooseClass, gainXp, spendLevelUp } from "./levels";
+import {
+  makeBody,
+  resurrectTerms,
+  risenName,
+  type Body,
+  type ResurrectTerms,
+  type Risen,
+} from "./fallen";
+import { chooseClass, gainXp, loseLevels, spendLevelUp } from "./levels";
 import type { Index } from "./library";
 import type { HaulItem } from "./loot";
 import { applyMorale, gearTags, isLow, moraleChanges, type Facts } from "./morale";
@@ -40,7 +48,7 @@ import { resolveRaid, type RaidReport } from "./raid";
 import { createRng, type Rng } from "./rng";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 11;
+export const TOWN_VERSION = 12;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 const PIT_HISTORY = 60;
@@ -73,8 +81,8 @@ export interface LostSite {
   /** Day the news reached town. */
   day: number;
   trapped: Trapped[];
-  /** Names of those who died there. */
-  bodies: string[];
+  /** The bodies of those who died there (DESIGN.md §10). Left too long, they rise. */
+  bodies: Body[];
   /** Gear of the dead (kept, not sold) and the haul they were carrying. */
   items: HaulItem[];
 }
@@ -95,6 +103,8 @@ export interface Departure {
 
 /** Someone the guild has lost. */
 export interface Memorial {
+  /** The hero's id (saves from before the fallen don't have it). */
+  heroId?: string;
   name: string;
   classId: string;
   day: number;
@@ -103,6 +113,10 @@ export interface Memorial {
   fate: "dead" | "lost";
   /** "raid" if they died defending the town (floor is then 0). */
   cause?: "raid";
+  /** Day they were buried in the Graveyard. */
+  buried?: number;
+  /** Their body rose in the dungeon (DESIGN.md §10). */
+  risen?: boolean;
   record: HeroRecord;
 }
 
@@ -209,6 +223,10 @@ export interface TownState {
   porters: string[];
   /** Parties kept on file (M6), so the player can swap a rested one in with one click. */
   parties: SavedParty[];
+  /** Bodies brought home, waiting for the Temple or the Graveyard (DESIGN.md §10). */
+  bodies: Body[];
+  /** Guild mates the dungeon kept, risen as the undead. */
+  risen: Risen[];
 }
 
 /** A party on file: who goes, who carries, and their orders. Gear stays on the heroes. */
@@ -229,7 +247,9 @@ export type LedgerKind =
   | "wages"
   | "built"
   | "repairs"
-  | "stolen";
+  | "stolen"
+  | "temple"
+  | "burials";
 
 /** Gold in (positive) or out (negative) of one kind on one day. */
 export interface LedgerLine {
@@ -608,6 +628,8 @@ export function newTown(ix: Index, names: readonly string[], seed: number): Town
     secrets: { found: 0, missed: 0, gold: 0 },
     porters: [],
     parties: [],
+    bodies: [],
+    risen: [],
   };
   // M6: the first heroes turn up untrained. The player picks their classes
   // and kits them out from the store room (or calls autoStart).
@@ -1312,7 +1334,12 @@ function nightfall(ix: Index, t: TownState, away: ReadonlySet<string>): RaidRepo
     if (rec) rec.kills += raid.heroKills[after.id] ?? 0;
     if (after.condition === "dead") {
       died++;
+      // The fallen are carried indoors: their gear goes to the store room,
+      // their body waits for the Temple or the Graveyard.
+      t.stash.push(...gearOf(ix, after).map((g) => g.item));
+      t.bodies.push(newBody(t, after, t.day, 0));
       t.memorial.push({
+        heroId: after.id,
         name: after.name,
         classId: after.classId,
         day: t.day,
@@ -1423,9 +1450,10 @@ function sitesNight(ix: Index, t: TownState): void {
   for (const site of t.sites) {
     for (const x of site.trapped.filter((x) => x.until < t.day)) {
       site.trapped = site.trapped.filter((y) => y !== x);
-      site.bodies.push(x.hero.name);
       site.items.push(...gearOf(ix, x.hero));
+      site.bodies.push(newBody(t, x.hero, t.day, site.floor));
       t.memorial.push({
+        heroId: x.hero.id,
         name: x.hero.name,
         classId: x.hero.classId,
         day: t.day,
@@ -1435,6 +1463,12 @@ function sitesNight(ix: Index, t: TownState): void {
       });
       news(t, `Nobody came for ${x.hero.name}. They died waiting on floor ${site.floor}.`, "bad");
       guildFeels(ix, t, { abandoned: 1 }, new Set());
+    }
+    // The dead who lie too long get up again.
+    for (const b of [...site.bodies]) {
+      if (b.risen || t.day - b.died < ix.lib.fallen.riseDays) continue;
+      site.bodies = site.bodies.filter((x) => x !== b);
+      rise(ix, t, site, b);
     }
     const population = t.dungeon.floors[site.floor - 1]?.population ?? 0;
     if (population <= 0 || !site.items.length) continue;
@@ -1455,8 +1489,127 @@ function sitesNight(ix: Index, t: TownState): void {
     }
     site.items = kept;
   }
-  t.sites = t.sites.filter((s) => s.trapped.length || s.items.length);
+  t.sites = t.sites.filter((s) => s.trapped.length || s.items.length || s.bodies.length);
   if (t.orders.rescue && !rescueSite(t)) t.orders = cancelRescue(ix, t).orders;
+  risenClimb(ix, t);
+}
+
+/** A body taken from where it lies, for the town's lists. */
+function newBody(t: TownState, h: Hero, day: number, floor: number): Body {
+  return makeBody(`b${t.nextThingId++}`, h, day, floor);
+}
+
+/**
+ * A body left in the dungeon rises (DESIGN.md §10): it picks up whatever of
+ * its own gear still lies there and joins the floor's monsters.
+ */
+function rise(ix: Index, t: TownState, site: LostSite, b: Body): void {
+  const equipment: Risen["equipment"] = {};
+  for (const slot of EQUIP_SLOTS) {
+    const id = b.gear[slot];
+    const i = site.items.findIndex((it) => it.keep && it.owner === b.hero.name && it.item === id);
+    if (!id || i < 0) continue;
+    equipment[slot] = id;
+    site.items.splice(i, 1);
+  }
+  const r: Risen = {
+    id: `r${t.nextThingId++}`,
+    body: b,
+    equipment,
+    floor: site.floor,
+    rose: t.day,
+  };
+  t.risen = [...(t.risen ?? []), r];
+  for (const m of t.memorial) if (m.heroId === b.hero.id) m.risen = true;
+  news(
+    t,
+    `${b.hero.name}'s body was never brought home. Something wearing their face walks floor ${site.floor} now: ${risenName(ix, r)}.`,
+    "bad",
+  );
+  guildFeels(ix, t, { comradeRose: 1 }, new Set());
+}
+
+/** Like any monster, the risen push up towards the pit (DESIGN.md §4). */
+function risenClimb(ix: Index, t: TownState): void {
+  for (const r of t.risen ?? []) {
+    const days = t.day - r.rose;
+    if (r.floor <= 1 || days <= 0 || days % ix.lib.fallen.climbDays) continue;
+    r.floor -= 1;
+    news(t, `${risenName(ix, r)} has been seen on floor ${r.floor}, closer to the pit.`, "bad");
+  }
+}
+
+/** What the Temple would ask to bring this body back, or why it can't. */
+export function resurrectQuote(
+  ix: Index,
+  town: TownState,
+  bodyId: string,
+): { terms?: ResurrectTerms; why?: string } {
+  const b = (town.bodies ?? []).find((x) => x.id === bodyId);
+  if (!b) return { why: "That body isn't in town." };
+  if (b.risen) return { why: `${b.hero.name} rose once already. All that's left is to bury them.` };
+  const e = effects(ix, town).find((x) => x.type === "resurrect");
+  if (!e) return { why: "You need a working Temple to bring anyone back." };
+  const terms = resurrectTerms(e, b.hero);
+  if (town.roster.length >= rosterSize(ix, town))
+    return { terms, why: "The guild has no room on the roster." };
+  if (town.gold < terms.gold) return { terms, why: `The priests want ${terms.gold} gold.` };
+  return { terms };
+}
+
+/**
+ * Bring a hero back from the dead at the Temple (DESIGN.md §10). They lose
+ * their most recent levels (each comes back as it was when the XP is earned
+ * again), come back weak and shaken, and rejoin the roster with no gear.
+ */
+export function resurrect(ix: Index, town: TownState, bodyId: string): TownState {
+  const { terms, why } = resurrectQuote(ix, town, bodyId);
+  if (why || !terms) throw new TownError(why ?? "The priests can't help.");
+  const t = edit(town);
+  const b = t.bodies.find((x) => x.id === bodyId)!;
+  book(t, "temple", -terms.gold);
+  const h = structuredClone(b.hero);
+  const lost = loseLevels(ix, h, terms.levels);
+  h.condition = "ok";
+  h.mana = 0;
+  h.injuries = [];
+  h.fatigue = 0;
+  h.raiseAsk = undefined;
+  h.hp = Math.max(1, Math.round((maxHp(ix, h) * ix.lib.fallen.resurrectedHpPercent) / 100));
+  applyMorale(ix, h, { resurrected: 1 }, t.day);
+  t.roster.push(h);
+  t.bodies = t.bodies.filter((x) => x !== b);
+  t.memorial = t.memorial.filter((m) => m.heroId !== h.id);
+  t.records[h.id] ??= newRecord(t.day);
+  news(
+    t,
+    `${h.name} is back from the dead${lost ? `, ${lost} level${lost > 1 ? "s" : ""} poorer` : ""}.`,
+    "good",
+  );
+  guildFeels(ix, t, { rescuedComrades: 1 }, new Set([h.id]));
+  return t;
+}
+
+/** Gold to bury someone, or undefined without a working Graveyard. */
+export function burialCost(ix: Index, town: TownState): number | undefined {
+  const e = effects(ix, town).find((x) => x.type === "burial");
+  return e?.gold;
+}
+
+/** Lay a body to rest in the Graveyard (DESIGN.md §10). The whole guild takes heart. */
+export function bury(ix: Index, town: TownState, bodyId: string): TownState {
+  const cost = burialCost(ix, town);
+  if (cost === undefined) throw new TownError("You need a working Graveyard to bury anyone.");
+  if (town.gold < cost) throw new TownError(`A burial costs ${cost} gold.`);
+  const t = edit(town);
+  const b = (t.bodies ?? []).find((x) => x.id === bodyId);
+  if (!b) throw new TownError("That body isn't in town.");
+  book(t, "burials", -cost);
+  t.bodies = t.bodies.filter((x) => x !== b);
+  for (const m of t.memorial) if (m.heroId === b.hero.id) m.buried = t.day;
+  news(t, `${b.hero.name} was laid to rest in the Graveyard.`, "good");
+  guildFeels(ix, t, { buriedComrade: 1 }, new Set());
+  return t;
 }
 
 /** A hero's gear as items lying where they fell: it goes back to the store room, not the Market. */
@@ -1578,16 +1731,18 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     floor: site.floor,
     room: site.room,
     trapped: site.trapped.filter((x) => x.until >= startDay + site.floor - 1).map((x) => x.hero),
-    bodies: site.bodies,
+    bodies: site.bodies ?? [],
     items: site.items,
   };
   const gear: Record<number, ScavengedGear[]> = {};
   for (const g of t.scavenged) (gear[g.floor] ??= []).push(g);
 
+  const risenBefore = new Map((t.risen ?? []).map((r) => [r.id, r]));
   const result = runExpedition(ix, party, t.orders, seed, t.dungeon.floors, {
     site: visit,
     gear,
     porters,
+    risen: t.risen ?? [],
   });
   const wiped = result.outcome === "wiped";
   const backDay = startDay + result.days;
@@ -1688,6 +1843,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
       }
     }
     t.memorial.push({
+      heroId: after.id,
       name: after.name,
       classId: after.classId,
       day: backDay,
@@ -1696,14 +1852,28 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
       record: rec,
     });
     if (lostSite) {
-      lostSite.bodies.push(after.name);
       lostSite.items.push(...gearOf(ix, after));
+      lostSite.bodies.push(newBody(t, after, backDay, lostSite.floor));
     } else {
-      // The party brings a fallen friend's gear home.
+      // The party brings a fallen friend home, and their gear.
       t.stash.push(...gearOf(ix, after).map((g) => g.item));
+      t.bodies.push(newBody(t, after, backDay, 0));
     }
   }
-  if (lostSite && (lostSite.trapped.length || lostSite.items.length)) t.sites.push(lostSite);
+  // Bodies the party picked up: home with it, or lying where it fell.
+  for (const b of result.bodies) {
+    if (lostSite) lostSite.bodies.push({ ...b, floor: lostSite.floor });
+    else t.bodies.push({ ...b, floor: 0 });
+  }
+  if (!wiped && result.bodies.length)
+    news(t, `The party carried home ${listWords(result.bodies.map((b) => b.hero.name))}.`, "good");
+  for (const id of result.risenSlain) {
+    const r = risenBefore.get(id);
+    if (r) news(t, `${risenName(ix, r)} was put down on floor ${r.floor}.`, "good");
+  }
+  t.risen = (t.risen ?? []).filter((r) => !result.risenSlain.includes(r.id));
+  if (lostSite && (lostSite.trapped.length || lostSite.items.length || lostSite.bodies.length))
+    t.sites.push(lostSite);
 
   // A rescue run: take the freed heroes and the gear off the site.
   if (result.siteVisited) {
@@ -1712,6 +1882,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
       const freed = new Set(result.rescued.map((h) => h.id));
       s.trapped = s.trapped.filter((x) => !freed.has(x.hero.id));
       s.items = result.siteLeft;
+      s.bodies = [];
     }
   }
   for (const h of rescued) {
@@ -1793,6 +1964,12 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   // Alignment (DESIGN.md §7): clashes cost morale for every day down there.
   const tripDays = Math.max(1, result.days);
   const aligned = partyAlignment(ix, party);
+  // Risen guild mates each hero knew (they'd joined by the day the risen died).
+  const knewRisen = (h: Hero) =>
+    result.risenMet.filter((id) => {
+      const r = risenBefore.get(id);
+      return !!r && (town.records[h.id]?.joined ?? Infinity) <= r.body.died;
+    }).length;
   for (const before of party) {
     const h = findHero(t, before.id);
     if (!h) continue;
@@ -1825,6 +2002,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
         Math.abs(ix.alignment(h.alignment).position) >= 1
           ? tripDays
           : 0,
+      foughtRisen: knewRisen(before),
     };
     morale[h.id] = moraleChanges(ix, h, facts, { leaderCha });
     applyMorale(ix, h, facts, backDay, { leaderCha });

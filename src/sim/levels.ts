@@ -8,7 +8,7 @@
  * content/levels.ts; classes and perks are content.
  */
 import { STATS, type ClassDef, type Stat } from "../content/types";
-import type { Hero, LevelUp } from "./hero";
+import type { Hero, LevelUp, LostLevel, PastLevel } from "./hero";
 import type { Index } from "./library";
 import type { Rng } from "./rng";
 /** Total XP needed to reach a level. */
@@ -167,8 +167,13 @@ export function chooseClass(
   hero.classes = { ...hero.classes, [classId]: levelIn(hero, classId) + 1 };
   const growth = ix.cls(classId).growth;
   const stats = { ...hero.stats } as Record<Stat, number>;
-  for (const s of STATS) stats[s] = Math.min(30, stats[s] + (growth[s] ?? 0));
+  const gains: Partial<Record<Stat, number>> = {};
+  for (const s of STATS) {
+    stats[s] = Math.min(30, stats[s] + (growth[s] ?? 0));
+    if (stats[s] !== hero.stats[s]) gains[s] = stats[s] - hero.stats[s];
+  }
   hero.stats = stats;
+  up.gains = gains;
   hero.classId = mainClass(hero);
   rollOffers(ix, hero, up, rng);
 }
@@ -199,6 +204,12 @@ export function gainXp(
   while (hero.level < l.maxLevel && hero.xp >= xpForLevel(ix, hero.level + 1)) {
     hero.level += 1;
     gained += 1;
+    // A level a resurrection took comes back exactly as it was (DESIGN.md §10).
+    if (hero.lost?.[0]?.level === hero.level) {
+      restoreLevel(ix, hero, hero.lost.shift()!);
+      if (!hero.lost.length) delete hero.lost;
+      continue;
+    }
     hero.levelUps.push({
       level: hero.level,
       offers: [],
@@ -244,6 +255,97 @@ export function spendLevelUp(
   const next = hero.levelUps.shift()!;
   if (perk) hero.perks = [...hero.perks, perk];
   if (stat) hero.stats = { ...hero.stats, [stat]: hero.stats[stat] + 1 };
+  hero.past = [
+    ...(hero.past ?? []),
+    {
+      level: next.level,
+      classId: next.classId!,
+      gains: next.gains ?? { ...ix.cls(next.classId!).growth },
+      ...(perk ? { perk } : {}),
+      ...(stat ? { stat } : {}),
+    },
+  ];
   autoClass(ix, hero, rng, built);
   return { wanted: !!perk && perk === next.wants };
+}
+
+// ---------------------------------------------------------------------------
+// Losing levels (DESIGN.md §10): the price of coming back from the dead.
+// ---------------------------------------------------------------------------
+
+/** Add (sign 1) or take away (sign -1) a level in a class and its stat gains. */
+function shiftClassLevel(
+  hero: Hero,
+  classId: string,
+  gains: Partial<Record<Stat, number>>,
+  sign: 1 | -1,
+): void {
+  const stats = { ...hero.stats } as Record<Stat, number>;
+  for (const s of STATS) stats[s] = Math.max(1, stats[s] + sign * (gains[s] ?? 0));
+  hero.stats = stats;
+  const classes = { ...hero.classes, [classId]: levelIn(hero, classId) + sign };
+  if (classes[classId]! <= 0) delete classes[classId];
+  hero.classes = classes;
+}
+
+/** Put a lost level back exactly as it was. */
+function restoreLevel(ix: Index, hero: Hero, back: LostLevel): void {
+  if (back.past) {
+    const p = back.past;
+    shiftClassLevel(hero, p.classId, p.gains, 1);
+    if (p.perk && ix.lib.perks.some((x) => x.id === p.perk)) hero.perks = [...hero.perks, p.perk];
+    if (p.stat) hero.stats = { ...hero.stats, [p.stat]: Math.min(30, hero.stats[p.stat] + 1) };
+    hero.past = [...(hero.past ?? []), p];
+  } else if (back.pending) {
+    const up = back.pending;
+    if (up.classId) shiftClassLevel(hero, up.classId, up.gains ?? ix.cls(up.classId).growth, 1);
+    hero.levelUps.push(up);
+  }
+  hero.classId = mainClass(hero);
+}
+
+/**
+ * Take a hero's most recent levels away, newest first (DESIGN.md §10): class
+ * levels, their stat gains, the perk and the free stat point. Never below
+ * level 1. XP drops to the start of the new level, and each lost level comes
+ * back as it was when that XP is earned again. Levels from saves made before
+ * levels were recorded come off the main class with its usual gains (their
+ * perks stay). Returns the levels taken. Changes the hero.
+ */
+export function loseLevels(ix: Index, hero: Hero, count: number): number {
+  let taken = 0;
+  const lost: LostLevel[] = [];
+  while (taken < count && hero.level > 1) {
+    const level = hero.level;
+    const waiting = hero.levelUps.at(-1);
+    const last = hero.past?.at(-1);
+    if (waiting && waiting.level === level) {
+      hero.levelUps = hero.levelUps.slice(0, -1);
+      if (waiting.classId)
+        shiftClassLevel(hero, waiting.classId, waiting.gains ?? ix.cls(waiting.classId).growth, -1);
+      lost.unshift({ level, pending: waiting });
+    } else if (last && last.level === level) {
+      hero.past = hero.past!.slice(0, -1);
+      shiftClassLevel(hero, last.classId, last.gains, -1);
+      if (last.perk) {
+        const i = hero.perks.lastIndexOf(last.perk);
+        if (i >= 0) hero.perks = hero.perks.filter((_, j) => j !== i);
+      }
+      if (last.stat)
+        hero.stats = { ...hero.stats, [last.stat]: Math.max(1, hero.stats[last.stat] - 1) };
+      lost.unshift({ level, past: last });
+    } else {
+      const classId = mainClass(hero);
+      const past: PastLevel = { level, classId, gains: { ...ix.cls(classId).growth } };
+      shiftClassLevel(hero, classId, past.gains, -1);
+      lost.unshift({ level, past });
+    }
+    hero.level -= 1;
+    taken += 1;
+  }
+  if (!taken) return 0;
+  hero.lost = [...lost, ...(hero.lost ?? [])];
+  hero.xp = xpForLevel(ix, hero.level);
+  hero.classId = mainClass(hero);
+  return taken;
 }

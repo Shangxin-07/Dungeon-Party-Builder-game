@@ -102,7 +102,7 @@ import {
 } from "./Heroes";
 import { RestockPanel } from "./Restock";
 import { ScoutingReport } from "./Report";
-import { Departed, LostPanel, TalkPanel } from "./Lost";
+import { Departed, FallenPanel, LostPanel, TalkPanel } from "./Lost";
 import { Accounts } from "./Accounts";
 
 const freshTown = () => newTown(ix, heroNames, Date.now() % 2 ** 31);
@@ -316,6 +316,7 @@ function TownPlay({ initial }: { initial: Game }) {
       <RestockPanel town={town} act={act} />
       <TalkPanel town={town} />
       <LostPanel town={town} act={act} />
+      <FallenPanel town={town} act={act} />
       <PartyPanel
         town={town}
         act={act}
@@ -728,7 +729,7 @@ function PartyPanel({
           Rescue run: down to floor {site.floor} to find{" "}
           {site.trapped.length
             ? site.trapped.map((x) => x.hero.name).join(" and ")
-            : `what's left of ${site.bodies.join(" and ") || "the lost party"}`}
+            : `what's left of ${site.bodies.map((b) => b.hero.name).join(" and ") || "the lost party"}`}
           .{" "}
           <button type="button" className="link" onClick={() => act((t) => cancelRescue(ix, t))}>
             Make it an ordinary trip
@@ -1654,6 +1655,8 @@ function Memorial({ town }: { town: TownState }) {
             <span className="muted">
               {m.record.trips} {m.record.trips === 1 ? "trip" : "trips"}, {m.record.kills} kills.
               {m.fate === "lost" ? " Lost before rescue runs existed: never found." : ""}
+              {m.buried ? ` Buried on day ${m.buried}.` : ""}
+              {m.risen && !m.buried ? " Their body rose in the dark." : ""}
             </span>
           </li>
         ))}

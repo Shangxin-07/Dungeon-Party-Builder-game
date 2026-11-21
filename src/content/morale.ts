@@ -53,6 +53,11 @@ export default defineMoraleRules({
     { fact: "abandoned", amount: -2, cap: 6, reason: "someone was left to die down there" },
     { fact: "rescuedComrades", amount: 2, cap: 6, reason: "the guild brought its own home" },
     { fact: "wasTrapped", amount: -10, reason: "was left trapped in the dark" },
+    // The fallen (DESIGN.md §10).
+    { fact: "buriedComrade", amount: 2, cap: 6, reason: "a friend was laid to rest" },
+    { fact: "comradeRose", amount: -3, cap: 9, reason: "a friend's body rose in the dark" },
+    { fact: "foughtRisen", amount: -6, cap: 12, reason: "had to fight a risen friend" },
+    { fact: "resurrected", amount: -10, reason: "came back from the dead, shaken" },
     { fact: "wantedPerk", amount: 8, reason: "got the training they wanted" },
     { fact: "levelUp", amount: 2, reason: "levelled up" },
   ],
