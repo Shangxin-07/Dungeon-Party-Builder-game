@@ -562,6 +562,7 @@ class Expedition {
     const result = runCombat(this.ix, this.party, monsters, {
       seed: this.rng.int(0, 2 ** 31 - 1),
       surprise: opts.surprise,
+      level: this.floors?.[this.depth - 1]?.level ?? this.depth,
       carrying: carried && { index: carried.index, item: carried.gear.item },
     });
     const summoned = new Set(result.log.filter((e) => e.kind === "summon").map((e) => e.target));

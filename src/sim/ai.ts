@@ -126,7 +126,22 @@ function technique(
 
 /** Monsters: sometimes use a special ability, otherwise hit someone in reach. */
 registerAi("brute", (view) => {
-  const specials = byTag(view, "damage").filter((a) => a.id !== "attack");
+  const { self, rng } = view;
+  // A leader's war cry, once there's someone to rally.
+  const rally = byTag(view, "rally")[0];
+  if (rally && view.allies.filter((a) => a.state === "up").length >= 2)
+    return { kind: "ability", ability: rally.id, target: self.uid };
+  const summon = byTag(view, "summon")[0];
+  if (summon && rng.chance(0.5)) return { kind: "ability", ability: summon.id, target: self.uid };
+  const specials = view
+    .abilities()
+    .filter(
+      (a) =>
+        a.id !== "attack" &&
+        a.target === "enemy" &&
+        (a.tags.includes("damage") || a.tags.includes("debuff")) &&
+        view.canAfford(a),
+    );
   if (specials.length && view.rng.chance(0.5)) {
     const ability = view.rng.pick(specials);
     const targets = view.targets(ability);

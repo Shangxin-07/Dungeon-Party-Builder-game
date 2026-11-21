@@ -237,10 +237,12 @@ export function FoeCard({ bar }: { bar: Bar }) {
               </div>
             ))}
           </dl>
-          {def?.abilities?.length ? (
+          {s.abilities?.length ? (
             <p className="skills">
-              {def.abilities.map((a) => (
-                <span key={a}>{ix.ability(a).name}</span>
+              {s.abilities.map((a) => (
+                <span key={a} title={ix.ability(a).description}>
+                  {ix.ability(a).name}
+                </span>
               ))}
             </p>
           ) : null}

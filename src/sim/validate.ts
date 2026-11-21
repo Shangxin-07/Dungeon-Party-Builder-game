@@ -144,7 +144,17 @@ export function validateLibrary(lib: Library): string[] {
     stats(w, m.stats, 30);
     if (m.power <= 0) err(`${w}: power must be positive`);
     if (!hasAi(m.ai)) err(`${w}: unknown AI "${m.ai}"`);
-    for (const a of m.abilities ?? []) if (!abilityIds.has(a)) err(`${w}: unknown ability "${a}"`);
+    for (const [a, level] of Object.entries(m.abilities ?? {})) {
+      if (!abilityIds.has(a)) err(`${w}: unknown ability "${a}"`);
+      if (!(level >= 1)) err(`${w}: ability "${a}" needs a level of 1 or more`);
+    }
+    if (m.variant) {
+      const base = lib.monsters.find((x) => x.id === m.variant!.of);
+      if (!base) err(`${w}: variant of unknown monster "${m.variant.of}"`);
+      else if (base.variant) err(`${w}: can't be a variant of a variant`);
+      if (!(m.variant.chance > 0 && m.variant.chance <= 1))
+        err(`${w}: variant chance must be above 0 and at most 1`);
+    }
     passives(w, m.passives);
     for (const t of m.triggers ?? []) actives(w, t.effects);
     if (m.loot && !lootIds.has(m.loot)) err(`${w}: unknown loot table "${m.loot}"`);
@@ -187,6 +197,8 @@ export function validateLibrary(lib: Library): string[] {
       if (!monsterIds.has(g.monster)) err(`${w}: unknown monster "${g.monster}"`);
       else if (lib.monsters.find((m) => m.id === g.monster)?.summonOnly)
         err(`${w}: "${g.monster}" is summon-only`);
+      else if (lib.monsters.find((m) => m.id === g.monster)?.variant)
+        err(`${w}: "${g.monster}" is a variant; it turns up in place of the monster it's based on`);
       if (g.count[0] < 1 || g.count[1] < g.count[0]) err(`${w}: bad count for "${g.monster}"`);
     }
   }

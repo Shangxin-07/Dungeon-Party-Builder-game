@@ -10,6 +10,7 @@ export default defineMonster({
   row: "front",
   tags: ["goblinoid", "humanoid"],
   ai: "brute",
+  abilities: { disarm: 2 },
   loot: "goblin-loot",
   passives: [{ type: "modifyStat", stat: "armor", amount: 1 }],
 });

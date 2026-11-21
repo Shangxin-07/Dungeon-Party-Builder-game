@@ -23,8 +23,11 @@ describe("encounters", () => {
         const monsters = rollEncounter(ix, floor, rng);
         expect(monsters.length).toBeGreaterThan(0);
         expect(monsters.length).toBeLessThanOrEqual(8);
-        for (const m of monsters) expect(allowed).toContain(m);
-        const power = monsters.reduce((s, m) => s + ix.monster(m).power, 0);
+        // A variant (a Spider Matriarch) stands in for its base monster and is
+        // meant to push the fight a little over the usual power.
+        const base = monsters.map((m) => ix.monster(m).variant?.of ?? m);
+        for (const m of base) expect(allowed).toContain(m);
+        const power = base.reduce((s, m) => s + ix.monster(m).power, 0);
         expect(power).toBeLessThanOrEqual(Math.ceil(floorPower(floor) * 1.25));
       }
     }

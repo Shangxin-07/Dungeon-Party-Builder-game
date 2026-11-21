@@ -11,4 +11,5 @@ export default defineMonster({
   row: "front",
   tags: ["beast", "vermin"],
   ai: "brute",
+  abilities: { gnaw: 2 },
 });

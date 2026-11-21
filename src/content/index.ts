@@ -50,6 +50,18 @@ import fireboltAbility from "./abilities/firebolt";
 import flameWaveAbility from "./abilities/flame-wave";
 import mendAbility from "./abilities/mend";
 import venomBiteAbility from "./abilities/venom-bite";
+import gnawAbility from "./abilities/gnaw";
+import acidSpitAbility from "./abilities/acid-spit";
+import webAbility from "./abilities/web";
+import warCryAbility from "./abilities/war-cry";
+import callTheBroodAbility from "./abilities/call-the-brood";
+import bleedingStatus from "./statuses/bleeding";
+import webbedStatus from "./statuses/webbed";
+import emboldenedStatus from "./statuses/emboldened";
+import spiderlingMonster from "./monsters/spiderling";
+import spiderMatriarchMonster from "./monsters/spider-matriarch";
+import goblinBossMonster from "./monsters/goblin-boss";
+import skeletonCaptainMonster from "./monsters/skeleton-captain";
 import powerStrikeAbility from "./abilities/power-strike";
 import secondWindAbility from "./abilities/second-wind";
 import whirlwindAbility from "./abilities/whirlwind";
@@ -196,11 +208,19 @@ export const abilities: readonly AbilityDef[] = [
   disarmAbility,
   backstabAbility,
   shieldBashAbility,
+  gnawAbility,
+  acidSpitAbility,
+  webAbility,
+  warCryAbility,
+  callTheBroodAbility,
 ];
 export const statuses: readonly StatusDef[] = [
   poisonedStatus,
   markedStatus,
   sunderedStatus,
+  bleedingStatus,
+  webbedStatus,
+  emboldenedStatus,
   disarmedStatus,
   dazedStatus,
   chilledStatus,
@@ -213,6 +233,10 @@ export const monsters: readonly MonsterDef[] = [
   littleSlimeMonster,
   skeletonMonster,
   slimeMonster,
+  spiderlingMonster,
+  spiderMatriarchMonster,
+  goblinBossMonster,
+  skeletonCaptainMonster,
 ];
 export const skills: readonly SkillDef[] = [appraisalSkill, medicineSkill, scoutingSkill];
 export const perks: readonly PerkDef[] = [

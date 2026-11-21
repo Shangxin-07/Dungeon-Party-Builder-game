@@ -114,6 +114,8 @@ export interface CombatOptions {
    * it's a weapon). `index` is its place in the monster list.
    */
   carrying?: { index: number; item: string };
+  /** Monster level for this fight (the floor's level). Unlocks monster abilities. Defaults to 1. */
+  level?: number;
 }
 
 /** The basic weapon attack every fighter has. Not a content file, so "attack" is a reserved id. */
@@ -140,6 +142,8 @@ export interface FoeSheet {
   stats?: StatBlock;
   derived?: DerivedBlock;
   weapon?: { name: string; damageType: DamageType; ranged: boolean };
+  /** Ability ids it can use in this fight. */
+  abilities?: string[];
 }
 
 export const foeSheet = (f: Fighter): FoeSheet => ({
@@ -152,6 +156,7 @@ export const foeSheet = (f: Fighter): FoeSheet => ({
   stats: { ...f.stats },
   derived: { ...f.derived },
   weapon: { ...f.weapon },
+  abilities: [...f.abilities],
 });
 
 const BLEED_ROUNDS = 3;
@@ -172,6 +177,7 @@ export function runCombat(
     !!opts.surprise,
     !!opts.noBleeding,
     opts.carrying,
+    opts.level ?? 1,
   ).run(opts.maxRounds ?? MAX_ROUNDS);
 }
 
@@ -192,6 +198,7 @@ class Battle {
     private surprise = false,
     private noBleeding = false,
     carrying?: { index: number; item: string },
+    private level = 1,
   ) {
     for (const hero of party) {
       if (hero.condition === "ok") this.fighters.push(this.fromHero(hero));
@@ -273,7 +280,9 @@ class Battle {
       weapon: wields
         ? { name: item.name.toLowerCase(), damageType: item.damageType ?? "crushing", ranged }
         : { name: def.weapon.name, damageType: def.weapon.damageType, ranged },
-      abilities: [...(def.abilities ?? [])],
+      abilities: Object.entries(def.abilities ?? {})
+        .filter(([, level]) => level <= this.level)
+        .map(([id]) => id),
       cooldowns: {},
       used: {},
       ai: def.ai,
@@ -549,7 +558,7 @@ class Battle {
           this.heal(target, Math.round(e.amount + (e.scale ?? 0) * this.stat(actor, "spellPower")));
           break;
         case "applyStatus":
-          this.applyStatus(target, e.status, e.turns, e.chance ?? 1);
+          this.applyStatus(target, e.status, e.turns, e.chance ?? 1, actor.side === target.side);
           break;
         case "summon":
           this.summon(actor, e.monster, e.count);
@@ -687,11 +696,19 @@ class Battle {
     });
   }
 
-  private applyStatus(target: Fighter, id: string, turns: number, chance: number): void {
+  private applyStatus(
+    target: Fighter,
+    id: string,
+    turns: number,
+    chance: number,
+    friendly = false,
+  ): void {
     if (target.state !== "up") return;
     const status = this.ix.status(id);
     // Willpower shrugs off some effects: each point of resist is -1% chance.
-    if (!this.rng.chance(chance * (1 - this.stat(target, "resist") / 100))) return;
+    // Nobody resists a friend's war cry.
+    const resist = friendly ? 0 : this.stat(target, "resist") / 100;
+    if (!this.rng.chance(chance * (1 - resist))) return;
     const existing = target.statuses.find((s) => s.id === id);
     if (existing) existing.turns = Math.max(existing.turns, turns);
     else target.statuses.push({ id, turns });

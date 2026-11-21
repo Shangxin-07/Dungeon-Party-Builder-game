@@ -11,5 +11,6 @@ export default defineMonster({
   row: "back",
   tags: ["goblinoid", "humanoid"],
   ai: "archer",
+  abilities: { "aimed-shot": 2 },
   loot: "goblin-loot",
 });

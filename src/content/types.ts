@@ -195,7 +195,25 @@ export interface MonsterDef {
   row: Row;
   tags: readonly string[];
   ai: string;
-  abilities?: readonly string[];
+  /**
+   * Ability id -> the monster level it's used from, like a class list. Monster
+   * level is the floor's level that day (1 = a typical floor-1 monster), so
+   * the same rat fights dirtier deeper down or on a crowded floor.
+   */
+  abilities?: Readonly<Record<string, number>>;
+  /**
+   * A tougher version of another monster (a Spider Matriarch, a Skeleton
+   * Captain). It never appears in encounters by itself: when a fight rolls
+   * the base monster, one of them may be swapped for this, at most one
+   * variant per fight.
+   */
+  variant?: {
+    of: string;
+    /** Chance per fight that includes the base monster. */
+    chance: number;
+    /** Only at or above this monster level. Defaults to 1. */
+    minLevel?: number;
+  };
   passives?: readonly PassiveEffect[];
   triggers?: readonly Trigger[];
   /** Summoned-only monsters never appear in encounters by themselves. */
