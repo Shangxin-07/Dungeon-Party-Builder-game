@@ -59,8 +59,9 @@ export function App() {
 
       <footer>
         <p>
-          New: used potions and bandages need restocking, and heroes get tired and injured, so it
-          pays to rotate the party. Next up: more monsters, floors and buildings.
+          New: floors 4 and 5 (the Flooded Shafts and the Old Delve) with ghouls, cave trolls,
+          sporecallers and the Lost Delvers; glowcap and deep silver to dig up; and the Apothecary,
+          the Mine Cage and a silver forge at the Blacksmith.
         </p>
       </footer>
     </main>

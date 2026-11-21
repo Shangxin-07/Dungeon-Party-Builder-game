@@ -13,6 +13,7 @@
  *   npm run days -- --policy 2 --build --parties    # two fixed parties, sending whichever is fresher
  *   npm run days -- --policy 2 --build --multiclass # each hero picks up a second class (and any combo)
  *   npm run days -- --camp --policy 1 --build       # start at the mining camp (the opening)
+ *   npm run days -- --policy climb --build --days 120 # go deeper as the party levels up (floors 4-5)
  *   npm run days -- --camp --unlucky --palisade-first # no timber ever drops: trade ore for it
  *
  * The bot restocks used supplies, keeps one hero on the bench and sends the
@@ -102,6 +103,17 @@ const ix = indexLibrary(
 );
 const days = Number(arg("days") ?? 40);
 const policy = arg("policy") ?? "1";
+const deepestFloor = Math.max(...library.floors.map((f) => f.depth));
+/**
+ * The floor to aim for. "climb": one floor deeper for every two levels the
+ * party averages (level 2-3: floor 2, 4-5: floor 3, 6-7: floor 4, 8+: floor 5).
+ */
+function targetFloor(t: TownState): number {
+  if (policy !== "climb") return Number(policy);
+  const heroes = t.party.map((id) => findHero(t, id)).filter((h) => !!h);
+  const avg = heroes.reduce((s, h) => s + h.level, 0) / Math.max(1, heroes.length);
+  return Math.max(1, Math.min(deepestFloor, 1 + Math.floor(avg / 2)));
+}
 const build = flag("build");
 const rotate = !flag("static");
 const runs = Number(arg("runs") ?? 1);
@@ -272,7 +284,7 @@ function step(t: TownState): TownState {
   // Go and get anyone who's trapped, or else the bodies before they rise.
   const site =
     t.sites.find((s) => s.trapped.some((x) => x.until >= t.day + s.floor - 1)) ??
-    t.sites.find((s) => s.bodies.some((b) => !b.risen) && s.floor <= Number(policy));
+    t.sites.find((s) => s.bodies.some((b) => !b.risen) && s.floor <= targetFloor(t));
   if (site && !t.orders.rescue) t = planRescue(ix, t, site.id);
   if (!site && t.orders.rescue) t = cancelRescue(ix, t);
   // Agree to raises while the gold holds out (a month of the new wage bill).
@@ -356,7 +368,7 @@ function step(t: TownState): TownState {
   const site2 = t.sites.find((s) => s.id === t.orders.rescue);
   t = setOrders(ix, t, {
     ...t.orders,
-    targetFloor: Math.max(Number(policy), site2?.floor ?? 0),
+    targetFloor: Math.max(targetFloor(t), site2?.floor ?? 0),
     clearPercent: clear || undefined,
   });
   return launch(ix, t, heroNames);
@@ -394,7 +406,7 @@ function play(seed: number, print: boolean) {
   const roseNews = new Set<string>();
   if (print) {
     console.log(
-      `Policy: ${policy === "idle" ? "never go down" : `trips to floor ${policy}`}` +
+      `Policy: ${policy === "idle" ? "never go down" : policy === "climb" ? "go deeper as the party levels up" : `trips to floor ${policy}`}` +
         `${build ? ", building defences" : ""}. ${days} days, seed ${seed}.\n`,
     );
     console.log(
@@ -493,6 +505,7 @@ if (runs === 1) {
   let built = 0;
   let unpaid = 0;
   const secrets = { found: 0, missed: 0, gold: 0 };
+  const deepest: number[] = [];
   const levels = library.buildings.reduce((s, b) => s + b.levels.length - b.startLevel, 0);
   for (let i = 0; i < runs; i++) {
     const t = play(seed0 + i, false);
@@ -508,6 +521,7 @@ if (runs === 1) {
     strength += t.pit.at(-1)?.strength ?? 0;
     firstRaid.push(r[0]?.day ?? Infinity);
     quit += t.departed.length;
+    deepest.push(Math.max(0, ...Object.values(t.records).map((r) => r.deepest)));
     for (const h of t.roster) {
       heroes++;
       levelSum += h.level;
@@ -541,7 +555,11 @@ if (runs === 1) {
       `  on the roster at the end: level ${(levelSum / Math.max(1, heroes)).toFixed(1)} on average, ` +
       `morale ${(moraleSum / Math.max(1, heroes)).toFixed(0)}, ${((unhappy / Math.max(1, heroes)) * 100).toFixed(0)}% unhappy\n` +
       `  overflow strength on the last night: ${(strength / runs).toFixed(1)}\n` +
-      `  trips per town: ${trips.toFixed(1)}, injuries on trips: ${injuries.toFixed(1)}\n` +
+      `  trips per town: ${trips.toFixed(1)}, injuries on trips: ${injuries.toFixed(1)}; ` +
+      `deepest floor reached: ${library.floors
+        .map((f) => f.depth)
+        .map((f) => `${f}: ${deepest.filter((d) => d === f).length}`)
+        .join(", ")} towns\n` +
       `  buildings: ${(built / runs).toFixed(1)} of ${levels} levels built; ` +
       `${(unpaid / runs).toFixed(1)} days with unpaid wages\n` +
       `  hidden caches per town: ${(secrets.found / runs).toFixed(1)} found, ` +

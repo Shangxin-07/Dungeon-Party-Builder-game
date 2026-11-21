@@ -248,7 +248,7 @@ describe("saves", () => {
     const up = migrateTown(ix, JSON.parse(JSON.stringify(old)))!;
     expect(up.version).toBe(TOWN_VERSION);
     expect(up.roster).toEqual(t.roster);
-    expect(up.dungeon.floors).toHaveLength(3);
+    expect(up.dungeon.floors).toHaveLength(library.floors.length);
     expect(up.lastTrip!.raids).toEqual([]);
     // And it plays on.
     expect(rest(ix, up, heroNames).day).toBe(up.day + 1);

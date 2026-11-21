@@ -134,6 +134,13 @@ export interface FloorDef {
   capacity: number;
   /** Monsters living here when a new game starts. */
   startPopulation: number;
+  /**
+   * How many levels below this floor's average its evicted monsters are, if
+   * not the usual `DungeonRules.evictedLevelDrop`. The deep floors push their
+   * rejects up a whole level weaker, so a floor fed from below stays at its
+   * own depth (M6.21: adding floors 4 and 5 left floors 1-3 as they were).
+   */
+  evictedLevelDrop?: number;
 }
 
 /**

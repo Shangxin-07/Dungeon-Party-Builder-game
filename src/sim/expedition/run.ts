@@ -98,6 +98,8 @@ export class Expedition {
   private depth = 0;
   private roomNo = 0;
   private deepest = 0;
+  /** The first floor the party walks; the cage carries them past the ones above. */
+  private first = 1;
   private roomsVisited = 0;
   private wiped = false;
   /** Downed heroes we've already said are being carried, so the log doesn't repeat it. */
@@ -167,7 +169,19 @@ export class Expedition {
         `${this.huntGoal() ? `; thin out floor ${targetFloor} by ${this.orders.clearPercent}%` : ""}.`,
     );
 
-    for (let depth = 1; depth <= targetFloor; depth++) {
+    // The Mine Cage: ride past the top floors, but never the target floor, nor
+    // a floor a rescue party has to search.
+    this.first = Math.max(
+      1,
+      Math.min(1 + Math.floor(this.extras.lift ?? 0), targetFloor, site?.floor ?? targetFloor),
+    );
+    if (this.first > 1)
+      this.emit(
+        "depart",
+        `The party rides the cage down past ${this.first === 2 ? "floor 1" : `floors 1 to ${this.first - 1}`}.`,
+      );
+
+    for (let depth = this.first; depth <= targetFloor; depth++) {
       const floor = this.ix.floor(depth);
       const rooms = planFloor(this.ix, depth, this.rng);
       this.depth = depth;
@@ -280,7 +294,7 @@ export class Expedition {
   /** Climb back up. Cleared floors are quieter, but something may have wandered in. */
   private goHome(outcome: "returned" | "retreated"): ExpeditionResult {
     this.roomNo = 0;
-    for (let d = this.depth; d >= 1; d--) {
+    for (let d = this.depth; d >= this.first; d--) {
       this.depth = d;
       if (!this.rng.chance(WANDER_CHANCE)) continue;
       const monsters = this.rollMonsters();
@@ -291,6 +305,11 @@ export class Expedition {
       if (this.wiped) return this.finish("wiped");
     }
     this.depth = 0;
+    if (this.first > 1)
+      this.emit(
+        "home",
+        `The cage hauls them up the last ${this.first - 1 === 1 ? "floor" : `${this.first - 1} floors`}.`,
+      );
     const back = list([...this.alive(), ...this.followers].map((h) => h.name));
     this.emit("home", `${back} climb out of the pit.`);
     return this.finish(outcome);
@@ -312,7 +331,7 @@ export class Expedition {
       orders: this.orders,
       deepestFloor: this.deepest,
       days:
-        Math.max(1, this.deepest) +
+        Math.max(1, this.deepest - (this.first - 1)) +
         Math.ceil(this.hunts / Math.max(1, this.ix.lib.dungeon.hunting.roomsPerDay)),
       roomsVisited: this.roomsVisited,
       party: this.party,

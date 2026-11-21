@@ -49,7 +49,15 @@ export type BuildingEffect =
       materials?: MaterialCost;
     }
   /** Lay the dead to rest, for this much gold (DESIGN.md §10). */
-  | { type: "burial"; gold: number };
+  | { type: "burial"; gold: number }
+  /** Injuries mend this many extra days for every day in town (the Apothecary). */
+  | { type: "healing"; amount: number }
+  /**
+   * The parties ride a cage down past this many floors (the Mine Cage): a
+   * trip skips their rooms and the days they take. Never the target floor,
+   * nor a floor a rescue party has to search.
+   */
+  | { type: "lift"; floors: number };
 
 export interface BuildingLevel {
   /** Gold to build or upgrade to this level. */

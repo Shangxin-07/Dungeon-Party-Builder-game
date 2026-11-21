@@ -298,6 +298,8 @@ export function validateLibrary(lib: Library): string[] {
     if (f.capacity < 1) err(`${w}: capacity must be at least 1`);
     if (f.startPopulation < 0 || f.startPopulation > f.capacity)
       err(`${w}: startPopulation must be between 0 and capacity`);
+    if (f.evictedLevelDrop !== undefined && !(f.evictedLevelDrop >= 0))
+      err(`${w}: evictedLevelDrop must be 0 or more`);
     for (const id of f.fixedRooms ?? []) if (!roomIds.has(id)) err(`${w}: unknown room "${id}"`);
     if (!lib.rooms.some((r) => f.depth >= r.floors[0] && f.depth <= r.floors[1]))
       err(`${w}: no rooms can appear at depth ${f.depth}`);
@@ -372,6 +374,8 @@ export function validateLibrary(lib: Library): string[] {
           materialCost(`${w} level ${i + 1} resurrect`, e.materials);
         } else if (e.type === "burial") {
           if (e.gold < 0) err(`${w} level ${i + 1}: burial can't cost negative gold`);
+        } else if (e.type === "lift") {
+          if (!(e.floors >= 1)) err(`${w} level ${i + 1}: lift needs at least 1 floor`);
         } else if (e.amount < 0) err(`${w} level ${i + 1}: negative ${e.type}`);
       }
     });

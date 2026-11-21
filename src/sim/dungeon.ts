@@ -56,6 +56,18 @@ export function newDungeon(ix: Index): DungeonState {
   };
 }
 
+/**
+ * Give a dungeon from an older game the floors added since (M6.21: floors 4
+ * and 5), as a new game would start them. Changes `d`. Returns whether it did.
+ */
+export function addNewFloors(ix: Index, d: DungeonState): boolean {
+  const floors = [...ix.lib.floors].sort((a, b) => a.depth - b.depth);
+  if (d.floors.length >= floors.length) return false;
+  for (const f of floors.slice(d.floors.length))
+    d.floors.push({ population: f.startPopulation, level: f.depth });
+  return true;
+}
+
 /** Monsters the bottom floor breeds per day right now. */
 export function spawnRate(ix: Index, d: DungeonState): number {
   const r = ix.lib.dungeon;
@@ -96,7 +108,8 @@ function evict(f: FloorPressure, n: number, drop: number): number {
 /** Run one day. Returns the new state and what happened. */
 export function dungeonDay(ix: Index, d: DungeonState): { dungeon: DungeonState; day: DungeonDay } {
   const rules = ix.lib.dungeon;
-  const caps = [...ix.lib.floors].sort((a, b) => a.depth - b.depth).map((f) => f.capacity);
+  const defs = [...ix.lib.floors].sort((a, b) => a.depth - b.depth);
+  const caps = defs.map((f) => f.capacity);
   const out = structuredClone(d);
   const bottom = out.floors.length - 1;
 
@@ -113,7 +126,7 @@ export function dungeonDay(ix: Index, d: DungeonState): { dungeon: DungeonState;
     const f = out.floors[i]!;
     const extra = f.population - caps[i]!;
     if (extra <= 0) continue;
-    const level = evict(f, extra, rules.evictedLevelDrop);
+    const level = evict(f, extra, defs[i]?.evictedLevelDrop ?? rules.evictedLevelDrop);
     pushedUp[i] = extra;
     if (i > 0) {
       arrive(out.floors[i - 1]!, extra, level);

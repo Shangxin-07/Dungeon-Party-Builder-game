@@ -21,6 +21,7 @@ import {
   maxHp,
   rescueSite,
   cantLaunch,
+  liftFloors,
 } from "./read";
 import { news, book, roll, edit, hero, listWords, gearOf, addMaterials } from "./internal";
 import type { HaulItem } from "../loot";
@@ -63,6 +64,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     gear,
     porters,
     risen: t.risen ?? [],
+    lift: liftFloors(ix, t),
   });
   const wiped = result.outcome === "wiped";
   const backDay = startDay + result.days;

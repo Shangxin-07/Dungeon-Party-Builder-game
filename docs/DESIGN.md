@@ -692,6 +692,26 @@ Balance after both halves (`npm run balance -- 1000`, retreat below 30%): floor 
 - Saves: `TOWN_VERSION` 13 adds the empty store. Tests and scripts that aren't about materials can use `stocked()` (`src/sim/stocked.ts`).
 - Not yet: selling or buying materials, raiders stealing them, renown. (M6.16 added timber, for the opening.)
 
+### As built in M6: the deep floors
+
+> Added 2026-11-21 (M6.21). Mike approved "more dungeon": new floors, monsters and buildings, all as content.
+
+- **Two new floors.** **Floor 4, the Flooded Shafts** (where the miners hit water and kept digging) and **floor 5, the Old Delve** (the gallery the town dug too deep into). Same shape as the others: 6-8 rooms and a rest spot, fight power 22 and 29 on the usual ×1.3 curve, capacity 70 and 80.
+- **The dungeon still breeds at the bottom**, now floor 5. Floors 4 and 5 start full and push their rejects up a whole level weaker (a new optional `evictedLevelDrop` on a floor), so a floor fed from below stays at its own depth. That leaves floors 1-3 and the raids exactly as before (same numbers from `npm run days`, policies 1-3), while killing on floors 4 and 5 now soaks up breeding before it reaches the pit. Older saves get the two new floors on load, full, as a new game starts them (no save bump).
+- **Monsters** (floors 4-5 only; the old floors never meet them):
+  - **Ghoul** (undead, front): *Numbing Claws* (may numb: −3 accuracy, −6 initiative). Variant **Ghast** (level 4.5+): bigger, and *Rend* (a heavy hit that bleeds).
+  - **Cave Troll** (one is a whole fight, 80 HP): once it's hurt badly its wounds start to close (*Regenerating*, 6 HP a turn for 4 turns). Weak to fire. *Crush* from level 4.5.
+  - **Sporecaller** (back row, caster): *Spore Burst* poisons the whole party. Weak to fire, shrugs off poison.
+  - **Lost Delver** (floor 5, undead spirit, back row caster): the miners who never came up. Blades and maces do 40% less; holy does 50% more. *Grave Chill* (cold, chills). Variant **The Foreman's Shade** (level 5+, front row): *War Cry*, and once a fight *Call the Crew* rings the shift bell for another Lost Delver.
+- **Rooms and finds.** Every old room (fights, traps, rest spots, the hoard) carries on down; ore seams stop at floor 4. New: the **silver vein** (deep silver), the **flooded gallery** (a trap: cold water, the whole party) and a hidden cache, the **Delvers' strongbox** (the old mine's pay chest).
+- **Two new materials.** **Glowcap** (Sporecallers) and **deep silver** (silver veins, trolls' ledges, Lost Delvers).
+- **Buildings:**
+  - **Apothecary**: level 1 (180 gold) injuries mend twice as fast; level 2 (400 gold, 5 glowcap) three times as fast, and sells **greater healing potions** (heal 40). New effect `healing`.
+  - **Mine Cage**: the old winch rigged again. Level 1 (300 gold, 8 ore, 4 silk) carries parties past floor 1, down and back up; level 2 (600 gold, 10 ore, 4 deep silver) past floors 1 and 2. A skipped floor costs no day and has no fights, so deep trips are shorter, but it also isn't thinned out and its monsters still climb towards the town. Never skips the target floor or a floor a rescue party must search. New effect `lift`.
+  - **Blacksmith level 3** (650 gold, 6 ore, 6 deep silver): the **silver sword** (+50% against the undead).
+- **Balance.** A veteran party (`npm run expedition`-style trips, fighter/scout/mage, all perks, full health) comes home from floor 3/4/5: level 3: 74% / 49% / 15%; level 5: 98% / 91% / 57%; level 7: 100% / 100% / 95%. Each new floor is about two hero levels harder than the one above. `npm run days -- --policy climb --build --days 120` (go one floor deeper for every two party levels): 97 of 100 towns reach floor 4 by day 120 at level 6.8, none floor 5 yet; first raid moves from never to about day 110, because nobody is thinning floors 1-2 any more. Each town brings home about 5 glowcap and 5 deep silver: most build the Apothecary and the first Mine Cage, a few the second, almost none the silver forge yet. Deep silver is meant to be what floor 5 is for.
+- `npm run days` has a new `--policy climb`, and the summary says how deep each town got.
+
 ## 12. First playable slice
 
 Small on purpose. Everything here is data, so adding more later means adding entries, not rewriting code.
@@ -809,7 +829,7 @@ Each milestone ends with something you can run.
 | M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load (built, see §11 "As built in M4") | Feel the dungeon getting worse over time |
 | M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs (built, see §11 "As built in M5") | Play the full design in miniature |
 | M6 | Balance pass (wages, the Market's cut, morale that settles), monster stats in the watch view, the Cleric (built, see §11 "As built in M6") | Feel gold get tight and see what you're up against |
-| M6+ | Grow content: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), materials and the "holding the pit" opening (§8, built in M6.15 and M6.16), more buildings, more monsters/floors, 2D watch view, multiple parties | Keep growing |
+| M6+ | Grow content: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), materials and the "holding the pit" opening (§8, built in M6.15 and M6.16), more buildings, more monsters/floors (floors 4-5 built in M6.21), 2D watch view, multiple parties | Keep growing |
 
 ## 16. Decisions (agreed 2026-11-20)
 

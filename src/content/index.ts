@@ -208,6 +208,40 @@ import crackedRibsInjury from "./injuries/cracked-ribs";
 import twistedAnkleInjury from "./injuries/twisted-ankle";
 import concussionInjury from "./injuries/concussion";
 import deepGashInjury from "./injuries/deep-gash";
+import floodedShaftsFloor from "./floors/flooded-shafts";
+import oldDelveFloor from "./floors/old-delve";
+import ghoulMonster from "./monsters/ghoul";
+import ghastMonster from "./monsters/ghast";
+import caveTrollMonster from "./monsters/cave-troll";
+import sporecallerMonster from "./monsters/sporecaller";
+import lostDelverMonster from "./monsters/lost-delver";
+import foremansShadeMonster from "./monsters/foremans-shade";
+import ghoulPackEncounter from "./encounters/ghoul-pack";
+import trollDenEncounter from "./encounters/troll-den";
+import sporeBedEncounter from "./encounters/spore-bed";
+import delverHauntEncounter from "./encounters/delver-haunt";
+import ghoulClawAbility from "./abilities/ghoul-claw";
+import rendAbility from "./abilities/rend";
+import sporeBurstAbility from "./abilities/spore-burst";
+import graveChillAbility from "./abilities/grave-chill";
+import callTheCrewAbility from "./abilities/call-the-crew";
+import numbedStatus from "./statuses/numbed";
+import regeneratingStatus from "./statuses/regenerating";
+import ghoulLoot from "./loot/ghoul-loot";
+import trollLoot from "./loot/troll-loot";
+import sporeLoot from "./loot/spore-loot";
+import delverLoot from "./loot/delver-loot";
+import silverVeinLoot from "./loot/silver-vein";
+import delversStrongboxLoot from "./loot/delvers-strongbox";
+import silverVeinRoom from "./rooms/silver-vein";
+import floodedGalleryRoom from "./rooms/flooded-gallery";
+import delversStrongboxSecret from "./secrets/delvers-strongbox";
+import glowcapMaterial from "./materials/glowcap";
+import deepSilverMaterial from "./materials/deep-silver";
+import silverSwordItem from "./items/silver-sword";
+import greaterHealingPotionItem from "./items/greater-healing-potion";
+import apothecaryBuilding from "./buildings/apothecary";
+import mineCageBuilding from "./buildings/mine-cage";
 import townRules from "./town";
 import dungeonRules from "./dungeon";
 
@@ -230,6 +264,9 @@ export const materials: readonly ItemDef[] = [
   ironOreMaterial,
   spiderSilkMaterial,
   boneDustMaterial,
+  // The deep floors (M6.21).
+  glowcapMaterial,
+  deepSilverMaterial,
 ];
 
 /** Posts round the pit (DESIGN.md §8): duties for heroes at home. */
@@ -258,6 +295,9 @@ export const items: readonly ItemDef[] = [
   scaleMailItem,
   ironStaffItem,
   maceItem,
+  // The deep floors (M6.21): from the Blacksmith's forge and the Apothecary.
+  silverSwordItem,
+  greaterHealingPotionItem,
   // Makeshift kit from the mining camp (the opening, DESIGN.md §8).
   pickAxeItem,
   slingItem,
@@ -297,6 +337,12 @@ export const abilities: readonly AbilityDef[] = [
   layOnHandsAbility,
   blizzardAbility,
   shadowStrikeAbility,
+  // Monsters of the deep floors (M6.21).
+  ghoulClawAbility,
+  rendAbility,
+  sporeBurstAbility,
+  graveChillAbility,
+  callTheCrewAbility,
 ];
 export const statuses: readonly StatusDef[] = [
   poisonedStatus,
@@ -308,6 +354,8 @@ export const statuses: readonly StatusDef[] = [
   disarmedStatus,
   dazedStatus,
   chilledStatus,
+  numbedStatus,
+  regeneratingStatus,
 ];
 export const monsters: readonly MonsterDef[] = [
   caveSpiderMonster,
@@ -321,6 +369,13 @@ export const monsters: readonly MonsterDef[] = [
   spiderMatriarchMonster,
   goblinBossMonster,
   skeletonCaptainMonster,
+  // Floors 4 and 5 (M6.21).
+  ghoulMonster,
+  ghastMonster,
+  caveTrollMonster,
+  sporecallerMonster,
+  lostDelverMonster,
+  foremansShadeMonster,
 ];
 export const skills: readonly SkillDef[] = [appraisalSkill, medicineSkill, scoutingSkill];
 export const perks: readonly PerkDef[] = [
@@ -363,6 +418,10 @@ export const encounters: readonly EncounterDef[] = [
   skeletonPatrolEncounter,
   slimesEncounter,
   spiderNestEncounter,
+  ghoulPackEncounter,
+  trollDenEncounter,
+  sporeBedEncounter,
+  delverHauntEncounter,
 ];
 export const lootTables: readonly LootTableDef[] = [
   goblinLoot,
@@ -376,6 +435,12 @@ export const lootTables: readonly LootTableDef[] = [
   campSalvageLoot,
   seamWorkLoot,
   pitSpoilsLoot,
+  ghoulLoot,
+  trollLoot,
+  sporeLoot,
+  delverLoot,
+  silverVeinLoot,
+  delversStrongboxLoot,
 ];
 export const rooms: readonly RoomDef[] = [
   dartTrapRoom,
@@ -387,8 +452,16 @@ export const rooms: readonly RoomDef[] = [
   spikedPitRoom,
   treasureHoardRoom,
   oreSeamRoom,
+  silverVeinRoom,
+  floodedGalleryRoom,
 ];
-export const floors: readonly FloorDef[] = [diggingsFloor, warrensFloor, boneHallsFloor];
+export const floors: readonly FloorDef[] = [
+  diggingsFloor,
+  warrensFloor,
+  boneHallsFloor,
+  floodedShaftsFloor,
+  oldDelveFloor,
+];
 export const buildings: readonly BuildingDef[] = [
   guildHallBuilding,
   marketBuilding,
@@ -402,6 +475,8 @@ export const buildings: readonly BuildingDef[] = [
   vaultBuilding,
   templeBuilding,
   graveyardBuilding,
+  apothecaryBuilding,
+  mineCageBuilding,
 ];
 
 export const transforms: readonly TransformDef[] = [risenTransform];
@@ -418,6 +493,7 @@ export const secrets: readonly SecretDef[] = [
   minersCacheSecret,
   falseFloorSecret,
   sealedNicheSecret,
+  delversStrongboxSecret,
 ];
 
 export const library: Library = {

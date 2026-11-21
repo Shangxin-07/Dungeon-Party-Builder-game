@@ -18,11 +18,14 @@ export function restHero(ix: Index, h: Hero, days: number): void {
   h.fatigue = Math.max(0, (h.fatigue ?? 0) - ix.lib.wear.restPerDay * days);
 }
 
-/** Wounds knit a day at a time in town. Returns the names of injuries that healed. */
-export function healInjuries(ix: Index, h: Hero): string[] {
+/**
+ * Wounds knit a day at a time in town, `extra` days more with an Apothecary.
+ * Returns the names of injuries that healed.
+ */
+export function healInjuries(ix: Index, h: Hero, extra = 0): string[] {
   const healed: string[] = [];
   h.injuries = (h.injuries ?? []).filter((inj) => {
-    inj.days -= 1;
+    inj.days -= 1 + Math.max(0, extra);
     if (inj.days > 0) return true;
     healed.push(ix.injury(inj.id).name.toLowerCase());
     return false;
