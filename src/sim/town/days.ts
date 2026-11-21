@@ -26,6 +26,7 @@ import { cancelRescue } from "./parties";
 import { buildersWork } from "./buildings";
 import { restHero, healInjuries, wasDowned, maybeInjure } from "./wounds";
 import { newBody, rise, risenClimb } from "./bodies";
+import { checkCamp, raidSpoils, tidyPosts, workPosts } from "./posts";
 
 /**
  * Night falls on day `t.day`: the dungeon breeds and pushes up, and whatever
@@ -51,7 +52,7 @@ export function nightfall(
         climbed: day.overflow.count,
         level: day.overflow.level,
         strength: day.strength,
-        defence: defence(ix, t),
+        defence: defence(ix, t, away),
         home,
         // The Vault keeps some of the gold out of reach.
         gold: Math.floor((t.gold * (100 - vaultShare(ix, t))) / 100),
@@ -124,6 +125,7 @@ export function nightfall(
     }
   }
   if (died) guildFeels(ix, t, { fallenComrades: died }, new Set());
+  raidSpoils(ix, t, raid);
   book(t, "stolen", -raid.goldStolen);
   t.damaged = [...t.damaged, ...raid.damaged];
   t.raids = [...t.raids, raid].slice(-RAID_HISTORY);
@@ -311,6 +313,8 @@ export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
   raiseTalk(ix, t);
   t.day += 1;
   buildersWork(ix, t, away);
+  workPosts(ix, t, away);
+  checkCamp(ix, t);
   for (const h of t.roster) {
     if (away.has(h.id)) continue;
     restHero(ix, h, 1);
@@ -322,6 +326,7 @@ export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
   // before quitting porters were taken off the porter list).
   t.party = t.party.filter((id) => findHero(t, id));
   t.porters = (t.porters ?? []).filter((id) => findHero(t, id));
+  tidyPosts(t);
 }
 
 /** Spend a day in town. Everyone heals, night falls, and new recruits turn up. */

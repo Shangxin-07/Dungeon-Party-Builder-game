@@ -1,0 +1,165 @@
+/**
+ * The opening and posts round the pit (DESIGN.md §8): a new game can start at
+ * the mining camp, held from makeshift posts, with no delving until the Guild
+ * Hall and a palisade are up.
+ */
+import { describe, expect, it } from "vitest";
+import { heroNames, library } from "../content";
+import type { Library } from "../content/types";
+import { indexLibrary } from "./library";
+import type { RaidReport } from "./raid";
+import { stocked } from "./stocked";
+import {
+  assignPost,
+  autoStart,
+  campNeeds,
+  cantLaunch,
+  defence,
+  hirePorter,
+  newTown,
+  postOf,
+  rest,
+  rosterSize,
+  upgrade,
+  warningDays,
+  type TownState,
+} from "./town";
+import { raidSpoils } from "./town/posts";
+import { validateLibrary } from "./validate";
+
+const ix = indexLibrary(library);
+const opening = library.opening;
+const camp = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed, { camp: true }));
+const ids = (t: TownState) => t.roster.map((h) => h.id);
+
+/** Pay for an upgrade and skip the builders' wait. */
+const build = (t: TownState, id: string): TownState => {
+  const u = upgrade(ix, stocked({ ...t, gold: t.gold + 10_000 }), id);
+  const t2 = { ...u, gold: t.gold, materials: t.materials, construction: [] };
+  t2.buildings = { ...u.buildings, [id]: (t.buildings[id] ?? 0) + 1 };
+  return t2;
+};
+
+describe("the mining camp", () => {
+  it("starts with makeshift kit, no Guild Hall, and no delving", () => {
+    const t = camp();
+    expect(t.camp).toBe(true);
+    expect(t.buildings["guild-hall"]).toBe(0);
+    expect(t.gold).toBe(opening.startingGold);
+    expect(newTown(ix, heroNames, 1, { camp: true }).stash).toEqual(opening.startingStash);
+    expect(rosterSize(ix, t)).toBe(opening.campRoster);
+    expect(campNeeds(ix, t)).toEqual(["Guild Hall", "Palisade"]);
+    expect(cantLaunch(ix, t)).toMatch(/camp is held: build Guild Hall and Palisade/);
+    // A normal new game skips all of it.
+    const normal = newTown(ix, heroNames, 1);
+    expect(normal.camp).toBeUndefined();
+    expect(normal.buildings["guild-hall"]).toBe(1);
+  });
+
+  it("is held once the Guild Hall and palisade are up: delving opens, the kit arrives", () => {
+    let t = camp();
+    t = assignPost(ix, t, ids(t)[0]!, "seam");
+    t = build(t, "guild-hall");
+    t = rest(ix, t, heroNames);
+    expect(t.camp).toBe(true);
+    const stash = t.stash.length;
+    t = build(t, "palisade");
+    t = rest(ix, t, heroNames);
+    expect(t.camp).toBeUndefined();
+    expect(campNeeds(ix, t)).toEqual([]);
+    expect(t.stash.length).toBe(stash + opening.heldStash.length);
+    expect(t.news.some((n) => /camp is held/.test(n.text))).toBe(true);
+    // The seam closes with the camp.
+    expect(t.posts.seam).toBeUndefined();
+    expect(() => assignPost(ix, t, ids(t)[0]!, "seam")).toThrow(/closed/);
+    // Nobody was picked at the camp (no party slots); now a party can go.
+    expect(cantLaunch(ix, t)).toMatch(/Pick at least one/);
+    expect(cantLaunch(ix, { ...t, party: ids(t).slice(0, 3) })).toBeUndefined();
+  });
+});
+
+describe("posts", () => {
+  it("hold one hero each, up to their slots", () => {
+    let t = camp();
+    const [a, b] = ids(t);
+    t = assignPost(ix, t, a!, "lookout");
+    expect(postOf(t, a!)).toBe("lookout");
+    expect(() => assignPost(ix, t, b!, "lookout")).toThrow(/no room/);
+    t = assignPost(ix, t, a!, "barricade");
+    expect(t.posts.lookout).toBeUndefined();
+    expect(postOf(t, a!)).toBe("barricade");
+    t = assignPost(ix, t, a!, undefined);
+    expect(postOf(t, a!)).toBeUndefined();
+  });
+
+  it("the barricade adds defence and a lookout sees the next night, while they're home and fit", () => {
+    let t = camp();
+    const [a, b, c] = ids(t);
+    expect(defence(ix, t)).toBe(0);
+    t = assignPost(ix, assignPost(ix, t, a!, "barricade"), b!, "barricade");
+    t = assignPost(ix, t, c!, "lookout");
+    expect(defence(ix, t)).toBe(2 + 2 + 1);
+    expect(warningDays(ix, t)).toBe(1);
+    expect(defence(ix, t, new Set([a!]))).toBe(2 + 1);
+    t.roster.find((h) => h.id === b)!.injuries = [{ id: library.injuries[0]!.id, days: 3 }];
+    expect(defence(ix, t)).toBe(2 + 1);
+  });
+
+  it("porters can salvage but don't stand at the barricade", () => {
+    let t = camp();
+    const r = t.recruits.find((x) => x.untrained);
+    if (!r) return;
+    t = hirePorter(ix, { ...t, gold: 500 }, r.id);
+    const p = t.roster.at(-1)!;
+    expect(() => assignPost(ix, t, p.id, "barricade")).toThrow(/Porters/);
+    expect(() => assignPost(ix, t, p.id, "salvage")).not.toThrow();
+  });
+
+  it("the salvage crew brings in timber and the seam brings in gold", () => {
+    let t = camp();
+    const [a, b, c] = ids(t);
+    t = assignPost(ix, assignPost(ix, t, a!, "salvage"), b!, "salvage");
+    t = assignPost(ix, t, c!, "seam");
+    let gathered = 0;
+    for (let d = 0; d < 10; d++) {
+      t = rest(ix, t, heroNames);
+      gathered += t.gathered?.gold ?? 0;
+    }
+    expect(t.materials.timber ?? 0).toBeGreaterThan(5);
+    expect(gathered).toBeGreaterThan(40);
+    expect(t.ledger.some((l) => l.kind === "gathered" && l.amount > 0)).toBe(true);
+  });
+});
+
+describe("raid spoils", () => {
+  it("dead raiders leave materials, never gold", () => {
+    const t = camp();
+    const gold = t.gold;
+    raidSpoils(ix, t, { kills: 40 } as RaidReport);
+    expect(t.materials.timber ?? 0).toBeGreaterThan(5);
+    expect(t.gold).toBe(gold);
+    expect(t.news.some((n) => /dead raiders/.test(n.text))).toBe(true);
+  });
+});
+
+describe("opening content checks", () => {
+  it("catch posts with unknown loot and openings that unlock missing buildings", () => {
+    const bad: Library = {
+      ...library,
+      posts: [
+        {
+          id: "x",
+          name: "X",
+          blurb: "",
+          slots: 0,
+          effects: [{ type: "gather", loot: "nope", rolls: 1 }],
+        },
+      ],
+      opening: { ...library.opening, unlock: { moat: 1 } },
+    };
+    const errors = validateLibrary(bad).join("\n");
+    expect(errors).toMatch(/post "x": slots/);
+    expect(errors).toMatch(/unknown loot table "nope"/);
+    expect(errors).toMatch(/opening: unknown building "moat"/);
+  });
+});

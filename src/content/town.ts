@@ -55,4 +55,6 @@ export default defineTownRules({
   savedParties: 2,
   // Five average heroes resting in town double the builders' pace; never more.
   helpers: { perHero: 0.2, perStr: 0.05, maxPerDay: 1 },
+  // Fallen raiders drop materials (DESIGN.md §8).
+  raidSpoils: "pit-spoils",
 });

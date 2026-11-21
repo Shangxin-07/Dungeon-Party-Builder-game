@@ -62,6 +62,9 @@ import {
   toggleParty,
   underConstruction,
   upgrade,
+  assignPost,
+  buy,
+  equip,
   wageBill,
   type TownState,
 } from "../src/sim/town";
@@ -90,6 +93,7 @@ const clear = Number(arg("clear") ?? 0);
 const porterCount = Number(arg("porters") ?? 0);
 const multiclass = flag("multiclass");
 const twoParties = flag("parties");
+const camp = flag("camp");
 
 const DEFENCES = ["palisade", "gate", "watchtower"];
 
@@ -103,9 +107,81 @@ function signUp(t: TownState): TownState {
 
 const FALLEN_BUILDINGS = ["temple", "graveyard"];
 
+/**
+ * Posts round the pit (DESIGN.md §8). At the camp: two on the salvage crew
+ * while timber is short, the rest at the seam for gold, anyone left over on
+ * the barricade. Later, whoever isn't in the party salvages, or holds the
+ * barricade once the store has timber to spare.
+ */
+function manPosts(t: TownState): TownState {
+  const timber = t.materials.timber ?? 0;
+  // Hero i takes order[i] (or the next post along with room).
+  const order = t.camp
+    ? timber < 10
+      ? ["salvage", "salvage", "seam", "barricade", "seam", "barricade"]
+      : ["seam", "seam", "barricade", "barricade", "barricade", "lookout"]
+    : timber < 6
+      ? ["salvage", "salvage", "salvage", "barricade"]
+      : ["barricade", "barricade", "barricade", "lookout"];
+  let posted = { ...t, posts: {} as Record<string, string[]> };
+  const free = (id: string) => ix.post(id).slots - (posted.posts[id]?.length ?? 0);
+  const heroes = t.roster.filter((h) => t.camp || !t.party.includes(h.id));
+  heroes.forEach((h, i) => {
+    const id = [...order.slice(i), ...order].find(
+      (p) => (!h.porter || ix.post(p).porters) && free(p) > 0,
+    );
+    if (id) posted = assignPost(ix, posted, h.id, id);
+  });
+  return posted;
+}
+
+/**
+ * After the opening, swap makeshift camp kit for the class's proper kit as
+ * the gold allows (keeping a few days' wages in hand), the way a player would.
+ */
+function properKit(t: TownState): TownState {
+  if (t.camp) return t;
+  for (const h of t.roster) {
+    if (h.porter) continue;
+    for (const id of ix.cls(h.classId).startingKit) {
+      const item = ix.item(id);
+      const slot = item.slot as keyof Hero["equipment"];
+      if (!(slot in h.equipment) && !["weapon", "offhand", "armor"].includes(item.slot)) continue;
+      const now = findHero(t, h.id)!.equipment[slot];
+      if (now && !ix.item(now).tags.includes("makeshift")) continue;
+      if (now === id) continue;
+      if (!t.stash.includes(id)) {
+        if (t.gold < item.value + 40 + 3 * wageBill(ix, t)) continue;
+        try {
+          t = buy(ix, t, id);
+        } catch {
+          continue;
+        }
+      }
+      t = equip(ix, t, h.id, id);
+    }
+  }
+  return t;
+}
+
 function step(t: TownState): TownState {
-  // Repair anything raided, then build defences, cheapest first.
-  if (build) {
+  t = properKit(t);
+  // The opening: build what holds the camp, as soon as it can be paid for.
+  for (const id of Object.keys(library.opening.unlock)) {
+    if (!t.camp) break;
+    const lvl = nextLevel(ix, t, id);
+    if (
+      lvl &&
+      (t.buildings[id] ?? 0) < library.opening.unlock[id]! &&
+      !underConstruction(t, id) &&
+      !materialsShort(ix, t, lvl.materials) &&
+      t.gold >= lvl.cost
+    )
+      t = upgrade(ix, t, id);
+  }
+  // Repair anything raided, then build defences, cheapest first. (At the
+  // camp, only what holds it: see above.)
+  if (build && !t.camp) {
     for (const id of t.damaged) if (t.gold >= repairCost(ix, t, id)) t = repair(ix, t, id);
     // Anything the store has the materials for (DESIGN.md §8).
     const buildable = (x: { id: string; lvl?: { materials?: Record<string, number> } }) =>
@@ -245,6 +321,7 @@ function step(t: TownState): TownState {
     else if (t.recruits.length && t.gold >= hirePrice(ix, t, t.recruits[0]!) + 30) t = signUp(t);
     else break;
   }
+  t = manPosts(t);
   if (policy === "idle") return rest(ix, t, heroNames);
   // Go when everyone is healed and nobody is tired or hurt.
   const ready = t.party.every((id) => {
@@ -273,6 +350,11 @@ const tally = {
   buried: 0,
   rose: 0,
   putDown: 0,
+  /** --camp: the day each town held the camp, and who died before it did. */
+  campHeld: [] as number[],
+  campDeaths: 0,
+  campDeathsTotal: 0,
+  campRaids: 0,
   /** Materials brought home, by id (DESIGN.md §8). */
   materials: {} as Record<string, number>,
 };
@@ -281,7 +363,7 @@ const CHECKPOINTS = [10, 20, 40, 60, 90];
 const goldAt: Record<number, number[]> = {};
 
 function play(seed: number, print: boolean) {
-  let t = autoStart(ix, newTown(ix, heroNames, seed));
+  let t = autoStart(ix, newTown(ix, heroNames, seed, { camp }));
   let printed = 0;
   const seen = new Set<number>();
   const unpaidDays = new Set<number>();
@@ -297,7 +379,22 @@ function play(seed: number, print: boolean) {
   }
   while (t.day <= days) {
     const trip = t.lastTrip;
+    const wasCamp = t.camp;
     t = step(t);
+    if (wasCamp && !t.camp) {
+      tally.campHeld.push(t.day);
+      tally.campRaids += t.pit.filter((n) => n.outcome !== "held").length;
+    }
+    if (t.camp) tally.campDeaths = t.memorial.length;
+    console.log(
+      t.day,
+      t.camp ? "camp" : "",
+      JSON.stringify(t.posts),
+      JSON.stringify(t.materials),
+      t.gold,
+      JSON.stringify(t.buildings),
+      t.construction.map((c) => c.building).join(),
+    );
     // Count days the wages went unpaid (from the news, which says so).
     for (const n of t.news) if (n.text.startsWith("The guild couldn't pay")) unpaidDays.add(n.day);
     for (const n of t.news)
@@ -375,6 +472,8 @@ if (runs === 1) {
   const levels = library.buildings.reduce((s, b) => s + b.levels.length - b.startLevel, 0);
   for (let i = 0; i < runs; i++) {
     const t = play(seed0 + i, false);
+    tally.campDeathsTotal += tally.campDeaths;
+    tally.campDeaths = 0;
     built += library.buildings.reduce((s, b) => s + (t.buildings[b.id] ?? 0) - b.startLevel, 0);
     unpaid += tally.unpaid;
     tally.unpaid = 0;
@@ -403,8 +502,14 @@ if (runs === 1) {
   const injuries = tally.injuries / runs;
   firstRaid.sort((a, b) => a - b);
   const median = firstRaid[Math.floor(runs / 2)]!;
+  const held = [...tally.campHeld].sort((a, b) => a - b);
   console.log(
-    `${runs} towns, ${days} days, policy ${policy}${build ? " + defences" : ""}:\n` +
+    `${runs} towns, ${days} days, policy ${policy}${build ? " + defences" : ""}${camp ? ", starting at the camp" : ""}:\n` +
+      (camp
+        ? `  camp held (median): ${held.length < runs / 2 ? "not by the end" : `day ${held[Math.floor(runs / 2)]}`}` +
+          ` (${held.length} of ${runs} towns); ${(tally.campRaids / runs).toFixed(1)} raids and ` +
+          `${(tally.campDeathsTotal / runs).toFixed(1)} deaths before then\n`
+        : "") +
       `  first raid (median): day ${median === Infinity ? "never" : median}\n` +
       `  raids per town: ${(raids / runs).toFixed(1)} (${((beaten / Math.max(1, raids)) * 100).toFixed(0)}% beaten off)\n` +
       `  heroes lost per town: ${(lost / runs).toFixed(1)} (${(trapped / runs).toFixed(1)} trapped, ${(rescued / runs).toFixed(1)} rescued)\n` +

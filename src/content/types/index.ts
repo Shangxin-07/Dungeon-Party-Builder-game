@@ -57,7 +57,16 @@ export type {
   HuntRules,
   RaidRules,
 } from "./dungeon";
-export type { BuildingEffect, BuildingLevel, BuildingDef, MaterialCost, TownRules } from "./town";
+export type {
+  BuildingEffect,
+  BuildingLevel,
+  BuildingDef,
+  MaterialCost,
+  TownRules,
+  PostEffect,
+  PostDef,
+  OpeningRules,
+} from "./town";
 export {
   defineClass,
   defineItem,
@@ -73,6 +82,8 @@ export {
   defineFloor,
   defineBuilding,
   defineTownRules,
+  definePost,
+  defineOpening,
   defineDungeonRules,
   defineMotivation,
   defineAlignment,

@@ -275,7 +275,7 @@ Defences are ordinary buildings in `content/buildings/` with a `defence` (or `ra
 
 ### Later: the opening, holding the pit
 
-> Added 2026-11-20. **Not in the first playable version**, which still starts with a Guild Hall and delving available. This becomes the game's opening once raids and defences exist (after M4).
+> Added 2026-11-20. Built in M6.16: see the note below the list.
 
 The game starts when you arrive at a mining site that has just dug too far. There are no defences, no Guild Hall, and monsters are already climbing out of the pit.
 
@@ -283,6 +283,14 @@ The game starts when you arrive at a mining site that has just dug too far. Ther
 2. **Gather materials.** Fallen raiders drop materials, and the miners salvage what they can. Losses still hurt, and heroes still have morale.
 3. **Build up.** Once you have enough, you build the first real defences (palisade, gate) and the Guild Hall.
 4. **Push down.** With the town secure enough, delving unlocks and the normal game begins: send parties down to thin the population at its source.
+
+> **Built in M6.16 (2026-11-21).** A new game now starts at the camp (it can be skipped on day 1; saves from before stay as they were). Numbers in `content/opening.ts` and `content/posts/`:
+> - **The camp:** 120 gold, no Guild Hall, a roster of 5, and makeshift kit (two pick-axes, a sling, a staff, work leathers, bandages). Anyone without proper kit takes something makeshift, a ranged one for the back row. No delving until the **Guild Hall** (now 80 gold, 6 timber, 3 days at the camp) and a **Palisade** (80 gold, 4 timber) are up. Then the guild's wagons bring proper kit to the store room and the camp-only posts close.
+> - **Posts** (`content/posts/`), for any hero at home and fit, in any game: **the barricade** (3 heroes, 2 defence each), **lookout** (1, sees tomorrow night, 1 defence), **salvage crew** (3, a roll a day: mostly timber, some iron ore), and at the camp only **work the seam** (2, two rolls a day: mostly coins, some ore). Porters can salvage and keep lookout, not hold the barricade. Heroes on posts still fight raids. A hero away on a trip leaves their post empty until they're back.
+> - **Raid spoils:** every raider killed at the pit drops a roll of `pit-spoils` (timber or iron ore, never gold), in any game.
+> - **Timber**, a new material: salvage and raid spoils. The Palisade's first level now needs 4 of it in every game, so an older town without walls puts someone on the salvage crew first.
+> - Makeshift roles are makeshift **kit**, not temporary classes: heroes still pick a real class when they sign, and the pick-axe makes the fighter. Simpler, and nothing to convert later.
+> - **Balance** (`npm run days -- --camp`, 100 towns): the camp is held around **day 18**, after about 3 raids, all beaten off, with nobody lost. Over 60 days a camp game on floor-1 trips ends with 13.7 building levels against 15.8 without the opening, and no worse for raids. A guild that never goes down still runs dry, because the seam closes with the camp and raid spoils are never gold.
 
 This works as a tutorial in disguise. It teaches assigning heroes, watching auto-battles, morale and building, before the player has to think about expeditions. It reuses the combat sim and the defence buildings, so it is mostly new content and a few new rules rather than new systems. Defence posts and makeshift roles are data like everything else (`content/posts/`, roles as temporary class definitions).
 
@@ -681,7 +689,7 @@ Balance after both halves (`npm run balance -- 1000`, retreat below 30%): floor 
 - **In town**, the Buildings panel opens with the store (every material, with where it turns up), each upgrade lists what it needs and what's missing, and the trip results say what went into the store.
 - **Balance** (`npm run days`, 60 days, building): floor-1 trips bring home about 40 ore, 13 silk and 8 bone dust a town; floor-2 trips about 28 ore, 14 silk and 6 bone dust. Raids, gold and buildings built are the same as before within noise, so gold is still what holds building back; materials mostly decide *which* upgrades come first. The opening (next) leans on them harder.
 - Saves: `TOWN_VERSION` 13 adds the empty store. Tests and scripts that aren't about materials can use `stocked()` (`src/sim/stocked.ts`).
-- Not yet: selling or buying materials, raiders stealing them, renown.
+- Not yet: selling or buying materials, raiders stealing them, renown. (M6.16 added timber, for the opening.)
 
 ## 12. First playable slice
 
@@ -800,7 +808,7 @@ Each milestone ends with something you can run.
 | M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load (built, see §11 "As built in M4") | Feel the dungeon getting worse over time |
 | M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs (built, see §11 "As built in M5") | Play the full design in miniature |
 | M6 | Balance pass (wages, the Market's cut, morale that settles), monster stats in the watch view, the Cleric (built, see §11 "As built in M6") | Feel gold get tight and see what you're up against |
-| M6+ | Grow content: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters/floors, 2D watch view, multiple parties | Keep growing |
+| M6+ | Grow content: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), materials and the "holding the pit" opening (§8, built in M6.15 and M6.16), more buildings, more monsters/floors, 2D watch view, multiple parties | Keep growing |
 
 ## 16. Decisions (agreed 2026-11-20)
 
@@ -820,6 +828,6 @@ Each milestone ends with something you can run.
 | 12 | Town buildings | One-off cost (gold, deep-floor materials, renown); permanent, survive wipes; raids damage but never destroy |
 | 13 | Favourite buildings | Each hero has one; built = morale boost, missing = morale drain |
 | 14 | Dungeon entrance and defences | An open pit dug by the original mining camp. Defences around it (walls, gate, watchtowers) soak up overflow; what gets past becomes a raid |
-| 15 | Game opening (later) | Start at an undefended mining site, assign heroes to makeshift defences, gather materials, build up, then unlock delving. The first playable version is unchanged |
+| 15 | Game opening (built M6.16) | Start at an undefended mining site, assign heroes to makeshift defences, gather materials, build up, then unlock delving. New games start here; it can be skipped |
 | 16 | Classes and levels (later) | Freeform: hero level up to ~50; each level-up goes into a known class of your choice; class levels uncapped. Advanced and combo classes unlock at class-level and stat thresholds (optionally buildings, alignment). Depth rewarded through class-level scaling and milestone perks. Forward only, never swap. Class names are examples only |
 | 17 | The fallen (later) | Bodies can be recovered. In town: resurrect (Temple; costs gold, materials and a level or a % of levels, regained as XP is re-earned) or bury (Graveyard). Left in the dungeon, a body rises as an undead version of the hero that later parties can meet |

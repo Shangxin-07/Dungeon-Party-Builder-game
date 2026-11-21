@@ -1,7 +1,7 @@
 /**
  * Reading the town: building effects, prices, wages, warnings. Nothing here changes state.
  */
-import type { BuildingEffect, ItemDef, MaterialCost } from "../../content/types";
+import type { BuildingEffect, ItemDef, MaterialCost, PostEffect } from "../../content/types";
 import { dungeonDay } from "../dungeon";
 import { describeParty, partyAlignment } from "../alignment";
 import { fatigueTier, heroSheet, type Hero } from "../hero";
@@ -30,14 +30,67 @@ export const total = (ix: Index, town: TownState, type: Amount) =>
 
 export const partySlots = (ix: Index, town: TownState) => total(ix, town, "partySlots");
 
-export const rosterSize = (ix: Index, town: TownState) => total(ix, town, "rosterSize");
+/** Heroes the guild can keep. At the mining camp, before the Guild Hall, the opening's campRoster. */
+export const rosterSize = (ix: Index, town: TownState) =>
+  Math.max(total(ix, town, "rosterSize"), town.camp ? ix.lib.opening.campRoster : 0);
 
-/** Overflow strength the pit defences hold back each night. */
-export const defence = (ix: Index, town: TownState) => total(ix, town, "defence");
+/** Can this hero work a post today? At home, standing, not hurt badly enough to be laid up. */
+export const fitForPost = (h: Hero, away: ReadonlySet<string>) =>
+  !away.has(h.id) && h.condition === "ok" && h.hp > 0 && !h.injuries?.length;
 
-/** How many nights ahead the watchtowers can see (0 = none). */
-export const warningDays = (ix: Index, town: TownState) =>
-  effects(ix, town).reduce((m, e) => (e.type === "raidWarning" ? Math.max(m, e.days) : m), 0);
+/** The posts open today: camp-only ones (the seam) close when the opening ends. */
+export const openPosts = (ix: Index, town: TownState) =>
+  ix.lib.posts.filter((p) => town.camp || !p.campOnly);
+
+/** The heroes working a post (DESIGN.md §8) today: on it, at home and fit. */
+export function postWorkers(
+  ix: Index,
+  town: TownState,
+  postId: string,
+  away: ReadonlySet<string> = new Set(),
+): Hero[] {
+  if (!town.camp && ix.post(postId).campOnly) return [];
+  return (town.posts?.[postId] ?? [])
+    .map((id) => findHero(town, id))
+    .filter((h): h is Hero => !!h && fitForPost(h, away));
+}
+
+/** Effects of every post, once per hero working it. */
+export function postEffects(
+  ix: Index,
+  town: TownState,
+  away: ReadonlySet<string> = new Set(),
+): PostEffect[] {
+  const out: PostEffect[] = [];
+  for (const p of openPosts(ix, town)) {
+    const n = postWorkers(ix, town, p.id, away).length;
+    for (let i = 0; i < n; i++) out.push(...p.effects);
+  }
+  return out;
+}
+
+/** Overflow strength held back each night: the pit defences, plus heroes on posts. */
+export const defence = (ix: Index, town: TownState, away: ReadonlySet<string> = new Set()) =>
+  total(ix, town, "defence") +
+  postEffects(ix, town, away).reduce((s, e) => s + (e.type === "defence" ? e.amount : 0), 0);
+
+/** How many nights ahead the watchtowers (or a lookout) can see (0 = none). */
+export const warningDays = (ix: Index, town: TownState, away: ReadonlySet<string> = new Set()) =>
+  [...effects(ix, town), ...postEffects(ix, town, away)].reduce(
+    (m, e) => (e.type === "raidWarning" ? Math.max(m, e.days) : m),
+    0,
+  );
+
+/**
+ * The opening (DESIGN.md §8): what still has to be built before parties can
+ * go down, as "Guild Hall" or "Palisade level 2". Empty once the camp is held.
+ */
+export function campNeeds(ix: Index, town: TownState): string[] {
+  if (!town.camp) return [];
+  return Object.entries(ix.lib.opening.unlock)
+    .filter(([id, level]) => (town.buildings[id] ?? 0) < level)
+    .map(([id, level]) => `${ix.building(id).name}${level > 1 ? ` level ${level}` : ""}`);
+}
 
 export const recruitsToday = (ix: Index, town: TownState) =>
   ix.lib.town.recruitsOnOffer + total(ix, town, "recruitOffers");
@@ -144,6 +197,9 @@ export const haulPrice = (ix: Index, itemId: string, value: number, bonus = 0) =
 export const sellPrice = (ix: Index, item: ItemDef, bonus = 0) =>
   Math.max(1, Math.floor(item.value * marketRate(ix, ix.lib.town.sellRate, bonus)));
 
+const listAnd = (xs: readonly string[]) =>
+  xs.length > 1 ? `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}` : (xs[0] ?? "");
+
 /** Materials in words: "4 iron ore and 3 spider silk". */
 export function materialWords(ix: Index, cost: MaterialCost | undefined): string {
   const parts = Object.entries(cost ?? {}).map(
@@ -247,6 +303,9 @@ export function grumbles(ix: Index, town: TownState): { hero: string; text: stri
 
 /** Why the party can't leave yet, or undefined if it can. */
 export function cantLaunch(ix: Index, town: TownState): string | undefined {
+  const needs = campNeeds(ix, town);
+  if (needs.length)
+    return `Nobody goes down until the camp is held: build ${listAnd(needs)} first.`;
   if (!town.party.length) return "Pick at least one hero for the party.";
   if (town.party.length > partySlots(ix, town))
     return `The Guild Hall only has room for ${partySlots(ix, town)} in a party.`;

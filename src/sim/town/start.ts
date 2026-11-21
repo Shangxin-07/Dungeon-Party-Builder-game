@@ -76,17 +76,30 @@ export function freshRecruits(ix: Index, town: TownState, names: readonly string
   }
 }
 
-export function newTown(ix: Index, names: readonly string[], seed: number): TownState {
+/**
+ * A new game. With `camp`, it starts with the opening (DESIGN.md §8,
+ * content/opening.ts): at the mining camp, with makeshift kit, no Guild Hall,
+ * and no delving until the camp is held.
+ */
+export function newTown(
+  ix: Index,
+  names: readonly string[],
+  seed: number,
+  opts: { camp?: boolean } = {},
+): TownState {
   const rules = ix.lib.town;
+  const opening = opts.camp ? ix.lib.opening : undefined;
   const town: TownState = {
     version: TOWN_VERSION,
     day: 1,
-    gold: rules.startingGold,
+    gold: opening?.startingGold ?? rules.startingGold,
     seed,
-    buildings: Object.fromEntries(ix.lib.buildings.map((b) => [b.id, b.startLevel])),
+    buildings: Object.fromEntries(
+      ix.lib.buildings.map((b) => [b.id, opening?.unbuilt.includes(b.id) ? 0 : b.startLevel]),
+    ),
     roster: [],
     recruits: [],
-    stash: [...rules.startingStash],
+    stash: [...(opening?.startingStash ?? rules.startingStash)],
     party: [],
     orders: DEFAULT_ORDERS,
     records: {},
@@ -110,7 +123,9 @@ export function newTown(ix: Index, names: readonly string[], seed: number): Town
     bodies: [],
     risen: [],
     materials: {},
+    posts: {},
   };
+  if (opening) town.camp = true;
   // M6: the first heroes turn up untrained. The player picks their classes
   // and kits them out from the store room (or calls autoStart).
   for (let i = 0; i < rules.startingRecruits; i++) town.recruits.push(makeRecruit(ix, town, names));

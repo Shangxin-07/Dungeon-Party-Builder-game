@@ -28,7 +28,7 @@ import type {
   FloorDef,
   DungeonRules,
 } from "./dungeon";
-import type { BuildingDef, TownRules } from "./town";
+import type { BuildingDef, OpeningRules, PostDef, TownRules } from "./town";
 
 /** Everything the simulation needs, indexed by kind. */
 export interface Library {
@@ -57,6 +57,8 @@ export interface Library {
   searching: SearchRules;
   fallen: FallenRules;
   transforms: readonly TransformDef[];
+  posts: readonly PostDef[];
+  opening: OpeningRules;
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -94,6 +96,10 @@ export const defineFloor = (def: FloorDef): FloorDef => def;
 export const defineBuilding = (def: BuildingDef): BuildingDef => def;
 
 export const defineTownRules = (def: TownRules): TownRules => def;
+
+export const definePost = (def: PostDef): PostDef => def;
+
+export const defineOpening = (def: OpeningRules): OpeningRules => def;
 
 export const defineDungeonRules = (def: DungeonRules): DungeonRules => def;
 

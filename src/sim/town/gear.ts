@@ -33,6 +33,21 @@ export function kitOut(ix: Index, town: TownState, heroId: string, buy = true): 
     }
     t = wearable ? equip(ix, t, heroId, id) : packItem(ix, t, heroId, id);
   }
+  // At the mining camp (DESIGN.md §8) there's no proper kit: whoever is left
+  // with empty hands takes something makeshift from the store room, a ranged
+  // one for the back row.
+  for (const slot of EQUIP_SLOTS) {
+    const h2 = hero(t, heroId);
+    if (h2.equipment[slot]) continue;
+    const spare = t.stash
+      .map((id) => ix.item(id))
+      .filter((i) => i.slot === slot && i.tags.includes("makeshift"))
+      .sort(
+        (a, b) =>
+          Number(!!b.ranged === (h2.row === "back")) - Number(!!a.ranged === (h2.row === "back")),
+      )[0];
+    if (spare) t = equip(ix, t, heroId, spare.id);
+  }
   return t;
 }
 

@@ -12,8 +12,10 @@ export default defineBuilding({
   raidProof: true,
   levels: [
     {
-      cost: 0,
-      days: 0,
+      // Only paid for at the mining camp (content/opening.ts); other games start with it.
+      cost: 80,
+      materials: { timber: 6 },
+      days: 3,
       summary: "3 heroes per party, 6 on the roster",
       effects: [
         { type: "partySlots", amount: 3 },

@@ -16,6 +16,7 @@ import type {
   MotivationDef,
   AlignmentDef,
   PerkDef,
+  PostDef,
   RoomDef,
   SkillDef,
   StatusDef,
@@ -39,6 +40,7 @@ export interface Index {
   alignment(id: string): AlignmentDef;
   injury(id: string): InjuryDef;
   transform(id: string): TransformDef;
+  post(id: string): PostDef;
   /** The floor at this depth. */
   floor(depth: number): FloorDef;
 }
@@ -75,6 +77,7 @@ export function indexLibrary(lib: Library): Index {
       alignment: table("alignment", lib.alignments),
       injury: table("injury", lib.injuries),
       transform: table("transform", lib.transforms ?? []),
+      post: table("post", lib.posts ?? []),
       floor: (depth) => {
         const f = lib.floors.find((x) => x.depth === depth);
         if (!f) throw new Error(`No floor defined at depth ${depth}`);

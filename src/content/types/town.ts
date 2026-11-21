@@ -136,4 +136,59 @@ export interface TownRules {
    * `maxPerDay` days of work a day, to the oldest job first.
    */
   helpers: { perHero: number; perStr: number; maxPerDay: number };
+  /**
+   * Loot table rolled once for every raider killed at the pit (DESIGN.md §8:
+   * fallen raiders drop materials). Materials go to the store, coins to the
+   * guild's gold, anything else to the store room.
+   */
+  raidSpoils?: string;
+}
+
+/**
+ * What a hero on a post does (DESIGN.md §8). Each hero on the post adds it,
+ * on every day they're at home and fit to work.
+ */
+export type PostEffect =
+  /** Holds back this much overflow strength at night, per hero. */
+  | { type: "defence"; amount: number }
+  /** See the overflow coming this many nights ahead (one hero is enough). */
+  | { type: "raidWarning"; days: number }
+  /** Roll this loot table `rolls` times a day per hero: materials to the store, coins to gold. */
+  | { type: "gather"; loot: string; rolls: number };
+
+/**
+ * A post round the pit (DESIGN.md §8, content/posts/): heroes at home can be
+ * put on one. Posts start as makeshift camp duties in the opening and stay
+ * useful for heroes who aren't delving.
+ */
+export interface PostDef {
+  id: string;
+  name: string;
+  blurb: string;
+  /** Heroes it has room for. */
+  slots: number;
+  effects: readonly PostEffect[];
+  /** Porters can work it (they never fight, so not the barricade). */
+  porters?: boolean;
+  /** Only at the mining camp (DESIGN.md §8): gone once the opening is over. */
+  campOnly?: boolean;
+}
+
+/**
+ * The opening (DESIGN.md §8): a new game can start at the undefended mining
+ * camp. No delving until the `unlock` buildings are up.
+ */
+export interface OpeningRules {
+  /** Replaces the town's startingGold in a camp game. */
+  startingGold: number;
+  /** Replaces the town's startingStash: makeshift kit from the camp. */
+  startingStash: readonly string[];
+  /** Buildings that start at level 0 at the camp, whatever their startLevel. */
+  unbuilt: readonly string[];
+  /** Roster size before the Guild Hall is built. */
+  campRoster: number;
+  /** Building id -> level needed before parties can go down. */
+  unlock: Readonly<Record<string, number>>;
+  /** Items that arrive in the store room when the camp is held (the guild's proper kit). */
+  heldStash: readonly string[];
 }
