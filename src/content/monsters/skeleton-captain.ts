@@ -10,6 +10,8 @@ export default defineMonster({
   weapon: { name: "rusted greatsword", damageType: "slashing", attack: 6 },
   row: "front",
   tags: ["undead"],
+  // The dead hate the righteous (DESIGN.md §7): Good heroes are hit first.
+  hunts: ["align:good"],
   ai: "brute",
   loot: "skeleton-loot",
   variant: { of: "skeleton", chance: 0.15, minLevel: 2.5 },

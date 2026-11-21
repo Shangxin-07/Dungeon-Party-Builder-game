@@ -9,6 +9,12 @@ export default defineMonster({
   weapon: { name: "rusty blade", damageType: "slashing", attack: 4 },
   row: "front",
   tags: ["goblinoid", "humanoid"],
+  // Goblins know their own kind (DESIGN.md §7): a band may parley with an
+  // Evil party, or demand a cut of its loot, instead of fighting.
+  reactions: [
+    { reaction: "parley", to: ["evil"], chance: 0.25 },
+    { reaction: "tribute", to: ["evil"], chance: 0.25 },
+  ],
   ai: "brute",
   abilities: { disarm: 2 },
   loot: "goblin-loot",

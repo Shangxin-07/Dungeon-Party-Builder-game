@@ -10,5 +10,7 @@ export default defineLootTable({
     { item: "coins", weight: 2 },
     { item: "gem", weight: 1 },
     { item: "trinket", weight: 1 },
+    // Unholy (DESIGN.md §7): what the dark did to a miner's blade.
+    { item: "cursed-blade", weight: 0.5 },
   ],
 });

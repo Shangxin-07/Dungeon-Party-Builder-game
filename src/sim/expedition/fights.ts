@@ -5,9 +5,12 @@
 import { foeSheet, runCombat, type Side } from "../combat";
 import { rollEncounter } from "../encounter";
 import { risenHero, risenName, type Risen } from "../fallen";
+import { partyAlignment } from "../alignment";
+import { heroSheet, type Hero } from "../hero";
+import { reactToParty } from "../reactions";
 import { type RoomContext } from "../rooms";
 import type { CarriedGear } from "./report";
-import { list } from "./trip";
+import { an, list } from "./trip";
 import { TripCare } from "./care";
 
 /** Rooms and fights. Extended by TripRescue. */
@@ -30,7 +33,65 @@ export class TripFights extends TripCare {
       heal: (h, a) => this.heal(h, a),
       restoreMana: (h, a) => this.restoreMana(h, a),
       findLoot: (t, from) => this.findLoot(t, from, true),
+      alignment: () => this.alignmentNow(),
+      leader: () => this.leader(),
+      deed: (fact) => this.deeds[fact]++,
+      gift: (gold, news) => this.gifts.push({ gold, news }),
     };
+  }
+
+  // -------------------------------------------------------------------------
+  // Alignment (DESIGN.md §7)
+  // -------------------------------------------------------------------------
+
+  /** The party's alignment id as it stands (the living), or "divided". */
+  protected alignmentNow(): string {
+    return partyAlignment(this.ix, this.alive()).alignment?.id ?? "divided";
+  }
+
+  /** Who speaks for the party: the most charming conscious hero of its alignment. */
+  protected leader(): Hero | undefined {
+    const align = this.alignmentNow();
+    const up = this.conscious();
+    const ours = up.filter((h) => h.alignment === align);
+    let best: Hero | undefined;
+    for (const h of ours.length ? ours : up)
+      if (!best || heroSheet(this.ix, h).stats.CHA > heroSheet(this.ix, best).stats.CHA) best = h;
+    return best;
+  }
+
+  /**
+   * Monsters that react to the party's alignment (content/monsters/
+   * `reactions`): a goblin band that parleys or takes a toll. True: no fight.
+   */
+  protected reacts(monsters: readonly string[]): boolean {
+    if (!monsters.some((id) => this.ix.monster(id).reactions?.length)) return false;
+    const off = reactToParty({
+      ix: this.ix,
+      rng: this.rng,
+      monsters,
+      alignment: this.alignmentNow(),
+      leader: this.leader(),
+      log: (kind, text) => this.emit(kind, text),
+      payTribute: () => this.payTribute(),
+    });
+    if (off) {
+      this.parleys++;
+      for (const id of monsters) this.seen.add(id);
+    }
+    return off;
+  }
+
+  /** Hand over the cheapest-looking loot (never anyone's own gear). */
+  protected payTribute(): string | undefined {
+    let pick = -1;
+    this.haul.forEach((h, i) => {
+      if (h.keep) return;
+      if (pick < 0 || h.estimate < this.haul[pick]!.estimate) pick = i;
+    });
+    if (pick < 0) return undefined;
+    const [paid] = this.haul.splice(pick, 1);
+    return an(this.ix.item(paid!.item).name.toLowerCase());
   }
 
   // -------------------------------------------------------------------------
@@ -49,6 +110,7 @@ export class TripFights extends TripCare {
   }
 
   protected fight(monsters: readonly string[], opts: { surprise?: boolean } = {}): Side | "none" {
+    if (monsters.length && this.reacts(monsters)) return "none";
     // Monsters on this floor may have picked up a lost hero's gear.
     const loose = this.extras.gear?.[this.depth]?.filter((g) => !this.gearTaken.includes(g.id));
     let carried: { gear: CarriedGear; index: number } | undefined;

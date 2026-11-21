@@ -15,8 +15,11 @@ export default defineBuilding({
     {
       cost: 220,
       days: 4,
-      summary: "Resurrect: 100 gold + 20 a level and 3 bone dust, and they lose 2 levels (or 20%)",
+      summary:
+        "Sells holy symbols. Resurrect: 100 gold + 20 a level and 3 bone dust, and they lose 2 levels (or 20%)",
       effects: [
+        // Holy gear (DESIGN.md §7).
+        { type: "sells", items: ["holy-symbol"] },
         {
           type: "resurrect",
           gold: 100,
@@ -31,8 +34,10 @@ export default defineBuilding({
       cost: 450,
       materials: { "bone-dust": 4 },
       days: 6,
-      summary: "Resurrect: 80 gold + 15 a level and 2 bone dust, and they lose 1 level (or 10%)",
+      summary:
+        "Also sells blessed blades. Resurrect: 80 gold + 15 a level and 2 bone dust, and they lose 1 level (or 10%)",
       effects: [
+        { type: "sells", items: ["holy-symbol", "blessed-blade"] },
         {
           type: "resurrect",
           gold: 80,

@@ -12,6 +12,7 @@ import {
   repairCost,
   underConstruction,
   upgrade,
+  willDeal,
   type Construction,
   type TownState,
 } from "../../sim/town";
@@ -54,6 +55,13 @@ export function Buildings({ town, act }: { town: TownState; act: Act }) {
               <p className="small">{b.blurb}</p>
               {now ? <p className="small">Now: {now.summary}.</p> : null}
               {b.raidProof ? <p className="small muted">Raids can't damage it.</p> : null}
+              {level && !willDeal(ix, town, b.id) ? (
+                <p className="small warn">
+                  Shut: only deals with{" "}
+                  {(b.dealsWith ?? []).map((a) => ix.alignment(a).name).join(" or ")} heroes, and
+                  the guild has none.
+                </p>
+              ) : null}
               {work ? (
                 <Works
                   building={b.name}

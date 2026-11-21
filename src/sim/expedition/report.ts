@@ -33,6 +33,10 @@ export type ExpeditionEventKind =
   | "secret"
   /** A rescue party reaches where a lost party fell (DESIGN.md §10). */
   | "site"
+  /** Something the party decided about, by its alignment (DESIGN.md §7, content/events/). */
+  | "event"
+  /** Monsters talked to the party instead of fighting it (DESIGN.md §7). */
+  | "parley"
   /** Raids on the town reuse the trip log format. */
   | "raid";
 
@@ -113,6 +117,15 @@ export interface ExpeditionResult {
   porterHaul: HaulItem[];
   /** Hidden caches found, and those walked past without anyone noticing. */
   secrets: { found: number; missed: number };
+  /**
+   * Kind and cruel deeds the party did (DESIGN.md §7, content/events/), as
+   * morale facts. Optional: trips saved before M6.23 don't have them.
+   */
+  deeds?: { goodDeeds: number; evilDeeds: number };
+  /** Gold that will reach the town for what the party did: a reward later. */
+  gifts?: { gold: number; news: string }[];
+  /** Fights monsters talked their way out of (DESIGN.md §7). */
+  parleys?: number;
 }
 
 /** Where a lost party fell, as a rescue party will find it (DESIGN.md §10). */

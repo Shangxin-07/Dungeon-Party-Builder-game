@@ -1256,6 +1256,16 @@ sup.down {
   font-weight: 600;
 }
 
+/* Alignment in the dungeon (DESIGN.md §7): events and monsters who talk instead. */
+.log-x-event {
+  color: #c9b6e8;
+}
+
+.log-x-parley {
+  color: #c9b6e8;
+  font-style: italic;
+}
+
 .restock {
   list-style: none;
   margin: 0 0 10px;

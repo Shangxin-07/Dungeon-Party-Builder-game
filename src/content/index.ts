@@ -1,6 +1,6 @@
 /**
  * The content library. To add content, create a file in the matching folder
- * (classes/, items/, materials/, monsters/, rooms/, loot/, floors/, buildings/, perks/, secrets/,
+ * (classes/, items/, materials/, monsters/, rooms/, events/, loot/, floors/, buildings/, perks/, secrets/,
  * motivations/, ...) and add it to the
  * list below. No engine code changes are needed. The content tests check every id and reference.
  */
@@ -20,12 +20,27 @@ import type {
   PerkDef,
   PostDef,
   RoomDef,
+  EventDef,
   SecretDef,
   SkillDef,
   StatusDef,
   TransformDef,
 } from "./types";
 import fighterClass from "./classes/fighter";
+import holySymbolItem from "./items/holy-symbol";
+import blessedBladeItem from "./items/blessed-blade";
+import cursedBladeItem from "./items/cursed-blade";
+import boneCharmItem from "./items/bone-charm";
+import strangersPurseLoot from "./loot/strangers-purse";
+import shrineOfferingsLoot from "./loot/shrine-offerings";
+import shrineRelicLoot from "./loot/shrine-relic";
+import altarGiftsLoot from "./loot/altar-gifts";
+import strangeMeetingRoom from "./rooms/strange-meeting";
+import woundedStrangerEvent from "./events/wounded-stranger";
+import corneredGoblinEvent from "./events/cornered-goblin";
+import minersShrineEvent from "./events/miners-shrine";
+import darkAltarEvent from "./events/dark-altar";
+import blackMarketBuilding from "./buildings/black-market";
 import templeBuilding from "./buildings/temple";
 import graveyardBuilding from "./buildings/graveyard";
 import fallenRules from "./fallen";
@@ -302,6 +317,11 @@ export const items: readonly ItemDef[] = [
   pickAxeItem,
   slingItem,
   workLeathersItem,
+  // Holy and unholy gear (DESIGN.md §7): the Temple, the Black Market and events.
+  holySymbolItem,
+  blessedBladeItem,
+  cursedBladeItem,
+  boneCharmItem,
   // Materials (DESIGN.md §8): the guild keeps them to build with. See materials/.
   ...materials,
 ];
@@ -425,6 +445,11 @@ export const encounters: readonly EncounterDef[] = [
 ];
 export const lootTables: readonly LootTableDef[] = [
   goblinLoot,
+  // Events (DESIGN.md §7).
+  strangersPurseLoot,
+  shrineOfferingsLoot,
+  shrineRelicLoot,
+  altarGiftsLoot,
   richChestLoot,
   skeletonLoot,
   slimeLoot,
@@ -454,6 +479,8 @@ export const rooms: readonly RoomDef[] = [
   oreSeamRoom,
   silverVeinRoom,
   floodedGalleryRoom,
+  // Events played out by party alignment (DESIGN.md §7, events/).
+  strangeMeetingRoom,
 ];
 export const floors: readonly FloorDef[] = [
   diggingsFloor,
@@ -477,6 +504,8 @@ export const buildings: readonly BuildingDef[] = [
   graveyardBuilding,
   apothecaryBuilding,
   mineCageBuilding,
+  // Only deals with Evil heroes (DESIGN.md §7).
+  blackMarketBuilding,
 ];
 
 export const transforms: readonly TransformDef[] = [risenTransform];
@@ -496,6 +525,14 @@ export const secrets: readonly SecretDef[] = [
   delversStrongboxSecret,
 ];
 
+/** Room events, played out by the party's alignment (DESIGN.md §7). */
+export const events: readonly EventDef[] = [
+  woundedStrangerEvent,
+  corneredGoblinEvent,
+  minersShrineEvent,
+  darkAltarEvent,
+];
+
 export const library: Library = {
   classes,
   items,
@@ -507,6 +544,7 @@ export const library: Library = {
   encounters,
   lootTables,
   rooms,
+  events,
   floors,
   buildings,
   motivations,

@@ -20,6 +20,7 @@ const KINDS: Record<LedgerKind, string> = {
   burials: "Burials",
   gathered: "Work on the posts",
   spoils: "Spoils from raiders",
+  gifts: "Thanks for good deeds",
 };
 
 /** Days of accounts shown. */

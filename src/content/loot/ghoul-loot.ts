@@ -10,5 +10,7 @@ export default defineLootTable({
     { item: "trinket", weight: 2 },
     { item: "silver-ring", weight: 1 },
     { item: "bone-dust", weight: 2 },
+    // Unholy (DESIGN.md §7).
+    { item: "bone-charm", weight: 0.5 },
   ],
 });

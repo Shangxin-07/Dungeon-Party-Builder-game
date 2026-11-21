@@ -17,6 +17,8 @@ import {
 import { hasAi } from "./ai";
 import { EQUIP_SLOTS } from "./hero";
 import { hasRoom } from "./rooms";
+import { hasEventEffect } from "./events";
+import { hasReaction } from "./reactions";
 
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const RESERVED_ABILITY_IDS = ["attack"];
@@ -413,6 +415,59 @@ export function validateLibrary(lib: Library): string[] {
     if (a.weight <= 0) err(`${w}: weight must be positive`);
     rules(w, a.rules);
   }
+
+  // Alignment in the dungeon and in town (DESIGN.md §7).
+  const alignIds = new Set(lib.alignments.map((a) => a.id));
+  const partyAligns = new Set([...alignIds, "divided"]);
+  for (const m of lib.monsters) {
+    const w = `monster "${m.id}"`;
+    for (const r of m.reactions ?? []) {
+      if (!hasReaction(r.reaction)) err(`${w}: unknown reaction "${r.reaction}"`);
+      if (!(r.chance > 0 && r.chance <= 1)) err(`${w}: reaction chance must be above 0, at most 1`);
+      if (!r.to.length) err(`${w}: reaction "${r.reaction}" applies to no alignment`);
+      for (const a of r.to) if (!partyAligns.has(a)) err(`${w}: reaction to unknown "${a}"`);
+    }
+    for (const t of m.hunts ?? [])
+      if (t.startsWith("align:") && !alignIds.has(t.slice(6)))
+        err(`${w}: hunts unknown alignment "${t.slice(6)}"`);
+  }
+  for (const b of lib.buildings)
+    for (const a of b.dealsWith ?? [])
+      if (!alignIds.has(a)) err(`building "${b.id}": deals with unknown alignment "${a}"`);
+  ids("event", lib.events ?? []);
+  for (const e of lib.events ?? []) {
+    const w = `event "${e.id}"`;
+    if (e.floors[0] < 1 || e.floors[1] < e.floors[0]) err(`${w}: bad floor range`);
+    if (e.weight <= 0) err(`${w}: weight must be positive`);
+    if (!e.intro) err(`${w}: needs an intro`);
+    for (const a of alignIds) if (!e.outcomes[a]) err(`${w}: no outcome for a ${a} party`);
+    for (const [key, o] of Object.entries(e.outcomes)) {
+      if (!partyAligns.has(key)) err(`${w}: outcome for unknown alignment "${key}"`);
+      if (!o.text) err(`${w}: the ${key} outcome needs text`);
+      for (const x of o.effects) {
+        if (!hasEventEffect(x.type)) err(`${w}: unknown effect "${x.type}"`);
+        if (x.chance !== undefined && !(x.chance > 0 && x.chance <= 1))
+          err(`${w}: effect chance must be above 0, at most 1`);
+        if (x.type === "loot" && !lootIds.has(x.table))
+          err(`${w}: unknown loot table "${x.table}"`);
+        if (x.type === "hurt") {
+          if (x.damage[0] < 0 || x.damage[1] < x.damage[0]) err(`${w}: bad hurt damage`);
+          if (!DAMAGE_TYPES.includes(x.damageType))
+            err(`${w}: unknown damage type "${x.damageType}"`);
+        }
+        if (x.type === "gift" && (x.gold[0] < 0 || x.gold[1] < x.gold[0]))
+          err(`${w}: bad gift gold`);
+        if (x.type === "healParty" && !(x.percent > 0)) err(`${w}: healParty needs a percent`);
+      }
+    }
+  }
+  for (const r of lib.rooms)
+    if (r.behaviour === "event") {
+      const any = (lib.events ?? []).some(
+        (e) => e.floors[0] <= r.floors[1] && r.floors[0] <= e.floors[1],
+      );
+      if (!any) err(`room "${r.id}": no events can happen on its floors`);
+    }
 
   for (const m of lib.motivations) {
     const w = `motivation "${m.id}"`;

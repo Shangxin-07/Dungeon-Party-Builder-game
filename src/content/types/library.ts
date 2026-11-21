@@ -20,6 +20,7 @@ import type {
   WearRules,
 } from "./heroes";
 import type {
+  EventDef,
   EncounterDef,
   LootTableDef,
   RoomDef,
@@ -42,6 +43,8 @@ export interface Library {
   encounters: readonly EncounterDef[];
   lootTables: readonly LootTableDef[];
   rooms: readonly RoomDef[];
+  /** Room events played out by party alignment (DESIGN.md §7). */
+  events: readonly EventDef[];
   floors: readonly FloorDef[];
   buildings: readonly BuildingDef[];
   motivations: readonly MotivationDef[];
@@ -90,6 +93,8 @@ export const defineEncounter = (def: EncounterDef): EncounterDef => def;
 export const defineLootTable = (def: LootTableDef): LootTableDef => def;
 
 export const defineRoom = (def: RoomDef): RoomDef => def;
+
+export const defineEvent = (def: EventDef): EventDef => def;
 
 export const defineFloor = (def: FloorDef): FloorDef => def;
 

@@ -11,6 +11,7 @@ import type { ExpeditionEventKind } from "./expedition";
 import type { Hero } from "./hero";
 import type { Index } from "./library";
 import type { Rng } from "./rng";
+import { pickEvent, runEvent } from "./events";
 
 /** What a room handler can see and do. */
 export interface RoomContext {
@@ -38,6 +39,17 @@ export interface RoomContext {
   restoreMana(hero: Hero, amount: number): number;
   /** Roll a loot table and try to carry what's found. `from` reads like "in the chest". */
   findLoot(tableId: string, from: string): void;
+  /**
+   * The party's alignment right now (DESIGN.md §7): an alignment id, or
+   * "divided" with no two-thirds majority. Worked out from who's still alive.
+   */
+  alignment(): string;
+  /** Who speaks for the party: the most charming conscious hero of its alignment. */
+  leader(): Hero | undefined;
+  /** Count a deed (a morale fact such as "goodDeeds") for everyone on the trip. */
+  deed(fact: "goodDeeds" | "evilDeeds"): void;
+  /** Gold that reaches the town after the trip, with a line for the news. */
+  gift(gold: number, news: string): void;
 }
 
 export type RoomHandler = (ctx: RoomContext) => void;
@@ -127,6 +139,12 @@ registerRoom("trap", (ctx) => {
     const raw = Math.round(ctx.rng.int(trap.damage[0], trap.damage[1]) * scale);
     ctx.hurt(h, raw, trap.damageType);
   }
+});
+
+/** Something to decide about (content/events/), played out by the party's alignment. */
+registerRoom("event", (ctx) => {
+  const event = pickEvent(ctx.ix, ctx.depth, ctx.rng);
+  if (event) runEvent(ctx, event);
 });
 
 /** A chest or a hoard. */

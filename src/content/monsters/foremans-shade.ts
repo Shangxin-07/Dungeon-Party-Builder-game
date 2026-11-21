@@ -10,6 +10,8 @@ export default defineMonster({
   weapon: { name: "ghostly pick", damageType: "cold", attack: 7 },
   row: "front",
   tags: ["undead", "spirit"],
+  // The dead hate the righteous (DESIGN.md §7): Good heroes are hit first.
+  hunts: ["align:good"],
   ai: "brute",
   loot: "delver-loot",
   variant: { of: "lost-delver", chance: 0.2, minLevel: 5 },

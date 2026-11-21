@@ -54,6 +54,10 @@ export class TripBase {
   protected searching = false;
   /** Hero id → floor they last refused to turn back on (once per floor each). */
   protected refused = new Map<string, number>();
+  /** Alignment in the dungeon (DESIGN.md §7): deeds done, gifts earned, fights talked out of. */
+  protected deeds = { goodDeeds: 0, evilDeeds: 0 };
+  protected gifts: { gold: number; news: string }[] = [];
+  protected parleys = 0;
 
   constructor(
     protected ix: Index,
