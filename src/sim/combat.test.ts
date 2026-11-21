@@ -20,6 +20,22 @@ describe("combat", () => {
     expect(a.party).toEqual(b.party);
   });
 
+  it("marks lines as good or bad news for the party", () => {
+    const r = runCombat(ix, party(), ["goblin", "goblin", "goblin-archer"], { seed: 9 });
+    const heroIds = new Set(r.party.map((h) => h.id));
+    for (const e of r.log) {
+      if (e.kind === "killed") expect(e.tone).toBe("good");
+      if (e.kind === "downed" || e.kind === "died") expect(e.tone).toBe("bad");
+      if (e.kind === "hit") expect(e.tone).toBe(heroIds.has(e.actor!) ? "good" : "bad");
+      if (e.kind === "damage" && e.amount)
+        expect(e.tone).toBe(heroIds.has(e.target!) ? "bad" : "good");
+      if (e.kind === "round" || e.kind === "miss") expect(e.tone).toBeUndefined();
+    }
+    expect(r.log.at(-1)!.tone).toBe(r.winner === "party" ? "good" : "bad");
+    expect(r.log.some((e) => e.tone === "good")).toBe(true);
+    expect(r.log.some((e) => e.tone === "bad")).toBe(true);
+  });
+
   it("plays out differently with a different seed", () => {
     const logs = new Set(
       [1, 2, 3, 4, 5].map((seed) =>

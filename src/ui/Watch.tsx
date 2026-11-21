@@ -293,7 +293,8 @@ function Line({ e }: { e: ExpeditionEvent }) {
   if (e.kind === "combat") {
     const k = e.combat?.kind ?? "action";
     if (k === "round") return <li className="log-combat log-round-small">{e.text}</li>;
-    return <li className={`log-combat log-${k}`}>{e.text}</li>;
+    const tone = e.combat?.tone ? ` tone-${e.combat.tone}` : "";
+    return <li className={`log-combat log-${k}${tone}`}>{e.text}</li>;
   }
   return <li className={`log-x-${e.kind}`}>{e.text}</li>;
 }

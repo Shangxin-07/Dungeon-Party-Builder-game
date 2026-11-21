@@ -5,6 +5,9 @@
   --text: #ece4d6;
   --muted: #a89c88;
   --accent: #e0a64b;
+  /* Combat log: good and bad news for the party. Kept soft so only "exposed" shouts. */
+  --good: #93b98a;
+  --bad: #c98b7f;
   color-scheme: dark;
   font-family:
     system-ui,
@@ -336,6 +339,14 @@ footer {
 .log-combat.log-died,
 .log-combat.log-end {
   color: var(--text);
+}
+
+.log .tone-good {
+  color: var(--good);
+}
+
+.log .tone-bad {
+  color: var(--bad);
 }
 
 /* The party's front row is down: the back row can be hit. Mike wants it loud. */
