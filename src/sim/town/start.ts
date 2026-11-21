@@ -3,12 +3,13 @@
  */
 import { DEFAULT_ORDERS } from "../expedition";
 import { newDungeon } from "../dungeon";
-import { baseClasses, createHero, rollRecruit, type Hero } from "../hero";
+import { baseClasses, createHero, rollRecruit, trainRecruit, type Hero } from "../hero";
 import type { Index } from "../library";
 import type { Rng } from "../rng";
-import { TOWN_VERSION, type TownState } from "./state";
+import { TOWN_VERSION, newRecord, type TownState } from "./state";
 import { total, recruitsToday, recruitPicks } from "./read";
 import { roll } from "./internal";
+import { kitOut } from "./gear";
 
 export function pickName(town: TownState, names: readonly string[], rng: Rng): string {
   const taken = new Set([...town.roster, ...town.recruits].map((h) => h.name));
@@ -125,9 +126,22 @@ export function newTown(
     materials: {},
     posts: {},
   };
-  if (opening) town.camp = true;
   // M6: the first heroes turn up untrained. The player picks their classes
   // and kits them out from the store room (or calls autoStart).
   for (let i = 0; i < rules.startingRecruits; i++) town.recruits.push(makeRecruit(ix, town, names));
-  return town;
+  if (!opening) return town;
+  // At the mining camp they're already here, as miners with whatever was to
+  // hand: half in the front row with the picks, the rest behind with slings.
+  town.camp = true;
+  town.freeHires = 0;
+  let t = town;
+  town.recruits.forEach((r, i) => {
+    const h = trainRecruit(ix, r, opening.campClass);
+    if (i >= Math.ceil(town.recruits.length / 2)) h.row = "back";
+    t.roster.push(h);
+    t.records[h.id] = newRecord(t.day);
+  });
+  t.recruits = [];
+  for (const h of t.roster) t = kitOut(ix, t, h.id, false);
+  return t;
 }

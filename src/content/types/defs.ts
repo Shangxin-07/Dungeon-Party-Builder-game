@@ -32,9 +32,10 @@ export interface ClassRequirements {
 /**
  * Base classes can be recruited into, or learned at any level-up. Advanced
  * classes grow out of one class, combo classes out of two or more; neither
- * can be recruited into.
+ * can be recruited into. A camp class (the opening's Miner) is what everyone
+ * at the mining camp is until it's held; nobody chooses it.
  */
-export type ClassKind = "base" | "advanced" | "combo";
+export type ClassKind = "base" | "advanced" | "combo" | "camp";
 
 export interface ClassDef {
   /** Unique kebab-case id, referenced from other content. */

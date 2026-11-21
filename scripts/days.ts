@@ -32,6 +32,7 @@ import { indexLibrary } from "../src/sim/library";
 import {
   answerRaise,
   autoStart,
+  trainMiners,
   fightsToTrain,
   hirePorter,
   hirePrice,
@@ -157,6 +158,7 @@ function manPosts(t: TownState): TownState {
  */
 function properKit(t: TownState): TownState {
   if (t.camp) return t;
+  t = trainMiners(ix, t);
   for (const h of t.roster) {
     if (h.porter) continue;
     for (const id of ix.cls(h.classId).startingKit) {

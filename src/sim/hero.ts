@@ -344,6 +344,9 @@ export const classFit = (ix: Index, stats: StatBlock, classId: string) =>
 export const baseClasses = (ix: Index) =>
   ix.lib.classes.filter((c) => (c.kind ?? "base") === "base");
 
+/** Whether a hero is still in a camp class (the opening's Miner) and has to pick a real one. */
+export const inCampClass = (ix: Index, h: Hero) => ix.cls(h.classId).kind === "camp";
+
 /** The class a recruit's own stats suit best. */
 export function bestClass(ix: Index, stats: StatBlock): string {
   let best = baseClasses(ix)[0]!.id;

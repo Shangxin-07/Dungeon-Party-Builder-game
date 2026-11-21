@@ -36,17 +36,24 @@ export function Accounts({ town }: { town: TownState }) {
   return (
     <section aria-labelledby="accounts-heading" className="panel">
       <h2 id="accounts-heading">The books</h2>
-      <p className="muted">
-        Every hero is paid {w.base} gold a day plus {w.perLevel} per level. The roster costs{" "}
-        <strong>{bill}</strong> gold a day
-        {bill ? (
-          <>
-            , so {town.gold} gold lasts about <strong>{Math.floor(town.gold / bill)}</strong> days
-            without a haul
-          </>
-        ) : null}
-        . Anyone who goes unpaid takes it badly.
-      </p>
+      {town.camp ? (
+        <p className="muted">
+          Nobody is paid at the mining camp: the miners work for their keep. Wages of {w.base} gold
+          a day plus {w.perLevel} per level start once the camp is held.
+        </p>
+      ) : (
+        <p className="muted">
+          Every hero is paid {w.base} gold a day plus {w.perLevel} per level. The roster costs{" "}
+          <strong>{bill}</strong> gold a day
+          {bill ? (
+            <>
+              , so {town.gold} gold lasts about <strong>{Math.floor(town.gold / bill)}</strong> days
+              without a haul
+            </>
+          ) : null}
+          . Anyone who goes unpaid takes it badly.
+        </p>
+      )}
       {town.roster.length ? (
         <p className="skills">
           {town.roster.map((h) => (

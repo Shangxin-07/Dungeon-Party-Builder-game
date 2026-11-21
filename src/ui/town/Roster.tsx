@@ -8,6 +8,7 @@ import {
   EQUIP_SLOTS,
   heroSheet,
   heroTitle,
+  inCampClass,
   type Hero,
 } from "../../sim/hero";
 import {
@@ -19,6 +20,8 @@ import {
   packItem,
   setRow,
   toggleParty,
+  trainMiner,
+  trainMiners,
   trainPorter,
   unequip,
   unpackItem,
@@ -43,6 +46,16 @@ export function Roster({ town, act }: { town: TownState; act: Act }) {
   return (
     <section aria-labelledby="roster-heading" className="panel">
       <h2 id="roster-heading">Roster</h2>
+      {!town.camp && town.roster.some((h) => !h.porter && inCampClass(ix, h)) ? (
+        <p className="small">
+          The camp is held, and the miners can train for the dungeon. Pick each one's class on their
+          card, or{" "}
+          <button type="button" className="link" onClick={() => act((t) => trainMiners(ix, t))}>
+            pick for me
+          </button>
+          .
+        </p>
+      ) : null}
       {town.roster.length ? (
         <ul className="hero-cards">
           {town.roster.map((h) => (
@@ -97,19 +110,56 @@ export function PorterTraining({ hero: h, act }: { hero: Hero; act: Act }) {
   );
 }
 
+/** A miner's class picker, once the camp is held (DESIGN.md §8). */
+export function MinerTraining({ town, hero: h, act }: { town: TownState; hero: Hero; act: Act }) {
+  const fit = bestClass(ix, h.stats);
+  const [classId, setClassId] = useState(fit);
+  if (town.camp)
+    return (
+      <p className="small quiet">
+        A miner until the camp is held. Then they put down the pick and train in a proper class.
+      </p>
+    );
+  return (
+    <p className="small">
+      <label>
+        Train as{" "}
+        <select value={classId} onChange={(e) => setClassId(e.target.value)}>
+          {baseClasses(ix).map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+              {c.id === fit ? " (best fit)" : ""}
+            </option>
+          ))}
+        </select>
+      </label>{" "}
+      <button
+        type="button"
+        className="btn"
+        onClick={() => act((t) => trainMiner(ix, t, h.id, classId))}
+      >
+        Train
+      </button>{" "}
+      <span className="muted">The camp is held: pick the class they'll delve as.</span>
+    </p>
+  );
+}
+
 export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Act }) {
   const inParty = town.party.includes(h.id) || (town.porters ?? []).includes(h.id);
   const rec = town.records[h.id];
   const sheet = heroSheet(ix, h);
   const supplies = tally(town.stash.filter((id) => ix.item(id).slot === "consumable"));
   const packFull = h.pack.length >= sheet.derived.carrySlots;
+  const miner = inCampClass(ix, h);
 
   return (
     <li className={`hero-card${inParty ? " in-party" : ""}`}>
       <div className="hero-head">
         <h3>{h.name}</h3>
         <span className="muted small">
-          {h.porter ? "Porter" : heroTitle(ix, h)}, paid {wage(ix, h)} gold a day
+          {h.porter ? "Porter" : heroTitle(ix, h)},{" "}
+          {town.camp ? "working for their keep" : `paid ${wage(ix, h)} gold a day`}
         </span>
         {h.levelUps.length ? <span className="badge">Level up!</span> : null}
       </div>
@@ -117,6 +167,7 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
       <MoraleBar hero={h} log />
       <WearBar hero={h} />
       {h.porter ? <PorterTraining hero={h} act={act} /> : <XpBar hero={h} />}
+      {miner ? <MinerTraining town={town} hero={h} act={act} /> : null}
       <Personality hero={h} town={town} />
       <LevelUpPicker key={h.levelUps[0]?.level ?? 0} hero={h} town={town} act={act} />
       {h.raiseAsk ? (
@@ -146,6 +197,7 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
         <button
           type="button"
           className={`btn${inParty ? " btn-on" : ""}`}
+          hidden={!!town.camp || miner}
           aria-pressed={inParty}
           onClick={() => act((t) => toggleParty(ix, t, h.id))}
         >
@@ -184,7 +236,9 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
           title={`Fill in the ${ix.cls(h.classId).name.toLowerCase()}'s usual kit (${ix
             .cls(h.classId)
             .startingKit.map((id) => ix.item(id).name)
-            .join(", ")}): from the store room first, then the Market.`}
+            .join(
+              ", ",
+            )}): from the store room first${town.camp ? " (nothing is for sale at the camp)" : ", then the Market"}.`}
           onClick={() => act((t) => kitOut(ix, t, h.id))}
         >
           Kit out

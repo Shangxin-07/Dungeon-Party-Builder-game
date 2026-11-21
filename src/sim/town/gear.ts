@@ -27,7 +27,8 @@ export function kitOut(ix: Index, town: TownState, heroId: string, buy = true): 
       continue;
     }
     if (!t.stash.includes(id)) {
-      if (!buy || !stock.includes(id) || t.gold < buyPrice(item)) continue;
+      // Nothing is bought at the mining camp: its gold is for the build.
+      if (!buy || t.camp || !stock.includes(id) || t.gold < buyPrice(item)) continue;
       book(t, "bought", -buyPrice(item));
       t.stash.push(id);
     }

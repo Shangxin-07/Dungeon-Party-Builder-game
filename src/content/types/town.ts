@@ -187,6 +187,12 @@ export interface OpeningRules {
   unbuilt: readonly string[];
   /** Roster size before the Guild Hall is built. */
   campRoster: number;
+  /**
+   * The class everyone at the camp holds (a "camp" kind class): the starting
+   * heroes begin in it, and anyone signed there joins in it. Once the camp is
+   * held, each picks a base class.
+   */
+  campClass: string;
   /** Building id -> level needed before parties can go down. */
   unlock: Readonly<Record<string, number>>;
   /** Items that arrive in the store room when the camp is held (the guild's proper kit). */

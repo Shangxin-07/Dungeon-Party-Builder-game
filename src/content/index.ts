@@ -37,6 +37,7 @@ import spellbladeClass from "./classes/spellblade";
 import paladinClass from "./classes/paladin";
 import frostMageClass from "./classes/frost-mage";
 import assassinClass from "./classes/assassin";
+import minerClass from "./classes/miner";
 import flameBladeAbility from "./abilities/flame-blade";
 import arcaneWardAbility from "./abilities/arcane-ward";
 import holyStrikeAbility from "./abilities/holy-strike";
@@ -220,6 +221,8 @@ export const classes: readonly ClassDef[] = [
   paladinClass,
   frostMageClass,
   assassinClass,
+  // The opening's camp class (DESIGN.md §8): held until the camp is, then swapped.
+  minerClass,
 ];
 /** Building materials and rarer things: items the guild keeps rather than sells. */
 export const materials: readonly ItemDef[] = [

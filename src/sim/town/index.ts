@@ -75,6 +75,8 @@ export {
   hirePorter,
   fightsToTrain,
   trainPorter,
+  trainMiner,
+  trainMiners,
   autoStart,
   dismiss,
   porterPrice,

@@ -2,7 +2,17 @@
  * Hiring, training porters, dismissing, and choosing level-ups.
  */
 import type { Stat } from "../../content/types";
-import { baseClasses, EQUIP_SLOTS, heroSheet, trainRecruit, classFit, type Hero } from "../hero";
+import {
+  baseClasses,
+  bestClass,
+  EQUIP_SLOTS,
+  heroSheet,
+  inCampClass,
+  rollPersonality,
+  trainRecruit,
+  classFit,
+  type Hero,
+} from "../hero";
 import { chooseClass, gainXp, spendLevelUp } from "../levels";
 import type { Index } from "../library";
 import { applyMorale } from "../morale";
@@ -40,7 +50,9 @@ export function hire(ix: Index, town: TownState, recruitId: string, classId?: st
     throw new TownError("The roster is full. Upgrade the Guild Hall or dismiss someone.");
   const price = hirePrice(ix, t, t.recruits[i]!);
   if (t.gold < price) throw new TownError("Not enough gold.");
-  if (classId && !baseClasses(ix).some((c) => c.id === classId))
+  // At the mining camp everyone signs as a miner, whatever class was asked for.
+  if (t.camp) classId = ix.lib.opening.campClass;
+  else if (classId && !baseClasses(ix).some((c) => c.id === classId))
     throw new TownError("Recruits can only start in a base class.");
   const [recruit] = t.recruits.splice(i, 1);
   const h = recruit!.untrained ? trainRecruit(ix, recruit!, classId ?? recruit!.classId) : recruit!;
@@ -111,6 +123,72 @@ export function trainPorter(
   t.roster[t.roster.findIndex((x) => x.id === heroId)] = trained;
   t.porters = (t.porters ?? []).filter((id) => id !== heroId);
   if (t.party.length < partySlots(ix, t)) t.party.push(heroId);
+  return t;
+}
+
+/**
+ * Train a miner (the opening's camp class, DESIGN.md §8) in a base class once
+ * the camp is held. Their stats move by the class's training as a recruit's
+ * would, and every level they earned at the camp moves over to the new class.
+ */
+export function trainMiner(ix: Index, town: TownState, heroId: string, classId: string): TownState {
+  const t = edit(town);
+  const h = hero(t, heroId);
+  if (!inCampClass(ix, h)) throw new TownError(`${h.name} already has a trade.`);
+  if (t.camp) throw new TownError("Nobody trains until the camp is held.");
+  const cls = baseClasses(ix).find((c) => c.id === classId);
+  if (!cls) throw new TownError("Miners can only train in a base class.");
+  const from = ix.cls(h.classId);
+  const stats = { ...h.stats } as Record<Stat, number>;
+  for (const s of Object.keys(stats) as Stat[])
+    stats[s] = Math.max(
+      1,
+      Math.min(30, stats[s] + (cls.baseStats?.[s] ?? 10) - (from.baseStats?.[s] ?? 10)),
+    );
+  h.stats = stats;
+  const levels = Object.values(h.classes ?? {}).reduce((a, b) => a + b, 0) || 1;
+  h.classes = { [classId]: levels };
+  for (const up of h.levelUps) if (up.classId === from.id) up.classId = classId;
+  for (const p of h.past ?? []) if (p.classId === from.id) p.classId = classId;
+  for (const l of h.lost ?? []) {
+    if (l.past?.classId === from.id) l.past.classId = classId;
+    if (l.pending?.classId === from.id) l.pending.classId = classId;
+  }
+  h.classId = classId;
+  h.row = cls.row;
+  const p = rollPersonality(ix, h.id, h.name, h.stats, classId);
+  h.likes = p.likes;
+  h.dislikes = p.dislikes;
+  news(t, `${h.name} puts down the pick-axe to train as a ${cls.name}.`, "good");
+  return keepHpInBounds(ix, t, h);
+}
+
+/**
+ * Train every miner once the camp is held, as autoStart would sign recruits
+ * ("pick for me"): the starting roster's classes to whoever suits each best,
+ * the rest to the class their stats suit.
+ */
+export function trainMiners(
+  ix: Index,
+  town: TownState,
+  classIds: readonly string[] = ix.lib.town.startingRoster,
+): TownState {
+  const wanted = [...classIds];
+  for (const h of town.roster) {
+    const i = wanted.indexOf(h.classId);
+    if (i >= 0) wanted.splice(i, 1);
+  }
+  let t = town;
+  const miners = () => t.roster.filter((h) => !h.porter && inCampClass(ix, h));
+  for (const classId of wanted) {
+    const open = miners();
+    if (!open.length) break;
+    const best = open.reduce((a, b) =>
+      classFit(ix, b.stats, classId) > classFit(ix, a.stats, classId) ? b : a,
+    );
+    t = trainMiner(ix, t, best.id, classId);
+  }
+  for (const h of miners()) t = trainMiner(ix, t, h.id, bestClass(ix, h.stats));
   return t;
 }
 

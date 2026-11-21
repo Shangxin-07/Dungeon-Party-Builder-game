@@ -73,7 +73,9 @@ export function RecruitCard({
   full: boolean;
 }) {
   const fit = h.untrained ? bestClass(ix, h.stats) : h.classId;
-  const [classId, setClassId] = useState(fit);
+  const [picked, setClassId] = useState(fit);
+  // At the mining camp everyone signs as a miner and picks a class once it's held.
+  const classId = town.camp ? ix.lib.opening.campClass : picked;
   const hero = h.untrained ? trainRecruit(ix, h, classId) : h;
   const price = hirePrice(ix, town, h);
   return (
@@ -87,7 +89,7 @@ export function RecruitCard({
           <p className="small quiet">
             Raw: {STAT_ORDER.map((k) => `${k} ${h.stats[k]}`).join(", ")}
           </p>
-          <label className="small">
+          <label className="small" hidden={town.camp}>
             Train as{" "}
             <select value={classId} onChange={(e) => setClassId(e.target.value)}>
               {baseClasses(ix).map((c) => (
