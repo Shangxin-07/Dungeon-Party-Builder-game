@@ -27,8 +27,10 @@ import {
   defence,
   dismiss,
   equip,
+  fightsToTrain,
   haggler,
   hire,
+  hirePorter,
   hirePrice,
   kitOut,
   launch,
@@ -51,6 +53,7 @@ import {
   shopStock,
   toggleParty,
   TownError,
+  trainPorter,
   underConstruction,
   unequip,
   unpackItem,
@@ -689,6 +692,26 @@ function PartyPanel({ town, act, onLaunch }: { town: TownState; act: Act; onLaun
         </label>
       </div>
 
+      <p className="small">
+        Porters{" "}
+        <span className="muted">
+          ({(town.porters ?? []).length}/{ix.lib.town.porters.slots})
+        </span>
+        :{" "}
+        {(town.porters ?? []).length ? (
+          (town.porters ?? []).map((id) => town.roster.find((x) => x.id === id)?.name).join(", ") +
+          ` ${(town.porters ?? []).length === 1 ? "carries" : "carry"} ${(
+            town.porters ?? []
+          ).reduce((s, id) => {
+            const p = town.roster.find((x) => x.id === id);
+            return s + (p ? heroSheet(ix, p).derived.carrySlots : 0);
+          }, 0)} more slots of loot.`
+        ) : (
+          <span className="muted">
+            none. Porters carry loot, don't fight, and run for home if the party falls.
+          </span>
+        )}
+      </p>
       <ScoutingReport town={town} party={party} />
       {warnings.length ? (
         <ul className="warnings">
@@ -734,8 +757,49 @@ function Roster({ town, act }: { town: TownState; act: Act }) {
   );
 }
 
+/** A porter's progress towards training, and the class picker once they're ready. */
+function PorterTraining({ hero: h, act }: { hero: Hero; act: Act }) {
+  const left = fightsToTrain(ix, h);
+  const fit = bestClass(ix, h.stats);
+  const [classId, setClassId] = useState(fit);
+  const need = ix.lib.town.porters.trainAfterFights;
+  return (
+    <div className="small">
+      <p className="quiet">
+        Watched {h.porter!.watched} {h.porter!.watched === 1 ? "fight" : "fights"}
+        {left ? ` (${left} more before they can train)` : ""}; {h.porter!.xp} XP banked for when
+        they do.
+      </p>
+      {left ? (
+        <progress max={need} value={need - left} aria-label="Watched fights" />
+      ) : (
+        <p>
+          <label>
+            Train as{" "}
+            <select value={classId} onChange={(e) => setClassId(e.target.value)}>
+              {ix.lib.classes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                  {c.id === fit ? " (best fit)" : ""}
+                </option>
+              ))}
+            </select>
+          </label>{" "}
+          <button
+            type="button"
+            className="btn"
+            onClick={() => act((t) => trainPorter(ix, t, h.id, classId))}
+          >
+            Train
+          </button>
+        </p>
+      )}
+    </div>
+  );
+}
+
 function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Act }) {
-  const inParty = town.party.includes(h.id);
+  const inParty = town.party.includes(h.id) || (town.porters ?? []).includes(h.id);
   const rec = town.records[h.id];
   const sheet = heroSheet(ix, h);
   const supplies = tally(town.stash.filter((id) => ix.item(id).slot === "consumable"));
@@ -746,14 +810,15 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
       <div className="hero-head">
         <h3>{h.name}</h3>
         <span className="muted small">
-          {ix.cls(h.classId).name}, level {h.level}, paid {wage(ix, h)} gold a day
+          {h.porter ? "Porter" : `${ix.cls(h.classId).name}, level ${h.level}`}, paid {wage(ix, h)}{" "}
+          gold a day
         </span>
         {h.levelUps.length ? <span className="badge">Level up!</span> : null}
       </div>
       <HeroBars hero={h} />
       <MoraleBar hero={h} log />
       <WearBar hero={h} />
-      <XpBar hero={h} />
+      {h.porter ? <PorterTraining hero={h} act={act} /> : <XpBar hero={h} />}
       <Personality hero={h} town={town} />
       <LevelUpPicker key={h.levelUps[0]?.level ?? 0} hero={h} act={act} />
       {h.raiseAsk ? (
@@ -786,9 +851,15 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
           aria-pressed={inParty}
           onClick={() => act((t) => toggleParty(ix, t, h.id))}
         >
-          {inParty ? "In the party" : "Add to party"}
+          {h.porter
+            ? inParty
+              ? "Carrying for the party"
+              : "Take along"
+            : inParty
+              ? "In the party"
+              : "Add to party"}
         </button>
-        <div className="seg" role="group" aria-label="Row">
+        <div className="seg" role="group" aria-label="Row" hidden={!!h.porter}>
           {(["front", "back"] as const).map((r) => (
             <button
               key={r}
@@ -1033,6 +1104,18 @@ function RecruitCard({
       >
         {price ? `Hire for ${price} gold` : `Sign up as a ${ix.cls(classId).name.toLowerCase()}`}
       </button>
+      {h.untrained ? (
+        <button
+          type="button"
+          className="link small"
+          title="Porters don't fight. They carry loot, watch the fighting, and run for home if the party falls. Train them in a class once they've seen enough."
+          disabled={full || town.gold < ix.lib.town.porters.hireCost}
+          onClick={() => act((t) => hirePorter(ix, t, h.id))}
+        >
+          or sign as a porter ({ix.lib.town.porters.hireCost} gold, {ix.lib.town.porters.wage} a
+          day)
+        </button>
+      ) : null}
     </li>
   );
 }

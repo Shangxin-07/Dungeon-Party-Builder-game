@@ -9,6 +9,7 @@
  *   npm run days -- --days 60 --seed 7 --runs 200   # summary over many towns
  *   npm run days -- --policy 2 --build --static     # never rotate the party
  *   npm run days -- --policy 1 --clear 50           # thin floor 1 out by half each trip
+ *   npm run days -- --policy 2 --porters 2          # keep two porters (trained when the party is short)
  *
  * The bot restocks used supplies, keeps one hero on the bench and sends the
  * freshest heroes (unless --static), and rests until the party is at 90% HP
@@ -19,13 +20,16 @@
  * the defences are up, cheapest first, keeping a few days' wages in hand.
  */
 import { heroNames, library } from "../src/content";
-import { fatigueTier, heroSheet, type Hero } from "../src/sim/hero";
+import { bestClass, fatigueTier, heroSheet, type Hero } from "../src/sim/hero";
 import { indexLibrary } from "../src/sim/library";
 import {
   answerRaise,
   autoStart,
+  fightsToTrain,
+  hirePorter,
   hirePrice,
   kitOut,
+  trainPorter,
   cancelRescue,
   cantLaunch,
   chooseLevelUp,
@@ -71,6 +75,7 @@ const rotate = !flag("static");
 const runs = Number(arg("runs") ?? 1);
 const seed0 = Number(arg("seed") ?? 1);
 const clear = Number(arg("clear") ?? 0);
+const porterCount = Number(arg("porters") ?? 0);
 
 const DEFENCES = ["palisade", "gate", "watchtower"];
 
@@ -121,10 +126,32 @@ function step(t: TownState): TownState {
   let budget = t.gold - 2 * wageBill(ix, t);
   const okd = plan.filter((l) => (budget -= l.cost) >= 0);
   if (okd.length) t = restock(ix, t, okd);
+  // Porters (--porters N): keep N, and train one when the party is short.
+  const fighters = () => t.roster.filter((h) => !h.porter);
+  for (const p of t.roster.filter((h) => h.porter && !fightsToTrain(ix, h)))
+    if (fighters().length < partySlots(ix, t) + 1) {
+      t = trainPorter(ix, t, p.id, bestClass(ix, p.stats));
+      t = kitOut(ix, t, p.id);
+    }
+  const porterOnOffer = t.recruits.find((r) => r.untrained);
+  if (
+    t.roster.filter((h) => h.porter).length < porterCount &&
+    porterOnOffer &&
+    t.roster.length < rosterSize(ix, t) &&
+    t.gold >= library.town.porters.hireCost + 60
+  )
+    t = hirePorter(ix, t, porterOnOffer.id);
+  t = {
+    ...t,
+    porters: t.roster
+      .filter((h) => h.porter && h.condition === "ok" && !h.injuries.length)
+      .slice(0, library.town.porters.slots)
+      .map((h) => h.id),
+  };
   // Keep a hero on the bench so the party can rotate.
   if (
     rotate &&
-    t.roster.length < partySlots(ix, t) + 1 &&
+    fighters().length < partySlots(ix, t) + 1 &&
     t.roster.length < rosterSize(ix, t) &&
     t.recruits.length &&
     t.gold >= hirePrice(ix, t, t.recruits[0]!) + 60
@@ -135,11 +162,11 @@ function step(t: TownState): TownState {
   const fit = (h: Hero) => h.condition === "ok" && h.hp >= heroSheet(ix, h).derived.maxHp * 0.9;
   const tiredness = (h: Hero) => h.fatigue + (h.injuries.length ? 50 : 0) + (fit(h) ? 0 : 100);
   if (rotate) {
-    const best = [...t.roster]
+    const best = fighters()
       .sort((a, b) => tiredness(a) - tiredness(b))
       .slice(0, partySlots(ix, t));
     if (!best.some((h) => h.row === "front")) {
-      const front = t.roster
+      const front = fighters()
         .filter((h) => h.row === "front" && !best.includes(h))
         .sort((a, b) => tiredness(a) - tiredness(b))[0];
       if (front) best[best.length - 1] = front;
@@ -147,7 +174,7 @@ function step(t: TownState): TownState {
     t = { ...t, party: best.map((h) => h.id) };
   }
   while (t.party.length < partySlots(ix, t)) {
-    const spare = t.roster.find((h) => !t.party.includes(h.id));
+    const spare = fighters().find((h) => !t.party.includes(h.id));
     if (spare) t = toggleParty(ix, t, spare.id);
     else if (t.recruits.length && t.gold >= hirePrice(ix, t, t.recruits[0]!) + 30) t = signUp(t);
     else break;

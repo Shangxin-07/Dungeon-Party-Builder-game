@@ -33,6 +33,16 @@ export default defineTownRules({
   haulRate: 0.7,
   // A haggler with Appraisal 70 and CHA 14 gets 8% more; never above 90%.
   haggle: { perAppraisal: 0.002, perCha: 0.01, max: 0.9 },
+  // Porters: cheap hands who carry loot and run for it if the party falls.
+  // A floor-1 porter with average DEX and END gets home 60% of the time.
+  porters: {
+    hireCost: 20,
+    wage: 1,
+    slots: 2,
+    trainAfterFights: 8,
+    xpShare: 0.5,
+    escape: { base: 0.6, perStat: 0.02, perFloor: 0.15 },
+  },
   restPercent: 40,
   // A raid-damaged building costs a quarter of its build price to fix.
   repairRate: 0.25,

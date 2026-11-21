@@ -92,6 +92,8 @@ export type ExpeditionEventKind =
   | "quiet"
   /** A low-morale hero ignores the standing orders (DESIGN.md §6). */
   | "disobey"
+  /** A porter's run for home after a wipe (M6). */
+  | "porter"
   /** A hidden cache found by the party's best scout (M6). */
   | "secret"
   /** A rescue party reaches where a lost party fell (DESIGN.md §10). */
@@ -162,6 +164,10 @@ export interface ExpeditionResult {
   disobeyed: number;
   /** Extra rooms spent hunting under a "clear the floor" order. */
   huntRooms: number;
+  /** Porters who went along, and whether they got home. */
+  porters: { id: string; name: string; home: boolean }[];
+  /** Loot porters ran home with after a wipe (not in `haul` or `leftBehind`). */
+  porterHaul: HaulItem[];
   /** Hidden caches found, and those walked past without anyone noticing. */
   secrets: { found: number; missed: number };
 }
@@ -192,6 +198,8 @@ export interface ExpeditionExtras {
   site?: SiteVisit;
   /** Scavenged gear by floor depth. */
   gear?: Readonly<Record<number, readonly CarriedGear[]>>;
+  /** Porters (M6): they carry loot, never fight, and run for it if the party falls. */
+  porters?: readonly Hero[];
 }
 
 // ---------------------------------------------------------------------------
@@ -318,7 +326,10 @@ class Expedition {
 
   run(): ExpeditionResult {
     const { targetFloor, retreat, loot } = this.orders;
-    const names = list(this.conscious().map((h) => h.name));
+    const porters = this.extras.porters ?? [];
+    const names =
+      list(this.conscious().map((h) => h.name)) +
+      (porters.length ? `, with ${list(porters.map((p) => p.name))} carrying,` : "");
     const site = this.extras.site;
     const mission = site
       ? `floor ${site.floor} to find ${site.trapped.length ? list(site.trapped.map((h) => h.name)) : "the lost party"}`
@@ -461,8 +472,14 @@ class Expedition {
 
   private finish(outcome: ExpeditionResult["outcome"]): ExpeditionResult {
     const wiped = outcome === "wiped";
+    let porterHaul: HaulItem[] = [];
+    const porters: ExpeditionResult["porters"] = [];
     if (wiped) {
       this.emit("wipe", "Nobody is left standing. The party lies where it fell.");
+      porterHaul = this.portersRun(porters);
+    } else {
+      for (const p of this.extras.porters ?? [])
+        porters.push({ id: p.id, name: p.name, home: true });
     }
     return {
       outcome,
@@ -474,7 +491,9 @@ class Expedition {
       roomsVisited: this.roomsVisited,
       party: this.party,
       haul: wiped ? [] : this.haul,
-      leftBehind: wiped ? this.haul : [],
+      leftBehind: wiped ? this.haul.filter((h) => !porterHaul.includes(h)) : [],
+      porterHaul,
+      porters,
       kills: this.kills,
       floorKills: this.floorKills,
       log: this.log,
@@ -488,6 +507,53 @@ class Expedition {
       secrets: this.secrets,
       huntRooms: this.hunts,
     };
+  }
+
+  /**
+   * The party has fallen: each porter drops what they can't run with and
+   * makes for the surface (content/town.ts `porters.escape`). Those who make
+   * it bring home the most valuable loot they can carry.
+   */
+  private portersRun(out: ExpeditionResult["porters"]): HaulItem[] {
+    const esc = this.ix.lib.town.porters.escape;
+    const loose = [...this.haul].sort(
+      (a, b) => worthPerSlot(this.ix, b) - worthPerSlot(this.ix, a),
+    );
+    const saved: HaulItem[] = [];
+    for (const p of this.extras.porters ?? []) {
+      const sheet = heroSheet(this.ix, p);
+      const chance = Math.max(
+        0.05,
+        Math.min(
+          0.95,
+          esc.base +
+            (sheet.stats.DEX + sheet.stats.END - 20) * esc.perStat -
+            (this.depth - 1) * esc.perFloor,
+        ),
+      );
+      const home = this.rng.chance(chance);
+      out.push({ id: p.id, name: p.name, home });
+      if (!home) {
+        this.emit("porter", `${p.name} runs for the stairs, but doesn't make it.`);
+        continue;
+      }
+      let room = sheet.derived.carrySlots;
+      const took: string[] = [];
+      for (const item of [...loose]) {
+        if (item.keep) continue;
+        const size = itemSize(this.ix.item(item.item));
+        if (size > room) continue;
+        room -= size;
+        saved.push(item);
+        loose.splice(loose.indexOf(item), 1);
+        took.push(this.ix.item(item.item).name.toLowerCase());
+      }
+      this.emit(
+        "porter",
+        `${p.name} runs for it${took.length ? ` with ${list(took)}` : ""} and gets back to town.`,
+      );
+    }
+    return saved;
   }
 
   /**
@@ -837,9 +903,10 @@ class Expedition {
   // Loot and carrying
   // -------------------------------------------------------------------------
 
-  /** Free carry slots: everyone standing carries, downed heroes are carried. */
+  /** Free carry slots: everyone standing carries, downed heroes are carried, and so do porters. */
   private capacity(): number {
     let slots = 0;
+    for (const p of this.extras.porters ?? []) slots += heroSheet(this.ix, p).derived.carrySlots;
     for (const h of this.conscious()) {
       slots += heroSheet(this.ix, h).derived.carrySlots - h.pack.length;
     }

@@ -494,6 +494,24 @@ export interface SecretDef {
   loot: string;
 }
 
+/** Porters (M6): untrained hands who carry loot and watch the fighting. */
+export interface PorterRules {
+  /** Gold to sign a recruit as a porter, and their daily wage. */
+  hireCost: number;
+  wage: number;
+  /** Porters who can go down with one party. */
+  slots: number;
+  /** Fights a porter must watch before they can be trained in a class. */
+  trainAfterFights: number;
+  /** Share of a fighter's XP a porter banks for each trip, paid out on training. */
+  xpShare: number;
+  /**
+   * When the party falls, each porter runs for it: chance = base +
+   * (DEX + END − 20) × perStat − (floor − 1) × perFloor, kept within 5-95%.
+   */
+  escape: { base: number; perStat: number; perFloor: number };
+}
+
 /** How often hidden caches turn up, and how Scouting finds them (content/searching.ts). */
 export interface SearchRules {
   /** Chance each room the party walks through (and survives) has a cache. */
@@ -605,6 +623,7 @@ export interface TownRules {
    * on top of the usual rate, never above `max` (M6).
    */
   haggle: { perAppraisal: number; perCha: number; max: number };
+  porters: PorterRules;
   /** Share of an item's value the Market pays when you sell it. */
   sellRate: number;
   /**

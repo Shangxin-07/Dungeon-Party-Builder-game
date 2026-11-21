@@ -69,6 +69,8 @@ export function fitDefenders(ix: Index, home: readonly Hero[]): Hero[] {
   const rules = ix.lib.dungeon.raids;
   return home
     .filter((h) => {
+      // Porters don't fight, not even for the town.
+      if (h.porter) return false;
       const max = heroSheet(ix, h).derived.maxHp;
       return h.condition === "ok" && h.hp >= (max * rules.defenderMinHpPercent) / 100;
     })
