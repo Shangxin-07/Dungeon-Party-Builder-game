@@ -110,6 +110,7 @@ export function resolveRaid(ix: Index, input: RaidInput, rng: Rng): RaidReport {
     const fight = runCombat(ix, defenders, report.raiders, {
       seed: rng.int(0, 2 ** 31 - 1),
       noBleeding: true,
+      level: input.level,
     });
     report.after = fight.party;
     report.kills = fight.kills.length;

@@ -4,6 +4,7 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DERIVED, STATS, type Derived } from "../content/types";
+import { knownAbilities } from "../sim/abilities";
 import type { FoeSheet } from "../sim/combat";
 import type { ExpeditionEvent, ExpeditionResult } from "../sim/expedition";
 import { fatigueTier, heroSheet, type Hero } from "../sim/hero";
@@ -138,7 +139,7 @@ export function HeroBars({ hero }: { hero: Hero }) {
 
 /** Only heroes with spells that cost mana get a mana bar. */
 export const usesMana = (hero: Hero) =>
-  ix.cls(hero.classId).abilities.some((id) => (ix.ability(id).cost ?? 0) > 0);
+  knownAbilities(ix, hero).some((k) => (k.ability.cost ?? 0) > 0);
 
 /** The 7 stats, then the secondary stats and skills if `full`. */
 export function StatSheet({ hero, full = false }: { hero: Hero; full?: boolean }) {
@@ -236,10 +237,12 @@ export function FoeCard({ bar }: { bar: Bar }) {
               </div>
             ))}
           </dl>
-          {def?.abilities?.length ? (
+          {s.abilities?.length ? (
             <p className="skills">
-              {def.abilities.map((a) => (
-                <span key={a}>{ix.ability(a).name}</span>
+              {s.abilities.map((a) => (
+                <span key={a} title={ix.ability(a).description}>
+                  {ix.ability(a).name}
+                </span>
               ))}
             </p>
           ) : null}

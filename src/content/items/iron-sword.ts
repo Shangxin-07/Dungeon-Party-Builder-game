@@ -7,6 +7,7 @@ export default defineItem({
   value: 70,
   tags: ["sword", "blade", "melee"],
   damageType: "slashing",
+  abilities: ["disarm"],
   passives: [
     { type: "modifyStat", stat: "attack", amount: 6 },
     { type: "modifyStat", stat: "accuracy", amount: 3 },

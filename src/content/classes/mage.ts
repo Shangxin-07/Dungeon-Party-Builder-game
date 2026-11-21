@@ -9,7 +9,7 @@ export default defineClass({
   likes: ["staff", "fire"],
   row: "back",
   ai: "caster",
-  abilities: ["flame-wave", "firebolt", "mend"],
+  abilities: { firebolt: 1, "flame-wave": 1, mend: 1, "frost-lance": 4, fireball: 7 },
   startingKit: ["staff", "healing-potion"],
   growth: { INT: 1, WIL: 1 },
 });

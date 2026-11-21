@@ -51,6 +51,37 @@ import fireboltAbility from "./abilities/firebolt";
 import flameWaveAbility from "./abilities/flame-wave";
 import mendAbility from "./abilities/mend";
 import venomBiteAbility from "./abilities/venom-bite";
+import gnawAbility from "./abilities/gnaw";
+import acidSpitAbility from "./abilities/acid-spit";
+import webAbility from "./abilities/web";
+import warCryAbility from "./abilities/war-cry";
+import callTheBroodAbility from "./abilities/call-the-brood";
+import bleedingStatus from "./statuses/bleeding";
+import webbedStatus from "./statuses/webbed";
+import emboldenedStatus from "./statuses/emboldened";
+import spiderlingMonster from "./monsters/spiderling";
+import spiderMatriarchMonster from "./monsters/spider-matriarch";
+import goblinBossMonster from "./monsters/goblin-boss";
+import skeletonCaptainMonster from "./monsters/skeleton-captain";
+import powerStrikeAbility from "./abilities/power-strike";
+import secondWindAbility from "./abilities/second-wind";
+import whirlwindAbility from "./abilities/whirlwind";
+import markPreyAbility from "./abilities/mark-prey";
+import flurryAbility from "./abilities/flurry";
+import frostLanceAbility from "./abilities/frost-lance";
+import fireballAbility from "./abilities/fireball";
+import circleOfHealingAbility from "./abilities/circle-of-healing";
+import cleaveAbility from "./abilities/cleave";
+import aimedShotAbility from "./abilities/aimed-shot";
+import crushAbility from "./abilities/crush";
+import disarmAbility from "./abilities/disarm";
+import backstabAbility from "./abilities/backstab";
+import shieldBashAbility from "./abilities/shield-bash";
+import markedStatus from "./statuses/marked";
+import sunderedStatus from "./statuses/sundered";
+import disarmedStatus from "./statuses/disarmed";
+import dazedStatus from "./statuses/dazed";
+import chilledStatus from "./statuses/chilled";
 import poisonedStatus from "./statuses/poisoned";
 import caveSpiderMonster from "./monsters/cave-spider";
 import giantRatMonster from "./monsters/giant-rat";
@@ -169,8 +200,37 @@ export const abilities: readonly AbilityDef[] = [
   venomBiteAbility,
   prayerAbility,
   smiteAbility,
+  powerStrikeAbility,
+  secondWindAbility,
+  whirlwindAbility,
+  markPreyAbility,
+  flurryAbility,
+  frostLanceAbility,
+  fireballAbility,
+  circleOfHealingAbility,
+  cleaveAbility,
+  aimedShotAbility,
+  crushAbility,
+  disarmAbility,
+  backstabAbility,
+  shieldBashAbility,
+  gnawAbility,
+  acidSpitAbility,
+  webAbility,
+  warCryAbility,
+  callTheBroodAbility,
 ];
-export const statuses: readonly StatusDef[] = [poisonedStatus];
+export const statuses: readonly StatusDef[] = [
+  poisonedStatus,
+  markedStatus,
+  sunderedStatus,
+  bleedingStatus,
+  webbedStatus,
+  emboldenedStatus,
+  disarmedStatus,
+  dazedStatus,
+  chilledStatus,
+];
 export const monsters: readonly MonsterDef[] = [
   caveSpiderMonster,
   giantRatMonster,
@@ -179,6 +239,10 @@ export const monsters: readonly MonsterDef[] = [
   littleSlimeMonster,
   skeletonMonster,
   slimeMonster,
+  spiderlingMonster,
+  spiderMatriarchMonster,
+  goblinBossMonster,
+  skeletonCaptainMonster,
 ];
 export const skills: readonly SkillDef[] = [appraisalSkill, medicineSkill, scoutingSkill];
 export const perks: readonly PerkDef[] = [

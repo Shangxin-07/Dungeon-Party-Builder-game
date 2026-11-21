@@ -1,0 +1,18 @@
+import { defineMonster } from "../types";
+
+// Variant: a bigger goblin with a louder voice, leading bands below floor 1.
+export default defineMonster({
+  id: "goblin-boss",
+  name: "Goblin Boss",
+  power: 6,
+  stats: { STR: 12, DEX: 11, END: 11, PER: 9, INT: 8, WIL: 8, CHA: 9 },
+  overrides: { maxHp: 34 },
+  weapon: { name: "notched cleaver", damageType: "slashing", attack: 5 },
+  row: "front",
+  tags: ["goblinoid", "humanoid"],
+  ai: "brute",
+  loot: "goblin-loot",
+  variant: { of: "goblin", chance: 0.15, minLevel: 2 },
+  abilities: { "war-cry": 1, disarm: 1 },
+  passives: [{ type: "modifyStat", stat: "armor", amount: 2 }],
+});

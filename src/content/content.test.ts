@@ -28,7 +28,7 @@ describe("validateLibrary", () => {
   it("catches references to ids that don't exist", () => {
     const [fighter] = library.classes;
     const errors = broken({
-      classes: [{ ...fighter!, startingKit: ["laser-sword"], abilities: ["fly"], ai: "genius" }],
+      classes: [{ ...fighter!, startingKit: ["laser-sword"], abilities: { fly: 1 }, ai: "genius" }],
     });
     expect(errors).toEqual(
       expect.arrayContaining([

@@ -7,6 +7,7 @@ export default defineItem({
   value: 15,
   tags: ["dagger", "blade", "melee", "light"],
   damageType: "piercing",
+  abilities: ["backstab"],
   passives: [
     { type: "modifyStat", stat: "attack", amount: 2 },
     { type: "modifyStat", stat: "accuracy", amount: 4 },

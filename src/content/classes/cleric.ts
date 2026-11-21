@@ -11,7 +11,7 @@ export default defineClass({
   likes: ["mace", "holy"],
   row: "front",
   ai: "healer",
-  abilities: ["prayer", "smite"],
+  abilities: { prayer: 1, smite: 1, "circle-of-healing": 5 },
   startingKit: ["mace", "leather-armor", "wooden-shield", "bandages"],
   growth: { WIL: 1, CHA: 1 },
 });

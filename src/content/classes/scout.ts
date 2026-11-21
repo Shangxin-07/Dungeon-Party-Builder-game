@@ -9,7 +9,7 @@ export default defineClass({
   likes: ["bow", "dagger"],
   row: "back",
   ai: "archer",
-  abilities: [],
+  abilities: { "mark-prey": 1, flurry: 5 },
   startingKit: ["short-bow", "leather-armor", "bandages"],
   growth: { DEX: 1, PER: 1 },
 });

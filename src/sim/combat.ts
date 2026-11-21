@@ -17,6 +17,7 @@ import type {
   Trigger,
 } from "../content/types";
 import { getAi, type Action, type BattleView } from "./ai";
+import { knownAbilityIds } from "./abilities";
 import { heroSheet, type Hero } from "./hero";
 import type { Index } from "./library";
 import { createRng, type Rng } from "./rng";
@@ -39,6 +40,10 @@ export interface Fighter {
   tags: string[];
   weapon: { name: string; damageType: DamageType; ranged: boolean };
   abilities: string[];
+  /** Turns until each ability on cooldown is ready again. */
+  cooldowns: Record<string, number>;
+  /** Times each ability has been used this fight. */
+  used: Record<string, number>;
   ai: string;
   hp: number;
   mana: number;
@@ -109,6 +114,8 @@ export interface CombatOptions {
    * it's a weapon). `index` is its place in the monster list.
    */
   carrying?: { index: number; item: string };
+  /** Monster level for this fight (the floor's level). Unlocks monster abilities. Defaults to 1. */
+  level?: number;
 }
 
 /** The basic weapon attack every fighter has. Not a content file, so "attack" is a reserved id. */
@@ -135,6 +142,8 @@ export interface FoeSheet {
   stats?: StatBlock;
   derived?: DerivedBlock;
   weapon?: { name: string; damageType: DamageType; ranged: boolean };
+  /** Ability ids it can use in this fight. */
+  abilities?: string[];
 }
 
 export const foeSheet = (f: Fighter): FoeSheet => ({
@@ -147,6 +156,7 @@ export const foeSheet = (f: Fighter): FoeSheet => ({
   stats: { ...f.stats },
   derived: { ...f.derived },
   weapon: { ...f.weapon },
+  abilities: [...f.abilities],
 });
 
 const BLEED_ROUNDS = 3;
@@ -167,6 +177,7 @@ export function runCombat(
     !!opts.surprise,
     !!opts.noBleeding,
     opts.carrying,
+    opts.level ?? 1,
   ).run(opts.maxRounds ?? MAX_ROUNDS);
 }
 
@@ -187,6 +198,7 @@ class Battle {
     private surprise = false,
     private noBleeding = false,
     carrying?: { index: number; item: string },
+    private level = 1,
   ) {
     for (const hero of party) {
       if (hero.condition === "ok") this.fighters.push(this.fromHero(hero));
@@ -225,7 +237,9 @@ class Battle {
             ranged: !!weaponDef.ranged,
           }
         : { name: "fists", damageType: "crushing", ranged: false },
-      abilities: [...cls.abilities],
+      abilities: knownAbilityIds(this.ix, hero),
+      cooldowns: {},
+      used: {},
       ai: cls.ai,
       hp: Math.min(hero.hp, sheet.derived.maxHp),
       mana: Math.min(hero.mana, sheet.derived.mana),
@@ -266,7 +280,11 @@ class Battle {
       weapon: wields
         ? { name: item.name.toLowerCase(), damageType: item.damageType ?? "crushing", ranged }
         : { name: def.weapon.name, damageType: def.weapon.damageType, ranged },
-      abilities: [...(def.abilities ?? [])],
+      abilities: Object.entries(def.abilities ?? {})
+        .filter(([, level]) => level <= this.level)
+        .map(([id]) => id),
+      cooldowns: {},
+      used: {},
       ai: def.ai,
       hp: derived.maxHp,
       mana: derived.mana,
@@ -400,6 +418,7 @@ class Battle {
       this.tickStatuses(f);
       if (f.state !== "up") return;
     }
+    for (const id in f.cooldowns) if (f.cooldowns[id]! > 0) f.cooldowns[id]!--;
     const action = getAi(f.ai)(this.view(f));
     this.perform(f, action);
   }
@@ -433,9 +452,16 @@ class Battle {
       ix: this.ix,
       rng: this.rng,
       abilities: () => [BASIC_ATTACK, ...self.abilities.map((id) => this.ix.ability(id))],
-      canAfford: (a) => self.mana >= (a.cost ?? 0),
+      canAfford: (a) => this.ready(self, a),
       targets: (a) => this.targetsFor(self, a),
     };
+  }
+
+  /** Enough mana, off cooldown, and not used up for this fight. */
+  private ready(self: Fighter, a: AbilityDef): boolean {
+    if (self.mana < (a.cost ?? 0)) return false;
+    if ((self.cooldowns[a.id] ?? 0) > 0) return false;
+    return a.perFight === undefined || (self.used[a.id] ?? 0) < a.perFight;
   }
 
   private targetsFor(self: Fighter, ability: AbilityDef): Fighter[] {
@@ -443,13 +469,15 @@ class Battle {
       case "self":
         return [self];
       case "ally":
+      case "all-allies":
         return this.fighters.filter((f) => f.side === self.side && f.state !== "dead");
       case "all-enemies":
       case "enemy": {
         const enemies = this.fighters.filter((f) => f.side !== self.side && f.state === "up");
-        // Melee weapon attacks can only reach the front row while it stands.
+        // Melee weapon attacks can only reach the front row while it stands
+        // (a sweeping blow like Cleave hits the whole front row).
         const melee = ability.effects.some((e) => e.type === "weaponAttack") && !self.weapon.ranged;
-        if (!melee || ability.target === "all-enemies") return enemies;
+        if (!melee) return enemies;
         const front = enemies.filter((f) => f.row === "front");
         return front.length ? front : enemies;
       }
@@ -486,7 +514,10 @@ class Battle {
 
     const ability = action.ability === "attack" ? BASIC_ATTACK : this.ix.ability(action.ability);
     actor.mana -= ability.cost ?? 0;
-    const targets = ability.target === "all-enemies" ? this.targetsFor(actor, ability) : [target];
+    if (ability.cooldown) actor.cooldowns[ability.id] = ability.cooldown;
+    actor.used[ability.id] = (actor.used[ability.id] ?? 0) + 1;
+    const group = ability.target === "all-enemies" || ability.target === "all-allies";
+    const targets = group ? this.targetsFor(actor, ability) : [target];
     const isBasic = ability === BASIC_ATTACK;
     if (!isBasic) {
       const aimed = ability.target === "enemy" || (ability.target === "ally" && target !== actor);
@@ -527,7 +558,7 @@ class Battle {
           this.heal(target, Math.round(e.amount + (e.scale ?? 0) * this.stat(actor, "spellPower")));
           break;
         case "applyStatus":
-          this.applyStatus(target, e.status, e.turns, e.chance ?? 1);
+          this.applyStatus(target, e.status, e.turns, e.chance ?? 1, actor.side === target.side);
           break;
         case "summon":
           this.summon(actor, e.monster, e.count);
@@ -665,11 +696,19 @@ class Battle {
     });
   }
 
-  private applyStatus(target: Fighter, id: string, turns: number, chance: number): void {
+  private applyStatus(
+    target: Fighter,
+    id: string,
+    turns: number,
+    chance: number,
+    friendly = false,
+  ): void {
     if (target.state !== "up") return;
     const status = this.ix.status(id);
     // Willpower shrugs off some effects: each point of resist is -1% chance.
-    if (!this.rng.chance(chance * (1 - this.stat(target, "resist") / 100))) return;
+    // Nobody resists a friend's war cry.
+    const resist = friendly ? 0 : this.stat(target, "resist") / 100;
+    if (!this.rng.chance(chance * (1 - resist))) return;
     const existing = target.statuses.find((s) => s.id === id);
     if (existing) existing.turns = Math.max(existing.turns, turns);
     else target.statuses.push({ id, turns });

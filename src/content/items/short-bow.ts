@@ -8,6 +8,7 @@ export default defineItem({
   tags: ["bow", "ranged"],
   damageType: "piercing",
   ranged: true,
+  abilities: ["aimed-shot"],
   passives: [
     { type: "modifyStat", stat: "attack", amount: 3 },
     { type: "modifyStat", stat: "accuracy", amount: 2 },

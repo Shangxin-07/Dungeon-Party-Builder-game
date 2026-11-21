@@ -69,8 +69,23 @@ export function rollEncounter(
       }
     }
   }
+  promoteVariant(ix, monsters, level, rng);
   // Keep the front row in front: order by row so logs read naturally.
   return monsters.sort((a, b) => rowOrder(ix, a) - rowOrder(ix, b));
+}
+
+/**
+ * Maybe swap one monster for a tougher variant of it (a Spider Matriarch at
+ * the head of a nest). At most one variant per fight. Changes `monsters`.
+ */
+function promoteVariant(ix: Index, monsters: string[], level: number, rng: Rng): void {
+  for (const v of ix.lib.monsters) {
+    if (!v.variant || (v.variant.minLevel ?? 1) > level) continue;
+    const i = monsters.indexOf(v.variant.of);
+    if (i < 0 || !rng.chance(v.variant.chance)) continue;
+    monsters[i] = v.id;
+    return;
+  }
 }
 
 /** How likely an encounter group is on this floor. */

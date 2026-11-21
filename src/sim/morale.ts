@@ -9,6 +9,7 @@
  */
 import type { MoraleFact, MoraleRule } from "../content/types";
 import { heroSheet, type Hero, type MoraleNote } from "./hero";
+import { knownAbilities } from "./abilities";
 import type { Index } from "./library";
 
 export type Facts = Partial<Record<MoraleFact, number>>;
@@ -51,11 +52,7 @@ export function moraleChanges(
     else if (hero.morale > m.contentAbove.morale)
       amount = Math.floor(amount * m.contentAbove.gainShare);
     else amount = Math.round(amount);
-    if (amount)
-      out.push({
-        amount,
-        reason: r.reason.replaceAll("{favourite}", favourite),
-      });
+    if (amount) out.push({ amount, reason: r.reason.replaceAll("{favourite}", favourite) });
   }
   return out;
 }
@@ -124,6 +121,7 @@ export function gearTags(ix: Index, hero: Hero): Set<string> {
   const tags = new Set<string>();
   for (const id of Object.values(hero.equipment))
     if (id) for (const t of ix.item(id).tags) tags.add(t);
-  for (const a of ix.cls(hero.classId).abilities) for (const t of ix.ability(a).tags) tags.add(t);
+  for (const k of knownAbilities(ix, hero))
+    if (k.source === "class") for (const t of k.ability.tags) tags.add(t);
   return tags;
 }

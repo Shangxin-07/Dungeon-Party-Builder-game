@@ -12,6 +12,6 @@ export default defineMonster({
   tags: ["beast", "ambusher"],
   ai: "brute",
   loot: "spider-loot",
-  abilities: ["venom-bite"],
+  abilities: { "venom-bite": 1, web: 3 },
   passives: [{ type: "resist", damageType: "poison", percent: 100 }],
 });

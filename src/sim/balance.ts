@@ -54,7 +54,10 @@ export function balanceReport(
     let party = start;
     let won = true;
     for (let f = 0; f < fightsPerTrip && won; f++) {
-      const r = runCombat(ix, party, rollEncounter(ix, floor, rng), { seed: rng.int(0, 2 ** 31) });
+      const r = runCombat(ix, party, rollEncounter(ix, floor, rng), {
+        seed: rng.int(0, 2 ** 31),
+        level: floor,
+      });
       won = r.winner === "party";
       party = patchUp(r.party);
     }

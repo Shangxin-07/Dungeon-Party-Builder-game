@@ -23,7 +23,15 @@ export const DERIVED = [
 ] as const;
 export type Derived = (typeof DERIVED)[number];
 
-export const DAMAGE_TYPES = ["slashing", "piercing", "crushing", "fire", "poison", "holy"] as const;
+export const DAMAGE_TYPES = [
+  "slashing",
+  "piercing",
+  "crushing",
+  "fire",
+  "cold",
+  "poison",
+  "holy",
+] as const;
 export type DamageType = (typeof DAMAGE_TYPES)[number];
 
 export type Row = "front" | "back";
@@ -95,8 +103,13 @@ export interface ClassDef {
   row: Row;
   /** Id of the combat AI that picks this class's actions. */
   ai: string;
-  /** Ability ids this class can use. "attack" is always available. */
-  abilities: readonly string[];
+  /**
+   * The class's ability list: ability id -> the level it's learned at, e.g.
+   * { firebolt: 1, "frost-lance": 4 }. "attack" is always available. In the
+   * first slice the level is the hero's level; with freeform classes
+   * (DESIGN.md §9) it becomes the level in this class.
+   */
+  abilities: Readonly<Record<string, number>>;
   /** Item ids a new recruit starts with. */
   startingKit: readonly string[];
   /** Fixed stat gains every time a hero of this class levels up (DESIGN.md §9). */
@@ -121,6 +134,11 @@ export interface ItemDef {
   /** Consumables only: what happens when used. */
   use?: readonly ActiveEffect[];
   /**
+   * Weapons and offhands: abilities anyone gets while this is equipped
+   * (an axe's Cleave, a shield's Shield Bash).
+   */
+  abilities?: readonly string[];
+  /**
    * Loot only: the real value is rolled in this range when the item is found.
    * A wide range is where a good appraiser earns their keep.
    */
@@ -132,10 +150,19 @@ export interface ItemDef {
 export interface AbilityDef {
   id: string;
   name: string;
-  /** Who it can be aimed at. */
-  target: "enemy" | "all-enemies" | "ally" | "self";
+  /** One line for the hero sheet. */
+  description?: string;
+  /**
+   * Who it can be aimed at. "all-enemies" with a melee weapon attack only
+   * reaches the front row while it stands.
+   */
+  target: "enemy" | "all-enemies" | "ally" | "all-allies" | "self";
   /** Mana cost. */
   cost?: number;
+  /** Usable once every this many of the user's turns (3 = use, wait 2, use). */
+  cooldown?: number;
+  /** Usable at most this many times per fight. */
+  perFight?: number;
   /** Tags such as "spell", "fire", "heal". AIs read these to decide. */
   tags: readonly string[];
   effects: readonly ActiveEffect[];
@@ -168,7 +195,25 @@ export interface MonsterDef {
   row: Row;
   tags: readonly string[];
   ai: string;
-  abilities?: readonly string[];
+  /**
+   * Ability id -> the monster level it's used from, like a class list. Monster
+   * level is the floor's level that day (1 = a typical floor-1 monster), so
+   * the same rat fights dirtier deeper down or on a crowded floor.
+   */
+  abilities?: Readonly<Record<string, number>>;
+  /**
+   * A tougher version of another monster (a Spider Matriarch, a Skeleton
+   * Captain). It never appears in encounters by itself: when a fight rolls
+   * the base monster, one of them may be swapped for this, at most one
+   * variant per fight.
+   */
+  variant?: {
+    of: string;
+    /** Chance per fight that includes the base monster. */
+    chance: number;
+    /** Only at or above this monster level. Defaults to 1. */
+    minLevel?: number;
+  };
   passives?: readonly PassiveEffect[];
   triggers?: readonly Trigger[];
   /** Summoned-only monsters never appear in encounters by themselves. */
@@ -197,6 +242,8 @@ export interface PerkDef {
   /** Not offered before this hero level. Defaults to 2 (the first level-up). */
   minLevel?: number;
   passives: readonly PassiveEffect[];
+  /** Abilities the perk teaches. */
+  abilities?: readonly string[];
 }
 
 // ---------------------------------------------------------------------------

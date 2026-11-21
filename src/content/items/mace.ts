@@ -8,6 +8,7 @@ export default defineItem({
   value: 30,
   tags: ["mace", "melee", "holy"],
   damageType: "crushing",
+  abilities: ["crush"],
   passives: [
     { type: "modifyStat", stat: "attack", amount: 3 },
     { type: "modifyStat", stat: "spellPower", amount: 2 },

@@ -6,6 +6,7 @@ export default defineItem({
   slot: "offhand",
   value: 45,
   tags: ["shield", "heavy"],
+  abilities: ["shield-bash"],
   passives: [
     { type: "modifyStat", stat: "armor", amount: 2 },
     { type: "modifyStat", stat: "evasion", amount: 1 },
