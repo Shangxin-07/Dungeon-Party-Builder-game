@@ -88,7 +88,11 @@ export interface CombatEvent {
   hp?: { uid: string; hp: number; max: number };
   /** Summon events: the new creature's name. */
   name?: string;
+  /** Good or bad news for the party, for colouring the log. Left out when neither. */
+  tone?: Tone;
 }
+
+export type Tone = "good" | "bad";
 
 export interface CombatResult {
   winner: Side | "none";
@@ -336,7 +340,11 @@ class Battle {
         : winner === "monsters"
           ? "The party has fallen."
           : "Neither side can finish the other. The fight breaks off.";
-    this.emit({ kind: "end", text });
+    this.emit({
+      kind: "end",
+      text,
+      tone: winner === "party" ? "good" : winner === "monsters" ? "bad" : undefined,
+    });
 
     return {
       winner,
@@ -395,11 +403,12 @@ class Battle {
       this.emit({
         kind: "ambush",
         actor: best.uid,
+        tone: "good",
         text: `${best.name} spots ${ambushers[0]!.name} lying in wait.`,
       });
       return;
     }
-    this.emit({ kind: "ambush", text: "Ambush! Something drops from the dark." });
+    this.emit({ kind: "ambush", tone: "bad", text: "Ambush! Something drops from the dark." });
     for (const f of ambushers) this.ambushing.add(f.uid);
     for (const f of ambushers) {
       if (f.state === "up" && this.winner() === "none") this.takeTurn(f, true);
@@ -409,7 +418,11 @@ class Battle {
 
   /** A scouted fight: every hero gets one free action, with the ambush bonus. */
   private partySurprise(): void {
-    this.emit({ kind: "ambush", text: "The party catches them unawares and strikes first!" });
+    this.emit({
+      kind: "ambush",
+      tone: "good",
+      text: "The party catches them unawares and strikes first!",
+    });
     const party = this.fighters.filter((f) => f.side === "party" && f.state === "up");
     for (const f of party) this.ambushing.add(f.uid);
     for (const f of party) {
@@ -737,9 +750,12 @@ class Battle {
     const existing = target.statuses.find((s) => s.id === id);
     if (existing) existing.turns = Math.max(existing.turns, turns);
     else target.statuses.push({ id, turns });
+    // A friendly status (a war cry) helps its target; anything else hurts it.
+    const helps = friendly === (target.side === "party");
     this.emit({
       kind: "status",
       target: target.uid,
+      tone: helps ? "good" : "bad",
       text: `${target.name} is ${status.name.toLowerCase()}.`,
     });
   }
@@ -802,7 +818,35 @@ class Battle {
   }
 
   private emit(e: Omit<CombatEvent, "round">): void {
-    this.log.push({ round: this.round, ...e });
+    const tone = "tone" in e ? e.tone : this.toneOf(e);
+    const { tone: _, ...rest } = e;
+    this.log.push({ round: this.round, ...rest, ...(tone ? { tone } : {}) });
+  }
+
+  /** Is this line good or bad news for the party? Judged by whose side the actor or target is on. */
+  private toneOf(e: Omit<CombatEvent, "round">): Tone | undefined {
+    const side = (uid?: string) => this.fighters.find((f) => f.uid === uid)?.side;
+    const forParty = (s?: Side): Tone | undefined =>
+      s === "party" ? "good" : s === "monsters" ? "bad" : undefined;
+    const against = (s?: Side): Tone | undefined =>
+      s === "party" ? "bad" : s === "monsters" ? "good" : undefined;
+    switch (e.kind) {
+      case "hit":
+      case "summon":
+        return forParty(side(e.actor));
+      case "heal":
+      case "revived":
+        return forParty(side(e.target));
+      case "damage":
+        return e.amount ? against(side(e.target)) : undefined;
+      case "downed":
+      case "killed":
+      case "bleeding":
+      case "died":
+        return against(side(e.target));
+      default:
+        return undefined;
+    }
   }
 }
 
