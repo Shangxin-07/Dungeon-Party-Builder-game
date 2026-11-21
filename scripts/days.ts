@@ -50,6 +50,7 @@ import {
   launch,
   newTown,
   nextLevel,
+  materialsShort,
   partySlots,
   repair,
   repairCost,
@@ -106,8 +107,14 @@ function step(t: TownState): TownState {
   // Repair anything raided, then build defences, cheapest first.
   if (build) {
     for (const id of t.damaged) if (t.gold >= repairCost(ix, t, id)) t = repair(ix, t, id);
+    // Anything the store has the materials for (DESIGN.md §8).
+    const buildable = (x: { id: string; lvl?: { materials?: Record<string, number> } }) =>
+      x.lvl &&
+      !t.damaged.includes(x.id) &&
+      !underConstruction(t, x.id) &&
+      !materialsShort(ix, t, x.lvl.materials);
     const next = DEFENCES.map((id) => ({ id, lvl: nextLevel(ix, t, id) }))
-      .filter((x) => x.lvl && !t.damaged.includes(x.id) && !underConstruction(t, x.id))
+      .filter(buildable)
       .sort((a, b) => a.lvl!.cost - b.lvl!.cost)[0];
     if (next && t.gold >= next.lvl!.cost + 40) t = upgrade(ix, t, next.id);
     // Once the walls are up, build and upgrade everything else, cheapest
@@ -119,7 +126,7 @@ function step(t: TownState): TownState {
     const more = library.buildings
       .filter((b) => waiting || !FALLEN_BUILDINGS.includes(b.id))
       .map((b) => ({ id: b.id, lvl: nextLevel(ix, t, b.id) }))
-      .filter((x) => x.lvl && !t.damaged.includes(x.id) && !underConstruction(t, x.id))
+      .filter(buildable)
       .sort((a, b) => a.lvl!.cost - b.lvl!.cost)[0];
     if (defended && more && t.gold >= more.lvl!.cost + reserve) t = upgrade(ix, t, more.id);
   }
@@ -266,6 +273,8 @@ const tally = {
   buried: 0,
   rose: 0,
   putDown: 0,
+  /** Materials brought home, by id (DESIGN.md §8). */
+  materials: {} as Record<string, number>,
 };
 /** Gold in the coffers at these days, for the summary. */
 const CHECKPOINTS = [10, 20, 40, 60, 90];
@@ -297,6 +306,8 @@ function play(seed: number, print: boolean) {
       tally.trapped += t.lastTrip.trapped?.length ?? 0;
       tally.rescued += t.lastTrip.rescued?.length ?? 0;
       tally.earned += t.lastTrip.goldEarned;
+      for (const [id, n] of Object.entries(t.lastTrip.materials ?? {}))
+        tally.materials[id] = (tally.materials[id] ?? 0) + n;
       tally.trips++;
       tally.injuries += Object.keys(t.lastTrip.injuries ?? {}).length;
       tally.putDown += t.lastTrip.result.risenSlain.length;
@@ -409,6 +420,11 @@ if (runs === 1) {
       `  the fallen per town: ${(tally.resurrected / runs).toFixed(1)} resurrected, ` +
       `${(tally.buried / runs).toFixed(1)} buried, ${(tally.rose / runs).toFixed(1)} rose, ` +
       `${(tally.putDown / runs).toFixed(1)} risen put down\n` +
+      `  materials brought home per town: ${
+        Object.entries(tally.materials)
+          .map(([id, n]) => `${(n / runs).toFixed(1)} ${ix.item(id).name.toLowerCase()}`)
+          .join(", ") || "none"
+      }\n` +
       `  gold from trips per town: ${earned.toFixed(0)}; gold in hand (median) ` +
       Object.entries(goldAt)
         .map(([d, g]) => `day ${d}: ${[...g].sort((a, b) => a - b)[Math.floor(g.length / 2)]}`)

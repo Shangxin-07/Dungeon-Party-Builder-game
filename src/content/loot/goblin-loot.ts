@@ -8,5 +8,6 @@ export default defineLootTable({
     { item: "coins", weight: 4 },
     { item: "rusty-helmet", weight: 2 },
     { item: "dagger", weight: 1 },
+    { item: "iron-ore", weight: 1 },
   ],
 });

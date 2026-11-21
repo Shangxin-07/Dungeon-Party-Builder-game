@@ -23,6 +23,7 @@ export default defineBuilding({
     },
     {
       cost: 400,
+      materials: { "spider-silk": 3 },
       days: 4,
       summary:
         "2 more recruits a day, each the best of 3, and one of them comes trained and kitted; +2 morale a day in town",

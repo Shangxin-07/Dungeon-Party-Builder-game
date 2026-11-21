@@ -1,9 +1,11 @@
 /**
  * Buildings: upgrades, repairs, works in progress and the helpers on site.
  */
-import { library } from "../../content";
+import { library, materials } from "../../content";
 import {
   builderHands,
+  materialWords,
+  materialsShort,
   nextLevel,
   repair,
   repairCost,
@@ -19,6 +21,7 @@ export function Buildings({ town, act }: { town: TownState; act: Act }) {
   return (
     <section aria-labelledby="buildings-heading" className="panel">
       <h2 id="buildings-heading">Buildings</h2>
+      <Store town={town} />
       <Helpers town={town} />
       <ul className="cards">
         {library.buildings.map((b) => {
@@ -28,6 +31,7 @@ export function Buildings({ town, act }: { town: TownState; act: Act }) {
           const damaged = town.damaged.includes(b.id);
           const fix = damaged ? repairCost(ix, town, b.id) : 0;
           const work = underConstruction(town, b.id);
+          const short = next && materialsShort(ix, town, next.materials);
           return (
             <li key={b.id} className={`card${damaged ? " damaged" : ""}`}>
               <h3>
@@ -64,13 +68,21 @@ export function Buildings({ town, act }: { town: TownState; act: Act }) {
                   <p className="small muted">
                     Level {level + 1}: {next.summary}.
                   </p>
+                  {next.materials ? (
+                    <p className={`small${short ? " warn" : ""}`}>
+                      Also needs {materialWords(ix, next.materials)}
+                      {short ? `: short of ${short}` : ""}.
+                    </p>
+                  ) : null}
                   <button
                     type="button"
                     className="btn"
-                    disabled={town.gold < next.cost}
+                    disabled={town.gold < next.cost || !!short}
+                    title={short ? `Short of ${short}.` : undefined}
                     onClick={() => act((t) => upgrade(ix, t, b.id))}
                   >
                     {level ? "Upgrade" : "Build"} for {next.cost} gold
+                    {next.materials ? ` and ${materialWords(ix, next.materials)}` : ""}
                     {next.days ? `, ${next.days} ${next.days === 1 ? "day" : "days"}` : ""}
                   </button>
                 </>
@@ -82,6 +94,26 @@ export function Buildings({ town, act }: { town: TownState; act: Act }) {
         })}
       </ul>
     </section>
+  );
+}
+
+/**
+ * The guild's store of materials (DESIGN.md §8): what parties have carried
+ * home to build with. Every material is listed, so players learn what exists.
+ */
+export function Store({ town }: { town: TownState }) {
+  return (
+    <div className="store">
+      <h3 className="small">The guild's store</h3>
+      <ul className="store-list small">
+        {materials.map((m) => (
+          <li key={m.id} title={m.blurb}>
+            <strong>{town.materials?.[m.id] ?? 0}</strong> {m.name.toLowerCase()}{" "}
+            <span className="muted">({m.blurb})</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

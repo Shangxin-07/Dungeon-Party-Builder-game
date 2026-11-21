@@ -18,6 +18,7 @@ export default defineBuilding({
     },
     {
       cost: 220,
+      materials: { "iron-ore": 2 },
       days: 3,
       summary: "Warns 2 nights ahead, and holds back 2 strength",
       effects: [

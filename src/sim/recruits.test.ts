@@ -27,6 +27,7 @@ import {
   upgrade,
   type TownState,
 } from "./town";
+import { stocked } from "./stocked";
 
 const ix = indexLibrary(library);
 const rules = library.town;
@@ -83,7 +84,7 @@ describe("untrained recruits", () => {
   });
 
   it("a Tavern at level 2 sends trained, kitted recruits, for the price of their kit", () => {
-    let t: TownState = { ...fresh(), gold: 10_000 };
+    let t: TownState = stocked({ ...fresh(), gold: 10_000 });
     for (let i = 0; i < 2; i++) {
       t = upgrade(ix, t, "tavern");
       while (t.construction.length) t = rest(ix, t, heroNames);

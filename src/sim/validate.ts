@@ -147,6 +147,8 @@ export function validateLibrary(lib: Library): string[] {
     const w = `item "${i.id}"`;
     if (i.slot === "weapon" && !i.damageType) err(`${w}: weapons need a damageType`);
     if (i.slot === "consumable" && !i.use?.length) err(`${w}: consumables need a "use"`);
+    if (i.slot === "material" && (i.passives?.length || i.use?.length || i.valueRange))
+      err(`${w}: materials have a fixed value and nothing to equip or use`);
     if (i.value < 0) err(`${w}: value can't be negative`);
     if (i.valueRange && (i.valueRange[0] < 0 || i.valueRange[1] < i.valueRange[0]))
       err(`${w}: bad valueRange`);
@@ -304,6 +306,15 @@ export function validateLibrary(lib: Library): string[] {
   }
   for (let d = 1; d <= depths.size; d++) if (!depths.has(d)) err(`floors: depth ${d} is missing`);
 
+  // Material costs (DESIGN.md §8) name materials, in whole amounts.
+  const materialIds = new Set(lib.items.filter((i) => i.slot === "material").map((i) => i.id));
+  const materialCost = (w: string, cost: Readonly<Record<string, number>> | undefined) => {
+    for (const [id, n] of Object.entries(cost ?? {})) {
+      if (!materialIds.has(id)) err(`${w}: "${id}" isn't a material`);
+      if (!Number.isInteger(n) || n < 1) err(`${w}: needs a whole number of "${id}", 1 or more`);
+    }
+  };
+
   ids("building", lib.buildings);
   for (const b of lib.buildings) {
     const w = `building "${b.id}"`;
@@ -312,6 +323,7 @@ export function validateLibrary(lib: Library): string[] {
     b.levels.forEach((lvl, i) => {
       if (lvl.cost < 0) err(`${w} level ${i + 1}: negative cost`);
       if (!(lvl.days >= 0)) err(`${w} level ${i + 1}: days must be 0 or more`);
+      materialCost(`${w} level ${i + 1}`, lvl.materials);
       for (const e of lvl.effects) {
         if (e.type === "sells") {
           for (const id of e.items) if (!itemIds.has(id)) err(`${w}: sells unknown item "${id}"`);
@@ -321,6 +333,7 @@ export function validateLibrary(lib: Library): string[] {
           if (e.gold < 0 || e.goldPerLevel < 0 || e.levels < 0 || e.percent < 0)
             err(`${w} level ${i + 1}: resurrect costs can't be negative`);
           if (e.percent > 100) err(`${w} level ${i + 1}: resurrect percent must be 0-100`);
+          materialCost(`${w} level ${i + 1} resurrect`, e.materials);
         } else if (e.type === "burial") {
           if (e.gold < 0) err(`${w} level ${i + 1}: burial can't cost negative gold`);
         } else if (e.amount < 0) err(`${w} level ${i + 1}: negative ${e.type}`);

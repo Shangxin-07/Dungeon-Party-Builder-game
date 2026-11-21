@@ -15,6 +15,7 @@ export default defineBuilding({
     },
     {
       cost: 300,
+      materials: { "iron-ore": 6 },
       days: 4,
       summary: "Raiders can't touch any of the guild's gold",
       effects: [{ type: "vault", amount: 100 }],

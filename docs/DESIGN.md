@@ -395,7 +395,8 @@ export default defineClass({
 > - **Temple** (220 gold): resurrect for 100 + 20 × level gold, losing max(2 levels, 20%) off the top; level 2 (450 gold) makes it 80 + 15 × level and max(1, 10%). The hero comes back at 30% HP with no gear, no injuries, and a −10 morale shock. Each level a hero gains is now recorded (class, stat gains, perk, free stat), so lost levels come back exactly as they were, in order, as the XP is re-earned. Levels from older saves come off the main class with its usual gains, and keep their perks.
 > - **Graveyard** (60 gold): bury for 5 gold. Everyone in town +2 morale, Comrades heroes +4 more. Bodies wait in town until you decide.
 > - A body left in the dungeon **rises after 7 days** as "Bram, Risen": their class, AI, perks and whatever of their own gear still lies at the site, plus the risen transform (+50% HP, undead tag and weaknesses, a little stronger and slower). They haunt that floor and climb one floor every 10 days. A fight on their floor has a 35% chance of them joining it (once per trip); the best scout may recognise them first. Heroes who knew them lose 6 morale (Good heroes 4 more), and the whole guild loses 3 when one rises (Good 4 more). Put down, they drop their gear, and their body comes home: it can only be buried.
-> - Not yet: rare materials for resurrection (there's no materials system yet), risen joining raids, and a body in town without a Graveyard costing anything.
+> - Since M6.15 the Temple also wants **bone dust** (§11 "As built in M6: materials"): 3 per resurrection, 2 at Temple level 2.
+> - Not yet: risen joining raids, and a body in town without a Graveyard costing anything.
 
 A dead hero leaves a **body**, and the body matters. Recovery runs (above) can bring bodies home as well as survivors and gear. Once a body is in town, you choose:
 
@@ -506,7 +507,7 @@ What the bot sees over 60 days (40 towns each; the bot rests to 90% HP, then goe
 | Floor-1 trips, building defences | none | 0 | 5 |
 | Floor-2 trips, building defences | none | 2.5 | 12 |
 
-Not yet: materials and renown as building costs, the Tavern's morale bonus, Blacksmith repairs and upgrades, the Vault (stash protection), and garrisons or traps at the pit.
+Not yet: renown as a building cost (materials arrived in M6.15), the Tavern's morale bonus, Blacksmith repairs and upgrades, the Vault (stash protection), and garrisons or traps at the pit.
 
 ### As built in M5: personalities, levels and rescue runs
 
@@ -668,6 +669,19 @@ New statuses: marked, sundered, disarmed, dazed, chilled. New damage type: cold.
 - Monster cards in the watch view list the moves that monster has in that fight.
 
 Balance after both halves (`npm run balance -- 1000`, retreat below 30%): floor 2 79% home (was 81% before abilities), floor 3 23% (was 28%). Fighter, cleric, scout: 89% and 40% (was 93% and 41%). Close to the old pressure, with more going on in each fight.
+
+### As built in M6: materials
+
+> Added 2026-11-21 (M6.15). Mike approved materials first, then the opening (§8), because both the opening and resurrection need them. Materials live in `src/content/materials/`.
+
+- **Materials are items** in a new `material` slot, made with `defineMaterial`. Loot tables drop them like anything else, so they take carry slots, porters can carry them, and a party with full packs weighs them against the rest of the haul by their `value`. When the party gets home they go into the **guild's store** (`town.materials`) instead of the Market.
+- **Three to start:** **iron ore** (value 12): **ore seams**, a new room on every floor (2 rolls of the `ore-seam` table, mostly ore, now and then a gem), and the odd goblin. **Spider silk** (18): spiders, mostly floors 2 and 3. **Bone dust** (20): skeletons, mostly floor 3. Ore seams took half of the quiet passages' weight, so trips have as many fights as before.
+- **Building costs.** A building level can list `materials` as well as gold; they're used up when the work starts. First levels stay gold only, except the Blacksmith (3 ore for its forge). Iron ore goes into the walls, gate, watchtower, Blacksmith, Vault and Training Yard upgrades; spider silk into the Tavern and Library upgrades; the Guild Hall's levels 3 and 4 want both (6 ore + 3 silk, then 10 + 6). The Temple's level 2 wants 4 bone dust.
+- **Resurrection** (§10) costs bone dust too: the `resurrect` effect takes `materials`.
+- **In town**, the Buildings panel opens with the store (every material, with where it turns up), each upgrade lists what it needs and what's missing, and the trip results say what went into the store.
+- **Balance** (`npm run days`, 60 days, building): floor-1 trips bring home about 40 ore, 13 silk and 8 bone dust a town; floor-2 trips about 28 ore, 14 silk and 6 bone dust. Raids, gold and buildings built are the same as before within noise, so gold is still what holds building back; materials mostly decide *which* upgrades come first. The opening (next) leans on them harder.
+- Saves: `TOWN_VERSION` 13 adds the empty store. Tests and scripts that aren't about materials can use `stocked()` (`src/sim/stocked.ts`).
+- Not yet: selling or buying materials, raiders stealing them, renown.
 
 ## 12. First playable slice
 

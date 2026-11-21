@@ -108,20 +108,29 @@ export interface ResurrectTerms {
   gold: number;
   /** Levels they'll lose, off the top. */
   levels: number;
+  /** Rare materials the priests need (DESIGN.md §10), by item id. */
+  materials: Readonly<Record<string, number>>;
 }
 
 /**
  * The Temple's price for this hero (DESIGN.md §10): gold + goldPerLevel ×
- * level, and max(levels, percent% of their level, rounded up) levels, never
+ * level, its materials, and max(levels, percent% of their level, rounded up) levels, never
  * taking them below level 1.
  */
 export function resurrectTerms(
-  e: { gold: number; goldPerLevel: number; levels: number; percent: number },
+  e: {
+    gold: number;
+    goldPerLevel: number;
+    levels: number;
+    percent: number;
+    materials?: Readonly<Record<string, number>>;
+  },
   hero: Hero,
 ): ResurrectTerms {
   const want = Math.max(e.levels, Math.ceil((hero.level * e.percent) / 100));
   return {
     gold: e.gold + e.goldPerLevel * hero.level,
     levels: Math.min(want, Math.max(0, hero.level - 1)),
+    materials: e.materials ?? {},
   };
 }

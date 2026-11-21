@@ -22,6 +22,7 @@ import {
   type TownState,
 } from "./town";
 import { validateLibrary } from "./validate";
+import { stocked } from "./stocked";
 
 const ix = indexLibrary(library);
 const rng = (seed = 1) => createRng(seed);
@@ -37,7 +38,7 @@ const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
 const orders = (o: Partial<StandingOrders> = {}): StandingOrders => ({ ...DEFAULT_ORDERS, ...o });
 /** Pay for an upgrade and skip the builders' wait. */
 const build = (t: TownState, id: string): TownState => {
-  const u = upgrade(ix, { ...t, gold: t.gold + 10_000 }, id);
+  const u = upgrade(ix, stocked({ ...t, gold: t.gold + 10_000 }), id);
   const done = Object.fromEntries(u.construction.map((c) => [c.building, c.level]));
   return { ...u, gold: t.gold, buildings: { ...u.buildings, ...done }, construction: [] };
 };

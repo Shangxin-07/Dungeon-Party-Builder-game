@@ -1,6 +1,6 @@
 /**
  * The content library. To add content, create a file in the matching folder
- * (classes/, items/, monsters/, rooms/, loot/, floors/, buildings/, perks/, secrets/,
+ * (classes/, items/, materials/, monsters/, rooms/, loot/, floors/, buildings/, perks/, secrets/,
  * motivations/, ...) and add it to the
  * list below. No engine code changes are needed. The content tests check every id and reference.
  */
@@ -184,6 +184,11 @@ import minersCacheSecret from "./secrets/miners-cache";
 import falseFloorSecret from "./secrets/false-floor";
 import sealedNicheSecret from "./secrets/sealed-niche";
 import hiddenCacheLoot from "./loot/hidden-cache";
+import oreSeamLoot from "./loot/ore-seam";
+import oreSeamRoom from "./rooms/ore-seam";
+import ironOreMaterial from "./materials/iron-ore";
+import spiderSilkMaterial from "./materials/spider-silk";
+import boneDustMaterial from "./materials/bone-dust";
 import brokenArmInjury from "./injuries/broken-arm";
 import crackedRibsInjury from "./injuries/cracked-ribs";
 import twistedAnkleInjury from "./injuries/twisted-ankle";
@@ -203,6 +208,13 @@ export const classes: readonly ClassDef[] = [
   frostMageClass,
   assassinClass,
 ];
+/** Building materials and rarer things: items the guild keeps rather than sells. */
+export const materials: readonly ItemDef[] = [
+  ironOreMaterial,
+  spiderSilkMaterial,
+  boneDustMaterial,
+];
+
 export const items: readonly ItemDef[] = [
   axeItem,
   bandagesItem,
@@ -226,6 +238,8 @@ export const items: readonly ItemDef[] = [
   scaleMailItem,
   ironStaffItem,
   maceItem,
+  // Materials (DESIGN.md §8): the guild keeps them to build with. See materials/.
+  ...materials,
 ];
 export const abilities: readonly AbilityDef[] = [
   fireboltAbility,
@@ -334,6 +348,7 @@ export const lootTables: readonly LootTableDef[] = [
   smallChestLoot,
   spiderLoot,
   hiddenCacheLoot,
+  oreSeamLoot,
 ];
 export const rooms: readonly RoomDef[] = [
   dartTrapRoom,
@@ -344,6 +359,7 @@ export const rooms: readonly RoomDef[] = [
   restSpotRoom,
   spikedPitRoom,
   treasureHoardRoom,
+  oreSeamRoom,
 ];
 export const floors: readonly FloorDef[] = [diggingsFloor, warrensFloor, boneHallsFloor];
 export const buildings: readonly BuildingDef[] = [

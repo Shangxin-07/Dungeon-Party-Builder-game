@@ -182,6 +182,8 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
       risen: [],
     };
   },
+  // Materials (DESIGN.md §8): the guild's store starts empty.
+  12: (_ix, old) => ({ ...old, version: 13, materials: {} }),
 };
 
 /**
@@ -287,6 +289,7 @@ export function missingContent(ix: Index, town: TownState): string[] {
     Object.values(r.equipment).forEach(item);
   }
   town.stash.forEach(item);
+  Object.keys(town.materials).forEach(item);
   for (const g of town.scavenged) item(g.item);
   Object.keys(town.buildings).forEach(building);
   town.damaged.forEach(building);

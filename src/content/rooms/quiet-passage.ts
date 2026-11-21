@@ -5,7 +5,7 @@ export default defineRoom({
   name: "Quiet passage",
   behaviour: "quiet",
   floors: [1, 3],
-  weight: 2,
+  weight: 1,
   descriptions: [
     "A long, empty tunnel. Old pick marks on the walls.",
     "Water drips somewhere in the dark. Nothing else stirs.",

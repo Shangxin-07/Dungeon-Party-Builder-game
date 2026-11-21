@@ -15,6 +15,7 @@ export default defineBuilding({
     },
     {
       cost: 320,
+      materials: { "iron-ore": 4 },
       days: 4,
       summary: "Heroes in town earn 8 XP a day",
       effects: [{ type: "trainingXp", amount: 8 }],

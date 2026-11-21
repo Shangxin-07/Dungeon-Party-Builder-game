@@ -2,7 +2,7 @@
  * What the last trip changed in town, and a link to watch it again.
  */
 import { heroSheet } from "../../sim/hero";
-import type { TownState } from "../../sim/town";
+import { materialWords, type TownState } from "../../sim/town";
 import { ix } from "../game";
 import { describeRaid } from "../Pit";
 
@@ -47,6 +47,12 @@ export function TripTown({ town }: { town: TownState }) {
               <strong>{trip.hiddenGold}</strong> of it came from hidden caches.
             </>
           ) : null}
+        </p>
+      ) : null}
+      {trip.materials && Object.keys(trip.materials).length ? (
+        <p>
+          Into the guild's store, to build with:{" "}
+          <strong>{materialWords(ix, trip.materials)}</strong>.
         </p>
       ) : null}
       {trip.recovered?.length ? (
@@ -160,6 +166,9 @@ export function LastTrip({ town, onWatch }: { town: TownState; onWatch: () => vo
     <p className={`last-trip last-${r.outcome}`}>
       Last trip (day {trip.day}): the party reached floor {r.deepestFloor} and {what}.{" "}
       {trip.goldEarned ? `+${trip.goldEarned} gold. ` : ""}
+      {trip.materials && Object.keys(trip.materials).length
+        ? `+${materialWords(ix, trip.materials)}. `
+        : ""}
       <button type="button" className="link" onClick={onWatch}>
         Watch it again
       </button>

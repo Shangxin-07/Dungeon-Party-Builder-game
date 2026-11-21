@@ -9,7 +9,7 @@ import type { HaulItem } from "../loot";
 import type { RaidReport } from "../raid";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 12;
+export const TOWN_VERSION = 13;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 export const PIT_HISTORY = 60;
@@ -108,6 +108,8 @@ export interface TripReport {
   lootRate?: number;
   /** Gold from hidden caches the party found (part of goldEarned). */
   hiddenGold?: number;
+  /** Materials brought home for the guild's store, by item id (not sold). */
+  materials?: Record<string, number>;
   /** Kills per hero id. */
   kills: Record<string, number>;
   /** Raids on the town while the party was away (not "held" nights). */
@@ -189,6 +191,8 @@ export interface TownState {
   bodies: Body[];
   /** Guild mates the dungeon kept, risen as the undead. */
   risen: Risen[];
+  /** Materials in the guild's store, by item id (DESIGN.md §8): kept to build with. */
+  materials: Record<string, number>;
 }
 
 /** A party on file: who goes, who carries, and their orders. Gear stays on the heroes. */

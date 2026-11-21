@@ -11,6 +11,7 @@ import {
   planRescue,
   resurrect,
   resurrectQuote,
+  materialWords,
   type TownState,
 } from "../sim/town";
 import { risenName } from "../sim/fallen";
@@ -166,12 +167,17 @@ export function FallenPanel({ town, act }: { town: TownState; act: Act }) {
                 <p className="small muted">Rose once already. They can only be buried.</p>
               ) : q.terms ? (
                 <p className="small">
-                  The priests ask {q.terms.gold} gold.{" "}
+                  The priests ask {q.terms.gold} gold
+                  {Object.keys(q.terms.materials).length
+                    ? ` and ${materialWords(ix, q.terms.materials)}`
+                    : ""}
+                  .{" "}
                   {q.terms.levels
                     ? `${b.hero.name} would lose ${q.terms.levels} ${q.terms.levels === 1 ? "level" : "levels"} (back to level ${b.hero.level - q.terms.levels}).`
                     : `${b.hero.name} is only level 1, so has no levels to lose.`}
                 </p>
               ) : null}
+              {q.why && q.terms ? <p className="small warn">{q.why}</p> : null}
               <div className="row-buttons">
                 {!b.risen ? (
                   <button

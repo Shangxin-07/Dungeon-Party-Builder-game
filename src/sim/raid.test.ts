@@ -21,6 +21,7 @@ import {
   type TownState,
   wageBill,
 } from "./town";
+import { stocked } from "./stocked";
 
 const ix = indexLibrary(library);
 const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
@@ -33,7 +34,7 @@ function neglected(n = 30): DungeonState {
 }
 /** Pay for an upgrade and skip the builders' wait (tests of what the building does). */
 const build = (t: TownState, id: string): TownState => {
-  const u = upgrade(ix, t, id);
+  const u = upgrade(ix, stocked(t), id);
   const done = Object.fromEntries(u.construction.map((c) => [c.building, c.level]));
   return { ...u, buildings: { ...u.buildings, ...done }, construction: [] };
 };
@@ -182,7 +183,7 @@ describe("building work", () => {
   });
 
   it("goes on while a party is away, and several buildings can go up at once", () => {
-    let t = { ...fresh(), gold: 1000, orders: { ...fresh().orders, targetFloor: 2 } };
+    let t = stocked({ ...fresh(), gold: 1000, orders: { ...fresh().orders, targetFloor: 2 } });
     t = upgrade(ix, upgrade(ix, t, "gate"), "palisade");
     expect(t.construction).toHaveLength(2);
     t = launch(ix, t, heroNames);
