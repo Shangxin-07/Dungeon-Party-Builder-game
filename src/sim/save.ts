@@ -2,7 +2,8 @@
  * Saves (DESIGN.md §13). A save is the TownState as JSON with a version
  * number. Saves store ids, not copies of content, so they keep working as
  * content changes. When TownState changes shape, bump TOWN_VERSION and add a
- * step to MIGRATIONS that turns the previous version into the new one.
+ * step to MIGRATIONS that turns the previous version into the new one. Before
+ * bumping, add a save from the old version to fixtures/saves/ (see its README).
  *
  * Where saves are kept (browser storage, a file) is the UI's business; this
  * file only reads, upgrades and writes them.
@@ -155,7 +156,73 @@ export function importSave(ix: Index, text: string): TownState {
     throw new Error("That file isn't a Dungeon Party Builder save.");
   const town = migrateTown(ix, file.town);
   if (!town) throw new Error("That save is from a newer version of the game.");
+  const missing = missingContent(ix, town);
+  if (missing.length)
+    throw new Error(
+      `That save uses things this version of the game doesn't have: ${missing.slice(0, 5).join(", ")}` +
+        `${missing.length > 5 ? ` and ${missing.length - 5} more` : ""}.`,
+    );
   return town;
+}
+
+/**
+ * Content a save refers to that the game no longer has ('item "sword"', ...),
+ * each listed once. Saves keep ids, not copies (see the top of this file), so
+ * renaming or removing a class, item, building and so on breaks old saves
+ * unless a migration step renames the id in them too. Checking here turns
+ * what would be a crash on every load into a message.
+ */
+export function missingContent(ix: Index, town: TownState): string[] {
+  const out = new Set<string>();
+  const check = (kind: string, look: (id: string) => unknown, id: string | undefined) => {
+    if (id === undefined) return;
+    try {
+      look(id);
+    } catch {
+      out.add(`${kind} "${id}"`);
+    }
+  };
+  const item = (id?: string) => check("item", ix.item, id);
+  const cls = (id?: string) => check("class", ix.cls, id);
+  const building = (id?: string) => check("building", ix.building, id);
+  const monster = (id?: string) => check("monster", ix.monster, id);
+  const hero = (h: Hero) => {
+    cls(h.classId);
+    for (const id of Object.values(h.equipment)) item(id);
+    h.pack.forEach(item);
+    for (const id of h.perks) check("perk", ix.perk, id);
+    for (const l of h.levelUps ?? []) for (const id of l.offers) check("perk", ix.perk, id);
+    check("motivation", ix.motivation, h.motivation);
+    building(h.favourite);
+    for (const i of h.injuries ?? []) check("injury", ix.injury, i.id);
+  };
+  [...town.roster, ...town.recruits].forEach(hero);
+  for (const s of town.sites) {
+    for (const x of s.trapped) hero(x.hero);
+    for (const it of s.items) item(it.item);
+  }
+  town.stash.forEach(item);
+  for (const g of town.scavenged) item(g.item);
+  Object.keys(town.buildings).forEach(building);
+  town.damaged.forEach(building);
+  for (const c of town.construction) building(c.building);
+  for (const m of town.memorial) cls(m.classId);
+  for (const d of town.departed) {
+    cls(d.classId);
+    d.took.forEach(item);
+  }
+  // History the town screen shows: the last trip and recent raids.
+  const trip = town.lastTrip;
+  if (trip) {
+    trip.party.forEach(hero);
+    trip.result.kills.forEach(monster);
+    for (const h of [...trip.result.haul, ...(trip.result.porterHaul ?? [])]) item(h.item);
+  }
+  for (const r of town.raids) {
+    r.raiders.forEach(monster);
+    r.defenders.forEach(hero);
+  }
+  return [...out];
 }
 
 export function summarise(town: TownState): SaveSummary {

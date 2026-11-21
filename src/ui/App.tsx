@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CrashGuard } from "./Crash";
 import { ExpeditionView } from "./Expedition";
 import { TestFight } from "./TestFight";
 import { TownGame } from "./Town";
@@ -43,7 +44,9 @@ export function App() {
       </header>
 
       {tab === "town" ? (
-        <TownGame />
+        <CrashGuard>
+          <TownGame />
+        </CrashGuard>
       ) : (
         <>
           <p className="muted">

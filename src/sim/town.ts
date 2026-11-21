@@ -1351,6 +1351,7 @@ function quit(ix: Index, t: TownState, h: Hero): void {
   t.stash.push(...h.pack);
   t.roster = t.roster.filter((x) => x.id !== h.id);
   t.party = t.party.filter((id) => id !== h.id);
+  t.porters = (t.porters ?? []).filter((id) => id !== h.id);
   t.departed.push({ name: h.name, classId: h.classId, day: t.day, took });
   const gear = took.map((id) => ix.item(id).name.toLowerCase());
   news(
@@ -1503,6 +1504,10 @@ function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): void {
   }
   sitesNight(ix, t);
   quitters(ix, t);
+  // Nobody who has left the guild stays picked (this also mends saves from
+  // before quitting porters were taken off the porter list).
+  t.party = t.party.filter((id) => findHero(t, id));
+  t.porters = (t.porters ?? []).filter((id) => findHero(t, id));
 }
 
 /** Spend a day in town. Everyone heals, night falls, and new recruits turn up. */

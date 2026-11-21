@@ -37,16 +37,32 @@ function set(key: string, value: string | null): boolean {
   }
 }
 
-export function readSlot(slot: number): SlotInfo | undefined {
+/**
+ * What's in a slot. A slot that holds something the game can't read
+ * ("unreadable") is never treated as empty: the player decides what happens
+ * to it, so a save from a newer version (an old tab still open after an
+ * update) or one a future change breaks is never played over by accident.
+ */
+export type SlotState =
+  | { state: "empty" }
+  | ({ state: "ok" } & SlotInfo)
+  | { state: "unreadable"; raw: string; reason: string };
+
+export function inspectSlot(slot: number): SlotState {
   const raw = get(slotKey(slot));
-  if (!raw) return undefined;
+  if (!raw) return { state: "empty" };
   try {
     const town = importSave(ix, raw);
     const savedAt = new Date((JSON.parse(raw) as { savedAt?: string }).savedAt ?? 0);
-    return { town, savedAt };
-  } catch {
-    return undefined;
+    return { state: "ok", town, savedAt };
+  } catch (e) {
+    return { state: "unreadable", raw, reason: (e as Error).message };
   }
+}
+
+export function readSlot(slot: number): SlotInfo | undefined {
+  const s = inspectSlot(slot);
+  return s.state === "ok" ? s : undefined;
 }
 
 export function writeSlot(slot: number, town: TownState): boolean {
@@ -83,11 +99,27 @@ export function adoptLegacySave(): void {
 
 /** Offer the town as a file download. */
 export function downloadSave(town: TownState): void {
-  const blob = new Blob([exportSave(town, new Date())], { type: "application/json" });
+  download(exportSave(town, new Date()), `dungeon-party-day-${town.day}.json`);
+}
+
+/** Offer a slot's save, exactly as stored, as a file download (for one the game can't read). */
+export function downloadRaw(slot: number, raw: string): void {
+  download(raw, `dungeon-party-slot-${slot}.json`);
+}
+
+function download(text: string, name: string): void {
+  const blob = new Blob([text], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `dungeon-party-day-${town.day}.json`;
+  a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** The playing slot's save exactly as stored, if there is one (for the crash screen). */
+export function activeRaw(): { slot: number; raw: string } | undefined {
+  const slot = activeSlot();
+  const raw = get(slotKey(slot));
+  return raw ? { slot, raw } : undefined;
 }

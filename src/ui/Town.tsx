@@ -79,7 +79,9 @@ import {
   adoptLegacySave,
   clearSlot,
   downloadSave,
-  readSlot,
+  downloadRaw,
+  inspectSlot,
+  type SlotState,
   setActiveSlot,
   SLOTS,
   writeSlot,
@@ -137,14 +139,96 @@ function tally(ids: readonly string[]): [string, number][] {
 
 type Act = (f: (t: TownState) => TownState) => void;
 
-function startingGame(): { slot: number; town: TownState } {
+type Game = { slot: number; town: TownState };
+type Start = Game | { slot: number; problem: Extract<SlotState, { state: "unreadable" }> };
+
+function startingGame(): Start {
   adoptLegacySave();
   const slot = activeSlot();
-  return { slot, town: readSlot(slot)?.town ?? freshTown() };
+  const s = inspectSlot(slot);
+  if (s.state === "unreadable") return { slot, problem: s };
+  return { slot, town: s.state === "ok" ? s.town : freshTown() };
 }
 
+/**
+ * The town game. If the save it would carry on with can't be read, nothing is
+ * played (or autosaved) until the player says what to do with it.
+ */
 export function TownGame() {
-  const [game, setGame] = useState(startingGame);
+  const [start, setStart] = useState(startingGame);
+  if ("problem" in start)
+    return (
+      <SaveProblem
+        slot={start.slot}
+        problem={start.problem}
+        onPlay={(slot, town) => setStart({ slot, town })}
+      />
+    );
+  return <TownPlay initial={start} />;
+}
+
+function SaveProblem({
+  slot,
+  problem,
+  onPlay,
+}: {
+  slot: number;
+  problem: Extract<SlotState, { state: "unreadable" }>;
+  onPlay: (slot: number, town: TownState) => void;
+}) {
+  const others = SLOTS.filter((n) => n !== slot).map((n) => ({ n, s: inspectSlot(n) }));
+  const newer = /newer version/.test(problem.reason);
+  return (
+    <section className="town panel" aria-labelledby="save-problem-heading">
+      <h2 id="save-problem-heading">The guild in slot {slot} can't be loaded</h2>
+      <p className="error" role="alert">
+        {problem.reason}
+      </p>
+      <p>
+        {newer
+          ? "It was saved by a newer version of the game. Reload the page to get the latest version; your guild is still there."
+          : "Your save hasn't been touched. Download it to keep it safe while this gets fixed."}
+      </p>
+      <p className="small">
+        <button type="button" className="btn btn-main" onClick={() => location.reload()}>
+          Reload the page
+        </button>{" "}
+        <button type="button" className="btn" onClick={() => downloadRaw(slot, problem.raw)}>
+          Download the save
+        </button>
+      </p>
+      <p className="small">
+        Or play another slot:{" "}
+        {others.map(({ n, s }) =>
+          s.state === "unreadable" ? null : (
+            <button
+              key={n}
+              type="button"
+              className="btn"
+              onClick={() => onPlay(n, s.state === "ok" ? s.town : freshTown())}
+            >
+              {s.state === "ok" ? `Slot ${n} (day ${s.town.day})` : `Start a guild in slot ${n}`}
+            </button>
+          ),
+        )}{" "}
+        <button
+          type="button"
+          className="link danger"
+          onClick={() => {
+            if (!confirm(`Start over in slot ${slot}? The save there will be gone for good.`))
+              return;
+            onPlay(slot, freshTown());
+          }}
+        >
+          Start over in slot {slot}
+        </button>
+      </p>
+    </section>
+  );
+}
+
+function TownPlay({ initial }: { initial: Game }) {
+  const [game, setGame] = useState(initial);
   const { slot, town } = game;
   const setTown = (t: TownState) => setGame((g) => ({ ...g, town: t }));
   const [watching, setWatching] = useState<false | "trip" | RaidReport>(false);
@@ -282,7 +366,10 @@ function Saves({
   onError: (message: string) => void;
 }) {
   // Re-read the other slots whenever the town changes, so "saved at" stays fresh.
-  const slots = SLOTS.map((n) => ({ n, info: n === slot ? undefined : readSlot(n) }));
+  const slots = SLOTS.map((n) => {
+    const s: SlotState | undefined = n === slot ? undefined : inspectSlot(n);
+    return { n, s, info: s?.state === "ok" ? s : undefined };
+  });
   return (
     <section aria-labelledby="saves-heading" className="panel">
       <h2 id="saves-heading">Saves</h2>
@@ -292,8 +379,32 @@ function Saves({
         computer.
       </p>
       <ul className="slots">
-        {slots.map(({ n, info }) => {
+        {slots.map(({ n, s, info }) => {
           const t = n === slot ? town : info?.town;
+          if (s?.state === "unreadable")
+            return (
+              <li key={n} className="slot">
+                <strong>Slot {n}</strong>{" "}
+                <span className="muted small">Can't be loaded: {s.reason}</span>
+                <span className="slot-actions">
+                  <button type="button" className="btn" onClick={() => downloadRaw(n, s.raw)}>
+                    Download it
+                  </button>
+                  <button
+                    type="button"
+                    className="link danger"
+                    onClick={() => {
+                      if (!confirm(`Delete the save in slot ${n}? It will be gone for good.`))
+                        return;
+                      clearSlot(n);
+                      onError("");
+                    }}
+                  >
+                    Delete
+                  </button>
+                </span>
+              </li>
+            );
           return (
             <li key={n} className={`slot${n === slot ? " playing" : ""}`}>
               <strong>Slot {n}</strong>{" "}
