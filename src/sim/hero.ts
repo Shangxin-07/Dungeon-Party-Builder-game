@@ -73,8 +73,12 @@ export interface Hero {
   pay: number;
   /** Level at their last raise talk; they ask again a few levels on. */
   payLevel: number;
-  /** A raise they've asked for and not had an answer to yet. */
-  raiseAsk?: { amount: number; day: number };
+  /**
+   * A raise they've asked for and not had an answer to yet. `waited` counts
+   * the days they've spent in town since (days away don't count); missing on
+   * saves from before M6.20, which read as 0.
+   */
+  raiseAsk?: { amount: number; day: number; waited?: number };
   /**
    * A recruit who hasn't picked a class yet (M6): `stats` are their own,
    * before training, and `classId` is only the best fit. Hiring trains them.

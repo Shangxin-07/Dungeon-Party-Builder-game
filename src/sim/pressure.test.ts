@@ -77,7 +77,7 @@ describe("raises", () => {
 
   it("are asked for every few levels", () => {
     const t = rest(ix, at(fresh(), 1 + r.everyLevels), heroNames);
-    expect(t.roster[0]!.raiseAsk).toEqual({ amount: r.amount, day: 1 });
+    expect(t.roster[0]!.raiseAsk).toEqual({ amount: r.amount, day: 1, waited: 0 });
     expect(t.news.at(-1)!.text).toMatch(/asks for a raise/);
     expect(rest(ix, at(fresh(), r.everyLevels), heroNames).roster[0]!.raiseAsk).toBeUndefined();
   });
@@ -98,6 +98,34 @@ describe("raises", () => {
     for (let i = 0; i < r.patienceDays; i++) waited = rest(ix, waited, heroNames);
     expect(waited.roster[0]!.raiseAsk).toBeUndefined();
     expect(waited.roster[0]!.moraleLog.some((n) => n.reason === "was refused a raise")).toBe(true);
+  });
+
+  it("wait for the party to come home: days in the dungeon don't count", () => {
+    // Mike's day-39 bug: three heroes asked and gave up while still on a trip.
+    const t = rest(ix, at(fresh(), 1 + r.everyLevels), heroNames);
+    const asker = t.roster[0]!;
+    const sent = { ...t, party: [asker.id, ...t.party.filter((id) => id !== asker.id)] };
+    let away = sent;
+    for (let i = 0; i < 4; i++) {
+      away = launch(ix, away, heroNames);
+      if (!away.roster.some((h) => h.id === asker.id)) return; // fell on the trip; nothing to check
+    }
+    expect(away.day - t.day).toBeGreaterThanOrEqual(r.patienceDays);
+    const back = away.roster.find((h) => h.id === asker.id)!;
+    expect(back.raiseAsk).toBeDefined();
+    expect(away.news.some((n) => /gave up waiting/.test(n.text))).toBe(false);
+  });
+
+  it("aren't asked for while the hero is away", () => {
+    const t = at(fresh(), 1 + r.everyLevels);
+    const asker = t.roster[0]!;
+    const sent = launch(
+      ix,
+      { ...t, party: [asker.id, ...t.party.filter((id) => id !== asker.id)] },
+      heroNames,
+    );
+    const back = sent.roster.find((h) => h.id === asker.id);
+    if (back) expect(back.raiseAsk).toBeUndefined();
   });
 });
 
