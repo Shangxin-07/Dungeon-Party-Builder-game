@@ -6,15 +6,27 @@ import type { Hero } from "../sim/hero";
 import { scoutingReport } from "../sim/report";
 import type { TownState } from "../sim/town";
 import { ix } from "./game";
+import { Fold } from "./Fold";
 
 export function ScoutingReport({ town, party }: { town: TownState; party: readonly Hero[] }) {
   const floor = town.orders.targetFloor;
   const r = scoutingReport(ix, town, floor, party);
   return (
-    <div className="report">
-      <h3>
-        Scouting report: floor {floor}, {ix.floor(floor).name}
-      </h3>
+    <Fold
+      id="scouting"
+      level={3}
+      className="report"
+      title={`Scouting report: floor ${floor}, ${ix.floor(floor).name}`}
+      summary={
+        r.warnings.length ? (
+          <span className="warn">
+            {r.warnings.length} {r.warnings.length === 1 ? "worry" : "worries"}
+          </span>
+        ) : party.length ? (
+          <span className="good">looks well suited</span>
+        ) : undefined
+      }
+    >
       <ul className="report-monsters small">
         {r.monsters.map((m) => (
           <li key={m.monster}>
@@ -41,6 +53,6 @@ export function ScoutingReport({ town, party }: { town: TownState; party: readon
       ) : party.length ? (
         <p className="small good">This party looks well suited to what's down there.</p>
       ) : null}
-    </div>
+    </Fold>
   );
 }

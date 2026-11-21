@@ -1,6 +1,7 @@
 /**
  * The memorial to the fallen.
  */
+import { Fold } from "../Fold";
 import type { TownState } from "../../sim/town";
 import { ix } from "../game";
 import { Departed } from "../Lost";
@@ -8,8 +9,7 @@ import { Departed } from "../Lost";
 export function Memorial({ town }: { town: TownState }) {
   if (!town.memorial.length && !town.departed.length) return null;
   return (
-    <section aria-labelledby="memorial-heading" className="panel">
-      <h2 id="memorial-heading">Memorial</h2>
+    <Fold id="memorial" title="Memorial" summary={`${town.memorial.length} fallen`}>
       <ul className="memorial">
         {[...town.memorial].reverse().map((m, i) => (
           <li key={i}>
@@ -28,6 +28,6 @@ export function Memorial({ town }: { town: TownState }) {
         ))}
       </ul>
       <Departed town={town} />
-    </section>
+    </Fold>
   );
 }

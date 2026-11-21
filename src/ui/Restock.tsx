@@ -3,6 +3,7 @@
  * ready to put back in their packs from the store room or the Market. The
  * player ticks what to buy and okays it.
  */
+import { Fold } from "./Fold";
 import { useState } from "react";
 import { findHero, restock, restockPlan, type RestockLine, type TownState } from "../sim/town";
 import { ix } from "./game";
@@ -25,8 +26,12 @@ export function RestockPanel({ town, act }: { town: TownState; act: Act }) {
       return n;
     });
   return (
-    <section aria-labelledby="restock-heading" className="panel">
-      <h2 id="restock-heading">Restock</h2>
+    <Fold
+      id="restock"
+      title="Restock"
+      defaultOpen
+      summary={`${chosen.length} to buy, ${cost} gold`}
+    >
       <p className="muted">
         The last trip used these up. Untick anything you'd rather not replace.
       </p>
@@ -61,6 +66,6 @@ export function RestockPanel({ town, act }: { town: TownState; act: Act }) {
       {cost > town.gold ? (
         <span className="warn small"> Not enough gold for all of it.</span>
       ) : null}
-    </section>
+    </Fold>
   );
 }

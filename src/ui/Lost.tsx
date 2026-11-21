@@ -2,6 +2,7 @@
  * Lost parties and rescue runs (M5, DESIGN.md §10), the guild's news, and the
  * talk around town. Rules live in src/sim/town/.
  */
+import { Fold } from "./Fold";
 import { library } from "../content";
 import {
   burialCost,
@@ -27,8 +28,7 @@ export function LostPanel({ town, act }: { town: TownState; act: Act }) {
   const byFloor = new Map<number, typeof town.scavenged>();
   for (const g of town.scavenged) byFloor.set(g.floor, [...(byFloor.get(g.floor) ?? []), g]);
   return (
-    <section aria-labelledby="lost-heading" className="panel lost">
-      <h2 id="lost-heading">Lost in the dungeon</h2>
+    <Fold id="lost" title="Lost in the dungeon" className="lost" defaultOpen>
       <ul className="sites">
         {town.sites.map((s) => {
           const planned = town.orders.rescue === s.id;
@@ -135,7 +135,7 @@ export function LostPanel({ town, act }: { town: TownState; act: Act }) {
           </ul>
         </>
       ) : null}
-    </section>
+    </Fold>
   );
 }
 
@@ -145,8 +145,7 @@ export function FallenPanel({ town, act }: { town: TownState; act: Act }) {
   if (!bodies.length) return null;
   const burial = burialCost(ix, town);
   return (
-    <section aria-labelledby="fallen-heading" className="panel">
-      <h2 id="fallen-heading">The fallen</h2>
+    <Fold id="fallen" title="The fallen" defaultOpen>
       <p className="small muted">
         Bodies brought home wait here. The Temple can bring a hero back, at the cost of their most
         recent levels (each comes back as it was once they earn the XP again). The Graveyard lays
@@ -211,7 +210,7 @@ export function FallenPanel({ town, act }: { town: TownState; act: Act }) {
           );
         })}
       </ul>
-    </section>
+    </Fold>
   );
 }
 
@@ -220,8 +219,7 @@ export function TalkPanel({ town }: { town: TownState }) {
   const talk = grumbles(ix, town);
   if (!town.news.length && !talk.length) return null;
   return (
-    <section aria-labelledby="talk-heading" className="panel">
-      <h2 id="talk-heading">Around the guild</h2>
+    <Fold id="talk" title="Around the guild" summary={town.news.at(-1)?.text}>
       {town.news.length ? (
         <ul className="news small">
           {[...town.news]
@@ -241,7 +239,7 @@ export function TalkPanel({ town }: { town: TownState }) {
           ))}
         </ul>
       ) : null}
-    </section>
+    </Fold>
   );
 }
 

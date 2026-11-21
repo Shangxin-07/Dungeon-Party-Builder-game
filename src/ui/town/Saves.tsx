@@ -1,6 +1,7 @@
 /**
  * The save slots panel: switch, export, import and clear saves.
  */
+import { Fold } from "../Fold";
 import type { TownState } from "../../sim/town";
 import { importSave } from "../../sim/save";
 import { ix } from "../game";
@@ -24,8 +25,7 @@ export function Saves({
     return { n, s, info: s?.state === "ok" ? s : undefined };
   });
   return (
-    <section aria-labelledby="saves-heading" className="panel">
-      <h2 id="saves-heading">Saves</h2>
+    <Fold id="saves" title="Saves" summary={`Playing slot ${slot}`}>
       <p className="muted small">
         Your guild saves itself in this browser after everything you do. Keep up to {SLOTS.length}{" "}
         guilds going in separate slots, or save one to a file to keep it safe or move it to another
@@ -130,6 +130,6 @@ export function Saves({
           />
         </label>
       </p>
-    </section>
+    </Fold>
   );
 }

@@ -4,6 +4,7 @@
  * PostsPanel puts heroes at home on posts: the barricade, the lookout, the
  * salvage crew and (at the camp only) the seam.
  */
+import { Fold } from "../Fold";
 import { heroNames } from "../../content";
 import {
   assignPost,
@@ -34,8 +35,7 @@ export function CampPanel({ town, act }: { town: TownState; act: Act }) {
   if (!town.camp) return null;
   const needs = campNeeds(ix, town);
   return (
-    <section aria-labelledby="camp-heading" className="panel camp">
-      <h2 id="camp-heading">The mining camp</h2>
+    <Fold id="camp" title="The mining camp" className="camp" defaultOpen>
       <p>
         The miners dug too deep. Something is climbing out of the pit every night, and there are no
         walls, no Guild Hall, and nobody trained to go down. Put your people on the posts round the
@@ -110,7 +110,7 @@ export function CampPanel({ town, act }: { town: TownState; act: Act }) {
           <span className="muted">and start with a Guild Hall, ready to delve.</span>
         </p>
       ) : null}
-    </section>
+    </Fold>
   );
 }
 
@@ -127,8 +127,12 @@ export function PostsPanel({ town, act }: { town: TownState; act: Act }) {
       ]
     : [];
   return (
-    <section aria-labelledby="posts-heading" className="panel">
-      <h2 id="posts-heading">Posts round the pit</h2>
+    <Fold
+      id="posts"
+      title="Posts round the pit"
+      defaultOpen={!!town.camp}
+      summary={`${Object.values(town.posts ?? {}).flat().length} at their posts`}
+    >
       <p className="small muted">
         Heroes at home can hold a post. They still fight any raid that gets through, and a hero who
         goes down with a party leaves their post empty until they're back.
@@ -196,6 +200,6 @@ export function PostsPanel({ town, act }: { town: TownState; act: Act }) {
           );
         })}
       </ul>
-    </section>
+    </Fold>
   );
 }

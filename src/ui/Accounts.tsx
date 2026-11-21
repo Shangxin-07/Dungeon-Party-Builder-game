@@ -2,6 +2,7 @@
  * The guild's books (M6): what the gold came from and went on over the last
  * week, and the daily wage bill. Wages are content (content/town.ts).
  */
+import { Fold } from "./Fold";
 import type { LedgerKind, TownState } from "../sim/town";
 import { wage, wageBill } from "../sim/town";
 import { ix } from "./game";
@@ -34,8 +35,7 @@ export function Accounts({ town }: { town: TownState }) {
   const bill = wageBill(ix, town);
   const w = ix.lib.town.wages;
   return (
-    <section aria-labelledby="accounts-heading" className="panel">
-      <h2 id="accounts-heading">The books</h2>
+    <Fold id="accounts" title="The books" summary={`Last 7 days ${net >= 0 ? "+" : ""}${net} gold`}>
       {town.camp ? (
         <p className="muted">
           Nobody is paid at the mining camp: the miners work for their keep. Wages of {w.base} gold
@@ -102,6 +102,6 @@ export function Accounts({ town }: { town: TownState }) {
       ) : (
         <p className="muted">Nothing in the books this week.</p>
       )}
-    </section>
+    </Fold>
   );
 }

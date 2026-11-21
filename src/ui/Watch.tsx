@@ -1,6 +1,6 @@
 /**
- * Watching a trip: the log player, HP bars, hero stat sheets and the results
- * card. Used by the town's watch screen and by the sandbox expedition demo.
+ * Watching a trip: the log player, Party and Opposition panels (one line each,
+ * click for the full sheet) and the results card. Used by the town's watch screen and by the sandbox expedition demo.
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DERIVED, STATS, type Derived } from "../content/types";
@@ -201,63 +201,67 @@ const FOE_DERIVED: readonly Derived[] = [
   "initiative",
 ];
 
-/** A monster's bar plus its stats, weapon and tags, as seen while watching. */
+/** A monster's bar plus its stats, weapon and tags (the sandbox fight view). */
 export function FoeCard({ bar }: { bar: Bar }) {
-  const s = bar.sheet;
-  const def = s?.monsterId ? ix.monster(s.monsterId) : undefined;
   return (
     <li className="hero foe">
       <HpBar bar={bar} />
-      {s?.stats && s.derived ? (
-        <>
-          <p className="hero-class">
-            {s.row === "back" ? "Back row" : "Front row"}
-            {s.weapon ? (
-              <span className="muted">
-                {" "}
-                · {s.weapon.name} ({s.weapon.damageType}
-                {s.weapon.ranged ? ", ranged" : ""})
-              </span>
-            ) : null}
-            {def?.tags.length ? <span className="muted"> · {def.tags.join(", ")}</span> : null}
-          </p>
-          <dl className="stat-grid">
-            {STATS.map((st) => (
-              <div key={st}>
-                <dt>{st}</dt>
-                <dd>{s.stats![st]}</dd>
-              </div>
-            ))}
-          </dl>
-          <dl className="derived-grid">
-            {FOE_DERIVED.map((d) => (
-              <div key={d}>
-                <dt>{DERIVED_LABELS[d]}</dt>
-                <dd>{s.derived![d]}</dd>
-              </div>
-            ))}
-          </dl>
-          {s.abilities?.length ? (
-            <p className="skills">
-              {s.abilities.map((a) => (
-                <span key={a} title={ix.ability(a).description}>
-                  {ix.ability(a).name}
-                </span>
-              ))}
-            </p>
-          ) : null}
-        </>
-      ) : null}
+      <FoeDetails bar={bar} />
     </li>
   );
 }
 
-/** A hero's bars plus their stat sheet, as seen while watching. */
-function WatchCard({ hero, bar: raw }: { hero: Hero; bar?: Bar }) {
-  const bar = raw && !usesMana(hero) ? { ...raw, mana: undefined, maxMana: undefined } : raw;
+/** A monster's row, weapon, tags, stats and moves. */
+function FoeDetails({ bar }: { bar: Bar }) {
+  const s = bar.sheet;
+  const def = s?.monsterId ? ix.monster(s.monsterId) : undefined;
+  if (!s?.stats || !s.derived) return <p className="hero-class">Nothing more is known.</p>;
   return (
-    <li className="hero">
-      {bar ? <HpBar bar={bar} /> : null}
+    <>
+      <p className="hero-class">
+        {s.row === "back" ? "Back row" : "Front row"}
+        {s.weapon ? (
+          <span className="muted">
+            {" "}
+            · {s.weapon.name} ({s.weapon.damageType}
+            {s.weapon.ranged ? ", ranged" : ""})
+          </span>
+        ) : null}
+        {def?.tags.length ? <span className="muted"> · {def.tags.join(", ")}</span> : null}
+      </p>
+      <dl className="stat-grid">
+        {STATS.map((st) => (
+          <div key={st}>
+            <dt>{st}</dt>
+            <dd>{s.stats![st]}</dd>
+          </div>
+        ))}
+      </dl>
+      <dl className="derived-grid">
+        {FOE_DERIVED.map((d) => (
+          <div key={d}>
+            <dt>{DERIVED_LABELS[d]}</dt>
+            <dd>{s.derived![d]}</dd>
+          </div>
+        ))}
+      </dl>
+      {s.abilities?.length ? (
+        <p className="skills">
+          {s.abilities.map((a) => (
+            <span key={a} title={ix.ability(a).description}>
+              {ix.ability(a).name}
+            </span>
+          ))}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+/** A hero's class, row, morale, wounds and stat sheet, as seen while watching. */
+function HeroDetails({ hero, bar }: { hero: Hero; bar?: Bar }) {
+  return (
+    <>
       <p className="hero-class">
         {heroTitle(ix, hero)}, {hero.row} row
         {hero.alignment ? `, ${ix.alignment(hero.alignment).name}` : ""}
@@ -278,9 +282,54 @@ function WatchCard({ hero, bar: raw }: { hero: Hero; bar?: Bar }) {
           </span>
         ) : null}
       </p>
-      <StatSheet hero={hero} />
+      <StatSheet hero={hero} full />
+    </>
+  );
+}
+
+/**
+ * One line in the Party or Opposition panel: name, HP and mana. Click it for
+ * the full sheet underneath.
+ */
+function Combatant({
+  bar,
+  open,
+  onToggle,
+  children,
+}: {
+  bar: Bar;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <li className={`combatant${open ? " open" : ""}`}>
+      <button
+        type="button"
+        className="combatant-row"
+        aria-expanded={open}
+        title={open ? "Hide details" : "Show details"}
+        onClick={onToggle}
+      >
+        <HpBar bar={bar} />
+      </button>
+      {open ? <div className="combatant-details">{children}</div> : null}
     </li>
   );
+}
+
+/** A hero's bar before they've shown up in the log: full health, as they set off. */
+function startBar(hero: Hero): Bar {
+  const d = heroSheet(ix, hero).derived;
+  return {
+    uid: hero.id,
+    name: hero.name,
+    hp: hero.hp,
+    max: d.maxHp,
+    mana: hero.mana,
+    maxMana: d.mana,
+    state: hero.condition === "ok" ? "up" : hero.condition,
+  };
 }
 
 function Line({ e }: { e: ExpeditionEvent }) {
@@ -419,6 +468,16 @@ export function TripPlayer({
   const state = stateAt(log, shown);
   const done = shown >= log.length;
 
+  // Which combatants have their details open. Monster ids are new each fight.
+  const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
+  const toggle = (uid: string) =>
+    setOpen((o) => {
+      const n = new Set(o);
+      if (n.has(uid)) n.delete(uid);
+      else n.add(uid);
+      return n;
+    });
+
   return (
     <>
       <div className="controls">
@@ -440,22 +499,39 @@ export function TripPlayer({
 
       <p className="where">{state.where}</p>
       <div className="sides">
-        <ul className="bars heroes" aria-label="Party">
-          {heroes.map((h) => (
-            <WatchCard key={h.id} hero={h} bar={state.party.find((b) => b.uid === h.id)} />
-          ))}
-        </ul>
-        {state.monsters?.length ? (
-          <ul className="bars heroes foes" aria-label="Monsters">
-            {state.monsters.map((b) => (
-              <FoeCard key={b.uid} bar={b} />
-            ))}
+        <section className="side" aria-labelledby="side-party">
+          <h3 id="side-party">Party</h3>
+          <ul className="combatants">
+            {heroes.map((h) => {
+              const raw = state.party.find((b) => b.uid === h.id) ?? startBar(h);
+              const bar = usesMana(h) ? raw : { ...raw, mana: undefined, maxMana: undefined };
+              return (
+                <Combatant key={h.id} bar={bar} open={open.has(h.id)} onToggle={() => toggle(h.id)}>
+                  <HeroDetails hero={h} bar={bar} />
+                </Combatant>
+              );
+            })}
           </ul>
-        ) : (
-          <div className="bars" aria-label="Monsters">
-            <p className="muted quiet">No monsters in sight.</p>
-          </div>
-        )}
+        </section>
+        <section className="side foes" aria-labelledby="side-foes">
+          <h3 id="side-foes">Opposition</h3>
+          {state.monsters?.length ? (
+            <ul className="combatants">
+              {state.monsters.map((b) => (
+                <Combatant
+                  key={b.uid}
+                  bar={b}
+                  open={open.has(b.uid)}
+                  onToggle={() => toggle(b.uid)}
+                >
+                  <FoeDetails bar={b} />
+                </Combatant>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted quiet small">No monsters in sight.</p>
+          )}
+        </section>
       </div>
 
       <ol className="log" aria-live="polite" ref={logRef}>

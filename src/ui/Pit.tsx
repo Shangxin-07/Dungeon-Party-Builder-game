@@ -3,6 +3,7 @@
  * defences, the watchtower's forecast, recent raids, and the dungeon pressure
  * map (population and monster level per floor). DESIGN.md §4, §8.
  */
+import { Fold } from "./Fold";
 import { library } from "../content";
 import { levelBand, spawnRate } from "../sim/dungeon";
 import { floorPower, levelPower } from "../sim/encounter";
@@ -62,8 +63,11 @@ export function PitPanel({
     .filter((x) => x.amount > 0);
 
   return (
-    <section aria-labelledby="pit-heading" className="panel">
-      <h2 id="pit-heading">The pit</h2>
+    <Fold
+      id="pit"
+      title="The pit"
+      summary={`Defence ${def}${last ? `, last night ${last.strength}` : ""}`}
+    >
       <p className="muted small">
         Whatever the dungeon can't hold climbs out at night. Strength = monsters × their level. Your
         defences hold back their total; anything over that raids the town.
@@ -135,7 +139,7 @@ export function PitPanel({
       ) : null}
 
       <PressureMap town={town} />
-    </section>
+    </Fold>
   );
 }
 

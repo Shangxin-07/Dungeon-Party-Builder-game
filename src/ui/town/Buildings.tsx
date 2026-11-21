@@ -1,6 +1,7 @@
 /**
  * Buildings: upgrades, repairs, works in progress and the helpers on site.
  */
+import { Fold } from "../Fold";
 import { library, materials } from "../../content";
 import {
   builderHands,
@@ -18,10 +19,21 @@ import { ix } from "../game";
 import type { Act } from "./shared";
 import { costWords } from "./Posts";
 
+/** "5 built, 1 going up, 1 damaged". */
+function buildingSummary(town: TownState): string {
+  const built = Object.values(town.buildings).filter((l) => l > 0).length;
+  return [
+    `${built} built`,
+    town.construction.length ? `${town.construction.length} going up` : "",
+    town.damaged.length ? `${town.damaged.length} damaged` : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
 export function Buildings({ town, act }: { town: TownState; act: Act }) {
   return (
-    <section aria-labelledby="buildings-heading" className="panel">
-      <h2 id="buildings-heading">Buildings</h2>
+    <Fold id="buildings" title="Buildings" summary={buildingSummary(town)}>
       <Store town={town} />
       <Helpers town={town} />
       <ul className="cards">
@@ -93,7 +105,7 @@ export function Buildings({ town, act }: { town: TownState; act: Act }) {
           );
         })}
       </ul>
-    </section>
+    </Fold>
   );
 }
 
