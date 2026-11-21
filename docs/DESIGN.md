@@ -866,7 +866,7 @@ Each milestone ends with something you can run.
 | 15 | Game opening (built M6.16) | Start at an undefended mining site, assign heroes to makeshift defences, gather materials, build up, then unlock delving. New games start here; it can be skipped |
 | 16 | Classes and levels (later) | Freeform: hero level up to ~50; each level-up goes into a known class of your choice; class levels uncapped. Advanced and combo classes unlock at class-level and stat thresholds (optionally buildings, alignment). Depth rewarded through class-level scaling and milestone perks. Forward only, never swap. Class names are examples only |
 | 17 | The fallen (later) | Bodies can be recovered. In town: resurrect (Temple; costs gold, materials and a level or a % of levels, regained as XP is re-earned) or bury (Graveyard). Left in the dungeon, a body rises as an undead version of the hero that later parties can meet |
-| 18 | Where the choices are (agreed 2026-11-21) | In town. Trips run in the background; a debrief on return holds the choices (sell, salvage, research); watching is an optional replay. No runners |
+| 18 | Where the choices are (agreed 2026-11-21) | In town. Trips run in the background, hidden until someone comes back or finds them; a debrief on return holds the choices (sell, salvage, research); watching is an optional replay afterwards. No runners. Parties can be overfilled past their leader's command, at the risk of disobedience |
 
 ## 17. M7: the choices come back to town
 
@@ -925,10 +925,20 @@ Every trip gets a clock in hours, so you always know how long a party has been d
 The town doesn't know a party has wiped until they fail to come home.
 
 - **Overdue:** the day after a party's expected return, the header and news say so. Parties do come home late (hunting, long fights), so this is worry, not news.
-- **Possibly lost:** two days past due (tunable), the party is marked **possibly lost**. The *Lost in the dungeon* panel (M5) shows the floor they were heading for, and the next party can take a **recovery order** (`orders.rescue`) to find them.
+- **Possibly lost:** two days past due (tunable), the party is marked **possibly lost**. The *Lost in the dungeon* panel (M5) shows the floor they were heading for, and the next party can be sent to find them (rescue or recovery, below).
+- **Hidden until found (✅ DECIDED by Mike, 2026-11-21).** What happened to a party stays hidden until someone comes back or a later party finds them. No peeking at a trip in progress: the clock and "expected back" are all the town has. The replay unlocks in the debrief.
 - **The rescue clock starts at the wipe, not at the news.** Trapped heroes have the 5-day window (§10) from the moment they went down, so the days spent waiting to hear eat into it. Sending a recovery party as soon as a party is overdue is a gamble that can pay off.
 - If a porter runs home after a wipe (M6 part 4), the news arrives the day they do, with the floor and room, and there's no guessing.
-- A recovery order with no confirmed site searches the target floor; the rescuers find the site after the room it's in, as now.
+- A search with no confirmed site combs the target floor; the searchers find the party after the room it's in, as now.
+
+**Holed up: a party in trouble that hasn't wiped.** Mike wants rescue missions for the living, not just recovery of the dead. So a trip gets a new bad outcome between "came home" and "wiped":
+
+- When a party can't get home (too many downed to carry, cut off by a fight it can't win, out of potions on a deep floor), it can **hole up** instead of fighting to the end: it barricades the nearest cleared room or rest spot and waits. The best Survival or Medicine sets how long its supplies last (about 3-6 days, tunable); each day there costs morale and a little HP, and each night there's a chance monsters find them (a fight with no retreat).
+- A holed-up party is just overdue as far as the town knows. Nothing says it's alive until someone gets there.
+- **Rescue mission** (for the living): travels light and fast to the party's last known floor, avoids fights where its scout can, carries spare potions and bandages, and brings the holed-up heroes home with it. It can also reach heroes trapped after a wipe (§10), as today's rescue order does.
+- **Recovery mission** (for the dead): today's `orders.rescue` for bodies and gear after a wipe; slower, picks up the site and everything it can carry.
+- If the searchers find a holed-up party, it rejoins them: the rescuers' haul and the stranded party's haul come home together, and both get the "rescued" and "rescue" morale facts (Comrades and Good heroes most).
+- Too late, and the holed-up party has wiped since: the searchers find a site instead, exactly like a recovery.
 
 ### 4. The debrief
 
@@ -970,7 +980,7 @@ Parties still start at 3 to 4. How big they can grow depends on a **leader**, an
 - **A new skill, Leadership** (CHA + WIL, 0-100, like the other skills in §5). Perks and milestone perks can raise it.
 - **Each party names a leader** in the party panel (the best Leadership is picked by default). The leader's **command** is how many heroes they can lead well: 3 at Leadership 0-39, 4 at 40, 5 at 55, 6 at 70, 7 at 82, 8 at 92 (tunable).
 - **Alignment changes how far command stretches.** Each hero in the party costs command by their alignment step from the **leader**: same alignment 1, one step away 1.5, two steps away 2. The leader costs nothing. So a Good leader with command 6 can take 6 Good heroes, or 4 Good and 2 Neutral, but only 3 heroes if two of them are Evil. Porters don't cost command.
-- **Over command is allowed, but they may disobey.** You can fill a party past its command (alignment never bans, §7), but every hero over the line makes the party unruly: at each order check (retreat, loot, hunting) there's a chance someone ignores it, highest for the heroes furthest from the leader's alignment and with the lowest morale. The party panel shows command used / command available, and the launch warnings say who's likely to go their own way.
+- **Over command is allowed, but they may disobey (✅ DECIDED by Mike, 2026-11-21).** You can fill a party past its command (alignment never bans, §7), but every hero over the line makes the party unruly: at each order check (retreat, loot, hunting) there's a chance someone ignores it, highest for the heroes furthest from the leader's alignment and with the lowest morale. The party panel shows command used / command available, and the launch warnings say who's likely to go their own way.
 - **The leader matters in the dungeon too:** the party's morale losses are softened by the leader's CHA (today it's the best CHA), and if the leader falls, the party checks morale at once and is more likely to turn back.
 - **Party alignment** keeps the two-thirds rule (§7). Leadership is a second, separate pressure: a well-matched party is both happier and bigger.
 - **The Guild Hall sets the hard cap**, and the cap goes up:
@@ -1015,7 +1025,7 @@ High-INT heroes study in town instead of delving. This is a real roster choice: 
 
 ### 8. Scouting and stealth missions
 
-Standing orders gain a **mission**: *Delve* (today's trips), *Scout*, *Sneak* or *Recover*.
+Standing orders gain a **mission**: *Delve* (today's trips), *Scout*, *Sneak*, *Rescue* (the living, section 3) or *Recover* (the dead and their gear).
 
 **Scout missions** map a floor before you commit a real party.
 
@@ -1046,7 +1056,7 @@ Each one is playable on its own. Version numbers go up by one per PR, starting a
 | PR | What | Why this order |
 |---|---|---|
 | M7.01 | **Trip clock**: hours as room data, the clock in the watch view, time below in the trip results, hours per floor in `npm run balance` | Small, answers Mike's point 2 at once, and the background trips need hours |
-| M7.02 | **Background trips**: outings, Next day / Wait, kills landing by day, two parties out at once, expected back, overdue and possibly lost, rescue clock from the wipe. Saves version up | The core of the change. Watching becomes a replay |
+| M7.02 | **Background trips**: outings, Next day / Wait, kills landing by day, two parties out at once, expected back, overdue and possibly lost, rescue clock from the wipe, holed-up parties and rescue vs recovery missions. Saves version up | The core of the change. Watching becomes a replay |
 | M7.03 | **The debrief**: tally with detail, haul held for sell / salvage / keep, salvage lists and the Blacksmith yield, haul rule. Saves version up | Puts the first new choices where Mike wants them |
 | M7.04 | **Leadership and party size**: Leadership skill, leaders, command and alignment cost, disobedience, Guild Hall caps and level 5, fights scaling with party size | Makes the bigger parties that losses need |
 | M7.05 | **Losses that sting**: the tuning pass against the targets in section 6, and the gear check | Needs bigger parties first |
@@ -1059,9 +1069,9 @@ Crafting beyond the bane recipe can slot in after M7.06 or wait for M8.
 
 ### Open questions for Mike
 
-- ❓ **OPEN A: over command.** Recommended: a party can go over its leader's command (up to the Guild Hall cap) and the extras may disobey, so alignment never bans anyone. Alternative: command is a hard limit, so a mixed party simply can't be as big.
+- ✅ **DECIDED A: over command.** Mike: overfilling is allowed. A party can go over its leader's command (up to the Guild Hall cap) and the extras may disobey.
 - ❓ **OPEN B: who leads.** Recommended: you pick the leader, with the best Leadership chosen by default. Alternative: always the best Leadership, no choice.
 - ❓ **OPEN C: Guild Hall caps.** Recommended 4 / 5 / 6 / 8 / 10 by level, with a new level 5. Too big, too small?
-- ❓ **OPEN D: watching a party that's still out.** Recommended: no. You see the clock and "expected back", and the replay unlocks in the debrief, so nothing spoils the overdue tension. Alternative: a "peek" at the trip so far (a scrying pool building?).
+- ✅ **DECIDED D: watching a party that's still out.** Mike: no. A trip stays hidden until someone comes back or finds them. This also gives us rescue missions for the living (holed-up parties), not just recovery missions.
 - ❓ **OPEN E: the first beast.** The Mire Behemoth on floor 4 is an example. Happy with the floor and the idea, or would you rather it guarded something specific (say, the way down to floor 5)?
 - ❓ **OPEN F: research strength.** Recommended +15% damage at Studied and +25% at Mastered, plus wards that need research. Enough to feel, not enough to be required except for warded monsters?
