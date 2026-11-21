@@ -11,6 +11,7 @@ import { moraleChanges } from "./morale";
 import { createRng } from "./rng";
 import { migrateTown } from "./save";
 import {
+  autoStart,
   buy,
   haulPrice,
   launch,
@@ -25,7 +26,7 @@ import {
 import { validateLibrary } from "./validate";
 
 const ix = indexLibrary(library);
-const fresh = (seed = 1) => newTown(ix, heroNames, seed);
+const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
 const w = library.town.wages;
 
 describe("wages", () => {

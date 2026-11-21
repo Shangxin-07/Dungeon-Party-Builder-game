@@ -104,6 +104,13 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
       sites,
     };
   },
+  // M6: recruits can arrive untrained; old games have no free hires left.
+  6: (_ix, old) => ({
+    ...old,
+    version: 7,
+    freeHires: 0,
+    secrets: { found: 0, missed: 0, gold: 0 },
+  }),
 };
 
 /**

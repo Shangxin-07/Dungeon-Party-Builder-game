@@ -572,6 +572,23 @@ Rotating gets about a quarter more trips and gold out of the same 60 days. Injur
 
 Saves stay at version 6 (this all landed before version 6 shipped): heroes get fatigue, injuries and a pay record.
 
+### As built in M6 (part 3): picking classes, haggling, hidden caches and hunting
+
+> Added 2026-11-21 from Mike's notes after M6 part 2: "the starting gear that heroes get feels like choice removal... you hire them and they have stats, but no gear or class. You have to pick. Tavern upgrades change this." Also: the best hero's Appraisal/CHA should cut the Market's take; scouting should find hidden treasure, enough to notice over time; and a "clear the level by %" order.
+
+- **Untrained recruits.** Recruits turn up with stats and a personality, but no class and no gear. Raw stats are 10 ± 2 each, one of them +2, and the Tavern's picks favour recruits whose two best stats are high. On signing, the player picks the class (the card marks the best fit and previews the trained stats). Training adds the class's offset (its base stat − 10) to each raw stat, so a born fighter makes a better fighter than a born mage does. They join empty-handed.
+- **A new game** starts with no heroes, 4 free recruits (`town.startingRecruits`) and a store room of basic kit: 2 swords, a short bow, a staff, a mace, chainmail, 2 leather armours, 2 wooden shields, 3 potions and 3 bandages. **Kit out** on a hero card fills in their class's usual kit from the store room first, then buys the rest. **Pick for me** signs all the free recruits as fighter, scout, mage and fighter (`town.startingRoster`), each class going to the recruit who suits it best, and kits them out from the store room.
+- **The Tavern** at level 2 sends one recruit a day already trained and kitted, for the hire fee plus the value of their kit.
+- **Haggling.** The guild's best haggler raises what the Market pays: +0.2% per point of Appraisal above 50, and +1% per point of CHA above 10, never above 90% (`town.haggle`). A typical starting guild gets 74% for loot instead of 70%; a CHA 16, Appraisal 70 haggler gets 80%. The Market panel says who haggles and the rates; trip results say who haggled.
+- **Hidden caches** (`content/secrets/`, rules in `content/searching.ts`). After each room, there's a 15% chance it hides a cache: a miner's cache (floors 1-2), a false floor (1-3) or a sealed niche (2-3, rich loot). The party's best Scouting finds it with chance (Scouting − how well hidden) / 40, at most 90%. A starting scout (Scouting ~70) finds about 40% of floor-1 caches; a party with no scout, about 5%. Nothing is logged for a cache nobody noticed, but the guild's books keep a running tally: caches found, gold from them, and roughly how many were walked past. Over 60 days of floor-1 trips a guild with a scout finds about 30 caches, worth about 1,200 gold (a quarter of its trip income). Caches roll on their own random stream, so they never change the rest of a trip.
+- **"Clear the floor" orders.** Standing orders gain *Hunting: thin floor N out by 25/50/75/100%*. After walking the target floor, the party keeps searching side tunnels for monsters until that share of the floor's population (as it was when they arrived) is dead, the floor is empty, or they've hunted 12 extra rooms. Every 4 extra rooms add a day to the trip (`dungeon.hunting`), and retreat orders still apply. It's a trade: a 50% hunt on floor 1 makes trips about 70% longer, earns less gold per day and tires heroes, but keeps the pit quiet. Ignored on rescue runs.
+
+Saves are version 7. Older saves keep their heroes, with no free hires and an empty cache tally.
+
+### Next: porters (Mike, 2026-11-21)
+
+Non-combatants who go down with the party only to carry loot. They don't fight (monsters may still go for them) and they watch and learn: a way to train a class after the intro (§8, §9), for example a porter who has watched enough fights may train as a fighter. On a party wipe they run for it and try to get back to town on their own, a dangerous climb that a good END or DEX helps; the ones who make it bring back what they carry and news of where the party fell.
+
 Still to come in M6+: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), more buildings, the "holding the pit" opening (§8), more monsters and floors, the 2D watch view and multiple parties.
 
 ## 12. First playable slice

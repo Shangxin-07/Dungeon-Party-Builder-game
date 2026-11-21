@@ -2,11 +2,15 @@ import { describe, expect, it } from "vitest";
 import { heroNames, library } from "../content";
 import { indexLibrary } from "./library";
 import {
+  autoStart,
   buy,
   cantLaunch,
   dismiss,
   equip,
+  haggler,
   hire,
+  hirePrice,
+  kitOut,
   haulPrice,
   launch,
   newTown,
@@ -26,7 +30,7 @@ import {
 } from "./town";
 
 const ix = indexLibrary(library);
-const fresh = (seed = 1) => newTown(ix, heroNames, seed);
+const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
 const rules = library.town;
 
 /** Pay for an upgrade and skip the builders' wait (tests of what the building does). */
@@ -42,11 +46,40 @@ describe("a new town", () => {
     expect(t.day).toBe(1);
     expect(t.gold).toBe(rules.startingGold);
     expect(t.roster.map((h) => h.classId)).toEqual(rules.startingRoster);
-    expect(t.recruits).toHaveLength(rules.recruitsOnOffer);
-    expect(t.stash).toEqual(rules.startingStash);
+    expect(t.freeHires).toBe(0);
     expect(partySlots(ix, t)).toBe(3);
     expect(rosterSize(ix, t)).toBe(6);
     expect(t.party).toHaveLength(3);
+    // Kitted out from the store room: every hero has a weapon.
+    for (const h of t.roster) expect(h.equipment.weapon).toBeDefined();
+  });
+
+  it("begins with untrained recruits who sign for free, and a store room of kit", () => {
+    const t = newTown(ix, heroNames, 1);
+    expect(t.roster).toHaveLength(0);
+    expect(t.stash).toEqual(rules.startingStash);
+    expect(t.recruits).toHaveLength(rules.startingRecruits);
+    expect(t.freeHires).toBe(rules.startingRecruits);
+    for (const r of t.recruits) {
+      expect(r.untrained).toBe(true);
+      expect(Object.values(r.equipment).filter(Boolean)).toHaveLength(0);
+      expect(hirePrice(ix, t, r)).toBe(0);
+    }
+    // The player picks the class.
+    const r0 = t.recruits[0]!;
+    const after = hire(ix, t, r0.id, "mage");
+    const h = after.roster[0]!;
+    expect(h.classId).toBe("mage");
+    expect(h.untrained).toBeUndefined();
+    expect(after.gold).toBe(t.gold);
+    expect(after.freeHires).toBe(t.freeHires - 1);
+    // Mage training: INT goes up by the mage's (base - 10) offset.
+    const off = ix.cls("mage").baseStats.INT - 10;
+    expect(h.stats.INT).toBe(Math.max(1, Math.min(20, r0.stats.INT + off)));
+    // Kit comes from the store room.
+    const kitted = kitOut(ix, after, h.id, false);
+    expect(kitted.roster[0]!.equipment.weapon).toBe("staff");
+    expect(kitted.stash).not.toContain("staff");
   });
 
   it("is deterministic and gives everyone a different name", () => {
@@ -64,9 +97,10 @@ describe("a new town", () => {
 
 describe("town actions", () => {
   it("never change the state passed in", () => {
-    const t = fresh();
+    const t = rest(ix, fresh(), heroNames);
     const before = JSON.stringify(t);
     hire(ix, t, t.recruits[0]!.id);
+    kitOut(ix, t, t.roster[0]!.id);
     buy(ix, t, "healing-potion");
     dismiss(ix, t, t.roster[0]!.id);
     launch(ix, t, heroNames);
@@ -75,16 +109,18 @@ describe("town actions", () => {
   });
 
   it("hire a recruit for gold, up to the roster size", () => {
-    let t: TownState = { ...fresh(), gold: 10_000 };
+    let t: TownState = { ...rest(ix, fresh(), heroNames), gold: 10_000 };
     const recruit = t.recruits[0]!;
-    t = hire(ix, t, recruit.id);
+    t = hire(ix, t, recruit.id, "scout");
     expect(t.roster.map((h) => h.id)).toContain(recruit.id);
+    expect(t.roster.at(-1)!.classId).toBe("scout");
     expect(t.gold).toBe(10_000 - rules.hireCost);
     expect(t.recruits.map((h) => h.id)).not.toContain(recruit.id);
     t = hire(ix, t, t.recruits[0]!.id);
     expect(t.roster).toHaveLength(6);
     expect(() => hire(ix, t, t.recruits[0]!.id)).toThrow(/roster is full/);
-    expect(() => hire(ix, { ...fresh(), gold: 0 }, fresh().recruits[0]!.id)).toThrow(/gold/);
+    const later = rest(ix, fresh(), heroNames);
+    expect(() => hire(ix, { ...later, gold: 0 }, later.recruits[0]!.id)).toThrow(/gold/);
   });
 
   it("dismiss a hero and keep their gear", () => {
@@ -102,7 +138,9 @@ describe("town actions", () => {
     expect(t.gold).toBe(rules.startingGold - 25);
     expect(t.stash).toContain("healing-potion");
     t = sell(ix, t, "healing-potion");
-    expect(t.gold).toBe(rules.startingGold - 25 + sellPrice(ix, ix.item("healing-potion")));
+    expect(t.gold).toBe(
+      rules.startingGold - 25 + sellPrice(ix, ix.item("healing-potion"), haggler(ix, t).bonus),
+    );
     expect(() => buy(ix, t, "gem")).toThrow(/doesn't sell/);
     expect(() => buy(ix, { ...t, gold: 0 }, "sword")).toThrow(/gold/);
     expect(() => sell(ix, t, "gem")).toThrow(/store room/);
@@ -166,7 +204,10 @@ describe("launching a party", () => {
     expect(trip.result.outcome).toBe("returned");
     expect(after.day).toBe(t.day + trip.result.days);
     expect(trip.goldEarned).toBe(
-      trip.result.haul.reduce((s, h) => s + haulPrice(ix, h.item, h.value), 0),
+      trip.result.haul.reduce(
+        (s, h) => s + haulPrice(ix, h.item, h.value, haggler(ix, t).bonus),
+        0,
+      ),
     );
     // The Market takes its cut of the loot, and everyone gets paid each day.
     expect(trip.goldEarned).toBeLessThanOrEqual(trip.result.haul.reduce((s, h) => s + h.value, 0));

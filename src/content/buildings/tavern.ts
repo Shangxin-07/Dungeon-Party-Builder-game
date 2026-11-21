@@ -24,8 +24,10 @@ export default defineBuilding({
     {
       cost: 400,
       days: 4,
-      summary: "2 more recruits a day, each the best of 3; +2 morale a day in town",
+      summary:
+        "2 more recruits a day, each the best of 3, and one of them comes trained and kitted; +2 morale a day in town",
       effects: [
+        { type: "trainedRecruits", amount: 1 },
         { type: "recruitOffers", amount: 2 },
         { type: "recruitPicks", amount: 2 },
         { type: "restMorale", amount: 2 },
