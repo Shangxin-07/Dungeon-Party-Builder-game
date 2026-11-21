@@ -15,7 +15,11 @@ import {
   launch,
   newTown,
   packItem,
+  partyOnFile,
   partySlots,
+  pickParty,
+  renameParty,
+  saveParty,
   rest,
   rosterSize,
   sell,
@@ -259,5 +263,55 @@ describe("launching a party", () => {
     expect(rested.roster[0]!.hp).toBeGreaterThan(1);
     expect(rested.roster[1]!.condition).toBe("ok");
     expect(rested.roster[1]!.hp).toBeGreaterThan(0);
+  });
+});
+
+describe("parties on file", () => {
+  /** A town with all six roster slots filled, as two parties of three. */
+  const sixHeroes = () => {
+    let t = { ...fresh(), gold: 1000 };
+    while (t.roster.length < 6) {
+      if (!t.recruits.length) t = rest(ix, t, heroNames);
+      t = hire(ix, t, t.recruits[0]!.id, "fighter");
+      t = kitOut(ix, t, t.roster.at(-1)!.id);
+    }
+    return t;
+  };
+
+  it("saves two parties with their orders, and swaps between them", () => {
+    let t = sixHeroes();
+    const [a, b] = [t.roster.slice(0, 3), t.roster.slice(3, 6)].map((hs) => hs.map((h) => h.id));
+    t = saveParty(ix, t, 0);
+    expect(t.party).toEqual(a);
+    for (const id of t.party) t = toggleParty(ix, t, id);
+    for (const id of b!) t = toggleParty(ix, t, id);
+    t = setOrders(ix, t, { ...t.orders, targetFloor: 2 });
+    t = renameParty(ix, saveParty(ix, t, 1), 1, "The B team");
+    expect(t.parties.map((p) => p.name)).toEqual(["Party A", "The B team"]);
+
+    t = pickParty(ix, t, 0);
+    expect(t.party).toEqual(a);
+    expect(t.orders.targetFloor).toBe(1);
+    t = pickParty(ix, t, 1);
+    expect(t.party).toEqual(b);
+    expect(t.orders.targetFloor).toBe(2);
+    expect(cantLaunch(ix, t)).toBeUndefined();
+  });
+
+  it("only has so many slots, and needs someone in the party", () => {
+    const t = sixHeroes();
+    expect(() => saveParty(ix, t, rules.savedParties)).toThrow(/parties on file/);
+    expect(() => saveParty(ix, { ...t, party: [] }, 0)).toThrow(/heroes/);
+    expect(() => pickParty(ix, t, 1)).toThrow(/Nothing on file/);
+  });
+
+  it("leaves out heroes who are no longer with the guild", () => {
+    let t = saveParty(ix, sixHeroes(), 0);
+    const gone = t.party[1]!;
+    t = dismiss(ix, t, gone);
+    expect(partyOnFile(t, 0).heroes.map((h) => h.id)).not.toContain(gone);
+    t = pickParty(ix, t, 0);
+    expect(t.party).toHaveLength(2);
+    expect(t.party).not.toContain(gone);
   });
 });

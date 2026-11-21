@@ -10,13 +10,15 @@
  *   npm run days -- --policy 2 --build --static     # never rotate the party
  *   npm run days -- --policy 1 --clear 50           # thin floor 1 out by half each trip
  *   npm run days -- --policy 2 --porters 2          # keep two porters (trained when the party is short)
+ *   npm run days -- --policy 2 --build --parties    # two fixed parties, sending whichever is fresher
  *
  * The bot restocks used supplies, keeps one hero on the bench and sends the
  * freshest heroes (unless --static), and rests until the party is at 90% HP
  * and nobody is tired or injured, then sends it down. It spends
  * level-ups (the wanted perk if there is one, else the first; free points go
  * in the class's first main stat) and sends a rescue party when someone is
- * trapped. With --build it also builds and upgrades everything else once
+ * trapped. With --parties it fills the roster for two whole parties and
+ * alternates them, the way a player with two parties on file would. With --build it also builds and upgrades everything else once
  * the defences are up, cheapest first, keeping a few days' wages in hand.
  */
 import { heroNames, library } from "../src/content";
@@ -76,6 +78,7 @@ const runs = Number(arg("runs") ?? 1);
 const seed0 = Number(arg("seed") ?? 1);
 const clear = Number(arg("clear") ?? 0);
 const porterCount = Number(arg("porters") ?? 0);
+const twoParties = flag("parties");
 
 const DEFENCES = ["palisade", "gate", "watchtower"];
 
@@ -148,10 +151,10 @@ function step(t: TownState): TownState {
       .slice(0, library.town.porters.slots)
       .map((h) => h.id),
   };
-  // Keep a hero on the bench so the party can rotate.
+  // Keep a hero on the bench so the party can rotate (a whole second party with --parties).
   if (
     rotate &&
-    fighters().length < partySlots(ix, t) + 1 &&
+    fighters().length < partySlots(ix, t) * (twoParties ? 2 : 1) + (twoParties ? 0 : 1) &&
     t.roster.length < rosterSize(ix, t) &&
     t.recruits.length &&
     t.gold >= hirePrice(ix, t, t.recruits[0]!) + 60
@@ -161,7 +164,15 @@ function step(t: TownState): TownState {
   // someone's gone); otherwise the freshest heroes, injuries last.
   const fit = (h: Hero) => h.condition === "ok" && h.hp >= heroSheet(ix, h).derived.maxHp * 0.9;
   const tiredness = (h: Hero) => h.fatigue + (h.injuries.length ? 50 : 0) + (fit(h) ? 0 : 100);
-  if (rotate) {
+  if (twoParties) {
+    // Two fixed parties in roster order; send the one whose most worn-out hero is freshest.
+    const n = partySlots(ix, t);
+    const fs = fighters();
+    const worst = (hs: Hero[]) => Math.max(...hs.map(tiredness));
+    const halves = [fs.slice(0, n), fs.slice(n, 2 * n)].filter((hs) => hs.length);
+    const pick = halves.sort((a, b) => worst(a) - worst(b))[0] ?? [];
+    t = { ...t, party: pick.map((h) => h.id) };
+  } else if (rotate) {
     const best = fighters()
       .sort((a, b) => tiredness(a) - tiredness(b))
       .slice(0, partySlots(ix, t));
