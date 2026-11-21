@@ -94,7 +94,7 @@ function HpBar({ bar }: { bar: Bar }) {
 
 function Line({ e }: { e: CombatEvent }) {
   if (e.kind === "round") return <li className="log-round">{e.text}</li>;
-  return <li className={`log-${e.kind}`}>{e.text}</li>;
+  return <li className={`log-${e.kind}${e.tone ? ` tone-${e.tone}` : ""}`}>{e.text}</li>;
 }
 
 export function TestFight() {
