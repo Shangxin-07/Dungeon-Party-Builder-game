@@ -201,12 +201,15 @@ describe("bodies left in the dungeon", () => {
   });
 
   it("a rescue run carries the bodies home", () => {
-    for (let seed = 0; seed < 1000; seed++) {
+    // A party sent down half dead, with orders never to turn back, falls on
+    // floor 1 more often than not: a quick search, whatever the content.
+    for (let seed = 0; seed < 200; seed++) {
       const t0 = setOrders(ix, fresh(seed), {
         ...DEFAULT_ORDERS,
-        targetFloor: 3,
+        targetFloor: 1,
         retreat: { kind: "never" },
       });
+      for (const h of t0.roster) if (t0.party.includes(h.id)) h.hp = Math.ceil(h.hp / 3);
       let t = launch(ix, t0, heroNames);
       const site = t.sites.find((s) => s.bodies.length && s.floor === 1);
       if (!site) continue;
