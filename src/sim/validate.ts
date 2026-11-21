@@ -76,7 +76,43 @@ export function validateLibrary(lib: Library): string[] {
 
   for (const c of lib.classes) {
     const w = `class "${c.id}"`;
-    stats(w, c.baseStats, 20);
+    const kind = c.kind ?? "base";
+    if (!["base", "advanced", "combo"].includes(kind)) err(`${w}: unknown kind "${kind}"`);
+    if (kind === "base") {
+      if (c.baseStats) stats(w, c.baseStats, 20);
+      else err(`${w}: base classes need baseStats`);
+    } else {
+      if (c.baseStats) err(`${w}: only base classes have baseStats`);
+      const need = Object.keys(c.requires?.classLevels ?? {}).length;
+      if (kind === "advanced" && need !== 1)
+        err(`${w}: an advanced class grows out of exactly one class (requires.classLevels)`);
+      if (kind === "combo" && need < 2)
+        err(`${w}: a combo class needs two or more classes in requires.classLevels`);
+    }
+    for (const [id, level] of Object.entries(c.requires?.classLevels ?? {})) {
+      if (!classIds.has(id)) err(`${w}: requires unknown class "${id}"`);
+      if (id === c.id) err(`${w}: can't require itself`);
+      if (!Number.isInteger(level) || level < 1)
+        err(`${w}: required class levels must be 1 or more`);
+    }
+    for (const [s, v] of Object.entries(c.requires?.stats ?? {})) {
+      if (!STATS.includes(s as never)) err(`${w}: requires unknown stat "${s}"`);
+      if (!Number.isInteger(v) || v! < 1 || v! > 30) err(`${w}: required ${s} must be 1-30`);
+    }
+    if (c.requires?.building && !lib.buildings.some((b) => b.id === c.requires!.building))
+      err(`${w}: requires unknown building "${c.requires.building}"`);
+    passives(`${w} perLevel`, c.perLevel);
+    for (const [lvl, list] of Object.entries(c.milestones ?? {})) {
+      if (!Number.isInteger(Number(lvl)) || Number(lvl) < 2)
+        err(`${w}: milestone levels must be whole numbers, 2 or more`);
+      if (!list.length) err(`${w}: milestone ${lvl} offers no perks`);
+      for (const p of list) {
+        const perk = lib.perks.find((x) => x.id === p);
+        if (!perk) err(`${w}: unknown milestone perk "${p}"`);
+        else if (perk.classes.length && !perk.classes.includes(c.id))
+          err(`${w}: milestone perk "${p}" is for another class`);
+      }
+    }
     if (!c.mainStats.length) err(`${w}: needs at least one main stat`);
     for (const s of c.mainStats) if (!STATS.includes(s)) err(`${w}: unknown main stat "${s}"`);
     if (!hasAi(c.ai)) err(`${w}: unknown AI "${c.ai}"`);
@@ -343,7 +379,11 @@ export function validateLibrary(lib: Library): string[] {
     err("rescue: rescuedHpPercent must be 1-100");
 
   const t = lib.town;
-  for (const id of t.startingRoster) if (!classIds.has(id)) err(`town: unknown class "${id}"`);
+  for (const id of t.startingRoster) {
+    const c = lib.classes.find((x) => x.id === id);
+    if (!c) err(`town: unknown class "${id}"`);
+    else if ((c.kind ?? "base") !== "base") err(`town: starting class "${id}" isn't a base class`);
+  }
   if (t.startingRecruits < 1) err("town: startingRecruits must be at least 1");
   if (t.haggle.perAppraisal < 0 || t.haggle.perCha < 0) err("town: haggle rates can't be negative");
   if (t.haggle.max < 0 || t.haggle.max > 1) err("town: haggle.max must be 0-1");

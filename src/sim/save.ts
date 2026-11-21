@@ -115,6 +115,31 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
   7: (_ix, old) => ({ ...old, version: 8, porters: [] }),
   // M6: parties on file.
   8: (_ix, old) => ({ ...old, version: 9, parties: [] }),
+  // M6: freeform classes. Every level so far went into the hero's one class,
+  // including level-ups waiting to be spent (their stat gains are already in).
+  9: (_ix, old) => {
+    const upgrade = (h: Hero): Hero => ({
+      ...h,
+      classes: h.classes ?? (h.untrained || h.porter ? {} : { [h.classId]: h.level }),
+      levelUps: (h.levelUps ?? []).map((l) => ({ ...l, classId: l.classId ?? h.classId })),
+    });
+    const lastTrip = old.lastTrip as { party: Hero[] } | undefined;
+    return {
+      ...old,
+      version: 10,
+      roster: (old.roster as Hero[]).map(upgrade),
+      recruits: (old.recruits as Hero[]).map(upgrade),
+      sites: (old.sites as { trapped: { hero: Hero }[] }[]).map((s) => ({
+        ...s,
+        trapped: s.trapped.map((x) => ({ ...x, hero: upgrade(x.hero) })),
+      })),
+      lastTrip: lastTrip && { ...lastTrip, party: lastTrip.party.map(upgrade) },
+      raids: (old.raids as { defenders: Hero[] }[]).map((r) => ({
+        ...r,
+        defenders: r.defenders.map(upgrade),
+      })),
+    };
+  },
 };
 
 /**
@@ -188,6 +213,8 @@ export function missingContent(ix: Index, town: TownState): string[] {
   const monster = (id?: string) => check("monster", ix.monster, id);
   const hero = (h: Hero) => {
     cls(h.classId);
+    Object.keys(h.classes ?? {}).forEach(cls);
+    for (const l of h.levelUps ?? []) cls(l.classId);
     for (const id of Object.values(h.equipment)) item(id);
     h.pack.forEach(item);
     for (const id of h.perks) check("perk", ix.perk, id);

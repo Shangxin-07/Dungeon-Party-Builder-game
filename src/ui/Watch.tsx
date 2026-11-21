@@ -7,7 +7,7 @@ import { DERIVED, STATS, type Derived } from "../content/types";
 import { knownAbilities } from "../sim/abilities";
 import type { FoeSheet } from "../sim/combat";
 import type { ExpeditionEvent, ExpeditionResult } from "../sim/expedition";
-import { fatigueTier, heroSheet, type Hero } from "../sim/hero";
+import { fatigueTier, heroSheet, heroTitle, type Hero } from "../sim/hero";
 import { ix } from "./game";
 
 export const SPEEDS = { slow: 450, normal: 200, fast: 40 } as const;
@@ -259,7 +259,7 @@ function WatchCard({ hero, bar: raw }: { hero: Hero; bar?: Bar }) {
     <li className="hero">
       {bar ? <HpBar bar={bar} /> : null}
       <p className="hero-class">
-        {ix.cls(hero.classId).name}, level {hero.level}, {hero.row} row
+        {heroTitle(ix, hero)}, {hero.row} row
         {hero.morale !== undefined ? <span className="muted"> · morale {hero.morale}</span> : null}
         {fatigueTier(ix, hero) ? (
           <span className="warn"> · {fatigueTier(ix, hero)!.name}</span>

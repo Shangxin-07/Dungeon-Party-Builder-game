@@ -11,9 +11,11 @@ import { heroNames, library } from "../content";
 import type { ItemDef, Row } from "../content/types";
 import { describeRetreat, type LootRule } from "../sim/expedition";
 import {
+  baseClasses,
   bestClass,
   EQUIP_SLOTS,
   heroSheet,
+  heroTitle,
   trainRecruit,
   type EquipSlot,
   type Hero,
@@ -89,6 +91,7 @@ import {
 import { DERIVED_LABELS, HeroBars, Results, StatSheet, TripPlayer } from "./Watch";
 import {
   AbilityList,
+  ClassList,
   LevelUpPicker,
   MoraleBar,
   PerkList,
@@ -741,7 +744,7 @@ function PartyPanel({
                 <div key={h.id} className="formation-hero">
                   <HeroBars hero={h} />
                   <span className="muted small">
-                    {ix.cls(h.classId).name} {h.level} · morale {h.morale} · {describeKit(h)}
+                    {heroTitle(ix, h, true)} · morale {h.morale} · {describeKit(h)}
                   </span>
                 </div>
               ))
@@ -930,9 +933,7 @@ function PartiesOnFile({
                   </h4>
                   <p className="small">
                     {heroes.length
-                      ? heroes
-                          .map((h) => `${h.name} (${ix.cls(h.classId).name} ${h.level})`)
-                          .join(", ")
+                      ? heroes.map((h) => `${h.name} (${heroTitle(ix, h, true)})`).join(", ")
                       : "Nobody from it is left in the guild."}
                     {porters.length
                       ? `, carried for by ${porters.map((h) => h.name).join(", ")}`
@@ -1050,7 +1051,7 @@ function PorterTraining({ hero: h, act }: { hero: Hero; act: Act }) {
           <label>
             Train as{" "}
             <select value={classId} onChange={(e) => setClassId(e.target.value)}>
-              {ix.lib.classes.map((c) => (
+              {baseClasses(ix).map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                   {c.id === fit ? " (best fit)" : ""}
@@ -1083,8 +1084,7 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
       <div className="hero-head">
         <h3>{h.name}</h3>
         <span className="muted small">
-          {h.porter ? "Porter" : `${ix.cls(h.classId).name}, level ${h.level}`}, paid {wage(ix, h)}{" "}
-          gold a day
+          {h.porter ? "Porter" : heroTitle(ix, h)}, paid {wage(ix, h)} gold a day
         </span>
         {h.levelUps.length ? <span className="badge">Level up!</span> : null}
       </div>
@@ -1093,7 +1093,7 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
       <WearBar hero={h} />
       {h.porter ? <PorterTraining hero={h} act={act} /> : <XpBar hero={h} />}
       <Personality hero={h} town={town} />
-      <LevelUpPicker key={h.levelUps[0]?.level ?? 0} hero={h} act={act} />
+      <LevelUpPicker key={h.levelUps[0]?.level ?? 0} hero={h} town={town} act={act} />
       {h.raiseAsk ? (
         <div className="raise">
           <p>
@@ -1147,6 +1147,7 @@ function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Ac
         </div>
       </div>
       <StatSheet hero={h} full />
+      <ClassList hero={h} town={town} />
       <PerkList hero={h} />
       <AbilityList hero={h} />
 
@@ -1344,7 +1345,7 @@ function RecruitCard({
           <label className="small">
             Train as{" "}
             <select value={classId} onChange={(e) => setClassId(e.target.value)}>
-              {ix.lib.classes.map((c) => (
+              {baseClasses(ix).map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                   {c.id === fit ? " (best fit)" : ""}

@@ -2,11 +2,11 @@
  * Which abilities a hero knows, and where each one comes from. Three sources,
  * all data:
  *
- * - their class's list, by level (content/classes: `abilities: { id: level }`)
+ * - each of their classes' lists, by class level (content/classes: `abilities: { id: level }`)
  * - the weapon and offhand they're holding (content/items: `abilities`)
  * - perks they've picked (content/perks: `abilities`)
  *
- * Nothing is stored on the hero: it's worked out from class, level, gear and
+ * Nothing is stored on the hero: it's worked out from class levels, gear and
  * perks, so changing gear changes what a hero can do on the next fight.
  */
 import type { AbilityDef } from "../content/types";
@@ -22,8 +22,13 @@ export interface KnownAbility {
   from: string;
 }
 
-/** The level a hero counts as for their class list (hero level until §9's class levels). */
-export const classLevel = (hero: Hero): number => hero.level;
+/** A hero's classes, deepest first, with their levels. */
+const classesOf = (hero: Hero): [string, number][] => {
+  const list = Object.entries(hero.classes ?? {});
+  // Untrained recruits shown as their best-fit class, for previews.
+  if (!list.length) list.push([hero.classId, 1]);
+  return list.sort((a, b) => b[1] - a[1]);
+};
 
 /** Every ability the hero can use right now, class list first. No duplicates. */
 export function knownAbilities(ix: Index, hero: Hero): KnownAbility[] {
@@ -34,9 +39,11 @@ export function knownAbilities(ix: Index, hero: Hero): KnownAbility[] {
     seen.add(id);
     out.push({ ability: ix.ability(id), source, from });
   };
-  const cls = ix.cls(hero.classId);
-  for (const [id, level] of Object.entries(cls.abilities))
-    if (level <= classLevel(hero)) add(id, "class", cls.name);
+  for (const [classId, have] of classesOf(hero)) {
+    const cls = ix.cls(classId);
+    for (const [id, level] of Object.entries(cls.abilities))
+      if (level <= have) add(id, "class", cls.name);
+  }
   for (const slot of EQUIP_SLOTS) {
     const id = hero.equipment[slot];
     if (!id) continue;
@@ -53,12 +60,23 @@ export function knownAbilities(ix: Index, hero: Hero): KnownAbility[] {
 export const knownAbilityIds = (ix: Index, hero: Hero): string[] =>
   knownAbilities(ix, hero).map((k) => k.ability.id);
 
-/** Class abilities the hero hasn't reached yet, soonest first. */
-export function upcomingAbilities(ix: Index, hero: Hero): { ability: AbilityDef; level: number }[] {
-  return Object.entries(ix.cls(hero.classId).abilities)
-    .filter(([, level]) => level > classLevel(hero))
-    .sort((a, b) => a[1] - b[1])
-    .map(([id, level]) => ({ ability: ix.ability(id), level }));
+/**
+ * Class abilities the hero hasn't reached yet in the classes they have,
+ * fewest levels away first. `level` is the class level it comes at.
+ */
+export function upcomingAbilities(
+  ix: Index,
+  hero: Hero,
+): { ability: AbilityDef; level: number; classId: string }[] {
+  const known = new Set(knownAbilityIds(ix, hero));
+  return classesOf(hero)
+    .flatMap(([classId, have]) =>
+      Object.entries(ix.cls(classId).abilities)
+        .filter(([id, level]) => level > have && !known.has(id))
+        .map(([id, level]) => ({ ability: ix.ability(id), level, classId, away: level - have })),
+    )
+    .sort((a, b) => a.away - b.away)
+    .map(({ away: _, ...rest }) => rest);
 }
 
 /** Class abilities learned on reaching exactly this level. */

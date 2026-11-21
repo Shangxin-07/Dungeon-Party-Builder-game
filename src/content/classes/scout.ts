@@ -12,4 +12,18 @@ export default defineClass({
   abilities: { "mark-prey": 1, flurry: 5 },
   startingKit: ["short-bow", "leather-armor", "bandages"],
   growth: { DEX: 1, PER: 1 },
+  requires: { stats: { DEX: 12 } },
+  perLevel: [
+    { type: "modifyStat", stat: "accuracy", amount: 0.4 },
+    { type: "modifyStat", stat: "evasion", amount: 0.25 },
+    { type: "modifySkill", skill: "scouting", amount: 1 },
+  ],
+  milestones: {
+    5: ["eagle-eye", "shadow-step"],
+    10: ["deadeye", "pathfinder"],
+    20: ["ghost"],
+    30: ["hunters-instinct"],
+    40: ["quickdraw"],
+    50: ["master-of-the-hunt"],
+  },
 });

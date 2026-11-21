@@ -4,12 +4,12 @@
  * Rules live in src/sim (morale.ts, levels.ts, town.ts); this only shows them.
  */
 import { useState } from "react";
-import { STATS, type Stat } from "../content/types";
+import { STATS, type PassiveEffect, type Stat } from "../content/types";
 import { abilitiesAtLevel, abilityCost, knownAbilities, upcomingAbilities } from "../sim/abilities";
-import { fatigueTier, type Hero } from "../sim/hero";
-import { xpProgress } from "../sim/levels";
+import { classDepth, fatigueTier, type Hero } from "../sim/hero";
+import { classOptions, levelIn, xpProgress, type ClassOption } from "../sim/levels";
 import { lossFactor, mood } from "../sim/morale";
-import { chooseLevelUp, standing, type TownState } from "../sim/town";
+import { built, chooseLevelClass, chooseLevelUp, standing, type TownState } from "../sim/town";
 import { ix } from "./game";
 
 type Act = (f: (t: TownState) => TownState) => void;
@@ -139,33 +139,165 @@ export function AbilityList({ hero }: { hero: Hero }) {
       })}
       {next ? (
         <span className="muted" title={next.ability.description}>
-          Next: {next.ability.name} at level {next.level}
+          Next: {next.ability.name} at {ix.cls(next.classId).name} {next.level}
         </span>
       ) : null}
     </p>
   );
 }
 
-/** Spend the oldest level-up: one perk from those on offer, and the free point if there is one. */
-export function LevelUpPicker({ hero, act }: { hero: Hero; act: Act }) {
-  const up = hero.levelUps[0];
-  const [perk, setPerk] = useState<string>();
-  const [stat, setStat] = useState<Stat>();
-  if (!up) return null;
-  const chosen = perk && up.offers.includes(perk) ? perk : undefined;
-  const ready = (!up.offers.length || chosen) && (!up.freeStat || stat);
+const signedNum = (n: number) => (n > 0 ? `+${n}` : `${n}`);
+
+/** "+4 attack, +10 max HP", from a list of passives. */
+function describePassives(list: readonly PassiveEffect[]): string {
+  const label: Record<string, string> = {
+    maxHp: "max HP",
+    spellPower: "spell power",
+    armor: "armour",
+  };
+  return list
+    .map((p) => {
+      if (p.type === "modifyStat") return `${signedNum(p.amount)} ${label[p.stat] ?? p.stat}`;
+      if (p.type === "modifySkill") return `${signedNum(p.amount)} ${p.skill}`;
+      if (p.type === "bonusVsTag") return `+${p.percent}% vs ${p.tag}`;
+      return `${p.percent}% ${p.damageType} resist`;
+    })
+    .join(", ");
+}
+
+/** What one class level from here gives: stat gains, per-level bonuses, abilities, milestone. */
+function levelGains(o: ClassOption): string {
+  const next = o.level + 1;
+  const parts: string[] = [];
+  const growth = Object.entries(o.cls.growth)
+    .filter(([, v]) => v)
+    .map(([s, v]) => `+${v} ${s}`);
+  if (growth.length) parts.push(growth.join(" "));
+  if (o.level && o.cls.perLevel?.length)
+    parts.push(`${describePassives(o.cls.perLevel).replace(/\+([\d.]+)/g, "+$1/level")}`);
+  const learns = abilitiesAtLevel(ix, o.cls.id, next).map((a) => a.name);
+  if (learns.length) parts.push(`learns ${learns.join(" and ")}`);
+  if (o.cls.milestones?.[next]) parts.push("milestone perk");
+  return parts.join(" · ");
+}
+
+/**
+ * A hero's classes (DESIGN.md §9): each with its level, what depth has
+ * given so far, and the next milestone. Then the advanced and combo classes
+ * they could grow into, with what's still missing.
+ */
+export function ClassList({ hero, town }: { hero: Hero; town?: TownState }) {
+  if (hero.untrained || hero.porter) return null;
+  const opts = classOptions(ix, hero, town ? built(town) : undefined);
+  const have = opts.filter((o) => o.level).sort((a, b) => b.level - a.level);
+  const paths = opts.filter(
+    (o) =>
+      !o.level &&
+      (o.cls.kind ?? "base") !== "base" &&
+      Object.keys(o.cls.requires?.classLevels ?? {}).some((id) => levelIn(hero, id)),
+  );
+  return (
+    <div className="small classes">
+      {have.map((o) => {
+        const bonus = describePassives(classDepth(ix, o.cls.id, o.level));
+        const milestone = Object.keys(o.cls.milestones ?? {})
+          .map(Number)
+          .filter((l) => l > o.level)
+          .sort((a, b) => a - b)[0];
+        return (
+          <p key={o.cls.id} className="quiet" title={o.cls.blurb}>
+            <strong>
+              {o.cls.name} {o.level}
+            </strong>
+            {bonus ? <span className="muted"> · depth: {bonus}</span> : null}
+            {milestone ? <span className="muted"> · milestone perk at {milestone}</span> : null}
+          </p>
+        );
+      })}
+      {paths.length ? (
+        <p className="quiet muted">
+          Could grow into:{" "}
+          {paths
+            .map((o) => `${o.cls.name} (${o.ok ? "ready" : `needs ${o.missing.join(", ")}`})`)
+            .join("; ")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** Step one of a level-up: which class gets the level. */
+function ClassPicker({ hero, town, act }: { hero: Hero; town: TownState; act: Act }) {
+  const up = hero.levelUps[0]!;
+  const opts = classOptions(ix, hero, built(town));
+  const open = opts.filter((o) => o.ok).sort((a, b) => b.level - a.level);
+  const shut = opts.filter(
+    (o) =>
+      !o.ok &&
+      ((o.cls.kind ?? "base") === "base" ||
+        Object.keys(o.cls.requires?.classLevels ?? {}).some((id) => levelIn(hero, id))),
+  );
   const more = hero.levelUps.length - 1;
-  const learned = abilitiesAtLevel(ix, hero.classId, up.level);
   return (
     <div className="levelup">
       <h4>
         Level {up.level}!{" "}
         <span className="muted small">
-          {ix.cls(hero.classId).name} gains are in
+          Which class gets it? Classes are for keeps: a new one starts at level 1, and depth pays
+          off later.
+          {more ? ` ${more} more level-up${more > 1 ? "s" : ""} after this.` : ""}
+        </span>
+      </h4>
+      <div className="offers" role="group" aria-label="Classes">
+        {open.map((o) => (
+          <button
+            key={o.cls.id}
+            type="button"
+            className="offer"
+            onClick={() => act((t) => chooseLevelClass(ix, t, hero.id, o.cls.id))}
+          >
+            <strong>
+              {o.cls.name} {o.level ? `${o.level} → ${o.level + 1}` : "(new)"}
+            </strong>
+            <span className="small muted">{levelGains(o) || o.cls.blurb}</span>
+          </button>
+        ))}
+      </div>
+      {shut.length ? (
+        <p className="small muted">
+          Not yet: {shut.map((o) => `${o.cls.name} (needs ${o.missing.join(", ")})`).join("; ")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Spend the oldest level-up: first the class it goes into (when there's a
+ * choice), then one perk from those on offer, and the free point if there is one.
+ */
+export function LevelUpPicker({ hero, town, act }: { hero: Hero; town: TownState; act: Act }) {
+  const up = hero.levelUps[0];
+  const [perk, setPerk] = useState<string>();
+  const [stat, setStat] = useState<Stat>();
+  if (!up) return null;
+  if (!up.classId) return <ClassPicker hero={hero} town={town} act={act} />;
+  const chosen = perk && up.offers.includes(perk) ? perk : undefined;
+  const ready = (!up.offers.length || chosen) && (!up.freeStat || stat);
+  const more = hero.levelUps.length - 1;
+  const cls = ix.cls(up.classId);
+  const learned = abilitiesAtLevel(ix, cls.id, levelIn(hero, cls.id));
+  const milestone = !!cls.milestones?.[levelIn(hero, cls.id)];
+  return (
+    <div className="levelup">
+      <h4>
+        Level {up.level}: {cls.name} {levelIn(hero, cls.id)}!{" "}
+        <span className="muted small">
+          {cls.name} gains are in
           {learned.length
             ? ` and ${hero.name} learns ${learned.map((a) => a.name).join(" and ")}`
             : ""}
-          . Pick a perk
+          . Pick {milestone ? "a milestone perk" : "a perk"}
           {up.freeStat ? " and a stat for the free point" : ""}.
           {more ? ` ${more} more level-up${more > 1 ? "s" : ""} after this.` : ""}
         </span>
@@ -199,7 +331,7 @@ export function LevelUpPicker({ hero, act }: { hero: Hero; act: Act }) {
           >
             <option value="">pick a stat…</option>
             {STATS.map((s) => (
-              <option key={s} value={s}>
+              <option key={s} value={s} disabled={hero.stats[s] >= 30}>
                 {s} ({hero.stats[s]})
               </option>
             ))}

@@ -4,6 +4,7 @@
  */
 import { library } from "../content";
 import { cancelRescue, grumbles, planRescue, type TownState } from "../sim/town";
+import { heroTitle } from "../sim/hero";
 import { ix } from "./game";
 
 type Act = (f: (t: TownState) => TownState) => void;
@@ -33,8 +34,7 @@ export function LostPanel({ town, act }: { town: TownState; act: Act }) {
                 const late = x.until < arrive;
                 return (
                   <p key={x.hero.id} className={late ? "small warn" : "small"}>
-                    <strong>{x.hero.name}</strong> ({ix.cls(x.hero.classId).name}, level{" "}
-                    {x.hero.level}) is trapped, alive.{" "}
+                    <strong>{x.hero.name}</strong> ({heroTitle(ix, x.hero)}) is trapped, alive.{" "}
                     {late
                       ? `A party leaving today would get there too late.`
                       : `${left} ${left === 1 ? "day" : "days"} left: a party leaving today reaches them on day ${arrive}.`}

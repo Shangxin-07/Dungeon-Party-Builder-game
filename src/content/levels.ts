@@ -2,8 +2,9 @@ import { defineLevelRules } from "./types";
 
 /** Experience and levelling (DESIGN.md §9). Tune freely. */
 export default defineLevelRules({
-  // The first slice stops at 10; freeform classes take it towards 50 later.
-  maxLevel: 10,
+  // Freeform classes (DESIGN.md §9): each level goes into a class the player picks.
+  maxLevel: 50,
+  hpPerLevel: 1,
   xpPerPower: 3,
   xpPerFloor: 10,
   raidXpShare: 0.25,

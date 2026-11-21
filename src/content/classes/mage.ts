@@ -12,4 +12,17 @@ export default defineClass({
   abilities: { firebolt: 1, "flame-wave": 1, mend: 1, "frost-lance": 4, fireball: 7 },
   startingKit: ["staff", "healing-potion"],
   growth: { INT: 1, WIL: 1 },
+  requires: { stats: { INT: 12 } },
+  perLevel: [
+    { type: "modifyStat", stat: "spellPower", amount: 0.4 },
+    { type: "modifyStat", stat: "mana", amount: 1 },
+  ],
+  milestones: {
+    5: ["arcane-reserves", "kindled"],
+    10: ["elementalist", "wellspring"],
+    20: ["archmages-focus"],
+    30: ["mana-font"],
+    40: ["spell-lord"],
+    50: ["archmage"],
+  },
 });

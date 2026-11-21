@@ -14,6 +14,7 @@ const ix = indexLibrary(library);
 const hero = (classId: string, level = 1): Hero => {
   const h = createHero(ix, { id: `h-${classId}`, name: "Test", classId }, createRng(1));
   h.level = level;
+  h.classes = { [classId]: level };
   return h;
 };
 
@@ -28,6 +29,7 @@ describe("which abilities a hero knows", () => {
     ]);
 
     f.level = 4;
+    f.classes = { fighter: 4 };
     f.equipment = { weapon: "war-axe" };
     const known = knownAbilities(ix, f);
     expect(known.map((k) => k.ability.id)).toEqual(["power-strike", "second-wind", "cleave"]);
@@ -117,6 +119,7 @@ describe("abilities in a fight", () => {
   it("uses a once-a-fight ability only once", () => {
     const f = createHero(lix, { id: "f", name: "Bram", classId: "fighter" }, createRng(1));
     f.level = 4;
+    f.classes = { fighter: 4 };
     f.hp = 5; // badly hurt from the start
     f.pack = [];
     const r = runCombat(lix, [f], ["test-bag"], { seed: 1, maxRounds: 8 });
