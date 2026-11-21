@@ -4,7 +4,7 @@
 import type { BuildingEffect, ItemDef, MaterialCost, PostEffect } from "../../content/types";
 import { dungeonDay } from "../dungeon";
 import { describeParty, partyAlignment } from "../alignment";
-import { fatigueTier, heroSheet, type Hero } from "../hero";
+import { fatigueTier, heroSheet, inCampClass, type Hero } from "../hero";
 import type { Index } from "../library";
 import { isLow } from "../morale";
 import type { TownState } from "./state";
@@ -121,7 +121,7 @@ export const wage = (ix: Index, h: Hero) =>
 
 /** What the whole roster costs a day. */
 export const wageBill = (ix: Index, town: TownState) =>
-  town.roster.reduce((s, h) => s + wage(ix, h), 0);
+  town.camp ? 0 : town.roster.reduce((s, h) => s + wage(ix, h), 0);
 
 /** Whether a building is up and working (built and not damaged). */
 export const standing = (town: TownState, id: string) =>
@@ -315,6 +315,8 @@ export function cantLaunch(ix: Index, town: TownState): string | undefined {
     const h = findHero(town, id);
     if (!h) return "Someone in the party has left the guild.";
     if (h.condition !== "ok" || h.hp <= 0) return `${h.name} can't walk yet. Let them rest.`;
+    if (inCampClass(ix, h))
+      return `${h.name} is still a miner. Pick a class for them on the roster first.`;
     const inj = h.injuries?.[0];
     if (inj)
       return `${h.name} is laid up with a ${ix.injury(inj.id).name.toLowerCase()} for ${inj.days} more ${inj.days === 1 ? "day" : "days"}. Pick someone else.`;

@@ -15,23 +15,31 @@ import {
   campNeeds,
   cantLaunch,
   defence,
+  hire,
   hirePorter,
+  kitOut,
   newTown,
   postOf,
   rest,
   rosterSize,
   trade,
+  trainMiner,
   upgrade,
+  wageBill,
   warningDays,
   type TownState,
 } from "./town";
 import { raidSpoils } from "./town/posts";
+import { makeRecruit } from "./town/start";
+import { baseClasses } from "./hero";
+import { classOptions, openClasses } from "./levels";
 import { validateLibrary } from "./validate";
 
 const ix = indexLibrary(library);
 const opening = library.opening;
 const camp = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed, { camp: true }));
 const ids = (t: TownState) => t.roster.map((h) => h.id);
+const makeRecruitFor = (t: TownState) => makeRecruit(ix, t, heroNames);
 
 /** Pay for an upgrade and skip the builders' wait. */
 const build = (t: TownState, id: string): TownState => {
@@ -47,7 +55,9 @@ describe("the mining camp", () => {
     expect(t.camp).toBe(true);
     expect(t.buildings["guild-hall"]).toBe(0);
     expect(t.gold).toBe(opening.startingGold);
-    expect(newTown(ix, heroNames, 1, { camp: true }).stash).toEqual(opening.startingStash);
+    // Whatever the miners aren't holding is in the store room.
+    const held = t.roster.flatMap((h) => Object.values(h.equipment).filter(Boolean));
+    expect([...t.stash, ...held].sort()).toEqual([...opening.startingStash].sort());
     expect(rosterSize(ix, t)).toBe(opening.campRoster);
     expect(campNeeds(ix, t)).toEqual(["Guild Hall", "Palisade"]);
     expect(cantLaunch(ix, t)).toMatch(/camp is held: build Guild Hall and Palisade/);
@@ -75,7 +85,69 @@ describe("the mining camp", () => {
     expect(() => assignPost(ix, t, ids(t)[0]!, "seam")).toThrow(/closed/);
     // Nobody was picked at the camp (no party slots); now a party can go.
     expect(cantLaunch(ix, t)).toMatch(/Pick at least one/);
+    // ...once the miners have picked their classes.
+    expect(cantLaunch(ix, { ...t, party: ids(t).slice(0, 3) })).toMatch(/still a miner/);
+    for (const id of ids(t)) t = trainMiner(ix, t, id, "fighter");
     expect(cantLaunch(ix, { ...t, party: ids(t).slice(0, 3) })).toBeUndefined();
+  });
+});
+
+describe("miners", () => {
+  it("the starting heroes are already at the camp as miners: nobody to hire", () => {
+    const t = newTown(ix, heroNames, 3, { camp: true });
+    expect(t.roster).toHaveLength(library.town.startingRecruits);
+    expect(t.roster.every((h) => h.classId === opening.campClass && !h.untrained)).toBe(true);
+    expect(t.freeHires).toBe(0);
+    expect(t.recruits).toEqual([]);
+    expect(t.roster.filter((h) => h.equipment.weapon).length).toBeGreaterThanOrEqual(3);
+    // A normal game still starts with recruits to sign.
+    expect(newTown(ix, heroNames, 3).roster).toEqual([]);
+  });
+
+  it("anyone signed at the camp signs as a miner, and kitting out never spends gold", () => {
+    let t = camp(4);
+    t = { ...t, recruits: [makeRecruitFor(t)] };
+    t = hire(ix, t, t.recruits[0]!.id, "mage");
+    const h = t.roster.at(-1)!;
+    expect(h.classId).toBe(opening.campClass);
+    const gold = t.gold;
+    t = kitOut(ix, { ...t, stash: [] }, h.id);
+    expect(t.gold).toBe(gold);
+    expect(t.ledger.some((l) => l.kind === "bought")).toBe(false);
+  });
+
+  it("wages read nothing at the camp", () => {
+    const t = camp();
+    expect(wageBill(ix, t)).toBe(0);
+    expect(wageBill(ix, { ...t, camp: undefined })).toBeGreaterThan(0);
+  });
+
+  it("a miner can't train until the camp is held, then keeps their levels and earned stats", () => {
+    let t = camp(5);
+    const id = ids(t)[0]!;
+    expect(() => trainMiner(ix, t, id, "fighter")).toThrow(/camp is held/);
+    const h0 = t.roster[0]!;
+    const levelled = { ...h0, level: 3, classes: { miner: 3 }, stats: { ...h0.stats, END: 13 } };
+    t = { ...t, camp: undefined, roster: [levelled, ...t.roster.slice(1)] };
+    expect(() => trainMiner(ix, t, id, "spellblade")).toThrow(/base class/);
+    t = trainMiner(ix, t, id, "fighter");
+    const h = t.roster[0]!;
+    const fighter = ix.cls("fighter").baseStats!;
+    expect(h.classId).toBe("fighter");
+    expect(h.classes).toEqual({ fighter: 3 });
+    expect(h.stats.END).toBe(Math.min(30, 13 + fighter.END - 10));
+    expect(h.stats.STR).toBe(h0.stats.STR + fighter.STR - 10);
+    expect(h.row).toBe("front");
+    expect(() => trainMiner(ix, t, id, "mage")).toThrow(/already/);
+  });
+
+  it("is never offered at a level-up or to recruits", () => {
+    const t = camp();
+    expect(baseClasses(ix).some((c) => c.id === opening.campClass)).toBe(false);
+    const fighter = { ...t.roster[0]!, classId: "fighter", classes: { fighter: 2 } };
+    expect(classOptions(ix, fighter).some((o) => o.cls.id === opening.campClass)).toBe(false);
+    // A miner still at the camp levels up in the only class they have.
+    expect(openClasses(ix, t.roster[0]!).map((o) => o.cls.id)).toEqual([opening.campClass]);
   });
 });
 

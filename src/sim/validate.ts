@@ -77,10 +77,10 @@ export function validateLibrary(lib: Library): string[] {
   for (const c of lib.classes) {
     const w = `class "${c.id}"`;
     const kind = c.kind ?? "base";
-    if (!["base", "advanced", "combo"].includes(kind)) err(`${w}: unknown kind "${kind}"`);
-    if (kind === "base") {
+    if (!["base", "advanced", "combo", "camp"].includes(kind)) err(`${w}: unknown kind "${kind}"`);
+    if (kind === "base" || kind === "camp") {
       if (c.baseStats) stats(w, c.baseStats, 20);
-      else err(`${w}: base classes need baseStats`);
+      else err(`${w}: base and camp classes need baseStats`);
     } else {
       if (c.baseStats) err(`${w}: only base classes have baseStats`);
       const need = Object.keys(c.requires?.classLevels ?? {}).length;
@@ -343,6 +343,8 @@ export function validateLibrary(lib: Library): string[] {
         err(`opening: "${id}" has no level ${level}`);
     }
     if (op.campRoster < 1) err("opening: campRoster must be 1 or more");
+    const camp = lib.classes.find((c) => c.id === op.campClass);
+    if (camp?.kind !== "camp") err(`opening: campClass "${op.campClass}" must be a camp class`);
     op.trades.forEach((d, i) => {
       materialCost(`opening trade ${i + 1} give`, d.give);
       materialCost(`opening trade ${i + 1} get`, d.get);

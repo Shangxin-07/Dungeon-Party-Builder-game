@@ -24,6 +24,8 @@ export default defineOpening({
   ],
   unbuilt: ["guild-hall"],
   campRoster: 5,
+  // The starting heroes are already here, as miners: no hiring at the camp.
+  campClass: "miner",
   unlock: { "guild-hall": 1, palisade: 1 },
   // The miners will swap timber for ore, so the build never stalls on luck.
   trades: [{ give: { "iron-ore": 2 }, get: { timber: 1 } }],

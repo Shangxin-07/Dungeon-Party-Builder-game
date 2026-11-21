@@ -82,7 +82,9 @@ export function classOptions(
   hero: Hero,
   built: (buildingId: string) => boolean = () => false,
 ): ClassOption[] {
-  return ix.lib.classes.map((cls) => {
+  // A camp class (the Miner) is never chosen: only one a hero already holds shows.
+  const offered = ix.lib.classes.filter((c) => c.kind !== "camp" || levelIn(hero, c.id));
+  return offered.map((cls) => {
     const level = levelIn(hero, cls.id);
     const missing: string[] = [];
     if (!level) {

@@ -122,7 +122,8 @@ export function checkCamp(ix: Index, t: TownState): void {
   news(
     t,
     "The camp is held. With a Guild Hall and walls round the pit, the guild can start sending parties down. " +
-      "The road is safe again, and the guild's wagons bring proper kit to the store room.",
+      "The road is safe again, and the guild's wagons bring proper kit to the store room. " +
+      "The miners can put down their picks: choose each one's class on the roster.",
     "good",
   );
 }
