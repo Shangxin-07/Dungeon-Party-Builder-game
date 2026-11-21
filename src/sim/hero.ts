@@ -245,7 +245,12 @@ export function heroSheet(ix: Index, hero: Hero): HeroSheet {
     derived,
     skills,
     passives,
-    tags: ["hero", ...new Set([ix.cls(hero.classId).id, ...Object.keys(hero.classes ?? {})])],
+    // "align:good" and the like (DESIGN.md §7): monsters that hunt by alignment look for it.
+    tags: [
+      "hero",
+      ...new Set([ix.cls(hero.classId).id, ...Object.keys(hero.classes ?? {})]),
+      ...(hero.alignment ? [`align:${hero.alignment}`] : []),
+    ],
   };
 }
 

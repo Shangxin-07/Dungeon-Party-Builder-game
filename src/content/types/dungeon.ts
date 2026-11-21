@@ -69,6 +69,60 @@ export interface RoomDef {
 }
 
 /**
+ * Something that happens in a room, played out by the party's alignment
+ * (DESIGN.md §7): a wounded stranger is healed by a Good party, ignored by a
+ * Neutral one and robbed by an Evil one. Event rooms (behaviour "event") pick
+ * one of these. Add one by creating a file in content/events/.
+ */
+export interface EventDef {
+  id: string;
+  name: string;
+  /** Floors it can happen on, inclusive. */
+  floors: readonly [number, number];
+  /** Relative chance of being the event in an event room. */
+  weight: number;
+  /** Logged first, before the party decides. */
+  intro: string;
+  /**
+   * What the party does, by party alignment id, or "divided" for a party
+   * with no two-thirds majority. Every alignment needs one; a divided party
+   * without one argues and moves on.
+   */
+  outcomes: Readonly<Record<string, EventOutcome>>;
+}
+
+export interface EventOutcome {
+  /** Logged when it happens. {hero} is whoever takes the lead. */
+  text: string;
+  effects: readonly EventEffect[];
+}
+
+/**
+ * What an event outcome does. Each type is run by a handler registered in
+ * src/sim/events.ts (registerEventEffect), so new kinds can be added there.
+ * `chance` (default 1) is rolled for each effect on its own.
+ */
+export type EventEffect = { chance?: number; text?: string } & (
+  | /** Roll a loot table into the packs. */ { type: "loot"; table: string; from: string }
+  /** Heal everyone alive by this share of max HP (gets the downed back up). */
+  | { type: "healParty"; percent: number }
+  /** Hurt one hero, or everyone. Grows with depth like traps. */
+  | {
+      type: "hurt";
+      damage: readonly [number, number];
+      damageType: DamageType;
+      hits: "one" | "all";
+    }
+  /**
+   * Something the heroes will feel about at home: a morale fact for every
+   * hero who went, e.g. "goodDeeds" or "evilDeeds".
+   */
+  | { type: "deed"; fact: "goodDeeds" | "evilDeeds" }
+  /** Gold that turns up in town after the trip: a reward later. {gold} in `news`. */
+  | { type: "gift"; gold: readonly [number, number]; news: string }
+);
+
+/**
  * Hidden treasure (M6): a cache tucked away somewhere on a floor. Only a party
  * with a sharp enough Scouting skill notices it; nobody else ever knows it was
  * there. Add one by creating a file in content/secrets/.

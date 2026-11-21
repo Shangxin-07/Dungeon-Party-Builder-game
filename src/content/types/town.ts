@@ -57,7 +57,12 @@ export type BuildingEffect =
    * trip skips their rooms and the days they take. Never the target floor,
    * nor a floor a rescue party has to search.
    */
-  | { type: "lift"; floors: number };
+  | { type: "lift"; floors: number }
+  /**
+   * Percentage points added to the share of value paid for a trip's haul
+   * (the Black Market's fence, DESIGN.md §7). Still never above haggle.max.
+   */
+  | { type: "fence"; amount: number };
 
 export interface BuildingLevel {
   /** Gold to build or upgrade to this level. */
@@ -85,6 +90,12 @@ export interface BuildingDef {
   raidProof?: boolean;
   /** levels[0] is level 1, levels[1] is level 2, and so on. */
   levels: readonly BuildingLevel[];
+  /**
+   * Only deals with heroes of these alignments (DESIGN.md §7: the Black
+   * Market and Evil heroes). Its effects only work while the guild has one
+   * on its books.
+   */
+  dealsWith?: readonly string[];
 }
 
 /** How a new town starts and the house rules of the guild. */

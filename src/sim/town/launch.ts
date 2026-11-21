@@ -17,6 +17,7 @@ import {
   haggler,
   marketRate,
   haulPrice,
+  fence,
   findHero,
   maxHp,
   rescueSite,
@@ -85,6 +86,8 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     !t.party.includes(h.id) ||
     (!wiped && result.party.some((p) => p.id === h.id && p.condition !== "dead"));
   const haggle = haggler(ix, { ...t, roster: t.roster.filter(back) });
+  // The Black Market fences it for more, if the guild has someone it deals with (DESIGN.md §7).
+  const fenced = fence(ix, t);
   // Heroes' own gear goes back in the store room, and materials into the
   // guild's store (DESIGN.md §8): neither is sold.
   const recovered = result.haul.filter((h) => h.keep);
@@ -95,11 +98,17 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   addMaterials(t, materials);
   const goldEarned = [...result.haul, ...result.porterHaul]
     .filter((h) => !h.keep && !isMaterial(h))
-    .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggle.bonus), 0);
+    .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggle.bonus, fenced), 0);
   book(t, "haul", goldEarned);
+  // Rewards for what the party did down there (DESIGN.md §7): the stranger
+  // they saved sends thanks.
+  for (const g of result.gifts ?? []) {
+    book(t, "gifts", g.gold);
+    news(t, g.news, "good");
+  }
   const hiddenGold = result.haul
     .filter((h) => h.hidden && !h.keep && !isMaterial(h))
-    .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggle.bonus), 0);
+    .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggle.bonus, fenced), 0);
   const tally = t.secrets ?? { found: 0, missed: 0, gold: 0 };
   t.secrets = {
     found: tally.found + result.secrets.found,
@@ -331,6 +340,9 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
           ? tripDays
           : 0,
       foughtRisen: knewRisen(before),
+      goodDeeds: result.deeds?.goodDeeds ?? 0,
+      evilDeeds: result.deeds?.evilDeeds ?? 0,
+      unholyGear: tags.has("unholy") ? 1 : 0,
     };
     morale[h.id] = moraleChanges(ix, h, facts, { leaderCha });
     applyMorale(ix, h, facts, backDay, { leaderCha });
@@ -406,7 +418,7 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
     injuries,
     fatigue,
     haggledBy: haggle.hero?.name,
-    lootRate: marketRate(ix, ix.lib.town.haulRate, haggle.bonus),
+    lootRate: marketRate(ix, ix.lib.town.haulRate + fenced / 100, haggle.bonus),
     hiddenGold,
     materials,
   };

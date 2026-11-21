@@ -84,6 +84,15 @@ export const MORALE_FACTS = [
   "foughtRisen",
   /** 1 if this hero was brought back from the dead at the Temple. */
   "resurrected",
+  /**
+   * Alignment in the dungeon (DESIGN.md §7, content/events/): kind deeds the
+   * party did on the trip (a stranger healed, a shrine honoured)...
+   */
+  "goodDeeds",
+  /** ...and cruel ones (a stranger robbed, a shrine looted). */
+  "evilDeeds",
+  /** 1 if they carried unholy gear (tag "unholy") on the trip. */
+  "unholyGear",
 ] as const;
 
 export type MoraleFact = (typeof MORALE_FACTS)[number];

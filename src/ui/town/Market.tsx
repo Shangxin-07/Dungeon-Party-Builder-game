@@ -6,6 +6,7 @@ import { heroSheet } from "../../sim/hero";
 import {
   buy,
   buyPrice,
+  fence,
   haggler,
   marketRate,
   sell,
@@ -20,12 +21,16 @@ export function Market({ town, act }: { town: TownState; act: Act }) {
   const stock = shopStock(ix, town);
   const haggle = haggler(ix, town);
   const stash = tally(town.stash);
+  const fenced = fence(ix, town);
   return (
     <Fold id="market" title="Market" summary={`${stash.length} in the store room`}>
       <p className="small">
         The Market pays{" "}
-        <strong>{Math.round(marketRate(ix, ix.lib.town.haulRate, haggle.bonus) * 100)}%</strong> of
-        the value of loot from the pit (coins at face value) and{" "}
+        <strong>
+          {Math.round(marketRate(ix, ix.lib.town.haulRate + fenced / 100, haggle.bonus) * 100)}%
+        </strong>{" "}
+        of the value of loot from the pit (coins at face value
+        {fenced ? ", with the Black Market's fence" : ""}) and{" "}
         <strong>{Math.round(marketRate(ix, ix.lib.town.sellRate, haggle.bonus) * 100)}%</strong> for
         gear from the store room.{" "}
         {haggle.hero ? (

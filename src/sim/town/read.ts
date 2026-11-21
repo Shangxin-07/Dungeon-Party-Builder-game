@@ -19,8 +19,17 @@ export function effects(ix: Index, town: TownState): BuildingEffect[] {
 /** What one building is doing for the town right now. */
 export function buildingEffects(ix: Index, town: TownState, id: string): readonly BuildingEffect[] {
   const level = town.buildings[id] ?? 0;
-  if (level <= 0 || town.damaged.includes(id)) return [];
+  if (level <= 0 || town.damaged.includes(id) || !willDeal(ix, town, id)) return [];
   return ix.building(id).levels[level - 1]?.effects ?? [];
+}
+
+/**
+ * A building that only deals with some alignments (the Black Market, DESIGN.md
+ * §7) works while the guild has one of them on its books (porters don't count).
+ */
+export function willDeal(ix: Index, town: TownState, id: string): boolean {
+  const deals = ix.building(id).dealsWith;
+  return !deals || town.roster.some((h) => !h.porter && deals.includes(h.alignment));
 }
 
 export type Amount = Extract<BuildingEffect, { amount: number }>["type"];
@@ -195,11 +204,17 @@ export function haggler(ix: Index, town: TownState): { hero?: Hero; bonus: numbe
 export const marketRate = (ix: Index, base: number, bonus = 0) =>
   Math.min(Math.max(base, ix.lib.town.haggle.max), base + bonus);
 
-/** What the Market pays for one piece of a trip's haul worth `value`. Coins are coins. */
-export const haulPrice = (ix: Index, itemId: string, value: number, bonus = 0) =>
+/** Percentage points a fence (the Black Market, DESIGN.md §7) adds to the haul rate. */
+export const fence = (ix: Index, town: TownState) => total(ix, town, "fence");
+
+/**
+ * What the Market pays for one piece of a trip's haul worth `value`. Coins
+ * are coins. `fenced` is percentage points from fence() on the base rate.
+ */
+export const haulPrice = (ix: Index, itemId: string, value: number, bonus = 0, fenced = 0) =>
   ix.item(itemId).tags.includes("coins")
     ? value
-    : Math.max(1, Math.floor(value * marketRate(ix, ix.lib.town.haulRate, bonus)));
+    : Math.max(1, Math.floor(value * marketRate(ix, ix.lib.town.haulRate + fenced / 100, bonus)));
 
 export const sellPrice = (ix: Index, item: ItemDef, bonus = 0) =>
   Math.max(1, Math.floor(item.value * marketRate(ix, ix.lib.town.sellRate, bonus)));
@@ -251,6 +266,16 @@ export function launchWarnings(ix: Index, town: TownState): string[] {
     out.push("Nobody is in the front row. Monsters will go straight for the back.");
   const aligned = partyAlignment(ix, party);
   if (aligned.divided || aligned.mismatched.length) out.push(describeParty(ix, party));
+  // Holy and unholy gear (DESIGN.md §7): Good heroes hate carrying cursed things.
+  for (const h of party) {
+    const unholy = Object.values(h.equipment).filter(
+      (id): id is string => !!id && ix.item(id).tags.includes("unholy"),
+    );
+    if (unholy.length && h.alignment === "good")
+      out.push(
+        `${h.name} is Good and hates carrying the ${unholy.map((id) => ix.item(id).name).join(" and ")}: they'll lose morale.`,
+      );
+  }
   if (party.length && !party.some((h) => h.pack.some((id) => ix.item(id).tags.includes("heal"))))
     out.push("Nobody is carrying potions or bandages.");
   for (const h of party) {

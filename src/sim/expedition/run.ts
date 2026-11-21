@@ -258,6 +258,9 @@ export class Expedition extends TripRescue {
       disobeyed: this.disobeyed,
       secrets: this.secrets,
       huntRooms: this.hunts,
+      deeds: this.deeds,
+      gifts: wiped ? [] : this.gifts,
+      parleys: this.parleys,
     };
   }
 

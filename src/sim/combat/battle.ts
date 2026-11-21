@@ -210,11 +210,22 @@ export class Battle extends BattleEffects {
         // Melee weapon attacks can only reach the front row while it stands
         // (a sweeping blow like Cleave hits the whole front row).
         const melee = ability.effects.some((e) => e.type === "weaponAttack") && !self.weapon.ranged;
-        if (!melee) return enemies;
         const front = enemies.filter((f) => f.row === "front");
-        return front.length ? front : enemies;
+        const reach = melee && front.length ? front : enemies;
+        return ability.target === "enemy" ? this.hunted(self, reach) : reach;
       }
     }
+  }
+
+  /**
+   * Monsters that hunt by tag (MonsterDef.hunts, DESIGN.md §7: the undead go
+   * for Good heroes) pick from those first, if any are in reach.
+   */
+  protected hunted(self: Fighter, targets: Fighter[]): Fighter[] {
+    const hunts = self.monsterId ? this.ix.monster(self.monsterId).hunts : undefined;
+    if (!hunts?.length) return targets;
+    const prey = targets.filter((f) => f.tags.some((t) => hunts.includes(t)));
+    return prey.length ? prey : targets;
   }
 
   // -------------------------------------------------------------------------

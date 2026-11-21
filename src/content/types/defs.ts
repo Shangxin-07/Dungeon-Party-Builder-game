@@ -195,6 +195,30 @@ export interface MonsterDef {
   summonOnly?: boolean;
   /** Loot table id rolled when this monster is killed. */
   loot?: string;
+  /**
+   * Hero tags this monster goes for first when it picks a single target
+   * (DESIGN.md §7), e.g. ["align:good"]: the undead hate the righteous.
+   * It still hits whoever it can reach if none of them are in reach.
+   */
+  hunts?: readonly string[];
+  /**
+   * What a group with this monster in it may do instead of fighting, by the
+   * party's alignment (DESIGN.md §7): a goblin band parleys with an Evil
+   * party, or demands tribute. Tried in order before the fight.
+   */
+  reactions?: readonly MonsterReaction[];
+}
+
+/**
+ * A monster's reaction to the party (DESIGN.md §7). `reaction` names a
+ * handler registered in src/sim/reactions.ts; `to` lists the party
+ * alignments it happens to ("divided" for a party without one).
+ */
+export interface MonsterReaction {
+  reaction: string;
+  to: readonly string[];
+  /** Chance per fight. */
+  chance: number;
 }
 
 export interface SkillDef {

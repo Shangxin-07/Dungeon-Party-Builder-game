@@ -10,6 +10,8 @@ export default defineMonster({
   weapon: { name: "old sword", damageType: "slashing", attack: 4 },
   row: "front",
   tags: ["undead"],
+  // The dead hate the righteous (DESIGN.md §7): Good heroes are hit first.
+  hunts: ["align:good"],
   ai: "brute",
   abilities: { "power-strike": 3 },
   loot: "skeleton-loot",

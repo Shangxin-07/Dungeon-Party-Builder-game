@@ -7,6 +7,7 @@ import type {
   BuildingDef,
   ClassDef,
   EncounterDef,
+  EventDef,
   FloorDef,
   InjuryDef,
   ItemDef,
@@ -35,6 +36,7 @@ export interface Index {
   encounter(id: string): EncounterDef;
   lootTable(id: string): LootTableDef;
   room(id: string): RoomDef;
+  event(id: string): EventDef;
   building(id: string): BuildingDef;
   motivation(id: string): MotivationDef;
   alignment(id: string): AlignmentDef;
@@ -72,6 +74,7 @@ export function indexLibrary(lib: Library): Index {
       encounter: table("encounter", lib.encounters),
       lootTable: table("loot table", lib.lootTables),
       room: table("room", lib.rooms),
+      event: table("event", lib.events ?? []),
       building: table("building", lib.buildings),
       motivation: table("motivation", lib.motivations),
       alignment: table("alignment", lib.alignments),

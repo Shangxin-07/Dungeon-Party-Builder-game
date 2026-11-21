@@ -226,7 +226,9 @@ export type LedgerKind =
   | "temple"
   | "burials"
   | "gathered"
-  | "spoils";
+  | "spoils"
+  /** Rewards for what a party did down there (DESIGN.md §7, content/events/). */
+  | "gifts";
 
 /** Gold in (positive) or out (negative) of one kind on one day. */
 export interface LedgerLine {

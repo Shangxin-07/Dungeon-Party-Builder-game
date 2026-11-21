@@ -55,6 +55,8 @@ export {
   haggler,
   marketRate,
   haulPrice,
+  fence,
+  willDeal,
   materialWords,
   postWorkers,
   openPosts,

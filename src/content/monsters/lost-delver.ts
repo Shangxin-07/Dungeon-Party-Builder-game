@@ -10,6 +10,8 @@ export default defineMonster({
   weapon: { name: "grave-cold touch", damageType: "cold", attack: 4, ranged: true },
   row: "back",
   tags: ["undead", "spirit"],
+  // The dead hate the righteous (DESIGN.md §7): Good heroes are hit first.
+  hunts: ["align:good"],
   ai: "caster",
   abilities: { "grave-chill": 1 },
   loot: "delver-loot",
