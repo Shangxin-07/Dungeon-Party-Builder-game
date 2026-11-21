@@ -41,6 +41,10 @@ import {
   chooseLevelClass,
   built,
   planRescue,
+  resurrect,
+  resurrectQuote,
+  bury,
+  burialCost,
   findHero,
   hire,
   launch,
@@ -96,6 +100,8 @@ function signUp(t: TownState): TownState {
   return kitOut(ix, t, t.roster.at(-1)!.id);
 }
 
+const FALLEN_BUILDINGS = ["temple", "graveyard"];
+
 function step(t: TownState): TownState {
   // Repair anything raided, then build defences, cheapest first.
   if (build) {
@@ -108,7 +114,10 @@ function step(t: TownState): TownState {
     // first, keeping a few days' wages in hand: a guild that spends it all.
     const defended = DEFENCES.every((id) => (t.buildings[id] ?? 0) > 0);
     const reserve = 60 + 3 * wageBill(ix, t);
+    // The Temple and Graveyard only once there's a body waiting for them.
+    const waiting = (t.bodies ?? []).length > 0;
     const more = library.buildings
+      .filter((b) => waiting || !FALLEN_BUILDINGS.includes(b.id))
       .map((b) => ({ id: b.id, lvl: nextLevel(ix, t, b.id) }))
       .filter((x) => x.lvl && !t.damaged.includes(x.id) && !underConstruction(t, x.id))
       .sort((a, b) => a.lvl!.cost - b.lvl!.cost)[0];
@@ -137,8 +146,26 @@ function step(t: TownState): TownState {
       t = chooseLevelUp(ix, t, h.id, up.wants ?? up.offers[0], stat);
     }
   }
-  // Go and get anyone who's trapped.
-  const site = t.sites.find((s) => s.trapped.some((x) => x.until >= t.day + s.floor - 1));
+  // The fallen (DESIGN.md §10): resurrect while the gold holds out (a week of
+  // wages in hand), otherwise bury.
+  for (const b of [...(t.bodies ?? [])]) {
+    const q = resurrectQuote(ix, t, b.id);
+    if (!q.why && q.terms && t.gold >= q.terms.gold + 7 * wageBill(ix, t)) {
+      t = resurrect(ix, t, b.id);
+      t = kitOut(ix, t, b.hero.id);
+      tally.resurrected++;
+    } else if (
+      (b.risen || (!q.terms && (t.buildings.temple ?? 0) > 0)) &&
+      (burialCost(ix, t) ?? Infinity) <= t.gold
+    ) {
+      t = bury(ix, t, b.id);
+      tally.buried++;
+    }
+  }
+  // Go and get anyone who's trapped, or else the bodies before they rise.
+  const site =
+    t.sites.find((s) => s.trapped.some((x) => x.until >= t.day + s.floor - 1)) ??
+    t.sites.find((s) => s.bodies.some((b) => !b.risen) && s.floor <= Number(policy));
   if (site && !t.orders.rescue) t = planRescue(ix, t, site.id);
   if (!site && t.orders.rescue) t = cancelRescue(ix, t);
   // Agree to raises while the gold holds out (a month of the new wage bill).
@@ -228,7 +255,18 @@ function step(t: TownState): TownState {
 }
 
 /** Trapped and rescued heroes, counted as trips come back. */
-const tally = { trapped: 0, rescued: 0, earned: 0, unpaid: 0, trips: 0, injuries: 0 };
+const tally = {
+  trapped: 0,
+  rescued: 0,
+  earned: 0,
+  unpaid: 0,
+  trips: 0,
+  injuries: 0,
+  resurrected: 0,
+  buried: 0,
+  rose: 0,
+  putDown: 0,
+};
 /** Gold in the coffers at these days, for the summary. */
 const CHECKPOINTS = [10, 20, 40, 60, 90];
 const goldAt: Record<number, number[]> = {};
@@ -238,6 +276,7 @@ function play(seed: number, print: boolean) {
   let printed = 0;
   const seen = new Set<number>();
   const unpaidDays = new Set<number>();
+  const roseNews = new Set<string>();
   if (print) {
     console.log(
       `Policy: ${policy === "idle" ? "never go down" : `trips to floor ${policy}`}` +
@@ -252,12 +291,15 @@ function play(seed: number, print: boolean) {
     t = step(t);
     // Count days the wages went unpaid (from the news, which says so).
     for (const n of t.news) if (n.text.startsWith("The guild couldn't pay")) unpaidDays.add(n.day);
+    for (const n of t.news)
+      if (/never brought home/.test(n.text)) roseNews.add(`${n.day}${n.text}`);
     if (t.lastTrip && t.lastTrip.seed !== trip?.seed) {
       tally.trapped += t.lastTrip.trapped?.length ?? 0;
       tally.rescued += t.lastTrip.rescued?.length ?? 0;
       tally.earned += t.lastTrip.goldEarned;
       tally.trips++;
       tally.injuries += Object.keys(t.lastTrip.injuries ?? {}).length;
+      tally.putDown += t.lastTrip.result.risenSlain.length;
     }
     for (const c of CHECKPOINTS)
       if (c <= days && t.day >= c && !seen.has(c)) {
@@ -279,6 +321,7 @@ function play(seed: number, print: boolean) {
     printed = t.pit.length;
   }
   tally.unpaid += unpaidDays.size;
+  tally.rose += roseNews.size;
   return t;
 }
 
@@ -363,6 +406,9 @@ if (runs === 1) {
       `${(unpaid / runs).toFixed(1)} days with unpaid wages\n` +
       `  hidden caches per town: ${(secrets.found / runs).toFixed(1)} found, ` +
       `${(secrets.missed / runs).toFixed(1)} walked past, worth ${(secrets.gold / runs).toFixed(0)} gold\n` +
+      `  the fallen per town: ${(tally.resurrected / runs).toFixed(1)} resurrected, ` +
+      `${(tally.buried / runs).toFixed(1)} buried, ${(tally.rose / runs).toFixed(1)} rose, ` +
+      `${(tally.putDown / runs).toFixed(1)} risen put down\n` +
       `  gold from trips per town: ${earned.toFixed(0)}; gold in hand (median) ` +
       Object.entries(goldAt)
         .map(([d, g]) => `day ${d}: ${[...g].sort((a, b) => a - b)[Math.floor(g.length / 2)]}`)

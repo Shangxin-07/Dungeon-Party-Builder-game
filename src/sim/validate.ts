@@ -317,6 +317,12 @@ export function validateLibrary(lib: Library): string[] {
           for (const id of e.items) if (!itemIds.has(id)) err(`${w}: sells unknown item "${id}"`);
         } else if (e.type === "raidWarning") {
           if (e.days < 1) err(`${w} level ${i + 1}: raidWarning needs at least 1 day`);
+        } else if (e.type === "resurrect") {
+          if (e.gold < 0 || e.goldPerLevel < 0 || e.levels < 0 || e.percent < 0)
+            err(`${w} level ${i + 1}: resurrect costs can't be negative`);
+          if (e.percent > 100) err(`${w} level ${i + 1}: resurrect percent must be 0-100`);
+        } else if (e.type === "burial") {
+          if (e.gold < 0) err(`${w} level ${i + 1}: burial can't cost negative gold`);
         } else if (e.amount < 0) err(`${w} level ${i + 1}: negative ${e.type}`);
       }
     });
@@ -391,6 +397,24 @@ export function validateLibrary(lib: Library): string[] {
   if (rs.windowDays < 1) err("rescue: windowDays must be at least 1");
   if (rs.rescuedHpPercent <= 0 || rs.rescuedHpPercent > 100)
     err("rescue: rescuedHpPercent must be 1-100");
+
+  // The fallen (DESIGN.md §10).
+  ids("transform", lib.transforms);
+  const fa = lib.fallen;
+  if (!lib.transforms.some((x) => x.id === fa.transform))
+    err(`fallen: unknown transform "${fa.transform}"`);
+  for (const k of ["meetChance", "recogniseBase"] as const)
+    if (fa[k] < 0 || fa[k] > 1) err(`fallen: ${k} must be 0-1`);
+  if (fa.riseDays < 1) err("fallen: riseDays must be at least 1");
+  if (fa.climbDays < 1) err("fallen: climbDays must be at least 1");
+  if (fa.resurrectedHpPercent <= 0 || fa.resurrectedHpPercent > 100)
+    err("fallen: resurrectedHpPercent must be 1-100");
+  for (const x of lib.transforms) {
+    const w = `transform "${x.id}"`;
+    if (x.hpPercent <= 0) err(`${w}: hpPercent must be above 0`);
+    if (!x.suffix) err(`${w}: needs a suffix for the name`);
+    if (x.ai && !hasAi(x.ai)) err(`${w}: unknown AI "${x.ai}"`);
+  }
 
   const t = lib.town;
   for (const id of t.startingRoster) {

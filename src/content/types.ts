@@ -364,6 +364,17 @@ export const MORALE_FACTS = [
   "partyDivided",
   /** Days on a trip with Good and Evil heroes together, even when a Neutral majority allows it. */
   "goodEvilFriction",
+  /**
+   * The fallen (DESIGN.md §10). A guild mate was laid to rest in the
+   * Graveyard: 1 for everyone in town.
+   */
+  "buriedComrade",
+  /** A guild mate's body, left in the dungeon, rose as one of the undead. */
+  "comradeRose",
+  /** Risen guild mates this hero knew, met in a fight on this trip. */
+  "foughtRisen",
+  /** 1 if this hero was brought back from the dead at the Temple. */
+  "resurrected",
 ] as const;
 export type MoraleFact = (typeof MORALE_FACTS)[number];
 
@@ -479,6 +490,45 @@ export interface RescueRules {
   carryChance: number;
   /** HP share the rescued come home with. */
   rescuedHpPercent: number;
+}
+
+/** What becomes of the dead (DESIGN.md §10). Tune freely. */
+export interface FallenRules {
+  /** Days a body left in the dungeon lies still before it rises. */
+  riseDays: number;
+  /** The transform (content/transforms/) applied to a hero who rises. */
+  transform: string;
+  /** Chance a fight on a risen hero's floor has them join it (once per trip each). */
+  meetChance: number;
+  /** A risen hero climbs a floor towards the pit every this many days (DESIGN.md §4). */
+  climbDays: number;
+  /**
+   * Chance the party recognises a risen guild mate before the fight:
+   * base + the best Scouting ÷ 100, if anyone in the party knew them.
+   */
+  recogniseBase: number;
+  /** HP share a hero comes back from the Temple with. */
+  resurrectedHpPercent: number;
+}
+
+/**
+ * A change applied to a snapshot of a creature (DESIGN.md §10): a dead hero
+ * rising as one of the undead. The hero keeps their class, fighting style and
+ * gear; the transform adds to them.
+ */
+export interface TransformDef {
+  id: string;
+  /** Added to the name: "Bram" + ", Risen". */
+  suffix: string;
+  tags: readonly string[];
+  /** Changes to primary stats (never below 1). */
+  stats: Partial<Record<Stat, number>>;
+  /** Extra passives, on top of the hero's perks and gear. */
+  passives: readonly PassiveEffect[];
+  /** Max HP as a percent of the living hero's. */
+  hpPercent: number;
+  /** Combat AI to use instead of the class's, if any. */
+  ai?: string;
 }
 
 /**
@@ -687,7 +737,14 @@ export type BuildingEffect =
   /** Extra XP, as a percent, from every trip. */
   | { type: "xpPercent"; amount: number }
   /** Share of the guild's gold (percent) that raiders can't get at. */
-  | { type: "vault"; amount: number };
+  | { type: "vault"; amount: number }
+  /**
+   * Bring the dead back (DESIGN.md §10): gold plus goldPerLevel × the hero's
+   * level, and they lose max(levels, percent% of their level) off the top.
+   */
+  | { type: "resurrect"; gold: number; goldPerLevel: number; levels: number; percent: number }
+  /** Lay the dead to rest, for this much gold (DESIGN.md §10). */
+  | { type: "burial"; gold: number };
 
 export interface BuildingLevel {
   /** Gold to build or upgrade to this level. */
@@ -838,6 +895,8 @@ export interface Library {
   injuries: readonly InjuryDef[];
   secrets: readonly SecretDef[];
   searching: SearchRules;
+  fallen: FallenRules;
+  transforms: readonly TransformDef[];
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -864,3 +923,5 @@ export const defineSecret = (def: SecretDef): SecretDef => def;
 export const defineSearchRules = (def: SearchRules): SearchRules => def;
 export const defineInjury = (def: InjuryDef): InjuryDef => def;
 export const defineRescueRules = (def: RescueRules): RescueRules => def;
+export const defineFallenRules = (def: FallenRules): FallenRules => def;
+export const defineTransform = (def: TransformDef): TransformDef => def;

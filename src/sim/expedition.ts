@@ -12,6 +12,7 @@ import type { DamageType } from "../content/types";
 import { foeSheet, runCombat, type CombatEvent, type FoeSheet, type Side } from "./combat";
 import type { FloorPressure } from "./dungeon";
 import { rollEncounter } from "./encounter";
+import { risenHero, risenName, type Body, type Risen } from "./fallen";
 import { heroSheet, type Hero } from "./hero";
 import type { Index } from "./library";
 import { appraise, itemSize, rollLootTable, rollValue, worthPerSlot, type HaulItem } from "./loot";
@@ -160,6 +161,14 @@ export interface ExpeditionResult {
   siteLeft: HaulItem[];
   /** Ids of scavenged gear taken back from the monsters carrying it. */
   gearTaken: string[];
+  /**
+   * Bodies the party picked up (DESIGN.md §10): from a lost party's site, and
+   * risen guild mates put down. After a wipe they lie where the party fell.
+   */
+  bodies: Body[];
+  /** Ids of risen guild mates the party fought, and of those it put down. */
+  risenMet: string[];
+  risenSlain: string[];
   /** Times a hero ignored orders. */
   disobeyed: number;
   /** Extra rooms spent hunting under a "clear the floor" order. */
@@ -180,8 +189,8 @@ export interface SiteVisit {
   room: number;
   /** Trapped heroes still alive when the rescue party arrives. */
   trapped: Hero[];
-  /** Names of those who died there. */
-  bodies: string[];
+  /** The bodies of those who died there. */
+  bodies: Body[];
   /** Their gear and the haul they were carrying. */
   items: HaulItem[];
 }
@@ -200,6 +209,8 @@ export interface ExpeditionExtras {
   gear?: Readonly<Record<number, readonly CarriedGear[]>>;
   /** Porters (M6): they carry loot, never fight, and run for it if the party falls. */
   porters?: readonly Hero[];
+  /** Risen guild mates haunting the floors (DESIGN.md §10). */
+  risen?: readonly Risen[];
 }
 
 // ---------------------------------------------------------------------------
@@ -286,6 +297,9 @@ class Expedition {
   private siteVisited?: string;
   private siteLeft: HaulItem[] = [];
   private gearTaken: string[] = [];
+  private bodies: Body[] = [];
+  private risenMet: string[] = [];
+  private risenSlain: string[] = [];
   private disobeyed = 0;
   private secretRng: Rng;
   /** "Clear the floor" orders: the target floor's population on arrival, and rooms hunted. */
@@ -503,6 +517,9 @@ class Expedition {
       siteVisited: this.siteVisited,
       siteLeft: this.siteLeft,
       gearTaken: this.gearTaken,
+      bodies: this.bodies,
+      risenMet: this.risenMet,
+      risenSlain: this.risenSlain,
       disobeyed: this.disobeyed,
       secrets: this.secrets,
       huntRooms: this.hunts,
@@ -625,7 +642,7 @@ class Expedition {
   /** The rescue party reaches where the lost party fell (DESIGN.md §10). */
   private visitSite(site: SiteVisit): void {
     this.siteVisited = site.id;
-    const names = [...site.trapped.map((h) => h.name), ...site.bodies];
+    const names = [...site.trapped.map((h) => h.name), ...site.bodies.map((b) => b.hero.name)];
     this.emit(
       "site",
       names.length
@@ -644,7 +661,13 @@ class Expedition {
         `${h.name} is alive! Weak and starving, but alive. They'll walk out with the party.`,
       );
     }
-    for (const b of site.bodies) this.emit("site", `There's nothing to be done for ${b}.`);
+    for (const b of site.bodies) {
+      this.emit(
+        "site",
+        `There's nothing to be done for ${b.hero.name}. The party wraps the body to bring home.`,
+      );
+      this.bodies.push(b);
+    }
     const items = [...site.items].sort(
       (a, b) =>
         Number(!!b.keep) - Number(!!a.keep) || worthPerSlot(this.ix, b) - worthPerSlot(this.ix, a),
@@ -755,11 +778,14 @@ class Expedition {
         index: this.rng.int(0, monsters.length - 1),
       };
     }
+    // A risen guild mate haunting this floor may join the fight (DESIGN.md §10).
+    const risen = this.risenJoins(monsters);
     const result = runCombat(this.ix, this.party, monsters, {
       seed: this.rng.int(0, 2 ** 31 - 1),
       surprise: opts.surprise,
       level: this.floors?.[this.depth - 1]?.level ?? this.depth,
       carrying: carried && { index: carried.index, item: carried.gear.item },
+      risen: risen.map((r) => risenHero(this.ix, r)),
     });
     const summoned = new Set(result.log.filter((e) => e.kind === "summon").map((e) => e.target));
     const foes = result.fighters.filter((f) => f.side === "monsters" && !summoned.has(f.uid));
@@ -768,6 +794,7 @@ class Expedition {
     this.emit("fight", `${heroes} face ${list(foes.map((f) => f.name))}.`, {
       monsters: foes.map(foeSheet),
     });
+    for (const r of risen) this.meetRisen(r);
     const carrier = carried && foes[carried.index];
     if (carried && carrier) {
       const whose = carried.gear.owner ? `${carried.gear.owner}'s` : "a lost hero's";
@@ -810,8 +837,62 @@ class Expedition {
         this.emit("loot", `Got ${owner ? `${owner}'s` : "the"} ${def.name.toLowerCase()} back!`);
         this.repack();
       }
+      for (const r of risen) if (result.risenSlain.includes(r.id)) this.putDown(r);
     }
     return result.winner;
+  }
+
+  /** Risen heroes on this floor who come out for this fight: each at most once a trip. */
+  private risenJoins(monsters: readonly string[]): Risen[] {
+    if (!monsters.length) return [];
+    const here = (this.extras.risen ?? []).filter(
+      (r) => r.floor === this.depth && !this.risenMet.includes(r.id),
+    );
+    const out: Risen[] = [];
+    for (const r of here) {
+      if (!this.rng.chance(this.ix.lib.fallen.meetChance)) continue;
+      this.risenMet.push(r.id);
+      out.push(r);
+    }
+    return out;
+  }
+
+  /** The party sees who it's fighting, or a scout works it out first. */
+  private meetRisen(r: Risen): void {
+    const name = r.body.hero.name;
+    const scout = this.best("scouting");
+    const chance = this.ix.lib.fallen.recogniseBase + (scout?.value ?? 0) / 100;
+    const kit = Object.values(r.equipment).filter((id): id is string => !!id);
+    if (scout && this.rng.chance(chance)) {
+      const thing = kit.length ? this.ix.item(this.rng.pick(kit)).name.toLowerCase() : "face";
+      this.emit(
+        "fight",
+        `${scout.hero.name} knows that ${thing} at once. "That's... that's ${name}'s ${thing}." It's ${risenName(this.ix, r)}.`,
+      );
+    } else {
+      this.emit(
+        "fight",
+        `Something that was ${name} lurches out of the dark: ${risenName(this.ix, r)}.`,
+      );
+    }
+  }
+
+  /** A risen guild mate is put down: their gear and their body come home. */
+  private putDown(r: Risen): void {
+    this.risenSlain.push(r.id);
+    const name = r.body.hero.name;
+    for (const id of Object.values(r.equipment)) {
+      if (!id) continue;
+      const def = this.ix.item(id);
+      this.haul.push({ item: id, value: def.value, estimate: def.value, keep: true, owner: name });
+      this.emit("loot", `Got ${name}'s ${def.name.toLowerCase()} back.`);
+    }
+    this.bodies.push({ ...r.body, floor: this.depth, risen: true });
+    this.emit(
+      "site",
+      `${name} is still at last. The party wraps what's left of them to bring home.`,
+    );
+    this.repack();
   }
 
   /** Trap damage and the like. Resistances help; armour doesn't. */

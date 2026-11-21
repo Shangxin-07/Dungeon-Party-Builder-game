@@ -301,16 +301,19 @@ describe("wipes and rescue runs", () => {
     const t = wipeWithSurvivor();
     const site = t.sites[0]!;
     const sent = t.lastTrip!.party.map((h) => h.name);
-    expect([...site.trapped.map((x) => x.hero.name), ...site.bodies].sort()).toEqual(
-      expect.arrayContaining([...site.bodies].sort()),
-    );
+    const dead = site.bodies.map((b) => b.hero.name);
+    for (const b of site.bodies) {
+      expect(sent).toContain(b.hero.name);
+      expect(b.hero.condition).toBe("dead");
+      expect(b.hero.equipment).toEqual({});
+    }
     for (const x of site.trapped) {
       expect(sent).toContain(x.hero.name);
       expect(x.until).toBe(
         t.lastTrip!.day + t.lastTrip!.result.days + library.rescue.windowDays - 1,
       );
     }
-    for (const it of site.items.filter((i) => i.keep)) expect(site.bodies).toContain(it.owner);
+    for (const it of site.items.filter((i) => i.keep)) expect(dead).toContain(it.owner);
     expect(t.lastTrip!.trapped).toEqual(site.trapped.map((x) => x.hero.name));
   });
 

@@ -19,6 +19,7 @@ import type {
   RoomDef,
   SkillDef,
   StatusDef,
+  TransformDef,
 } from "../content/types";
 
 export interface Index {
@@ -37,6 +38,7 @@ export interface Index {
   motivation(id: string): MotivationDef;
   alignment(id: string): AlignmentDef;
   injury(id: string): InjuryDef;
+  transform(id: string): TransformDef;
   /** The floor at this depth. */
   floor(depth: number): FloorDef;
 }
@@ -72,6 +74,7 @@ export function indexLibrary(lib: Library): Index {
       motivation: table("motivation", lib.motivations),
       alignment: table("alignment", lib.alignments),
       injury: table("injury", lib.injuries),
+      transform: table("transform", lib.transforms ?? []),
       floor: (depth) => {
         const f = lib.floors.find((x) => x.depth === depth);
         if (!f) throw new Error(`No floor defined at depth ${depth}`);

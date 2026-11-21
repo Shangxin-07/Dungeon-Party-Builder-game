@@ -86,6 +86,35 @@ export interface Hero {
    * `xp` waits until then.
    */
   porter?: { watched: number; xp: number };
+  /**
+   * Levels spent since this was recorded (DESIGN.md §10), oldest first, so a
+   * resurrection can take the most recent ones off exactly. Saves from before
+   * the fallen have none for older levels.
+   */
+  past?: PastLevel[];
+  /**
+   * Levels lost to a resurrection, lowest first. Each comes back exactly as
+   * it was when the hero earns enough XP for that level again.
+   */
+  lost?: LostLevel[];
+}
+
+/** A level that has been put into a class and spent. */
+export interface PastLevel {
+  level: number;
+  classId: string;
+  /** Stat gains the class gave (after the cap of 30). */
+  gains: Partial<Record<Stat, number>>;
+  perk?: string;
+  /** The free stat point, if this level had one. */
+  stat?: Stat;
+}
+
+/** A level a resurrection took: spent (`past`) or still waiting to be spent (`pending`). */
+export interface LostLevel {
+  level: number;
+  past?: PastLevel;
+  pending?: LevelUp;
 }
 
 /** The fatigue tier a hero is in ("tired", "exhausted"), if any. */
@@ -109,6 +138,8 @@ export interface LevelUp {
   freeStat: boolean;
   /** The perk they'd love to be given, if they have a wish. */
   wants?: string;
+  /** Stat gains the class gave when it was picked, so they can be taken back (DESIGN.md §10). */
+  gains?: Partial<Record<Stat, number>>;
 }
 
 /** One line of a hero's morale history. */

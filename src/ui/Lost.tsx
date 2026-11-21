@@ -3,7 +3,17 @@
  * talk around town. Rules live in src/sim/town.ts.
  */
 import { library } from "../content";
-import { cancelRescue, grumbles, planRescue, type TownState } from "../sim/town";
+import {
+  burialCost,
+  bury,
+  cancelRescue,
+  grumbles,
+  planRescue,
+  resurrect,
+  resurrectQuote,
+  type TownState,
+} from "../sim/town";
+import { risenName } from "../sim/fallen";
 import { heroTitle } from "../sim/hero";
 import { ix } from "./game";
 
@@ -11,7 +21,8 @@ type Act = (f: (t: TownState) => TownState) => void;
 
 /** Where parties fell, who's waiting, and what the monsters walked off with. */
 export function LostPanel({ town, act }: { town: TownState; act: Act }) {
-  if (!town.sites.length && !town.scavenged.length) return null;
+  const risen = town.risen ?? [];
+  if (!town.sites.length && !town.scavenged.length && !risen.length) return null;
   const byFloor = new Map<number, typeof town.scavenged>();
   for (const g of town.scavenged) byFloor.set(g.floor, [...(byFloor.get(g.floor) ?? []), g]);
   return (
@@ -41,9 +52,17 @@ export function LostPanel({ town, act }: { town: TownState; act: Act }) {
                   </p>
                 );
               })}
-              {s.bodies.length ? (
-                <p className="small muted">Died here: {s.bodies.join(", ")}.</p>
-              ) : null}
+              {s.bodies.map((b) => {
+                const rises = b.died + library.fallen.riseDays;
+                return (
+                  <p key={b.id} className={b.risen ? "small muted" : "small warn"}>
+                    <strong>{b.hero.name}</strong>
+                    {b.risen
+                      ? "'s remains lie here, put down for good."
+                      : `'s body lies here. Unless it's brought home, it rises on day ${rises}.`}
+                  </p>
+                );
+              })}
               <p className="small">
                 {gear ? `${gear} pieces of their gear` : "None of their gear"}
                 {loot ? ` and ${loot} things they'd found` : ""} still lie there.
@@ -66,13 +85,37 @@ export function LostPanel({ town, act }: { town: TownState; act: Act }) {
                   className="btn"
                   onClick={() => act((t) => planRescue(ix, t, s.id))}
                 >
-                  Send the next party to find them
+                  {s.trapped.length
+                    ? "Send the next party to find them"
+                    : "Send the next party to bring them home"}
                 </button>
               )}
             </li>
           );
         })}
       </ul>
+      {risen.length ? (
+        <>
+          <h3>The risen</h3>
+          <ul className="small">
+            {risen.map((r) => {
+              const kit = Object.values(r.equipment).filter((id): id is string => !!id);
+              return (
+                <li key={r.id}>
+                  <strong>{risenName(ix, r)}</strong> walks floor {r.floor}, risen on day {r.rose}
+                  {kit.length
+                    ? `, still wearing their ${kit.map((id) => ix.item(id).name.toLowerCase()).join(", ")}`
+                    : ""}
+                  .{" "}
+                  <span className="muted">
+                    Put them down to bring their body home. Anyone who knew them will hate it.
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      ) : null}
       {byFloor.size ? (
         <>
           <h3>Carried off by monsters</h3>
@@ -91,6 +134,77 @@ export function LostPanel({ town, act }: { town: TownState; act: Act }) {
           </ul>
         </>
       ) : null}
+    </section>
+  );
+}
+
+/** Bodies brought home (DESIGN.md §10): bring them back at the Temple, or bury them. */
+export function FallenPanel({ town, act }: { town: TownState; act: Act }) {
+  const bodies = town.bodies ?? [];
+  if (!bodies.length) return null;
+  const burial = burialCost(ix, town);
+  return (
+    <section aria-labelledby="fallen-heading" className="panel">
+      <h2 id="fallen-heading">The fallen</h2>
+      <p className="small muted">
+        Bodies brought home wait here. The Temple can bring a hero back, at the cost of their most
+        recent levels (each comes back as it was once they earn the XP again). The Graveyard lays
+        them to rest, and the guild takes heart.
+      </p>
+      <ul className="sites">
+        {bodies.map((b) => {
+          const q = resurrectQuote(ix, town, b.id);
+          return (
+            <li key={b.id} className="site">
+              <h3>
+                {b.hero.name}{" "}
+                <span className="muted small">
+                  ({heroTitle(ix, b.hero)}, died on day {b.died})
+                </span>
+              </h3>
+              {b.risen ? (
+                <p className="small muted">Rose once already. They can only be buried.</p>
+              ) : q.terms ? (
+                <p className="small">
+                  The priests ask {q.terms.gold} gold.{" "}
+                  {q.terms.levels
+                    ? `${b.hero.name} would lose ${q.terms.levels} ${q.terms.levels === 1 ? "level" : "levels"} (back to level ${b.hero.level - q.terms.levels}).`
+                    : `${b.hero.name} is only level 1, so has no levels to lose.`}
+                </p>
+              ) : null}
+              <div className="row-buttons">
+                {!b.risen ? (
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={!!q.why}
+                    title={q.why}
+                    onClick={() => act((t) => resurrect(ix, t, b.id))}
+                  >
+                    Resurrect
+                  </button>
+                ) : null}{" "}
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={burial === undefined || town.gold < burial}
+                  title={
+                    burial === undefined
+                      ? "You need a Graveyard."
+                      : town.gold < burial
+                        ? `A burial costs ${burial} gold.`
+                        : undefined
+                  }
+                  onClick={() => act((t) => bury(ix, t, b.id))}
+                >
+                  Bury{burial ? ` (${burial} gold)` : ""}
+                </button>
+              </div>
+              {q.why && !b.risen ? <p className="small muted">{q.why}</p> : null}
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }

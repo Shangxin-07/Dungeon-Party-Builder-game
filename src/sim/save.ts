@@ -165,6 +165,23 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
       })),
     };
   },
+  // M6: the fallen leave bodies. Sites listed the dead by name only, with no
+  // hero to bring back or to rise, so those names stay on the memorial alone.
+  11: (_ix, old) => {
+    const lastTrip = old.lastTrip as { result: Record<string, unknown> } | undefined;
+    if (lastTrip) {
+      lastTrip.result.bodies ??= [];
+      lastTrip.result.risenMet ??= [];
+      lastTrip.result.risenSlain ??= [];
+    }
+    return {
+      ...old,
+      version: 12,
+      sites: (old.sites as Record<string, unknown>[]).map((s) => ({ ...s, bodies: [] })),
+      bodies: [],
+      risen: [],
+    };
+  },
 };
 
 /**
@@ -253,6 +270,16 @@ export function missingContent(ix: Index, town: TownState): string[] {
   for (const s of town.sites) {
     for (const x of s.trapped) hero(x.hero);
     for (const it of s.items) item(it.item);
+    for (const b of s.bodies) hero(b.hero);
+  }
+  // The fallen (DESIGN.md §10).
+  for (const b of town.bodies) {
+    hero(b.hero);
+    Object.values(b.gear).forEach(item);
+  }
+  for (const r of town.risen) {
+    hero(r.body.hero);
+    Object.values(r.equipment).forEach(item);
   }
   town.stash.forEach(item);
   for (const g of town.scavenged) item(g.item);
