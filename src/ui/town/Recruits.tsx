@@ -4,7 +4,15 @@
 import { useState } from "react";
 import { library } from "../../content";
 import { baseClasses, bestClass, trainRecruit, type Hero } from "../../sim/hero";
-import { autoStart, hire, hirePorter, hirePrice, rosterSize, type TownState } from "../../sim/town";
+import {
+  autoStart,
+  hire,
+  hirePorter,
+  hirePrice,
+  porterPrice,
+  rosterSize,
+  type TownState,
+} from "../../sim/town";
 import { ix } from "../game";
 import { StatSheet } from "../Watch";
 import { MoraleBar, Personality } from "../Heroes";
@@ -121,11 +129,12 @@ export function RecruitCard({
           type="button"
           className="link small"
           title="Porters don't fight. They carry loot, watch the fighting, and run for home if the party falls. Train them in a class once they've seen enough."
-          disabled={full || town.gold < ix.lib.town.porters.hireCost}
+          disabled={full || town.gold < porterPrice(ix, town)}
           onClick={() => act((t) => hirePorter(ix, t, h.id))}
         >
-          or sign as a porter ({ix.lib.town.porters.hireCost} gold, {ix.lib.town.porters.wage} a
-          day)
+          or sign as a porter (
+          {porterPrice(ix, town) ? `${porterPrice(ix, town)} gold, ` : "free, "}
+          {ix.lib.town.porters.wage} a day)
         </button>
       ) : null}
     </li>

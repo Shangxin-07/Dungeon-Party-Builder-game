@@ -11,6 +11,11 @@ import { partySlots, rosterSize, built } from "./read";
 import { news, book, roll, edit, hero } from "./internal";
 import { kitOut, keepHpInBounds } from "./gear";
 
+/** Gold to sign a recruit as a porter: free too while the starting heroes are signing up. */
+export function porterPrice(ix: Index, town: TownState): number {
+  return (town.freeHires ?? 0) > 0 ? 0 : ix.lib.town.porters.hireCost;
+}
+
 /** Gold to sign this recruit: free while the starting heroes are signing up. */
 export function hirePrice(ix: Index, town: TownState, recruit: Hero): number {
   if ((town.freeHires ?? 0) > 0) return 0;
@@ -59,11 +64,15 @@ export function hirePorter(ix: Index, town: TownState, recruitId: string): TownS
   if (!t.recruits[i]!.untrained) throw new TownError("A trained hero won't carry bags.");
   if (t.roster.length >= rosterSize(ix, t))
     throw new TownError("The roster is full. Upgrade the Guild Hall or dismiss someone.");
-  if (t.gold < rules.hireCost) throw new TownError("Not enough gold.");
+  const price = porterPrice(ix, t);
+  if (t.gold < price) throw new TownError("Not enough gold.");
   const [p] = t.recruits.splice(i, 1);
   p!.porter = { watched: 0, xp: 0 };
   p!.hp = heroSheet(ix, p!).derived.maxHp;
-  book(t, "hired", -rules.hireCost);
+  // A starting recruit signed as a porter uses up one of the free hires, or the
+  // guild would wait for them forever and no new recruits would come.
+  if ((t.freeHires ?? 0) > 0) t.freeHires -= 1;
+  else book(t, "hired", -price);
   t.roster.push(p!);
   t.records[p!.id] = newRecord(t.day);
   t.porters ??= [];

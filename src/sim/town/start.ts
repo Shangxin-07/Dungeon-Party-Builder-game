@@ -49,11 +49,23 @@ export function makeRecruit(ix: Index, town: TownState, names: readonly string[]
 }
 
 /**
+ * Free hires can't outnumber the starting recruits still waiting. Saves from
+ * M6.03 to M6.13 could have a starting recruit signed as a porter without the
+ * count going down, which left the guild waiting forever for a recruit who was
+ * already signed, and no new recruits ever turned up.
+ */
+export function tidyFreeHires(town: TownState): void {
+  const waiting = town.recruits.filter((r) => r.untrained).length;
+  town.freeHires = Math.min(town.freeHires ?? 0, waiting);
+}
+
+/**
  * A fresh batch of recruits looking for work: untrained, except for those a
  * good Tavern sends trained and kitted. The starting recruits wait until signed.
  */
 export function freshRecruits(ix: Index, town: TownState, names: readonly string[]): void {
-  if ((town.freeHires ?? 0) > 0) return;
+  tidyFreeHires(town);
+  if (town.freeHires > 0) return;
   town.recruits = [];
   const trained = total(ix, town, "trainedRecruits");
   for (let i = 0; i < recruitsToday(ix, town); i++) {

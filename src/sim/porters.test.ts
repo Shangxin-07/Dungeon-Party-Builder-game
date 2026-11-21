@@ -32,6 +32,27 @@ const withPorter = (seed = 1): TownState => {
 };
 
 describe("porters", () => {
+  it("a starting recruit signed as a porter is free and new recruits still come", () => {
+    // The bug: signing a starting recruit as a porter left a free hire owing, so
+    // the guild waited forever and no new recruits ever turned up.
+    const start = newTown(ix, heroNames, 1);
+    let t = hirePorter(ix, start, start.recruits[0]!.id);
+    expect(t.gold).toBe(start.gold);
+    expect(t.freeHires).toBe(start.freeHires - 1);
+    t = autoStart(ix, t);
+    expect(t.freeHires).toBe(0);
+    expect(t.recruits).toEqual([]);
+    const next = rest(ix, t, heroNames);
+    expect(next.recruits.length).toBe(library.town.recruitsOnOffer);
+  });
+
+  it("un-sticks saves that were already waiting on a recruit signed as a porter", () => {
+    const stuck = { ...autoStart(ix, newTown(ix, heroNames, 1)), freeHires: 1 };
+    expect(stuck.recruits).toEqual([]);
+    expect(migrateTown(ix, structuredClone(stuck))!.freeHires).toBe(0);
+    expect(rest(ix, stuck, heroNames).recruits.length).toBe(library.town.recruitsOnOffer);
+  });
+
   it("sign cheap, stay untrained, and go along without taking a party slot", () => {
     const t = withPorter();
     const p = t.roster.at(-1)!;
