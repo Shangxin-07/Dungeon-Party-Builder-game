@@ -99,6 +99,8 @@ export interface ClassRequirements {
   stats?: Readonly<Partial<Record<Stat, number>>>;
   /** A building the town must have standing to train it. */
   building?: string;
+  /** Alignments allowed to learn it (DESIGN.md §7), e.g. ["good"]. Any, if left out. */
+  alignments?: readonly string[];
 }
 
 /**
@@ -352,6 +354,16 @@ export const MORALE_FACTS = [
   "raiseRefused",
   /** 1 if a party went down without them while they were fit to go. */
   "benched",
+  /**
+   * Alignment (DESIGN.md §7). Days on a trip spent two steps from the party's
+   * alignment, or alongside someone who is: the mismatched hero and the
+   * heroes they clash with.
+   */
+  "alignmentClash",
+  /** Days on a trip in a party with no two-thirds alignment. */
+  "partyDivided",
+  /** Days on a trip with Good and Evil heroes together, even when a Neutral majority allows it. */
+  "goodEvilFriction",
 ] as const;
 export type MoraleFact = (typeof MORALE_FACTS)[number];
 
@@ -369,6 +381,22 @@ export interface MoraleRule {
   above?: number;
   /** Shown in town next to the change, e.g. "liked the gold". */
   reason: string;
+}
+
+/**
+ * An alignment (DESIGN.md §7): Good, Neutral, Evil. `position` places it on
+ * the scale; one step apart is fine, two steps is a clash. Its morale rules
+ * act like a second motivation.
+ */
+export interface AlignmentDef {
+  id: string;
+  name: string;
+  blurb: string;
+  /** Place on the scale, in whole steps (Good 1, Neutral 0, Evil -1). */
+  position: number;
+  /** How often recruits have it, relative to the others. */
+  weight: number;
+  rules: readonly MoraleRule[];
 }
 
 /** What drives a hero (DESIGN.md §6). */
@@ -800,6 +828,7 @@ export interface Library {
   floors: readonly FloorDef[];
   buildings: readonly BuildingDef[];
   motivations: readonly MotivationDef[];
+  alignments: readonly AlignmentDef[];
   town: TownRules;
   dungeon: DungeonRules;
   morale: MoraleRulesDef;
@@ -827,6 +856,7 @@ export const defineBuilding = (def: BuildingDef): BuildingDef => def;
 export const defineTownRules = (def: TownRules): TownRules => def;
 export const defineDungeonRules = (def: DungeonRules): DungeonRules => def;
 export const defineMotivation = (def: MotivationDef): MotivationDef => def;
+export const defineAlignment = (def: AlignmentDef): AlignmentDef => def;
 export const defineMoraleRules = (def: MoraleRulesDef): MoraleRulesDef => def;
 export const defineLevelRules = (def: LevelRules): LevelRules => def;
 export const defineWearRules = (def: WearRules): WearRules => def;

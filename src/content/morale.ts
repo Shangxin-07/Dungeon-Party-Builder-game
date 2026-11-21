@@ -36,6 +36,10 @@ export default defineMoraleRules({
     { fact: "favouriteMissing", amount: -1, reason: "misses having a {favourite}" },
     { fact: "restMorale", amount: 1, below: 70, reason: "an evening at the Tavern" },
     { fact: "unpaid", amount: -3, reason: "wasn't paid" },
+    // Alignment (DESIGN.md §7): a cost, never a ban. Per day on the trip.
+    { fact: "alignmentClash", amount: -2, cap: 10, reason: "clashed with the party" },
+    { fact: "partyDivided", amount: -1, cap: 5, reason: "a divided party" },
+    { fact: "goodEvilFriction", amount: -1, per: 2, cap: 3, reason: "uneasy company" },
     // M6: nobody likes being worked into the ground.
     { fact: "sentTired", amount: -3, reason: "was sent down worn out" },
     { fact: "injured", amount: -2, reason: "picked up a nasty injury" },

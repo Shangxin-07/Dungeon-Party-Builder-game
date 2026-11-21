@@ -7,7 +7,11 @@ export default defineClass({
   name: "Paladin",
   kind: "combo",
   blurb: "Front row. Holds the line, lays on hands, and hates the undead.",
-  requires: { classLevels: { fighter: 5, cleric: 5 }, stats: { STR: 12, WIL: 12 } },
+  requires: {
+    classLevels: { fighter: 5, cleric: 5 },
+    stats: { STR: 12, WIL: 12 },
+    alignments: ["good"],
+  },
   mainStats: ["STR", "WIL"],
   likes: ["sword", "holy", "shield"],
   row: "front",

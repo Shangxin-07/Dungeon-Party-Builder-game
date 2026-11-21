@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { heroNames, library } from "../content";
 import type { ItemDef, Row } from "../content/types";
+import { describeParty, partyAlignment } from "../sim/alignment";
 import { describeRetreat, type LootRule } from "../sim/expedition";
 import {
   baseClasses,
@@ -744,7 +745,8 @@ function PartyPanel({
                 <div key={h.id} className="formation-hero">
                   <HeroBars hero={h} />
                   <span className="muted small">
-                    {heroTitle(ix, h, true)} · morale {h.morale} · {describeKit(h)}
+                    {heroTitle(ix, h, true)} · {ix.alignment(h.alignment).name} · morale {h.morale}{" "}
+                    · {describeKit(h)}
                   </span>
                 </div>
               ))
@@ -754,6 +756,14 @@ function PartyPanel({
           </div>
         ))}
       </div>
+      {party.length ? (
+        <p
+          className={`small${partyAlignment(ix, party).divided || partyAlignment(ix, party).mismatched.length ? " warn" : " muted"}`}
+          title="Two-thirds of the party set its alignment; everyone else should be within one step (Good and Evil are two apart). Clashes cost morale every day down there."
+        >
+          {describeParty(ix, party)}
+        </p>
+      ) : null}
       {slots > party.length ? (
         <p className="muted small">
           {slots - party.length} empty {slots - party.length === 1 ? "slot" : "slots"}. Add heroes

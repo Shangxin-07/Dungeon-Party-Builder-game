@@ -8,6 +8,7 @@
  * Where saves are kept (browser storage, a file) is the UI's business; this
  * file only reads, upgrades and writes them.
  */
+import { rollAlignment } from "./alignment";
 import { newDungeon } from "./dungeon";
 import { rollPersonality, type Hero } from "./hero";
 import type { Index } from "./library";
@@ -140,6 +141,30 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
       })),
     };
   },
+  // M6: alignment. Worked out from each hero's id and name, so a hero gets
+  // the same one every time the save is loaded.
+  10: (ix, old) => {
+    const upgrade = (h: Hero): Hero => ({
+      ...h,
+      alignment: h.alignment ?? rollAlignment(ix, h.id, h.name),
+    });
+    const lastTrip = old.lastTrip as { party: Hero[] } | undefined;
+    return {
+      ...old,
+      version: 11,
+      roster: (old.roster as Hero[]).map(upgrade),
+      recruits: (old.recruits as Hero[]).map(upgrade),
+      sites: (old.sites as { trapped: { hero: Hero }[] }[]).map((s) => ({
+        ...s,
+        trapped: s.trapped.map((x) => ({ ...x, hero: upgrade(x.hero) })),
+      })),
+      lastTrip: lastTrip && { ...lastTrip, party: lastTrip.party.map(upgrade) },
+      raids: (old.raids as { defenders: Hero[] }[]).map((r) => ({
+        ...r,
+        defenders: r.defenders.map(upgrade),
+      })),
+    };
+  },
 };
 
 /**
@@ -220,6 +245,7 @@ export function missingContent(ix: Index, town: TownState): string[] {
     for (const id of h.perks) check("perk", ix.perk, id);
     for (const l of h.levelUps ?? []) for (const id of l.offers) check("perk", ix.perk, id);
     check("motivation", ix.motivation, h.motivation);
+    check("alignment", ix.alignment, h.alignment);
     building(h.favourite);
     for (const i of h.injuries ?? []) check("injury", ix.injury, i.id);
   };

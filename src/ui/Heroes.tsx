@@ -82,12 +82,17 @@ export function XpBar({ hero }: { hero: Hero }) {
 /** Motivation, likes and dislikes, and the favourite building. */
 export function Personality({ hero, town }: { hero: Hero; town?: TownState }) {
   const m = ix.motivation(hero.motivation);
+  const al = ix.alignment(hero.alignment);
   const fav = ix.building(hero.favourite).name;
   const has = town ? standing(town, hero.favourite) : undefined;
   return (
     <p className="personality small">
       <span title={m.blurb}>
         <strong>{m.name}</strong> <span className="muted">· {m.blurb}</span>
+      </span>
+      <br />
+      <span title={al.blurb}>
+        <strong>{al.name}</strong> <span className="muted">· {al.blurb}</span>
       </span>
       <br />
       {hero.likes ? <>Likes {plural(hero.likes)}. </> : null}

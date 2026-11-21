@@ -181,7 +181,7 @@ describe("levelling up", () => {
 
 describe("morale", () => {
   it("turns facts into morale using everyone's rules plus the hero's motivation", () => {
-    const h = { ...fighter(), motivation: "gold", morale: 50 };
+    const h = { ...fighter(), motivation: "gold", alignment: "neutral", morale: 50 };
     const changes = moraleChanges(ix, h, { goldShare: 60, emptyHanded: 0, likedGear: 1 });
     expect(changes.map((c) => c.reason)).toEqual([
       "liked their gear",
@@ -194,15 +194,15 @@ describe("morale", () => {
   });
 
   it("is softened by WIL, and stays within 0-100", () => {
-    const steady = { ...fighter(), stats: { ...fighter().stats, WIL: 18 } };
-    const shaky = { ...fighter(), stats: { ...fighter().stats, WIL: 4 } };
+    const steady = { ...fighter(), alignment: "neutral", stats: { ...fighter().stats, WIL: 18 } };
+    const shaky = { ...fighter(), alignment: "neutral", stats: { ...fighter().stats, WIL: 4 } };
     expect(lossFactor(ix, steady)).toBeLessThan(lossFactor(ix, shaky));
     const a = { ...steady, morale: 50, moraleLog: [] };
     const b = { ...shaky, morale: 50, moraleLog: [] };
     applyMorale(ix, a, { fallenComrades: 3 }, 1);
     applyMorale(ix, b, { fallenComrades: 3 }, 1);
     expect(a.morale).toBeGreaterThan(b.morale);
-    const c = { ...fighter(), morale: 2, moraleLog: [] };
+    const c = { ...fighter(), alignment: "neutral", morale: 2, moraleLog: [] };
     applyMorale(ix, c, { fallenComrades: 5 }, 1);
     expect(c.morale).toBe(0);
     expect(mood(ix, c)).toBe("fed up");

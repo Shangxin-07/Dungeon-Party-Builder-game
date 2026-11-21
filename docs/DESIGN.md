@@ -165,6 +165,14 @@ Everyone also gets morale from using a liked weapon, and loses it from a dislike
 ## 7. Alignment (after the first slice)
 
 > Added 2026-11-20. Not part of the first playable slice. It slots in once morale and motivations exist (M5), and is data-driven like everything else.
+>
+> **Built in M6.11 (2026-11-21).** What's in the game now:
+> - Every hero (and recruit) is Good, Neutral or Evil (`content/alignments/`, about 35/40/25), worked out from their id and name like their personality, so old saves get stable alignments. Shown on hero and recruit cards and in the watch view.
+> - The party panel shows the party alignment or what's wrong with it, and the launch warnings name anyone who clashes. Nothing is ever banned.
+> - Morale per day on the trip: a hero two steps from the party alignment, and the heroes they clash with, lose 2 (cap 10); a divided party costs everyone 1 (cap 5); Good and Evil together under a Neutral majority costs them 1 per 2 days (cap 3).
+> - Alignment is a second motivation: Good heroes grieve the fallen and the abandoned harder and feel good about rescues; Evil heroes like a fat purse and the killing.
+> - Classes can require an alignment: Paladin needs Good, Assassin needs Neutral or Evil.
+> - Not yet: room events by alignment, monsters reacting to it, holy/unholy loot, Temple/Black Market, low-morale walkouts specific to clashes.
 
 Every hero is **Good**, **Neutral** or **Evil**. Alignment is shown when recruiting and never changes on its own (perks or events might shift it later).
 

@@ -6,6 +6,7 @@
  */
 import type {
   AbilityDef,
+  AlignmentDef,
   BuildingDef,
   ClassDef,
   EncounterDef,
@@ -166,6 +167,9 @@ import goldMotivation from "./motivations/gold";
 import gloryMotivation from "./motivations/glory";
 import knowledgeMotivation from "./motivations/knowledge";
 import comradesMotivation from "./motivations/comrades";
+import goodAlignment from "./alignments/good";
+import neutralAlignment from "./alignments/neutral";
+import evilAlignment from "./alignments/evil";
 import moraleRules from "./morale";
 import levelRules from "./levels";
 import rescueRules from "./rescue";
@@ -303,6 +307,7 @@ export const perks: readonly PerkDef[] = [
   ...clericMilestones,
   ...advancedMilestones,
 ];
+export const alignments: readonly AlignmentDef[] = [goodAlignment, neutralAlignment, evilAlignment];
 export const motivations: readonly MotivationDef[] = [
   goldMotivation,
   gloryMotivation,
@@ -377,6 +382,7 @@ export const library: Library = {
   floors,
   buildings,
   motivations,
+  alignments,
   town: townRules,
   dungeon: dungeonRules,
   morale: moraleRules,

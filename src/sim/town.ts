@@ -19,6 +19,7 @@ import {
   type StandingOrders,
 } from "./expedition";
 import { applyKills, dungeonDay, newDungeon, type DungeonState } from "./dungeon";
+import { describeParty, partyAlignment } from "./alignment";
 import {
   baseClasses,
   createHero,
@@ -39,7 +40,7 @@ import { resolveRaid, type RaidReport } from "./raid";
 import { createRng, type Rng } from "./rng";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 10;
+export const TOWN_VERSION = 11;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 const PIT_HISTORY = 60;
@@ -408,6 +409,8 @@ export function launchWarnings(ix: Index, town: TownState): string[] {
   }
   if (party.length && !party.some((h) => h.row === "front"))
     out.push("Nobody is in the front row. Monsters will go straight for the back.");
+  const aligned = partyAlignment(ix, party);
+  if (aligned.divided || aligned.mismatched.length) out.push(describeParty(ix, party));
   if (party.length && !party.some((h) => h.pack.some((id) => ix.item(id).tags.includes("heal"))))
     out.push("Nobody is carrying potions or bandages.");
   for (const h of party) {
@@ -1787,6 +1790,9 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
   const morale: Record<string, { amount: number; reason: string }[]> = {};
   const leaderCha = Math.max(10, ...party.map((h) => heroSheet(ix, h).stats.CHA));
   const share = goldEarned / party.length;
+  // Alignment (DESIGN.md §7): clashes cost morale for every day down there.
+  const tripDays = Math.max(1, result.days);
+  const aligned = partyAlignment(ix, party);
   for (const before of party) {
     const h = findHero(t, before.id);
     if (!h) continue;
@@ -1811,6 +1817,14 @@ export function launch(ix: Index, town: TownState, names: readonly string[]): To
       levelUp: levels[h.id] ?? 0,
       sentTired: fatigueTier(ix, before) ? 1 : 0,
       injured: injuries[h.id]?.length ? 1 : 0,
+      alignmentClash: aligned.clashing.some((x) => x.id === h.id) ? tripDays : 0,
+      partyDivided: aligned.divided ? tripDays : 0,
+      goodEvilFriction:
+        aligned.friction &&
+        !aligned.clashing.some((x) => x.id === h.id) &&
+        Math.abs(ix.alignment(h.alignment).position) >= 1
+          ? tripDays
+          : 0,
     };
     morale[h.id] = moraleChanges(ix, h, facts, { leaderCha });
     applyMorale(ix, h, facts, backDay, { leaderCha });

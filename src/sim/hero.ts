@@ -12,6 +12,7 @@ import {
   type Stat,
   type StatBlock,
 } from "../content/types";
+import { rollAlignment } from "./alignment";
 import type { Index } from "./library";
 import { createRng, type Rng } from "./rng";
 import { computeDerived, effectiveStats, skillValue, type DerivedBlock } from "./stats";
@@ -54,6 +55,8 @@ export interface Hero {
   morale: number;
   /** Motivation id: what raises and lowers their morale. */
   motivation: string;
+  /** Alignment id (DESIGN.md §7): Good, Neutral or Evil. Never changes on its own. */
+  alignment: string;
   /** Building id they'd love the town to have. */
   favourite: string;
   /** A gear tag they like using ("sword", "fire"...), if any. */
@@ -245,6 +248,7 @@ export function createHero(
     injuries: [],
     pay: 0,
     payLevel: 1,
+    alignment: rollAlignment(ix, opts.id, opts.name),
     ...rollPersonality(ix, opts.id, opts.name, stats, cls.id),
   };
   for (const itemId of cls.startingKit) {
@@ -368,6 +372,7 @@ export function rollRecruit(
     pay: 0,
     payLevel: 1,
     untrained: true,
+    alignment: rollAlignment(ix, opts.id, opts.name),
     ...rollPersonality(ix, opts.id, opts.name, stats),
   };
 }
