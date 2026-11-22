@@ -426,6 +426,9 @@ export function validateLibrary(lib: Library): string[] {
           for (const id of e.items) if (!itemIds.has(id)) err(`${w}: sells unknown item "${id}"`);
         } else if (e.type === "raidWarning") {
           if (e.days < 1) err(`${w} level ${i + 1}: raidWarning needs at least 1 day`);
+        } else if (e.type === "workshop") {
+          if (!Number.isInteger(e.benches) || e.benches < 1)
+            err(`${w} level ${i + 1}: a workshop needs 1 or more benches`);
         } else if (e.type === "watch") {
           if (!watchOk(e))
             err(`${w} level ${i + 1}: watch needs 1+ floors and 0 <= exact <= floors`);
@@ -632,6 +635,28 @@ export function validateLibrary(lib: Library): string[] {
   if (t.restPercent <= 0) err("town: restPercent must be above 0");
   if (t.hireCost < 0 || t.startingGold < 0) err("town: costs can't be negative");
   if (t.repairRate < 0) err("town: repairRate can't be negative");
+
+  // Workshops and recipes (M7.14).
+  ids("recipe", lib.recipes ?? []);
+  for (const r of lib.recipes ?? []) {
+    const w = `recipe "${r.id}"`;
+    const shop = lib.buildings.find((b) => b.id === r.workshop);
+    const level = r.level ?? 1;
+    if (!shop) err(`${w}: unknown workshop "${r.workshop}"`);
+    else if (!shop.levels[level - 1]?.effects.some((e) => e.type === "workshop"))
+      err(`${w}: ${shop.id} level ${level} isn't a workshop`);
+    if (!itemIds.has(r.makes)) err(`${w}: makes unknown item "${r.makes}"`);
+    if (r.count !== undefined && (!Number.isInteger(r.count) || r.count < 1))
+      err(`${w}: count must be a whole number, 1 or more`);
+    materialCost(w, r.materials);
+    if ((r.gold ?? 0) < 0) err(`${w}: gold can't be negative`);
+    if (!(r.work > 0)) err(`${w}: work must be above 0`);
+    if (!Object.keys(r.materials).length && !r.gold) err(`${w}: must cost something`);
+  }
+  const ws = lib.workshops;
+  if (ws.perDay <= 0 || ws.minDay <= 0 || ws.perStat < 0) err("workshops: bad work rates");
+  if (ws.porter < 0 || ws.rest < 0 || ws.rest > 1) err("workshops: porter >= 0, rest 0-1");
+  if (!Number.isInteger(ws.queue) || ws.queue < 1) err("workshops: queue must be 1 or more");
 
   const fog = lib.scouting.fog;
   if (!fog.bands.length) err("scouting: fog needs at least one band");

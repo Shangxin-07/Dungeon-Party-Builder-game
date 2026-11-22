@@ -10,17 +10,22 @@ export default defineBuilding({
     {
       cost: 180,
       days: 3,
-      summary: "Injuries mend twice as fast",
-      effects: [{ type: "healing", amount: 1 }],
+      summary: "Injuries mend twice as fast. A still with 1 bench: bandages, healing potions",
+      effects: [
+        { type: "healing", amount: 1 },
+        { type: "workshop", benches: 1 },
+      ],
     },
     {
       cost: 400,
       materials: { glowcap: 5 },
       days: 4,
-      summary: "Injuries mend three times as fast; sells greater healing potions",
+      summary:
+        "Injuries mend three times as fast; sells and brews greater healing potions. 2 benches",
       effects: [
         { type: "healing", amount: 2 },
         { type: "sells", items: ["greater-healing-potion"] },
+        { type: "workshop", benches: 2 },
       ],
     },
   ],

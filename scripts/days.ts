@@ -76,6 +76,9 @@ import {
   buy,
   equip,
   retainerBill,
+  assignBench,
+  benches,
+  queueJob,
   settleByRule,
   nextCommand,
   type HaulRule,
@@ -172,6 +175,24 @@ function manPosts(t: TownState): TownState {
     if (id) posted = assignPost(ix, posted, h.id, id);
   });
   return posted;
+}
+
+/**
+ * Workshops (M7.14): once there's a Sawmill, one hero off the posts saws
+ * timber into planks (for the Watchtower and later stairhead barricades),
+ * keeping a few logs back and a dozen planks in hand.
+ */
+function sawPlanks(t: TownState): TownState {
+  if (t.camp || !benches(ix, t, "sawmill")) return t;
+  const shop = t.workshops?.sawmill ?? { workers: [], queue: [] };
+  if (!shop.workers.length) {
+    const h = t.roster.find((x) => !outingOf(t, x.id) && !t.party.includes(x.id) && !x.porter);
+    if (h) t = assignBench(ix, t, h.id, "sawmill");
+  }
+  const queued = t.workshops?.sawmill?.queue.length ?? 0;
+  if (queued < 2 && (t.materials.timber ?? 0) >= 3 && (t.materials.planks ?? 0) < 12)
+    t = queueJob(ix, t, "sawmill", "planks");
+  return t;
 }
 
 /**
@@ -405,6 +426,7 @@ function step(t: TownState): TownState {
     else break;
   }
   t = manPosts(t);
+  t = sawPlanks(t);
   if (policy === "idle") return rest(ix, t, heroNames);
   // Go when everyone is healed and nobody is tired or hurt.
   const ready = t.party.every((id) => {

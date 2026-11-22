@@ -12,6 +12,7 @@ import { type TownState, TownError } from "./state";
 import { campNeeds, findHero, haulPrice, openPosts, postWorkers } from "./read";
 import { addMaterials, book, edit, listWords, news, roll, useMaterials } from "./internal";
 import { materialWords, materialsShort } from "./read";
+import { leaveBench } from "./workshops";
 
 /**
  * Put a hero on a post, or take them off (`postId` undefined). A hero holds
@@ -31,8 +32,9 @@ export function assignPost(
     t.posts[id] = t.posts[id]!.filter((x) => x !== heroId);
     if (!t.posts[id]!.length) delete t.posts[id];
   }
-  // One job at a time: a hero on a post isn't at a research desk (M7.07).
+  // One job at a time: a hero on a post isn't at a research desk (M7.07) or a bench (M7.14).
   if (t.research) t.research.desks = t.research.desks.filter((d) => d.hero !== heroId);
+  leaveBench(t, heroId);
   if (!postId) return t;
   const post = ix.post(postId);
   if (post.campOnly && !t.camp) throw new TownError(`${post.name} closed with the camp.`);

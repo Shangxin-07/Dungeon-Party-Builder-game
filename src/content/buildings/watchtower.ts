@@ -35,7 +35,7 @@ export default defineBuilding({
     {
       // M7.13: listening at the shaft for the floor below.
       cost: 360,
-      materials: { "iron-ore": 3, timber: 4 },
+      materials: { "iron-ore": 3, planks: 4 },
       days: 4,
       summary: "Listens down the shaft: shows roughly how full floor 2 is too, holds back 3",
       effects: [

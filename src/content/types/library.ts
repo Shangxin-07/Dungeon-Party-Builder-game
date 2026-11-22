@@ -35,7 +35,15 @@ import type {
   FloorDef,
   DungeonRules,
 } from "./dungeon";
-import type { BuildingDef, OpeningRules, PostDef, ResearchRules, TownRules } from "./town";
+import type {
+  BuildingDef,
+  OpeningRules,
+  PostDef,
+  RecipeDef,
+  ResearchRules,
+  TownRules,
+  WorkshopRules,
+} from "./town";
 
 /** Everything the simulation needs, indexed by kind. */
 export interface Library {
@@ -81,6 +89,9 @@ export interface Library {
   traits: readonly TraitDef[];
   /** Research at the Library (M7.07). */
   research: ResearchRules;
+  /** Workshops and what they make (M7.14). */
+  recipes: readonly RecipeDef[];
+  workshops: WorkshopRules;
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -122,6 +133,10 @@ export const defineBuilding = (def: BuildingDef): BuildingDef => def;
 export const defineTownRules = (def: TownRules): TownRules => def;
 
 export const definePost = (def: PostDef): PostDef => def;
+
+export const defineRecipe = (def: RecipeDef): RecipeDef => def;
+
+export const defineWorkshopRules = (def: WorkshopRules): WorkshopRules => def;
 
 export const defineResearchRules = (def: ResearchRules): ResearchRules => def;
 

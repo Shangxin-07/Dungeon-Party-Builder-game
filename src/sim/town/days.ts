@@ -38,6 +38,7 @@ import { newBody, rise, risenClimb } from "./bodies";
 import { checkCamp, raidSpoils, tidyPosts, workPosts } from "./posts";
 import { researchTiers, studyDay, tidyDesks } from "./research";
 import { payDay } from "./pay";
+import { tidyBenches, workshopDay } from "./workshops";
 import { arrivals, hearOfLoss, landKills, launch, remember, returnHero } from "./launch";
 
 /**
@@ -423,9 +424,11 @@ export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
   workPosts(ix, t, away);
   studyDay(ix, t, away);
   checkCamp(ix, t);
+  // A day at the benches is only part of a day's rest (M7.14).
+  const worked = workshopDay(ix, t, away);
   for (const h of t.roster) {
     if (away.has(h.id)) continue;
-    restHero(ix, h, 1);
+    restHero(ix, h, worked.has(h.id) ? ix.lib.workshops.rest : 1);
     dayInTown(ix, t, h);
   }
   sitesNight(ix, t);
@@ -436,6 +439,7 @@ export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
   t.porters = (t.porters ?? []).filter((id) => findHero(t, id));
   tidyPosts(t);
   tidyDesks(t);
+  tidyBenches(t);
 }
 
 /**

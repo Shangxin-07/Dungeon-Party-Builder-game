@@ -2,7 +2,8 @@ import { defineBuilding } from "../types";
 
 /**
  * Better gear for sale (DESIGN.md §8), and salvage: breaking the haul down
- * into materials (M7.03, DESIGN.md §17.4). Repairs and upgrades come later.
+ * into materials (M7.03, DESIGN.md §17.4). M7.14: a workshop, where heroes at
+ * home forge swords, shields and mail from ore (content/recipes/).
  */
 export default defineBuilding({
   id: "blacksmith",
@@ -14,7 +15,8 @@ export default defineBuilding({
       cost: 200,
       materials: { "iron-ore": 3 },
       days: 3,
-      summary: "Sells iron swords, war axes, longbows and iron shields. Salvages loot (60% yield)",
+      summary:
+        "Sells iron swords, war axes, longbows and iron shields. Salvages loot (60% yield). A forge with 1 bench",
       effects: [
         {
           type: "sells",
@@ -22,13 +24,15 @@ export default defineBuilding({
           items: ["iron-sword", "war-axe", "longbow", "iron-shield", "scale-piercer"],
         },
         { type: "salvage", amount: 60 },
+        { type: "workshop", benches: 1 },
       ],
     },
     {
       cost: 450,
       materials: { "iron-ore": 6 },
       days: 5,
-      summary: "Also sells scale mail and iron-shod staves. Salvage yield 80%",
+      summary:
+        "Also sells scale mail and iron-shod staves. Salvage yield 80%. 2 benches; forges scale mail",
       effects: [
         {
           type: "sells",
@@ -43,13 +47,15 @@ export default defineBuilding({
           ],
         },
         { type: "salvage", amount: 80 },
+        { type: "workshop", benches: 2 },
       ],
     },
     {
       cost: 650,
       materials: { "iron-ore": 6, "deep-silver": 6 },
       days: 6,
-      summary: "Also forges silver swords (+50% against the undead). Salvage yield 100%",
+      summary:
+        "Also forges silver swords (+50% against the undead), to order too. Salvage yield 100%",
       effects: [
         {
           type: "sells",
@@ -65,6 +71,7 @@ export default defineBuilding({
           ],
         },
         { type: "salvage", amount: 100 },
+        { type: "workshop", benches: 2 },
       ],
     },
   ],

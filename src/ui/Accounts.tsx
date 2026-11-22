@@ -15,6 +15,7 @@ const KINDS: Record<LedgerKind, string> = {
   hired: "Hiring",
   wages: "Retainers",
   shares: "Shares of the haul",
+  crafting: "Workshop jobs",
   built: "Building",
   repairs: "Repairs",
   stolen: "Stolen by raiders",
