@@ -28,17 +28,28 @@ export interface StandingOrders {
    */
   rescue?: string;
   /**
-   * What a search is for (M7.02). "rescue": the living, travelling light and
-   * fast, slipping past fights where the scout can; it leaves bodies and gear.
-   * "recover" (the default): the dead and everything they had, at walking pace.
+   * What the trip is for. Missing: an ordinary delve.
+   *
+   * With `rescue` set, what a search is for (M7.02). "rescue": the living,
+   * travelling light and fast, slipping past fights where the scout can; it
+   * leaves bodies and gear. "recover" (the default): the dead and everything
+   * they had, at walking pace.
+   *
+   * "scout" (M7.08, DESIGN.md §17.8): map the floors down to the target
+   * floor. The best scout slips the party past fights where they can, it
+   * never hunts, and it brings home floor intel. Ignored on a search.
    */
-  mission?: "rescue" | "recover";
+  mission?: "rescue" | "recover" | "scout";
   /**
    * Clear the target floor (M6): after walking it, stay and hunt until this
    * percent of the monsters living there are dead. Retreat orders still apply.
    */
   clearPercent?: number;
 }
+
+/** A scout mission (M7.08): not on a search. */
+export const isScouting = (orders: StandingOrders): boolean =>
+  orders.mission === "scout" && !orders.rescue;
 
 export const DEFAULT_ORDERS: StandingOrders = {
   targetFloor: 1,

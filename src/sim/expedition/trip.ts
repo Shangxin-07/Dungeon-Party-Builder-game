@@ -10,13 +10,14 @@ import { heroSheet, type Hero } from "../hero";
 import type { Index } from "../library";
 import { type HaulItem } from "../loot";
 import { createRng, type Rng } from "../rng";
-import { type StandingOrders } from "./orders";
+import { isScouting, type StandingOrders } from "./orders";
 import type {
   Deserter,
   ExpeditionEventKind,
   HeroStatus,
   ExpeditionEvent,
   ExpeditionExtras,
+  FloorIntel,
 } from "./report";
 
 export const an = (name: string) => (/^[aeiou]/i.test(name) ? `an ${name}` : `a ${name}`);
@@ -85,6 +86,10 @@ export class TripBase {
   protected fledFrom?: string;
   /** Fighters who set off (M7.05): monster groups grow with them. */
   protected fighters = 0;
+  /** A scout mission's notes, by floor (M7.08). */
+  protected intel = new Map<number, FloorIntel>();
+  /** Fights a scout party slipped past (M7.08). */
+  protected slipped = 0;
 
   constructor(
     protected ix: Index,
@@ -163,6 +168,35 @@ export class TripBase {
   /** On a search for the living (M7.02), travelling light and fast. */
   protected onRescue(): boolean {
     return !!this.orders.rescue && this.orders.mission === "rescue";
+  }
+
+  /** On a scout mission (M7.08). */
+  protected scouting(): boolean {
+    return isScouting(this.orders);
+  }
+
+  /** A scout's notes on the floor they're on (M7.08). */
+  protected notes(): FloorIntel | undefined {
+    if (!this.scouting() || this.depth < 1) return undefined;
+    let n = this.intel.get(this.depth);
+    if (!n) {
+      n = {
+        floor: this.depth,
+        hour: this.hours,
+        level: this.floors?.[this.depth - 1]?.level ?? this.depth,
+        population: 0,
+        monsters: {},
+        groups: 0,
+        slipped: 0,
+        features: [],
+        hazards: [],
+        rooms: 0,
+        of: 0,
+      };
+      this.intel.set(this.depth, n);
+    }
+    n.hour = this.hours;
+    return n;
   }
 
   /** Make camp if the party has been awake too long. */

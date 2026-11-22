@@ -15,7 +15,7 @@
  * fights.ts (rooms, fights, the risen), rescue.ts (lost parties, porters) and
  * run.ts (the trip from start to finish).
  */
-export { DEFAULT_ORDERS, describeRetreat } from "./orders";
+export { DEFAULT_ORDERS, describeRetreat, isScouting } from "./orders";
 export type { RetreatRule, LootRule, StandingOrders } from "./orders";
 export type {
   ExpeditionEventKind,
@@ -27,6 +27,7 @@ export type {
   ExpeditionExtras,
   TripLeader,
   Deserter,
+  FloorIntel,
 } from "./report";
 export { DOWNED_LOAD } from "./tuning";
 export { runExpedition, planFloor, holedNight, breakOut } from "./run";

@@ -28,6 +28,7 @@ import type {
   RoomDef,
   SecretDef,
   SearchRules,
+  ScoutRules,
   TimeRules,
   FloorDef,
   DungeonRules,
@@ -61,6 +62,8 @@ export interface Library {
   injuries: readonly InjuryDef[];
   secrets: readonly SecretDef[];
   searching: SearchRules;
+  /** Scout missions and floor intel (M7.08). */
+  scouting: ScoutRules;
   /** The trip clock (M7.01): hours below. */
   time: TimeRules;
   fallen: FallenRules;
@@ -134,6 +137,7 @@ export const defineWearRules = (def: WearRules): WearRules => def;
 export const defineSecret = (def: SecretDef): SecretDef => def;
 
 export const defineSearchRules = (def: SearchRules): SearchRules => def;
+export const defineScoutRules = (def: ScoutRules): ScoutRules => def;
 
 export const defineTimeRules = (def: TimeRules): TimeRules => def;
 

@@ -192,6 +192,7 @@ export class TripFights extends TripCare {
   }
 
   protected fight(monsters: readonly string[], opts: { surprise?: boolean } = {}): Side | "none" {
+    if (monsters.length) this.count(monsters);
     if (monsters.length && this.reacts(monsters)) return "none";
     if (monsters.length && this.slipPast(monsters)) return "none";
     // Monsters on this floor may have picked up a lost hero's gear.
@@ -289,18 +290,40 @@ export class TripFights extends TripCare {
   }
 
   /**
-   * A rescue mission (M7.02) travels light: the best scout may lead the party
-   * quietly past a fight (Scouting + slipBase)%, at most slipMax.
+   * A rescue mission (M7.02) travels light, and a scout mission (M7.08)
+   * keeps out of sight: the best scout may lead the party quietly past a
+   * fight, (Scouting + slipBase)%, at most slipMax. Scouts still count what
+   * they slipped past, and it counts as a meeting.
    */
   protected slipPast(monsters: readonly string[]): boolean {
-    if (!this.onRescue()) return false;
-    const rs = this.ix.lib.rescue;
+    const scouting = this.scouting();
+    const rs = this.onRescue() ? this.ix.lib.rescue : scouting ? this.ix.lib.scouting : undefined;
+    if (!rs) return false;
     const scout = this.best("scouting");
     const chance = Math.min(rs.slipMax, Math.max(0, ((scout?.value ?? 0) + rs.slipBase) / 100));
     if (!scout || !this.rng.chance(chance)) return false;
     const names = [...new Set(monsters.map((id) => this.ix.monster(id).name.toLowerCase()))];
+    if (scouting) {
+      this.slipped++;
+      const n = this.notes();
+      if (n) n.slipped++;
+      for (const id of monsters) this.seen.add(id);
+      this.emit(
+        "scout",
+        `${scout.hero.name} counts the ${list(names)} from the shadows and leads the party quietly round them.`,
+      );
+      return true;
+    }
     this.emit("scout", `${scout.hero.name} leads the party quietly past the ${list(names)}.`);
     return true;
+  }
+
+  /** Scouts (M7.08) note every group they meet, fought or not. */
+  protected count(monsters: readonly string[]): void {
+    const n = this.notes();
+    if (!n) return;
+    n.groups++;
+    for (const id of monsters) n.monsters[id] = (n.monsters[id] ?? 0) + 1;
   }
 
   /** Risen heroes on this floor who come out for this fight: each at most once a trip. */

@@ -39,6 +39,7 @@ export type {
   ResearchState,
   ShelfItem,
   Desk,
+  TownIntel,
 } from "./state";
 export {
   buildingEffects,

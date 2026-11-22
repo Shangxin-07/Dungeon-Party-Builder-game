@@ -169,6 +169,21 @@ function Debrief({
             : ""}
         </p>
       ) : null}
+      {r.intel?.length &&
+      (r.outcome === "returned" || r.outcome === "retreated") &&
+      !trip.account ? (
+        <p className="small good">
+          Scouted floor{r.intel.length === 1 ? "" : "s"}{" "}
+          {r.intel
+            .map((i) => i.floor)
+            .join(", ")
+            .replace(/, (\d+)$/, " and $1")}
+          {r.slipped
+            ? `, slipping past ${r.slipped} ${r.slipped === 1 ? "group" : "groups"} of monsters`
+            : ""}
+          . What they saw is in the scouting report.
+        </p>
+      ) : null}
       <details>
         <summary>
           <strong>Time below:</strong>{" "}

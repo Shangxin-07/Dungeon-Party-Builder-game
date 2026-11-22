@@ -59,7 +59,7 @@ export function saveParty(ix: Index, town: TownState, slot: number, name?: strin
   if (!town.party.length) throw new TownError("Pick some heroes first.");
   const t = edit(town);
   t.parties ??= [];
-  const { rescue: _, mission: __, ...orders } = t.orders;
+  const orders = ordinaryOrders(t.orders);
   const old = t.parties[slot];
   while (t.parties.length < slot) t.parties.push(emptyParty(t.parties.length));
   t.parties[slot] = {
@@ -113,7 +113,7 @@ export function pickParty(ix: Index, town: TownState, slot: number): TownState {
   if (p.leader && t.party.includes(p.leader)) t.leader = p.leader;
   else delete t.leader;
   const { rescue, mission } = t.orders;
-  t.orders = { ...p.orders, ...(rescue ? { rescue, mission } : {}) };
+  t.orders = rescue ? { ...ordinaryOrders(p.orders), rescue, mission } : { ...p.orders };
   const floor = searchFloor(t);
   if (floor) t.orders.targetFloor = Math.max(t.orders.targetFloor, floor);
   return t;
@@ -144,6 +144,14 @@ export function planRescue(
 
 /** Back to an ordinary trip. */
 export function cancelRescue(_ix: Index, town: TownState): TownState {
-  const { rescue: _, mission: __, ...orders } = town.orders;
-  return { ...town, orders };
+  return { ...town, orders: ordinaryOrders(town.orders) };
+}
+
+/**
+ * Orders without any search (that belongs to the moment). A scout mission
+ * (M7.08) is the party's own, so it stays.
+ */
+function ordinaryOrders(o: StandingOrders): StandingOrders {
+  const { rescue: _, mission, ...orders } = o;
+  return !o.rescue && mission === "scout" ? { ...orders, mission } : orders;
 }

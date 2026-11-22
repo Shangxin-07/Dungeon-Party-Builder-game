@@ -12,7 +12,13 @@
  *   it, it fights its way home, or the guild gives it up for lost
  *   (hearOfLoss).
  */
-import { runExpedition, type Deserter, type ExpeditionResult, type SiteVisit } from "../expedition";
+import {
+  isScouting,
+  runExpedition,
+  type Deserter,
+  type ExpeditionResult,
+  type SiteVisit,
+} from "../expedition";
 import { afterLeading, partyCommand } from "../leadership";
 import { learnFromKills, researchTiers } from "./research";
 import { applyKills } from "../dungeon";
@@ -146,12 +152,16 @@ export function launch(
   });
   const goal = target
     ? `to look for ${target.outing?.name ?? site?.party ?? "the lost"} on floor ${orders.targetFloor}`
-    : `for floor ${orders.targetFloor}`;
+    : isScouting(orders)
+      ? `to scout ${orders.targetFloor === 1 ? "floor 1" : `floors 1 to ${orders.targetFloor}`}`
+      : `for floor ${orders.targetFloor}`;
   news(t, `${called} set off ${goal}. Expected back on day ${expected}.`);
   t.party = [];
   t.porters = [];
   delete t.leader;
   t.orders = cancelRescue(ix, t).orders;
+  // A scout mission (M7.08) is a one-off: the next party delves, unless it's on file as scouts.
+  if (t.orders.mission === "scout") delete t.orders.mission;
   return t;
 }
 
@@ -328,6 +338,7 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
   };
   t.stash.push(...recovered.map((h) => h.item));
   t.scavenged = t.scavenged.filter((g) => !result.gearTaken.includes(g.id));
+  bringIntel(ix, t, o);
 
   const { xp, levels, xpEach } = tripXp(ix, t, result);
 
@@ -443,7 +454,11 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
     const tags = gearTags(ix, left);
     const facts: Facts = {
       goldShare: share,
-      emptyHanded: goldEarned + recovered.length + Object.keys(materials).length === 0 ? 1 : 0,
+      // Scouts (M7.08) went to look, not to loot.
+      emptyHanded:
+        !result.intel && goldEarned + recovered.length + Object.keys(materials).length === 0
+          ? 1
+          : 0,
       kills: kills[h.id] ?? 0,
       newFloors: Math.max(0, result.deepestFloor - prevDeepest),
       sameOldFloor: result.deepestFloor <= prevDeepest ? 1 : 0,
@@ -584,6 +599,32 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
     hiddenGold,
     materials,
   });
+}
+
+/**
+ * Scouts home (M7.08, DESIGN.md §17.8): what they saw on each floor becomes
+ * the guild's floor intel, dated the day they were last there. Newer intel
+ * replaces older.
+ */
+function bringIntel(ix: Index, t: TownState, o: Outing): void {
+  const intel = o.result.intel;
+  if (!intel?.length) return;
+  t.intel ??= {};
+  const start = ix.lib.time.startHour;
+  for (const i of intel) {
+    const day = o.left + Math.floor((start + i.hour) / 24);
+    const old = t.intel[i.floor];
+    if (old && old.day > day) continue;
+    t.intel[i.floor] = { ...i, day, by: o.name };
+  }
+  const floors = intel.map((i) => i.floor).sort((a, b) => a - b);
+  const slipped = o.result.slipped ?? 0;
+  news(
+    t,
+    `${o.name} mapped ${floors.length === 1 ? `floor ${floors[0]}` : `floors ${listWords(floors.map(String))}`}` +
+      `${slipped ? `, slipping past ${slipped} ${slipped === 1 ? "group" : "groups"} of monsters` : ""}. The scouting report has what they saw.`,
+    "good",
+  );
 }
 
 /** Experience: kills shared by everyone still alive, plus a little per floor. */

@@ -71,6 +71,13 @@ export interface RoomDef {
    * A room with `rest` settings is where the party sleeps.
    */
   hours?: number;
+  /**
+   * How scouts write it up in floor intel (M7.08): "feature" (worth knowing
+   * about: a seam, a hoard, a rest spot), "hazard" (a trap) or "plain".
+   * Default: rooms with a trap are hazards, fight and quiet rooms are plain,
+   * everything else is a feature.
+   */
+  intel?: "feature" | "hazard" | "plain";
 }
 
 /**
@@ -175,6 +182,23 @@ export interface SearchRules {
    */
   spread: number;
   maxChance: number;
+}
+
+/**
+ * Scout missions (M7.08, DESIGN.md §17.8, content/scouting.ts): slipping
+ * past fights, and how long floor intel stays fresh.
+ */
+export interface ScoutRules {
+  /**
+   * The best scout slips the party past each fight with chance
+   * (Scouting + slipBase)%, at most slipMax. Failing that, it's a fight.
+   */
+  slipBase: number;
+  slipMax: number;
+  /** Intel older than this many days may be out of date. */
+  staleDays: number;
+  /** Scouts count monsters roughly: the floor's numbers are rounded to this. */
+  roundTo: number;
 }
 
 /**
