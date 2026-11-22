@@ -20,7 +20,7 @@ export default defineBuilding({
       cost: 0,
       materials: { timber: 6 },
       days: 3,
-      summary: "4 heroes per party, 8 on the roster",
+      summary: "8 on the roster, parties planned for 4",
       effects: [
         { type: "partySlots", amount: 4 },
         { type: "rosterSize", amount: 8 },
@@ -29,7 +29,7 @@ export default defineBuilding({
     {
       cost: 300,
       days: 3,
-      summary: "5 heroes per party, 10 on the roster",
+      summary: "10 on the roster, parties planned for 5",
       effects: [
         { type: "partySlots", amount: 5 },
         { type: "rosterSize", amount: 10 },
@@ -39,7 +39,7 @@ export default defineBuilding({
       cost: 600,
       materials: { "iron-ore": 6, "spider-silk": 3 },
       days: 5,
-      summary: "6 heroes per party, 12 on the roster",
+      summary: "12 on the roster, parties planned for 6",
       effects: [
         { type: "partySlots", amount: 6 },
         { type: "rosterSize", amount: 12 },
@@ -49,7 +49,7 @@ export default defineBuilding({
       cost: 1000,
       materials: { "iron-ore": 10, "spider-silk": 6 },
       days: 7,
-      summary: "8 heroes per party, 16 on the roster",
+      summary: "16 on the roster, parties planned for 8",
       effects: [
         { type: "partySlots", amount: 8 },
         { type: "rosterSize", amount: 16 },
@@ -60,7 +60,7 @@ export default defineBuilding({
       cost: 2000,
       materials: { "iron-ore": 12, "deep-silver": 4, glowcap: 6 },
       days: 9,
-      summary: "10 heroes per party, 20 on the roster",
+      summary: "20 on the roster, parties planned for 10",
       effects: [
         { type: "partySlots", amount: 10 },
         { type: "rosterSize", amount: 20 },

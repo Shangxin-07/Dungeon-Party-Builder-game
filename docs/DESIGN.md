@@ -237,6 +237,8 @@ How many heroes you can send at once is set by the size of your **Guild Hall**. 
 Six is the planned cap for now. More levels are just more rows of data.
 
 > **Changed in M7.05 (§17.5):** how many heroes go well together comes from the party's leader (Leadership, stretched or shrunk by alignment); the Guild Hall is the hard cap, now 4 / 5 / 6 / 8 / 10 per party and 8 / 10 / 12 / 16 / 20 on the roster.
+>
+> **Changed in M7.10:** the Guild Hall no longer caps the party. Mike promoted two porters going with a party of four and they were locked out, though the leader had command to spare. Any number of heroes can go; past the leader's command the party is unruly (disobeying, deserting) as in §17.5, and fights grow +18% per fighter over 3. The hall's 4 / 5 / 6 / 8 / 10 is now only the size it plans for: new hires and trained heroes join the next party until it's that big, and a porter trained while going with the party stays in it as a hero. The roster size is the real limit.
 
 ### Buildings
 

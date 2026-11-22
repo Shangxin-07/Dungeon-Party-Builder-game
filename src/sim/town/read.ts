@@ -43,6 +43,11 @@ export type Amount = Extract<BuildingEffect, { amount: number }>["type"];
 export const total = (ix: Index, town: TownState, type: Amount) =>
   effects(ix, town).reduce((s, e) => s + (e.type === type ? e.amount : 0), 0);
 
+/**
+ * The party size the Guild Hall plans for: new hires and trained heroes join
+ * the next party until it's this big. Not a cap (M7.10): any number can go,
+ * and the leader's command (src/sim/leadership.ts) says how well.
+ */
 export const partySlots = (ix: Index, town: TownState) => total(ix, town, "partySlots");
 
 /** Heroes the guild can keep. At the mining camp, before the Guild Hall, the opening's campRoster. */
@@ -492,8 +497,6 @@ export function cantLaunch(ix: Index, town: TownState): string | undefined {
   if (needs.length)
     return `Nobody goes down until the camp is held: build ${listAnd(needs)} first.`;
   if (!town.party.length) return "Pick at least one hero for the party.";
-  if (town.party.length > partySlots(ix, town))
-    return `The Guild Hall only has room for ${partySlots(ix, town)} in a party.`;
   if ((town.porters ?? []).length > ix.lib.town.porters.slots)
     return `Only ${ix.lib.town.porters.slots} porters can go with one party.`;
   for (const id of [...town.party, ...(town.porters ?? [])]) {

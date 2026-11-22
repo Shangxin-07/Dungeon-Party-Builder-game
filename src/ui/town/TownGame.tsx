@@ -8,7 +8,6 @@ import {
   defence,
   launch,
   newTown,
-  partySlots,
   rest,
   rosterSize,
   TownError,
@@ -320,13 +319,7 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
       <span>
         Roster <strong>{town.roster.length}</strong>/{rosterSize(ix, town)}
       </span>
-      {town.camp ? (
-        <span>At the mining camp</span>
-      ) : (
-        <span>
-          Party slots <strong>{partySlots(ix, town)}</strong>
-        </span>
-      )}
+      {town.camp ? <span>At the mining camp</span> : null}
       <span title="What holds back what climbs out of the pit tonight, with those below away">
         Defence <strong>{defence(ix, town, awaySet(town))}</strong>
       </span>
