@@ -881,6 +881,11 @@ sup.down {
   background: #e48a7a;
 }
 
+/* M7.13 fog: a floor known only roughly shows a softer bar. */
+.pop-fill.rough {
+  opacity: 0.55;
+}
+
 .gauge-wall {
   position: absolute;
   top: -4px;

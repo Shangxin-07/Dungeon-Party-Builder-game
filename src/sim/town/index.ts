@@ -127,6 +127,8 @@ export {
 export { nextLevel, underConstruction, upgrade, builderHands, repair } from "./buildings";
 export { answerRaise, raiseWords, rest, waitUntilBack, launchAndWait } from "./days";
 export { payDay, payShares, splitShares } from "./pay";
+export { floorKnowledge, fogBand, pitMap, watchRange } from "./fog";
+export type { FloorKnowledge, FloorSource } from "./fog";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
 export { launch, giveUp, outingView } from "./launch";
 export { assignPost, postOf, trade } from "./posts";

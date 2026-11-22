@@ -18,6 +18,11 @@ export type BuildingEffect =
   | { type: "defence"; amount: number }
   /** See the next night's overflow this many days ahead. */
   | { type: "raidWarning"; days: number }
+  /**
+   * Watch the top floors from the pit's edge (M7.13): how full the top
+   * `floors` floors are, roughly, and the number on the top `exact` floors.
+   */
+  | { type: "watch"; floors: number; exact: number }
   /** Extra recruits looking for work each day. */
   | { type: "recruitOffers"; amount: number }
   /** Each recruit is the best of this many extra candidates (by their two best stats). */
@@ -194,6 +199,8 @@ export type PostEffect =
   | { type: "defence"; amount: number }
   /** See the overflow coming this many nights ahead (one hero is enough). */
   | { type: "raidWarning"; days: number }
+  /** Watch the top floors (M7.13), as the building effect. */
+  | { type: "watch"; floors: number; exact: number }
   /** Roll this loot table `rolls` times a day per hero: materials to the store, coins to gold. */
   | { type: "gather"; loot: string; rolls: number };
 

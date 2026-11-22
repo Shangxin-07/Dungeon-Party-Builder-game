@@ -1225,6 +1225,7 @@ The pit map shows every floor's population against its capacity, and below floor
 - **Floor 1** is watched from the pit's edge. With a **Watchtower** (level 1) you see its population roughly ("quiet / busy / crowded / overflowing"); level 2 gives the number; level 3 adds floor 2 roughly, by listening at the shaft.
 - **Deeper floors** show the last report from a party or scouts (§17.8 floor intel), with its date: "floor 3, crowded, 6 days ago". Old intel fades to "unknown".
 - The danger is still there, but the player sees "floor 1 quiet, the rest unknown" most of the time, which is a moment to relax. Mike's watchtower idea fits exactly.
+- **Built in M7.13.** Bands: quiet (under 40% full), busy (under 75%), crowded, full. Watchtower 1 shows floor 1's band, level 2 counts it, a new level 3 (360 gold, 3 iron ore, 4 timber) listens down the shaft for floor 2's band. A manned lookout post also gives floor 1's band. Every party brings home a dated feel (band and monster level, no number) for each floor it walked; scouts bring a rounded count. Word older than 10 days is marked "may be out of date" and is forgotten after 21 days. Content: `scouting.fog`, building/post effect `watch`. The dungeon itself is unchanged.
 
 **Option 3b: Hold the stairs (recommended, with 3a).** Make clearing stick.
 

@@ -1,11 +1,10 @@
 /**
  * The pit (M4): the gauge of what climbs out each night against the town's
  * defences, the watchtower's forecast, recent raids, and the dungeon pressure
- * map (population and monster level per floor). DESIGN.md §4, §8.
+ * map (what the town knows of each floor: M7.13 fog). DESIGN.md §4, §8, §18.3.
  */
 import { Fold } from "./Fold";
 import { library } from "../content";
-import { levelBand, spawnRate } from "../sim/dungeon";
 import { floorPower, levelPower } from "../sim/encounter";
 import { fitDefenders, type RaidReport } from "../sim/raid";
 import {
@@ -13,6 +12,8 @@ import {
   buildingEffects,
   defence,
   forecast,
+  pitMap,
+  watchRange,
   type PitNight,
   type TownState,
 } from "../sim/town";
@@ -280,58 +281,118 @@ function roundedTop(x: number, base: number, w: number, h: number, r: number): s
   return `M${x},${base} V${top + r} Q${x},${top} ${x + r},${top} H${x + w - r} Q${x + w},${top} ${x + w},${top + r} V${base} Z`;
 }
 
-/** Per floor: how full it is and how strong its monsters have got (DESIGN.md §4). */
+/** How wide the bar is for a floor known only roughly: the middle of its fog band. */
+function bandWidth(band: string): number {
+  const bands = ix.lib.scouting.fog.bands;
+  const i = bands.findIndex((b) => b.name === band);
+  if (i < 0) return 0;
+  const lo = i ? bands[i - 1]!.below : 0;
+  return Math.min(1, (lo + Math.min(1, bands[i]!.below)) / 2);
+}
+
+const SOURCE_TEXT = {
+  watch: "the Watchtower, today",
+  scouts: "scouts",
+  party: "a party",
+  none: "",
+} as const;
+
+/**
+ * Per floor: what the town knows of how full it is and how strong its monsters
+ * are (DESIGN.md §4; M7.13 fog, §18.3). The Watchtower watches the top floors;
+ * the rest is the last word from a party or scouts, dated.
+ */
 function PressureMap({ town }: { town: TownState }) {
-  const d = town.dungeon;
+  const below = awaySet(town);
+  const known = pitMap(ix, town, below);
+  const watch = watchRange(ix, town, below);
   return (
     <>
       <h3>Dungeon pressure</h3>
       <p className="muted small">
-        The bottom floor breeds <strong>{spawnRate(ix, d).toFixed(1)}</strong> monsters a day, more
-        every day. Full floors push their weakest up. Kill them to make room and let a floor calm
-        down.
+        The bottom floor breeds, more every day, and full floors push their weakest up. Kill them to
+        make room and let a floor calm down. The town only knows what it can see:{" "}
+        {watch.floors
+          ? `the watch over the pit shows ${watch.floors === 1 ? "floor 1" : `floors 1-${watch.floors}`}${watch.exact ? `, and counts ${watch.exact === 1 ? "floor 1" : `floors 1-${watch.exact}`}` : " roughly"}; `
+          : "build a Watchtower (or man the lookout) to watch floor 1; "}
+        below that, it's the last word from a party or scouts, forgotten after{" "}
+        {ix.lib.scouting.fog.fadeDays} days.
       </p>
       <table className="pressure">
         <thead>
           <tr>
             <th>Floor</th>
-            <th>Monsters</th>
+            <th>How full</th>
             <th>Level</th>
-            <th title="Total monster power of a typical fight there today, and on day 1">
-              Fight power
-            </th>
+            <th>Word from</th>
           </tr>
         </thead>
         <tbody>
-          {d.floors.map((f, i) => {
-            const def = ix.floor(i + 1);
-            const [lo, hi] = levelBand(f);
-            const full = f.population / def.capacity;
+          {known.map((k) => {
+            const def = ix.floor(k.depth);
+            const width =
+              k.population !== undefined
+                ? Math.min(1, k.population / def.capacity)
+                : k.band
+                  ? bandWidth(k.band)
+                  : 0;
             return (
-              <tr key={def.id}>
+              <tr key={def.id} className={k.source === "none" ? "muted" : undefined}>
                 <td>
                   {def.depth}: {def.name}
                 </td>
                 <td>
-                  <span className="pop-track" aria-hidden="true">
-                    <span
-                      className={`pop-fill${full >= 1 ? " full" : ""}`}
-                      style={{ width: `${Math.min(100, full * 100)}%` }}
-                    />
-                  </span>{" "}
-                  <span className="num">
-                    {f.population}/{def.capacity}
-                  </span>
+                  {k.band ? (
+                    <>
+                      <span className="pop-track" aria-hidden="true">
+                        <span
+                          className={`pop-fill${width >= 1 ? " full" : ""}${k.population === undefined ? " rough" : ""}`}
+                          style={{ width: `${width * 100}%` }}
+                        />
+                      </span>{" "}
+                      <span className={k.stale ? "warn" : undefined}>
+                        {k.band}
+                        {k.population !== undefined ? (
+                          <span className="num muted">
+                            {" "}
+                            ({k.source === "scouts" ? "about " : ""}
+                            {k.population}/{def.capacity})
+                          </span>
+                        ) : null}
+                      </span>
+                    </>
+                  ) : (
+                    "unknown"
+                  )}
                 </td>
                 <td className="num">
-                  {f.level.toFixed(2)}{" "}
-                  <span className="muted small">
-                    ({lo.toFixed(1)}–{hi.toFixed(1)})
-                  </span>
+                  {k.level !== undefined ? (
+                    <>
+                      {k.level.toFixed(1)}{" "}
+                      <span
+                        className="muted small"
+                        title="Total monster power of a typical fight there, and on day 1"
+                      >
+                        (power {levelPower(k.level)}, was {floorPower(def.depth)})
+                      </span>
+                    </>
+                  ) : (
+                    <span className="muted">?</span>
+                  )}
                 </td>
-                <td className="num">
-                  {levelPower(f.level)}{" "}
-                  <span className="muted small">(was {floorPower(def.depth)})</span>
+                <td className="small">
+                  {k.source === "none" ? (
+                    <span className="muted">nobody's been down lately</span>
+                  ) : k.source === "watch" ? (
+                    SOURCE_TEXT.watch
+                  ) : (
+                    <span className={k.stale ? "warn" : undefined}>
+                      {k.by ?? SOURCE_TEXT[k.source]}
+                      {k.source === "scouts" ? " (scouting)" : ""}, day {k.day}
+                      {k.daysAgo ? ` (${k.daysAgo} ${k.daysAgo === 1 ? "day" : "days"} ago)` : ""}
+                      {k.stale ? ", may be out of date" : ""}
+                    </span>
+                  )}
                 </td>
               </tr>
             );

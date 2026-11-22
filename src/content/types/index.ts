@@ -63,6 +63,7 @@ export type {
   PorterRules,
   SearchRules,
   ScoutRules,
+  FogRules,
   StealthRules,
   LairDef,
   TimeRules,

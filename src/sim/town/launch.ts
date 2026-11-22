@@ -62,6 +62,7 @@ import type { HaulItem } from "../loot";
 import { cancelRescue } from "./parties";
 import { bringHome } from "./haul";
 import { payShares } from "./pay";
+import { recordSightings } from "./fog";
 import { restHero, lowestHp, wasDowned, maybeInjure } from "./wounds";
 import { dayInTown, quitters, guildFeels } from "./days";
 import { newBody } from "./bodies";
@@ -349,6 +350,7 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
   t.stash.push(...recovered.map((h) => h.item));
   t.scavenged = t.scavenged.filter((g) => !result.gearTaken.includes(g.id));
   bringIntel(ix, t, o);
+  recordSightings(ix, t, o);
   lairNews(ix, t, o);
 
   const { xp, levels, xpEach } = tripXp(ix, t, result);
@@ -899,6 +901,7 @@ export function hearOfLoss(
       fence(ix, t),
     );
     const goldEarned = brought.worth;
+    recordSightings(ix, t, o);
     // The porters who got out take their cut of what they carried (M7.12).
     const shares = payShares(
       ix,

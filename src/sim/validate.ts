@@ -385,6 +385,8 @@ export function validateLibrary(lib: Library): string[] {
       if (e.type === "gather") {
         if (!lootIds.has(e.loot)) err(`${w}: unknown loot table "${e.loot}"`);
         if (!Number.isInteger(e.rolls) || e.rolls < 1) err(`${w}: gather rolls must be 1 or more`);
+      } else if (e.type === "watch") {
+        if (!watchOk(e)) err(`${w}: watch needs 1+ floors and 0 <= exact <= floors`);
       } else if (e.type === "raidWarning" ? e.days < 1 : e.amount < 0) err(`${w}: bad ${e.type}`);
     }
   }
@@ -424,6 +426,9 @@ export function validateLibrary(lib: Library): string[] {
           for (const id of e.items) if (!itemIds.has(id)) err(`${w}: sells unknown item "${id}"`);
         } else if (e.type === "raidWarning") {
           if (e.days < 1) err(`${w} level ${i + 1}: raidWarning needs at least 1 day`);
+        } else if (e.type === "watch") {
+          if (!watchOk(e))
+            err(`${w} level ${i + 1}: watch needs 1+ floors and 0 <= exact <= floors`);
         } else if (e.type === "resurrect") {
           if (e.gold < 0 || e.goldPerLevel < 0 || e.levels < 0 || e.percent < 0)
             err(`${w} level ${i + 1}: resurrect costs can't be negative`);
@@ -628,6 +633,13 @@ export function validateLibrary(lib: Library): string[] {
   if (t.hireCost < 0 || t.startingGold < 0) err("town: costs can't be negative");
   if (t.repairRate < 0) err("town: repairRate can't be negative");
 
+  const fog = lib.scouting.fog;
+  if (!fog.bands.length) err("scouting: fog needs at least one band");
+  fog.bands.forEach((b, i) => {
+    if (i && !(b.below > fog.bands[i - 1]!.below)) err("scouting: fog bands must go up");
+  });
+  if (!(fog.fadeDays >= 1)) err("scouting: fog.fadeDays must be 1 or more");
+
   const d = lib.dungeon;
   if (d.spawnPerDay < 0 || d.spawnGrowthPerDay < 0) err("dungeon: spawn rates can't be negative");
   if (d.evictedLevelDrop < 0 || d.settlePerDay < 0) err("dungeon: level drift can't be negative");
@@ -637,4 +649,9 @@ export function validateLibrary(lib: Library): string[] {
   if (r.maxDefenders < 1) err("dungeon: raids.maxDefenders must be at least 1");
 
   return errors;
+}
+
+/** A watch effect (M7.13) sees at least one floor, and counts no more floors than it sees. */
+function watchOk(e: { floors: number; exact: number }): boolean {
+  return Number.isInteger(e.floors) && e.floors >= 1 && e.exact >= 0 && e.exact <= e.floors;
 }
