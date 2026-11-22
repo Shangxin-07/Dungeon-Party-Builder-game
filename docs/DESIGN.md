@@ -1157,7 +1157,7 @@ Crafting beyond the bane recipe can slot in after M7.06 or wait for M8.
 
 ## 18. Between trips: the town, gold and the full dungeon
 
-> Added 2026-11-22 from Mike's notes after playing M7.09. Design only; nothing here is built yet. Three questions for Mike at the end (**G**, **H**, **I**), each with a recommendation.
+> Added 2026-11-22 from Mike's notes after playing M7.09. Design only; nothing here is built yet. Mike accepted all three recommendations on 2026-11-22 (**✅ DECIDED** G, H, I at the end): workshops + townsfolk, shares + retainer, fog + holding the stairs.
 
 ### Why
 
@@ -1236,7 +1236,7 @@ The pit map shows every floor's population against its capacity, and below floor
 
 **Option 3d: Lower the caps on deep floors / start them empty.** Pure tuning: floors 2-5 start half full and the bottom breeds less. Quick, but they still end up full eventually, so the feeling comes back later.
 
-### Suggested order of PRs (if Mike agrees with the recommendations)
+### Order of PRs
 
 | PR | What |
 |---|---|
@@ -1247,8 +1247,8 @@ The pit map shows every floor's population against its capacity, and below floor
 | 5 | **Hold the stairs** (3b): stairhead barricades, strength vs the floor below, a seal mission |
 | 6 | **Town news** (1c): caravans, contracts, petitions, visitors, and Wait stopping for them |
 
-### Questions for Mike
+### Questions Mike answered
 
-- **G: town while they're away.** Recommend **1a workshops + 1b townsfolk** (with 1c news later). Or pick a different mix, e.g. 1c only to start small.
-- **H: early gold.** Recommend **2a shares and a retainer**, with 2b town income once settlers come. Or 2c (a stipend for the first weeks), or 2d (just cheaper wages).
-- **I: full floors.** Recommend **3a fog + watchtower** and **3b hold the stairs**. Or 3c tides, or 3d tuning only.
+- ✅ **DECIDED G: town while they're away.** **1a workshops + 1b townsfolk**, with 1c town news later. Mike: good (2026-11-22).
+- ✅ **DECIDED H: early gold.** **2a shares and a retainer**, with 2b town income once settlers come. Mike: good.
+- ✅ **DECIDED I: full floors.** **3a fog + watchtower** and **3b hold the stairs**. Mike: good.
