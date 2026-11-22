@@ -8,4 +8,5 @@ export default definePost({
   slots: 3,
   effects: [{ type: "gather", loot: "camp-salvage", rolls: 1 }],
   porters: true,
+  settlers: true,
 });

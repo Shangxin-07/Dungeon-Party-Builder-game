@@ -12,4 +12,6 @@ export default defineWorkshopRules({
   porter: 0.5,
   rest: 0.5,
   queue: 6,
+  // M7.15: a townsperson at a bench, slower than most heroes but never tired.
+  settler: 0.6,
 });

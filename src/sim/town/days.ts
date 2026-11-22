@@ -38,6 +38,7 @@ import { newBody, rise, risenClimb } from "./bodies";
 import { checkCamp, raidSpoils, tidyPosts, workPosts } from "./posts";
 import { researchTiers, studyDay, tidyDesks } from "./research";
 import { payDay } from "./pay";
+import { folkDay, folkScared } from "./folk";
 import { tidyBenches, workshopDay } from "./workshops";
 import { arrivals, hearOfLoss, landKills, launch, remember, returnHero } from "./launch";
 
@@ -87,6 +88,7 @@ export function nightfall(
     },
   ].slice(-PIT_HISTORY);
   if (raid.outcome === "held") return undefined;
+  folkScared(ix, t, raid);
 
   // Defenders come back from the fight hurt, or not at all. Those who saw
   // raiders off learn from it.
@@ -418,6 +420,7 @@ export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
   // Anyone already at the end of their tether goes before the day starts.
   quitters(ix, t);
   payDay(ix, t);
+  folkDay(ix, t);
   raiseTalk(ix, t, away);
   t.day += 1;
   buildersWork(ix, t, away);

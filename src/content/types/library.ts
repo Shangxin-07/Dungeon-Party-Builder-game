@@ -42,6 +42,7 @@ import type {
   RecipeDef,
   ResearchRules,
   TownRules,
+  TownsfolkRules,
   WorkshopRules,
 } from "./town";
 
@@ -92,6 +93,8 @@ export interface Library {
   /** Workshops and what they make (M7.14). */
   recipes: readonly RecipeDef[];
   workshops: WorkshopRules;
+  /** Settlers (M7.15). */
+  townsfolk: TownsfolkRules;
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -137,6 +140,8 @@ export const definePost = (def: PostDef): PostDef => def;
 export const defineRecipe = (def: RecipeDef): RecipeDef => def;
 
 export const defineWorkshopRules = (def: WorkshopRules): WorkshopRules => def;
+
+export const defineTownsfolkRules = (def: TownsfolkRules): TownsfolkRules => def;
 
 export const defineResearchRules = (def: ResearchRules): ResearchRules => def;
 

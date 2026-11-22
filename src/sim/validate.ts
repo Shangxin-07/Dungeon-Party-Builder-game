@@ -658,6 +658,13 @@ export function validateLibrary(lib: Library): string[] {
   if (ws.porter < 0 || ws.rest < 0 || ws.rest > 1) err("workshops: porter >= 0, rest 0-1");
   if (!Number.isInteger(ws.queue) || ws.queue < 1) err("workshops: queue must be 1 or more");
 
+  const tf = lib.townsfolk;
+  if (tf.safeDays < 0 || tf.arrivalChance < 0 || tf.arrivalChance > 1 || tf.arrivalMax < 1)
+    err("townsfolk: bad arrival rules");
+  if (tf.eats <= 0 || tf.foodStore < 0 || tf.tax < 0 || tf.marketDay < 0 || tf.marketEvery < 0)
+    err("townsfolk: food and taxes can't be negative");
+  if (tf.fleeOnRaid < 0 || tf.fleeOnRaid > 1) err("townsfolk: fleeOnRaid must be 0-1");
+
   const fog = lib.scouting.fog;
   if (!fog.bands.length) err("scouting: fog needs at least one band");
   fog.bands.forEach((b, i) => {

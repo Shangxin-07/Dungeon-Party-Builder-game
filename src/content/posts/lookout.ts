@@ -13,4 +13,5 @@ export default definePost({
     { type: "watch", floors: 1, exact: 0 },
   ],
   porters: true,
+  settlers: true,
 });

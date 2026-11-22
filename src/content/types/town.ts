@@ -63,6 +63,10 @@ export type BuildingEffect =
    * work its benches at once, on the recipes in content/recipes/ for it.
    */
   | { type: "workshop"; benches: number }
+  /** Room for this many townsfolk (M7.15, Cottages). */
+  | { type: "housing"; amount: number }
+  /** Food the town grows or hunts each day (M7.15, the Farm). */
+  | { type: "food"; amount: number }
   /**
    * The parties ride a cage down past this many floors (the Mine Cage): a
    * trip skips their rooms and the days they take. Never the target floor,
@@ -224,6 +228,11 @@ export interface PostDef {
   effects: readonly PostEffect[];
   /** Porters can work it (they never fight, so not the barricade). */
   porters?: boolean;
+  /**
+   * Townsfolk can work it too (M7.15). They share its slots with heroes and
+   * never add defence, so the barricade is the heroes' job.
+   */
+  settlers?: boolean;
   /** Only at the mining camp (DESIGN.md §8): gone once the opening is over. */
   campOnly?: boolean;
 }
@@ -319,4 +328,28 @@ export interface WorkshopRules {
   porter: number;
   rest: number;
   queue: number;
+  /** Work a townsperson at a bench puts in a day (M7.15): no stats, steady. */
+  settler: number;
+}
+
+/**
+ * Townsfolk (M7.15, DESIGN.md §18.1b/2b): settlers come when the pit is held
+ * and there's housing and food, pay a little tax, and can work posts and
+ * benches. Raids that get through scare them off.
+ */
+export interface TownsfolkRules {
+  /** Days since a raid last got through before anyone will settle. */
+  safeDays: number;
+  /** Chance a day that settlers turn up when there's room, food and safety, and at most how many. */
+  arrivalChance: number;
+  arrivalMax: number;
+  /** Food each settler eats a day, and the most the stores hold. */
+  eats: number;
+  foodStore: number;
+  /** Gold each settler pays a day; and every `marketEvery` days with a Market, `marketDay` more each. */
+  tax: number;
+  marketEvery: number;
+  marketDay: number;
+  /** A raid that gets through: this share of the settlers leave (rounded up). */
+  fleeOnRaid: number;
 }

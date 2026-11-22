@@ -317,10 +317,22 @@ export interface TownState {
   sightings?: Record<number, Sighting>;
   /** Workshops (M7.14, DESIGN.md §18.1), by building id: who works there and what's queued. */
   workshops?: Record<string, Workshop>;
+  /** Townsfolk (M7.15): how many, the food in store, and how many work each job. */
+  folk?: Folk;
   /** Huge beasts' lairs (M7.08), by lair id: the day the beast was killed. Missing: none yet. */
   lairs?: Record<string, { slain?: number }>;
   /** What the posts brought in yesterday: materials by id, and gold. */
   gathered?: { day: number; materials: Record<string, number>; gold: number };
+}
+
+/**
+ * The town's settlers (M7.15). `jobs` counts settlers by job: "post:<id>"
+ * or "workshop:<building id>". The rest are just living here.
+ */
+export interface Folk {
+  count: number;
+  food: number;
+  jobs: Record<string, number>;
 }
 
 /** A workshop's benches and queue (M7.14). Workers away below keep their bench. */
@@ -422,6 +434,8 @@ export type LedgerKind =
   | "shares"
   /** Gold paid for workshop jobs, and given back when one is called off (M7.14). */
   | "crafting"
+  /** Townsfolk's taxes and market days (M7.15). */
+  | "taxes"
   | "built"
   | "repairs"
   | "stolen"
