@@ -870,7 +870,7 @@ Each milestone ends with something you can run.
 
 ## 17. M7: the choices come back to town
 
-> Added 2026-11-21 from Mike's notes after playing M6. Design only; nothing here is built yet. Open questions for Mike are marked **❓ OPEN**, each with a recommendation.
+> Added 2026-11-21 from Mike's notes after playing M6. Design only; nothing here is built yet. Mike answered every open question on 2026-11-21; they're marked **✅ DECIDED** below.
 
 ### Why
 
@@ -978,7 +978,16 @@ There are one-click buttons for **Sell all**, **Salvage all** and **Research wha
 Parties still start at 3 to 4. How big they can grow depends on a **leader**, and the Guild Hall sets the ceiling.
 
 - **A new skill, Leadership** (CHA + WIL, 0-100, like the other skills in §5). Perks and milestone perks can raise it.
-- **Each party names a leader** in the party panel (the best Leadership is picked by default). The leader's **command** is how many heroes they can lead well: 3 at Leadership 0-39, 4 at 40, 5 at 55, 6 at 70, 7 at 82, 8 at 92 (tunable).
+- **You pick each party's leader in town** (✅ DECIDED by Mike, 2026-11-21), in the party panel. At first the choice rests on raw stats: Leadership comes from CHA + WIL, and the panel shows each hero's Leadership and the command it gives.
+- **Leaders grow with the job.** Every trip as leader adds leadership experience, which raises Leadership a little (about +2 per trip, slowing down past 70; tunable), so a long-serving leader becomes a better one.
+- **Leader traits** (`content/traits/`, data like perks): leaders pick up positive and negative traits from what happens on their watch. Each trait is a small effect on command, on the party's morale, or on how unruly heroes behave. Examples:
+  - *Lost someone* (a party member died under them): **Haunted** (−1 command; the party's morale losses hurt a little more) or, for a Good leader, **Overcautious** (turns back sooner than the orders say).
+  - *Pulled off a big fight* (beat a boss, a warded beast or a fight well above the floor's power): **Inspiring** (+1 command) or **Steady** (deserters less likely).
+  - *Brought everyone home many trips in a row:* **Trusted** (heroes two steps away cost 1.5 instead of 2).
+  - *A deserter left on their watch:* **Doubted** (the next few trips are more unruly).
+  Traits are rolled from the event with odds shaped by the leader's alignment and motivation, can fade or be overwritten by later ones (tunable), and are shown on the hero card with the trip that earned them.
+- **Clever monsters go for the leader.** Intelligent monsters (a new `cunning` tag: goblin archers and bosses, the Foreman's Shade, sporecallers) target the leader first when they can reach them, using the same `hunts` mechanism as undead hunting Good heroes (the leader carries a `leader` tag in fights). A leader who falls makes the party check morale, as below.
+- The leader's **command** is how many heroes they can lead well: 3 at Leadership 0-39, 4 at 40, 5 at 55, 6 at 70, 7 at 82, 8 at 92 (tunable).
 - **Alignment changes how far command stretches.** Each hero in the party costs command by their alignment step from the **leader**: same alignment 1, one step away 1.5, two steps away 2. The leader costs nothing. So a Good leader with command 6 can take 6 Good heroes, or 4 Good and 2 Neutral, but only 3 heroes if two of them are Evil. Porters don't cost command.
 - **Over command is allowed, but they may disobey (✅ DECIDED by Mike, 2026-11-21).** You can fill a party past its command (alignment never bans, §7), but every hero over the line makes the party unruly: at each order check (retreat, loot, hunting) there's a chance someone ignores it, highest for the heroes furthest from the leader's alignment and with the lowest morale. The party panel shows command used / command available, and the launch warnings say who's likely to go their own way.
 - **Deserters (Mike's idea).** The worst form of disobedience: before a fight that looks bad (a big group, a known killer, a warded beast), an unruly hero may slip away and head home alone. The chance is highest for heroes over command, two steps from the leader's alignment, with low morale; Evil heroes are the likeliest, Good heroes almost never. A deserter walks home on their own (a porter-style escape roll per floor, using their own stats), and the party fights a hero short.
@@ -1063,7 +1072,7 @@ Each one is playable on its own. Version numbers go up by one per PR, starting a
 | M7.01 | **Trip clock**: hours as room data, the clock in the watch view, time below in the trip results, hours per floor in `npm run balance` | Small, answers Mike's point 2 at once, and the background trips need hours |
 | M7.02 | **Background trips**: outings, Next day / Wait, kills landing by day, two parties out at once, expected back, overdue and possibly lost, rescue clock from the wipe, holed-up parties and rescue vs recovery missions. Saves version up | The core of the change. Watching becomes a replay |
 | M7.03 | **The debrief**: tally with detail, haul held for sell / salvage / keep, salvage lists and the Blacksmith yield, haul rule. Saves version up | Puts the first new choices where Mike wants them |
-| M7.04 | **Leadership and party size**: Leadership skill, leaders, command and alignment cost, disobedience and deserters (with their partial debrief), Guild Hall caps and level 5, fights scaling with party size | Makes the bigger parties that losses need |
+| M7.04 | **Leadership and party size**: Leadership skill, leaders, command and alignment cost, disobedience and deserters (with their partial debrief), leader traits and leadership experience, clever monsters targeting leaders, Guild Hall caps and level 5, fights scaling with party size | Makes the bigger parties that losses need |
 | M7.05 | **Losses that sting**: the tuning pass against the targets in section 6, and the gear check | Needs bigger parties first |
 | M7.06 | **Research**: Library desks, researchers, Lore, monster tiers, specimens, item research and recipes, wards | Needs the debrief (research choice) and gives stealth its payoff |
 | M7.07 | **Scout missions and floor intel**: the mission order, slipping past fights, dated intel in the report | Needed to find lairs |
@@ -1072,11 +1081,11 @@ Each one is playable on its own. Version numbers go up by one per PR, starting a
 
 Crafting beyond the bane recipe can slot in after M7.06 or wait for M8.
 
-### Open questions for Mike
+### Questions Mike answered
 
 - ✅ **DECIDED A: over command.** Mike: overfilling is allowed. A party can go over its leader's command (up to the Guild Hall cap) and the extras may disobey.
-- ❓ **OPEN B: who leads.** Recommended: you pick the leader, with the best Leadership chosen by default. Alternative: always the best Leadership, no choice.
-- ❓ **OPEN C: Guild Hall caps.** Recommended 4 / 5 / 6 / 8 / 10 by level, with a new level 5. Too big, too small?
+- ✅ **DECIDED B: who leads.** Mike: you pick the leader in town, from raw stats at first. Leaders gain positive and negative traits from what happens (a lost member, a big win), get better the longer they lead, and intelligent monsters target them first (section 5).
+- ✅ **DECIDED C: Guild Hall caps.** 4 / 5 / 6 / 8 / 10 by level, with a new level 5. Mike: good for now, tweak if needed.
 - ✅ **DECIDED D: watching a party that's still out.** Mike: no. A trip stays hidden until someone comes back or finds them. This also gives us rescue missions for the living (holed-up parties), not just recovery missions.
-- ❓ **OPEN E: the first beast.** The Mire Behemoth on floor 4 is an example. Happy with the floor and the idea, or would you rather it guarded something specific (say, the way down to floor 5)?
-- ❓ **OPEN F: research strength.** Recommended +15% damage at Studied and +25% at Mastered, plus wards that need research. Enough to feel, not enough to be required except for warded monsters?
+- ✅ **DECIDED E: the first beast.** The Mire Behemoth on floor 4, as described. Mike: fine for now, tweak later; the first one matters less than the ones after it.
+- ✅ **DECIDED F: research strength.** +15% damage at Studied, +25% at Mastered, plus wards that need research. Mike: fine for now; it's tuning, and the damage bonus may be dropped later.
