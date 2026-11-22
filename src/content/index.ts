@@ -134,6 +134,17 @@ import medicineSkill from "./skills/medicine";
 import scoutingSkill from "./skills/scouting";
 import leadershipSkill from "./skills/leadership";
 import leadershipRules from "./leadership";
+import researchRules from "./research";
+import loreSkill from "./skills/lore";
+import goblinEarSpecimen from "./specimens/goblin-ear";
+import spiderFangSpecimen from "./specimens/spider-fang";
+import etchedSkullSpecimen from "./specimens/etched-skull";
+import trollToothSpecimen from "./specimens/troll-tooth";
+import foremansTallySpecimen from "./specimens/foremans-tally";
+import tinCharmItem from "./items/tin-charm";
+import luckyCharmItem from "./items/lucky-charm";
+import wardStoneItem from "./items/ward-stone";
+import trinketIdentifiedLoot from "./loot/trinket-identified";
 import hauntedTrait from "./traits/haunted";
 import overcautiousTrait from "./traits/overcautious";
 import hardenedTrait from "./traits/hardened";
@@ -295,6 +306,15 @@ export const materials: readonly ItemDef[] = [
   deepSilverMaterial,
 ];
 
+/** Specimens (M7.07, DESIGN.md §17.7): bits of monsters that feed the Library's research on them. */
+export const specimens: readonly ItemDef[] = [
+  goblinEarSpecimen,
+  spiderFangSpecimen,
+  etchedSkullSpecimen,
+  trollToothSpecimen,
+  foremansTallySpecimen,
+];
+
 /** Posts round the pit (DESIGN.md §8): duties for heroes at home. */
 export const posts: readonly PostDef[] = [barricadePost, lookoutPost, salvagePost, seamPost];
 
@@ -333,6 +353,12 @@ export const items: readonly ItemDef[] = [
   blessedBladeItem,
   cursedBladeItem,
   boneCharmItem,
+  // What a strange trinket turns out to be (M7.07, research).
+  tinCharmItem,
+  luckyCharmItem,
+  wardStoneItem,
+  // Specimens (M7.07): for the Library, from monsters a party kills. See specimens/.
+  ...specimens,
   // Materials (DESIGN.md §8): the guild keeps them to build with. See materials/.
   ...materials,
 ];
@@ -413,6 +439,7 @@ export const skills: readonly SkillDef[] = [
   medicineSkill,
   scoutingSkill,
   leadershipSkill,
+  loreSkill,
 ];
 
 /** Leader traits (M7.05, DESIGN.md §17.5), earned on a leader's watch. */
@@ -471,6 +498,7 @@ export const encounters: readonly EncounterDef[] = [
   delverHauntEncounter,
 ];
 export const lootTables: readonly LootTableDef[] = [
+  trinketIdentifiedLoot,
   goblinLoot,
   // Events (DESIGN.md §7).
   strangersPurseLoot,
@@ -592,6 +620,7 @@ export const library: Library = {
   opening: openingRules,
   leadership: leadershipRules,
   traits,
+  research: researchRules,
 };
 
 export { heroNames } from "./names";

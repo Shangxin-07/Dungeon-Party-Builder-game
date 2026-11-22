@@ -11,6 +11,7 @@ export default defineMonster({
   row: "back",
   tags: ["goblinoid", "humanoid", "cunning"],
   ai: "archer",
+  research: { tricks: "Hangs back and picks off whoever leads. Close the gap, or shoot back." },
   abilities: { "aimed-shot": 2 },
   loot: "goblin-loot",
 });

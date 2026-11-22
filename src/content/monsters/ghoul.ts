@@ -13,6 +13,7 @@ export default defineMonster({
   // The dead hate the righteous (DESIGN.md §7): Good heroes are hit first.
   hunts: ["align:good"],
   ai: "brute",
+  research: { tricks: "Its claws leave you numb. Holy light hurts it badly; poison does nothing." },
   abilities: { "ghoul-claw": 1 },
   loot: "ghoul-loot",
   passives: [

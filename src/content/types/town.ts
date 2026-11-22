@@ -67,7 +67,9 @@ export type BuildingEffect =
    * The share (percent) of an item's salvage list the Blacksmith gets out of
    * it (M7.03, DESIGN.md §17.4): rounded down, at least 1 of each.
    */
-  | { type: "salvage"; amount: number };
+  | { type: "salvage"; amount: number }
+  /** Research desks (M7.07, DESIGN.md §17.7): heroes who study here instead of delving. */
+  | { type: "researchDesks"; amount: number };
 
 export interface BuildingLevel {
   /** Gold to build or upgrade to this level. */
@@ -231,4 +233,27 @@ export interface OpeningRules {
    * posts bring in can't stall the build, e.g. 2 iron ore for 1 timber.
    */
   trades: readonly { give: MaterialCost; get: MaterialCost }[];
+}
+
+/**
+ * Research at the Library (M7.07, DESIGN.md §17.7, content/research.ts).
+ * Heroes at its desks add points every day; kills and specimens add more.
+ */
+export interface ResearchRules {
+  /** Points per day: (INT − intBase), at least 0 ... */
+  intBase: number;
+  /** ... plus this share of the hero's Lore skill ... */
+  loreShare: number;
+  /** ... times (1 + this percent / 100) for a Knowledge-motivated hero. */
+  knowledgeBonus: number;
+  /** XP a hero earns for each day at a desk. */
+  xpPerDay: number;
+  /** Points a monster's research gets for each one a party kills. */
+  killPoints: number;
+  /** Points to reach Studied and Mastered, per point of monster power, when a monster doesn't say. */
+  perPower: readonly [number, number];
+  /** Extra damage the guild deals to a monster it has Studied, then Mastered, in percent. */
+  damage: readonly [number, number];
+  /** Once Mastered, this percent of the monster's resistances still works (immunities stay). */
+  masteredResist: number;
 }

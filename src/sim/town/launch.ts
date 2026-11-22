@@ -14,6 +14,7 @@
  */
 import { runExpedition, type Deserter, type ExpeditionResult, type SiteVisit } from "../expedition";
 import { afterLeading, partyCommand } from "../leadership";
+import { learnFromKills, researchTiers } from "./research";
 import { applyKills } from "../dungeon";
 import { partyAlignment } from "../alignment";
 import { fatigueTier, heroSheet, type Hero } from "../hero";
@@ -105,6 +106,7 @@ export function launch(
     porters,
     risen: t.risen ?? [],
     lift: liftFloors(ix, t),
+    research: researchTiers(ix, t),
     leader: cmd.leader && {
       id: cmd.leader.id,
       disobey: cmd.disobey,
@@ -279,6 +281,8 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
   t.outings = t.outings.filter((x) => x !== o);
   landAllKills(t, o);
   const kills = heroKills(party, result);
+  // Every kill teaches the Library a little (M7.07).
+  learnFromKills(ix, t, result.kills);
 
   // Searchers who found a lost party bring the news (and anyone alive) home.
   const visited = result.siteVisited ? t.sites.find((s) => s.id === result.siteVisited) : undefined;

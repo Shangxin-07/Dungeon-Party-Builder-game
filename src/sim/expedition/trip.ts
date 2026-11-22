@@ -81,6 +81,8 @@ export class TripBase {
   protected leaderFell = false;
   /** The leader just went down: the next order check, the party may lose heart. */
   protected leaderShaken = false;
+  /** The party just ran from something it couldn't hurt (M7.07): it heads home. */
+  protected fledFrom?: string;
   /** Fighters who set off (M7.05): monster groups grow with them. */
   protected fighters = 0;
 

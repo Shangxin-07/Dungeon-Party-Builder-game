@@ -4,7 +4,7 @@
  * here (or from anywhere with registerAi) and reference its id from content.
  * The combat loop never needs to change.
  */
-import type { AbilityDef } from "../content/types";
+import type { AbilityDef, DamageType } from "../content/types";
 import type { Fighter } from "./combat";
 import type { Index } from "./library";
 import type { Rng } from "./rng";
@@ -29,6 +29,11 @@ export interface BattleView {
   canAfford(ability: AbilityDef): boolean;
   /** Fighters this ability could be aimed at right now. */
   targets(ability: AbilityDef): Fighter[];
+  /**
+   * Damage types this foe is known to be weak to (M7.07): only for a monster
+   * the guild has Studied, and only for the party. Empty otherwise.
+   */
+  weakTo(foe: Fighter): readonly DamageType[];
 }
 
 export type Ai = (view: BattleView) => Action;
@@ -85,6 +90,19 @@ const priciest = (abilities: AbilityDef[]) =>
 
 const statusesOf = (a: AbilityDef) =>
   a.effects.flatMap((e) => (e.type === "applyStatus" ? [e.status] : []));
+
+/** The damage types a spell deals. */
+const typesOf = (a: AbilityDef) =>
+  a.effects.flatMap((e) => (e.type === "dealDamage" ? [e.damageType] : []));
+
+/**
+ * The spell for this target (M7.07): one that hits a weak spot the guild has
+ * Studied, else the first (priciest) one.
+ */
+function rightSpell(view: BattleView, spells: AbilityDef[], target: Fighter): AbilityDef {
+  const weak = view.weakTo(target);
+  return spells.find((a) => typesOf(a).some((t) => weak.includes(t))) ?? spells[0]!;
+}
 
 const hurts = (a: AbilityDef) =>
   a.effects.some((e) => e.type === "weaponAttack" || e.type === "dealDamage");
@@ -179,10 +197,14 @@ function damageSpell(view: BattleView, choose: (t: Fighter[]) => Fighter | undef
   const aoe = spells.find((a) => a.target === "all-enemies");
   if (aoe && view.enemies.length >= 2)
     return { kind: "ability", ability: aoe.id, target: view.enemies[0]!.uid } as Action;
-  const single = spells.find((a) => a.target === "enemy");
-  const target = single && choose(view.targets(single));
+  const singles = spells.filter((a) => a.target === "enemy");
+  const target = singles.length ? choose(view.targets(singles[0]!)) : undefined;
   return target
-    ? ({ kind: "ability", ability: single!.id, target: target.uid } as Action)
+    ? ({
+        kind: "ability",
+        ability: rightSpell(view, singles, target).id,
+        target: target.uid,
+      } as Action)
     : undefined;
 }
 
@@ -249,10 +271,11 @@ registerAi("caster", (view) => {
   if (aoe && enemies.length >= 2)
     return { kind: "ability", ability: aoe.id, target: enemies[0]!.uid };
 
-  const single = damage.find((a) => a.target === "enemy");
-  if (single) {
-    const target = lowest(view.targets(single), (f) => f.hp);
-    if (target) return { kind: "ability", ability: single.id, target: target.uid };
+  const singles = damage.filter((a) => a.target === "enemy");
+  if (singles.length) {
+    const target = lowest(view.targets(singles[0]!), (f) => f.hp);
+    if (target)
+      return { kind: "ability", ability: rightSpell(view, singles, target).id, target: target.uid };
   }
   const weakest = (t: Fighter[]) => lowest(t, (f) => f.hp);
   return technique(view, weakest) ?? attack(view, weakest);

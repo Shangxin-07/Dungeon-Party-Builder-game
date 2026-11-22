@@ -5,7 +5,8 @@ export default defineLootTable({
   id: "spider-loot",
   rolls: [1, 1],
   entries: [
-    { item: null, weight: 5 },
+    { item: null, weight: 4 },
+    { item: "spider-fang", weight: 1 },
     { item: "spider-silk", weight: 2 },
     { item: "gem", weight: 1 },
     { item: "trinket", weight: 1 },

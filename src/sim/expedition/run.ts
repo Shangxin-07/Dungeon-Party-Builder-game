@@ -2,6 +2,7 @@
  * Running a trip: down, room by room, look after the party between rooms,
  * check orders, come home. Tuning numbers are in tuning.ts.
  */
+import { theName } from "../research";
 import type { FloorPressure } from "../dungeon";
 import { type Hero } from "../hero";
 import type { Index } from "../library";
@@ -214,6 +215,10 @@ export class Expedition extends TripRescue {
 
         const lastRoom = depth === targetFloor && i === rooms.length - 1 && !this.huntGoal();
         const reason = lastRoom ? undefined : this.retreatReason();
+        if (reason && this.fledFrom) {
+          this.emit("retreat", `${reason}. The party heads for home.`);
+          return this.goHome("retreated");
+        }
         if (reason) {
           const rebel = this.refuser();
           if (rebel) {
@@ -548,6 +553,8 @@ export class Expedition extends TripRescue {
   }
 
   protected retreatReason(): string | undefined {
+    // Ran from something nothing could hurt (M7.07): nobody argues with that.
+    if (this.fledFrom) return `Nothing the party has can hurt ${theName(this.fledFrom)}`;
     // The leader just went down (M7.05): the party may lose heart, whatever the orders.
     if (this.leaderShaken) {
       this.leaderShaken = false;

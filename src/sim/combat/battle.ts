@@ -34,7 +34,9 @@ export function runCombat(
     opts.level ?? 1,
     opts.risen ?? [],
     opts.leader,
-  ).run(opts.maxRounds ?? MAX_ROUNDS);
+  )
+    .useResearch(opts.research)
+    .run(opts.maxRounds ?? MAX_ROUNDS);
 }
 
 /** One fight. Built on BattleEffects (what abilities do) and BattleBase (the fighters). */
@@ -66,6 +68,11 @@ export class Battle extends BattleEffects {
       }
       if (winner === "none" && !this.noBleeding) this.bleedOut();
       winner = this.winner();
+      if (winner === "none" && this.cantHurtAny()) {
+        this.flee();
+        winner = this.winner();
+        break;
+      }
     }
 
     const text =
@@ -73,7 +80,9 @@ export class Battle extends BattleEffects {
         ? "The party is victorious."
         : winner === "monsters"
           ? "The party has fallen."
-          : "Neither side can finish the other. The fight breaks off.";
+          : this.fledFrom
+            ? "The party gets away."
+            : "Neither side can finish the other. The fight breaks off.";
     this.emit({
       kind: "end",
       text,
@@ -88,7 +97,43 @@ export class Battle extends BattleEffects {
       kills: this.kills,
       fighters: this.fighters,
       risenSlain: this.risenSlain,
+      ...(this.fledFrom ? { fled: this.fledFrom } : {}),
     };
+  }
+
+  /** Everything still standing against the party is warded (M7.07): there's no winning this. */
+  protected cantHurtAny(): boolean {
+    const foes = this.fighters.filter((f) => f.side === "monsters" && f.state === "up");
+    const up = this.fighters.some((f) => f.side === "party" && f.state === "up");
+    return up && foes.length > 0 && foes.every((f) => this.wardOf(f));
+  }
+
+  /**
+   * The party runs from what it can't hurt (M7.07). Each warded foe gets a
+   * parting blow; then everyone still on their feet carries one of the
+   * downed, and anyone left over is left behind.
+   */
+  protected flee(): void {
+    const foes = this.fighters.filter((f) => f.side === "monsters" && f.state === "up");
+    const what = foes[0]!;
+    this.fledFrom = what.monsterId;
+    this.emit({
+      kind: "action",
+      tone: "bad",
+      text: `Nothing the party has can touch ${what.name}. They run for it!`,
+    });
+    for (const f of foes) if (f.state === "up" && this.winner() === "none") this.takeTurn(f, true);
+    const party = this.fighters.filter((f) => f.side === "party");
+    const up = party.filter((f) => f.state === "up").length;
+    const downed = party.filter((f) => f.state === "downed");
+    for (const f of downed.slice(up)) {
+      f.state = "dead";
+      this.emit({
+        kind: "died",
+        target: f.uid,
+        text: `There's nobody to carry ${f.name}. They're left behind.`,
+      });
+    }
   }
 
   protected turnOrder(): Fighter[] {
@@ -188,6 +233,12 @@ export class Battle extends BattleEffects {
       abilities: () => [BASIC_ATTACK, ...self.abilities.map((id) => this.ix.ability(id))],
       canAfford: (a) => this.ready(self, a),
       targets: (a) => this.targetsFor(self, a),
+      weakTo: (foe) => {
+        if (self.side !== "party" || this.tierOf(foe) < 2) return [];
+        return foe.passives.flatMap((p) =>
+          p.type === "resist" && p.percent < 0 ? [p.damageType] : [],
+        );
+      },
     };
   }
 
@@ -212,7 +263,12 @@ export class Battle extends BattleEffects {
         // (a sweeping blow like Cleave hits the whole front row).
         const melee = ability.effects.some((e) => e.type === "weaponAttack") && !self.weapon.ranged;
         const front = enemies.filter((f) => f.row === "front");
-        const reach = melee && front.length ? front : enemies;
+        let reach = melee && front.length ? front : enemies;
+        // Nobody wastes blows on a ward (M7.07) while there's something they can hurt.
+        if (self.side === "party") {
+          const hurtable = reach.filter((f) => !this.wardOf(f));
+          if (hurtable.length) reach = hurtable;
+        }
         return ability.target === "enemy" ? this.hunted(self, reach) : reach;
       }
     }

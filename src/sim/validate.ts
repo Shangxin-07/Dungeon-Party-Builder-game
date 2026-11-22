@@ -161,6 +161,16 @@ export function validateLibrary(lib: Library): string[] {
     if (i.abilities?.length && i.slot !== "weapon" && i.slot !== "offhand")
       err(`${w}: only weapons and offhands can grant abilities`);
     for (const a of i.abilities ?? []) if (!abilityIds.has(a)) err(`${w}: unknown ability "${a}"`);
+    const r = i.research;
+    if (r) {
+      if (!(r.points > 0)) err(`${w}: research points must be positive`);
+      if (!r.monsters?.length === !r.becomes)
+        err(`${w}: research feeds monsters (a specimen) or becomes something, one or the other`);
+      for (const m of r.monsters ?? [])
+        if (!lib.monsters.some((x) => x.id === m)) err(`${w}: research on unknown monster "${m}"`);
+      if (r.becomes && !lootIds.has(r.becomes)) err(`${w}: unknown loot table "${r.becomes}"`);
+      if (i.slot === "material") err(`${w}: materials go to the store, not the Library`);
+    }
   }
 
   for (const a of lib.abilities) {
@@ -200,6 +210,11 @@ export function validateLibrary(lib: Library): string[] {
     passives(w, m.passives);
     for (const t of m.triggers ?? []) actives(w, t.effects);
     if (m.loot && !lootIds.has(m.loot)) err(`${w}: unknown loot table "${m.loot}"`);
+    const pts = m.research?.points;
+    if (pts && !(pts[0] > 0 && pts[1] > pts[0]))
+      err(`${w}: research points must be positive and go up (Studied, then Mastered)`);
+    if (m.ward && ![2, 3].includes(m.ward.tier))
+      err(`${w}: a ward breaks at research tier 2 (Studied) or 3 (Mastered)`);
   }
 
   for (const p of lib.perks) {
@@ -226,6 +241,14 @@ export function validateLibrary(lib: Library): string[] {
   });
   for (const k of ["injuryChance", "woundedInjuryChance"] as const)
     if (wear[k] < 0 || wear[k] > 1) err(`wear: ${k} must be 0-1`);
+
+  const study = lib.research;
+  if (study.loreShare < 0 || study.killPoints < 0 || study.xpPerDay < 0 || study.knowledgeBonus < 0)
+    err("research: rates can't be negative");
+  if (!(study.perPower[0] > 0 && study.perPower[1] > study.perPower[0]))
+    err("research: perPower must be positive and go up");
+  if (study.masteredResist < 0 || study.masteredResist > 100)
+    err("research: masteredResist must be 0-100");
 
   const porters = lib.town.porters;
   if (porters.hireCost < 0 || porters.wage < 0 || porters.slots < 0)

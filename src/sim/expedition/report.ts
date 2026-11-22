@@ -205,6 +205,8 @@ export interface ExpeditionExtras {
   lift?: number;
   /** The party's leader and how unruly the party is (M7.05, see sim/leadership.ts). */
   leader?: TripLeader;
+  /** How far the guild has researched each monster (M7.07): monster id -> tier 2 or 3. */
+  research?: Readonly<Record<string, number>>;
 }
 
 /** What the trip needs to know about its leader (M7.05). */

@@ -85,7 +85,25 @@ export class BattleEffects extends BattleBase {
     armored: boolean,
     source?: Fighter,
   ): void {
-    const resist = resistance(this.passives(target), type);
+    // A ward nothing gets through until the guild has researched it (M7.07).
+    const ward = this.wardOf(target);
+    if (ward) {
+      this.emit({
+        kind: "damage",
+        target: target.uid,
+        amount: 0,
+        text: `${target.name} shrugs it off (${ward}).`,
+        hp: this.hp(target),
+      });
+      return;
+    }
+    // What the Library knows (M7.07): the party hits a Studied monster harder,
+    // and a Mastered one's resistances only half work (immunities stay).
+    const rules = this.ix.lib.research;
+    const tier = this.tierOf(target);
+    let resist = resistance(this.passives(target), type);
+    if (tier >= 3 && resist > 0 && resist < 100) resist = (resist * rules.masteredResist) / 100;
+    if (source?.side === "party" && tier >= 2) raw *= 1 + (rules.damage[tier - 2] ?? 0) / 100;
     let amount = raw * (1 - resist / 100);
     if (armored) amount -= this.stat(target, "armor");
     amount = resist >= 100 ? 0 : Math.max(1, Math.round(amount));

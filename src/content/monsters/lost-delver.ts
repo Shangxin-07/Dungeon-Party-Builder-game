@@ -13,6 +13,7 @@ export default defineMonster({
   // The dead hate the righteous (DESIGN.md §7): Good heroes are hit first.
   hunts: ["align:good"],
   ai: "caster",
+  research: { tricks: "Blades pass through it, cold is its own. Holy light and fire don't." },
   abilities: { "grave-chill": 1 },
   loot: "delver-loot",
   passives: [

@@ -63,6 +63,8 @@ export const MORALE_FACTS = [
   "ledParty",
   /** 1 if they levelled up. */
   "levelUp",
+  /** 1 for a day spent at a research desk (M7.07). */
+  "studied",
   /** 1 if the guild couldn't pay their wages today. */
   "unpaid",
   /** 1 if they were sent down tired (at the first fatigue tier or worse). */

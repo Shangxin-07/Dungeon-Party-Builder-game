@@ -11,6 +11,7 @@ export default defineMonster({
   row: "back",
   tags: ["plant", "cunning"],
   ai: "caster",
+  research: { tricks: "Stays at the back filling the air with spores. Burn it." },
   abilities: { "spore-burst": 1 },
   loot: "spore-loot",
   passives: [

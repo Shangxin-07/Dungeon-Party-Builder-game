@@ -195,6 +195,7 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
   }),
   // The debrief (M7.03): hauls already sold, nothing waiting, and the old way as the rule.
   15: (_ix, old) => ({ ...old, version: 16, haul: [], haulRule: "sell" }),
+  16: (_ix, old) => ({ ...old, version: 17, research: { monsters: {}, shelf: [], desks: [] } }),
 };
 
 /**
@@ -307,6 +308,9 @@ export function missingContent(ix: Index, town: TownState): string[] {
   town.stash.forEach(item);
   Object.keys(town.materials).forEach(item);
   for (const id of Object.keys(town.posts)) check("post", ix.post, id);
+  // Research (M7.07): monsters studied and finds on the Library shelf.
+  Object.keys(town.research?.monsters ?? {}).forEach(monster);
+  for (const s of town.research?.shelf ?? []) item(s.item);
   for (const g of town.scavenged) item(g.item);
   Object.keys(town.buildings).forEach(building);
   town.damaged.forEach(building);

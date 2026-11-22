@@ -126,6 +126,26 @@ export interface ItemDef {
    * their tags (town.salvage.byTag), or nothing.
    */
   salvage?: Readonly<Record<string, number>>;
+  /**
+   * Research (M7.07, DESIGN.md §17.7): what the Library can learn from it,
+   * so the debrief can send it there instead of selling it.
+   */
+  research?: ItemResearch;
+}
+
+/**
+ * What studying an item gives the guild (M7.07). A specimen (a goblin's ear,
+ * a troll's tooth) feeds research on the monsters it came from at once; an
+ * unidentified piece goes on the Library shelf until a researcher has put
+ * `points` into it, then turns into whatever `becomes` rolls.
+ */
+export interface ItemResearch {
+  /** Research points it is worth: given at once to `monsters`, or needed to identify it. */
+  points: number;
+  /** Specimens: the monsters whose research it feeds. */
+  monsters?: readonly string[];
+  /** Unidentified things: loot table rolled once it's studied; what it really was goes to the store room. */
+  becomes?: string;
 }
 
 export interface AbilityDef {
@@ -213,6 +233,25 @@ export interface MonsterDef {
    * party, or demands tribute. Tried in order before the fight.
    */
   reactions?: readonly MonsterReaction[];
+  /** What research teaches about it (M7.07, DESIGN.md §17.7). Defaults by power. */
+  research?: MonsterResearch;
+  /**
+   * A defence nothing gets through until the guild has researched the monster
+   * to `tier` (M7.07): it takes no damage at all. A party that can't hurt
+   * anything left standing runs for it.
+   */
+  ward?: { name: string; tier: number };
+}
+
+/**
+ * Research on one monster (M7.07, DESIGN.md §17.7). Tier 1 is "met"; tier 2
+ * (Studied) and tier 3 (Mastered) cost research points.
+ */
+export interface MonsterResearch {
+  /** Points to reach Studied, then Mastered (totals). Defaults to power × ResearchRules.perPower. */
+  points?: readonly [number, number];
+  /** Its tricks, in words, shown once Studied ("its wounds close unless burnt"). */
+  tricks?: string;
 }
 
 /**

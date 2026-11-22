@@ -37,6 +37,7 @@ import { buildersWork } from "./buildings";
 import { restHero, healInjuries, wasDowned, maybeInjure } from "./wounds";
 import { newBody, rise, risenClimb } from "./bodies";
 import { checkCamp, raidSpoils, tidyPosts, workPosts } from "./posts";
+import { researchTiers, studyDay, tidyDesks } from "./research";
 import { arrivals, hearOfLoss, landKills, launch, remember, returnHero } from "./launch";
 
 /**
@@ -68,6 +69,7 @@ export function nightfall(
         // The Vault keeps some of the gold out of reach.
         gold: Math.floor((t.gold * (100 - vaultShare(ix, t))) / 100),
         targets,
+        research: researchTiers(ix, t),
       },
       rng,
     ),
@@ -427,6 +429,7 @@ export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
   t.day += 1;
   buildersWork(ix, t, away);
   workPosts(ix, t, away);
+  studyDay(ix, t, away);
   checkCamp(ix, t);
   for (const h of t.roster) {
     if (away.has(h.id)) continue;
@@ -440,6 +443,7 @@ export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
   t.party = t.party.filter((id) => findHero(t, id));
   t.porters = (t.porters ?? []).filter((id) => findHero(t, id));
   tidyPosts(t);
+  tidyDesks(t);
 }
 
 /**

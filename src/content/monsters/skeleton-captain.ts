@@ -13,6 +13,10 @@ export default defineMonster({
   // The dead hate the righteous (DESIGN.md §7): Good heroes are hit first.
   hunts: ["align:good"],
   ai: "brute",
+  research: {
+    tricks:
+      "Arrows and blades slip between its bones; it rallies the patrol. Crush it, or burn it with holy light.",
+  },
   loot: "skeleton-loot",
   variant: { of: "skeleton", chance: 0.15, minLevel: 2.5 },
   abilities: { "war-cry": 1, "power-strike": 1 },
