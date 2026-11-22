@@ -263,7 +263,3 @@ export function tidyBenches(t: TownState): void {
   for (const w of Object.values(t.workshops ?? {}))
     w.workers = w.workers.filter((x) => findHero(t, x));
 }
-
-/** Heroes at home with a bench, for the "one job at a time" check in other panels. */
-export const busyAtBench = (town: TownState) =>
-  new Set(Object.values(town.workshops ?? {}).flatMap((w) => w.workers));

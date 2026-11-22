@@ -199,8 +199,3 @@ export function sealDays(ix: Index, d: DungeonState, above: number): number {
   const press = rules.wearPerDay + Math.max(0, (below?.population ?? 0) - cap) * rules.perMonster;
   return press > 0 ? Math.ceil(seal.strength / press) : Infinity;
 }
-
-/** What the expedition needs to know about each floor today. */
-export function floorConditions(d: DungeonState): FloorPressure[] {
-  return d.floors.map((f) => ({ ...f }));
-}

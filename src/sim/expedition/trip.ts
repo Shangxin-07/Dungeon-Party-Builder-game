@@ -143,15 +143,18 @@ export class TripBase {
   }
 
   protected snapshot(): HeroStatus[] {
-    return this.party.map((h) => ({
-      uid: h.id,
-      name: h.name,
-      hp: h.hp,
-      maxHp: this.maxHp(h),
-      mana: h.mana,
-      maxMana: this.maxMana(h),
-      condition: h.condition,
-    }));
+    return this.party.map((h) => {
+      const { derived } = heroSheet(this.ix, h);
+      return {
+        uid: h.id,
+        name: h.name,
+        hp: h.hp,
+        maxHp: derived.maxHp,
+        mana: h.mana,
+        maxMana: derived.mana,
+        condition: h.condition,
+      };
+    });
   }
 
   // -------------------------------------------------------------------------

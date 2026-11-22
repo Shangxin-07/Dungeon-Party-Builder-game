@@ -52,9 +52,33 @@ export function roll<T>(town: TownState, use: (rng: Rng) => T): T {
   return out;
 }
 
-/** Deep enough copy that actions can change the copy freely. */
+/**
+ * Deep enough copy that actions can change the copy freely. Trip reports and
+ * the hidden results (and parties as they left) of parties still out are never
+ * changed once written, and they're most of the town's size, so the copy
+ * shares them instead of cloning them every action. Never change them in place:
+ * write a new report or outing field instead.
+ */
 export function edit(town: TownState): TownState {
-  return structuredClone(town);
+  const { trips, lastTrip, outings } = town;
+  // Placeholders keep every key where it was, so saves come out the same.
+  const out = structuredClone({
+    ...town,
+    ...(trips ? { trips: [] } : {}),
+    ...(lastTrip ? { lastTrip: undefined } : {}),
+    ...(outings
+      ? { outings: outings.map((o) => ({ ...o, result: null!, party: [], porterParty: [] })) }
+      : {}),
+  });
+  if (trips) out.trips = [...trips];
+  if (lastTrip) out.lastTrip = lastTrip;
+  outings?.forEach((o, i) => {
+    const copy = out.outings[i]!;
+    copy.result = o.result;
+    copy.party = o.party;
+    copy.porterParty = o.porterParty;
+  });
+  return out;
 }
 
 /** A hero at home, for the player's actions: those out in the dungeon can't be touched. */
