@@ -155,7 +155,8 @@ export const built = (town: TownState) => (id: string) => standing(town, id);
 export function forecast(ix: Index, town: TownState): { day: number; strength: number }[] {
   const out: { day: number; strength: number }[] = [];
   let d = town.dungeon;
-  for (let i = 0; i < warningDays(ix, town); i++) {
+  // A lookout who's down below sees nothing.
+  for (let i = 0, n = warningDays(ix, town, awaySet(town)); i < n; i++) {
     const next = dungeonDay(ix, d);
     d = next.dungeon;
     out.push({ day: town.day + i, strength: next.day.strength });

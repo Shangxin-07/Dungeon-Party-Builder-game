@@ -8,7 +8,14 @@ import { library } from "../content";
 import { levelBand, spawnRate } from "../sim/dungeon";
 import { floorPower, levelPower } from "../sim/encounter";
 import { fitDefenders, type RaidReport } from "../sim/raid";
-import { buildingEffects, defence, forecast, type PitNight, type TownState } from "../sim/town";
+import {
+  awaySet,
+  buildingEffects,
+  defence,
+  forecast,
+  type PitNight,
+  type TownState,
+} from "../sim/town";
 import { ix } from "./game";
 
 const OUTCOME_TEXT: Record<RaidReport["outcome"], string> = {
@@ -43,13 +50,15 @@ export function PitPanel({
   town: TownState;
   onWatchRaid: (raid: RaidReport) => void;
 }) {
-  const def = defence(ix, town);
+  // Heroes down below hold no post and can't defend (DESIGN.md §8, §17).
+  const below = awaySet(town);
+  const def = defence(ix, town, below);
   const last = town.pit.at(-1);
   const ahead = forecast(ix, town);
-  const away = new Set(town.party);
+  const leaving = new Set([...below, ...town.party]);
   const guard = fitDefenders(
     ix,
-    town.roster.filter((h) => !away.has(h.id)),
+    town.roster.filter((h) => !leaving.has(h.id)),
   );
   const top = Math.max(def, last?.strength ?? 0, ...ahead.map((f) => f.strength), 4) * 1.15;
   const defenceBuildings = library.buildings
@@ -114,7 +123,7 @@ export function PitPanel({
         )
           ? ". Damaged defences don't count until repaired"
           : ""}
-        . Home guard if the party leaves:{" "}
+        {below.size ? ". Heroes down below don't count" : ""}. Home guard if the party leaves:{" "}
         <strong>{guard.length ? names(guard.map((h) => h.name)) : "nobody fit"}</strong>.
       </p>
 
