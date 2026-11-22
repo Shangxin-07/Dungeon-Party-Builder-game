@@ -138,6 +138,23 @@ export function planRescue(
   return t;
 }
 
+/**
+ * Whether the next party's orders are the ones on file: same floor, retreat,
+ * loot, hunting, mission and lair. A search planned on top doesn't count.
+ */
+export function sameOrders(onFile: StandingOrders, next: StandingOrders): boolean {
+  const a = ordinaryOrders(onFile);
+  const b = ordinaryOrders(next);
+  return (
+    a.targetFloor === b.targetFloor &&
+    JSON.stringify(a.retreat) === JSON.stringify(b.retreat) &&
+    a.loot === b.loot &&
+    (a.clearPercent ?? 0) === (b.clearPercent ?? 0) &&
+    a.mission === b.mission &&
+    a.lair === b.lair
+  );
+}
+
 /** Back to an ordinary trip. */
 export function cancelRescue(_ix: Index, town: TownState): TownState {
   return { ...town, orders: ordinaryOrders(town.orders) };

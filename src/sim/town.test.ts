@@ -21,6 +21,7 @@ import {
   pickParty,
   renameParty,
   saveParty,
+  sameOrders,
   rest,
   rosterSize,
   sell,
@@ -326,6 +327,32 @@ describe("parties on file", () => {
     expect(t.party).toEqual(b);
     expect(t.orders.targetFloor).toBe(2);
     expect(cantLaunch(ix, t)).toBeUndefined();
+  });
+
+  it("doesn't hand one party's hunt to the next (Mike's report, M7.10)", () => {
+    let t = eightHeroes();
+    const b = t.roster.slice(4, 8).map((h) => h.id);
+    // Party A clears floor 1; Party B, the new hands, only walk it.
+    t = saveParty(ix, setOrders(ix, t, { ...t.orders, clearPercent: 100 }), 0);
+    for (const id of t.party) t = toggleParty(ix, t, id);
+    for (const id of b) t = toggleParty(ix, t, id);
+    t = saveParty(ix, setOrders(ix, t, { ...t.orders, clearPercent: undefined }), 1);
+    expect(t.parties[1]!.orders.clearPercent).toBeUndefined();
+
+    // A goes down by hand: picked, then the main send button.
+    t = launch(ix, pickParty(ix, t, 0), heroNames);
+    expect(t.outings.at(-1)!.result.orders.clearPercent).toBe(100);
+    expect(t.orders.clearPercent).toBeUndefined();
+
+    // B put together by hand goes as it is on file, without A's hunt.
+    for (const id of b) t = toggleParty(ix, t, id);
+    expect(sameOrders(t.parties[1]!.orders, t.orders)).toBe(true);
+    const sent = launch(ix, t, heroNames);
+    expect(sent.outings.at(-1)!.name).toBe("Party B");
+    expect(sent.outings.at(-1)!.result.orders.clearPercent).toBeUndefined();
+    // Sent from file, the same.
+    const fromFile = launch(ix, pickParty(ix, { ...t, party: [] }, 1), heroNames);
+    expect(fromFile.outings.at(-1)!.result.orders.clearPercent).toBeUndefined();
   });
 
   it("only has so many slots, and needs someone in the party", () => {
