@@ -14,8 +14,12 @@ import { indexLibrary } from "./library";
 import { createRng } from "./rng";
 import { importSave } from "./save";
 import {
+  assignPost,
   autoStart,
   awaySet,
+  defence,
+  forecast,
+  postWorkers,
   cantLaunch,
   equip,
   giveUp,
@@ -298,5 +302,25 @@ describe("saves from before background trips", () => {
     // And a trip still works the new way.
     const after = launchAndWait(ix, t, heroNames);
     expect(after.trips.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("posts while a party is down below", () => {
+  it("leave an away hero's post empty until they're back (DESIGN.md §8)", () => {
+    let t = setOrders(ix, fresh(), orders({}));
+    const [a, b] = t.party;
+    t = assignPost(ix, t, a!, "barricade");
+    t = assignPost(ix, t, b!, "lookout");
+    const bare = defence(ix, { ...t, posts: {} });
+    expect(defence(ix, t, awaySet(t)) - bare).toBe(3);
+    expect(forecast(ix, t).length).toBeGreaterThan(0);
+
+    t = launch(ix, t, heroNames);
+    // They keep the post for later, but hold nothing while they're away.
+    expect(t.posts.barricade).toContain(a);
+    expect(postWorkers(ix, t, "barricade", awaySet(t))).toEqual([]);
+    expect(defence(ix, t, awaySet(t))).toBe(bare);
+    // Nor does a lookout who's below see anything coming.
+    expect(forecast(ix, t)).toEqual([]);
   });
 });

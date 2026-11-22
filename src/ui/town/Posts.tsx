@@ -8,6 +8,7 @@ import { Fold } from "../Fold";
 import { heroNames } from "../../content";
 import {
   assignPost,
+  awaySet,
   campNeeds,
   defence,
   fitForPost,
@@ -16,7 +17,9 @@ import {
   newTown,
   trade,
   openPosts,
+  outingOf,
   postOf,
+  postWorkers,
   underConstruction,
   warningDays,
   type TownState,
@@ -117,7 +120,15 @@ export function CampPanel({ town, act }: { town: TownState; act: Act }) {
 /** Heroes at home on posts round the pit. */
 export function PostsPanel({ town, act }: { town: TownState; act: Act }) {
   const posts = openPosts(ix, town);
-  const away = new Set(town.party);
+  // Down below now; the chosen party too, for what posts hold once it goes.
+  const below = awaySet(town);
+  const leaving = new Set([...below, ...town.party]);
+  const working = posts.reduce((n, p) => n + postWorkers(ix, town, p.id, below).length, 0);
+  const onPosts = Object.values(town.posts ?? {}).flat();
+  const belowCount = onPosts.filter((id) => below.has(id)).length;
+  const laidUp = onPosts.length - working - belowCount;
+  const held = (away: ReadonlySet<string>) =>
+    defence(ix, town, away) - defence(ix, { ...town, posts: {} });
   const hands = town.roster.filter((h) => !postOf(town, h.id));
   const got = town.gathered;
   const gotWords = got
@@ -131,7 +142,11 @@ export function PostsPanel({ town, act }: { town: TownState; act: Act }) {
       id="posts"
       title="Posts round the pit"
       defaultOpen={!!town.camp}
-      summary={`${Object.values(town.posts ?? {}).flat().length} at their posts`}
+      summary={[
+        `${working} at their posts`,
+        ...(belowCount ? [`${belowCount} away below`] : []),
+        ...(laidUp > 0 ? [`${laidUp} laid up`] : []),
+      ].join(", ")}
     >
       <p className="small muted">
         Heroes at home can hold a post. They still fight any raid that gets through, and a hero who
@@ -139,12 +154,14 @@ export function PostsPanel({ town, act }: { town: TownState; act: Act }) {
         {town.camp ? "" : " The seam closed with the camp."}
       </p>
       <p className="small">
-        Posts hold back <strong>{defence(ix, town) - defence(ix, { ...town, posts: {} })}</strong>{" "}
-        strength tonight
-        {town.party.length && !town.camp
-          ? ` (${defence(ix, town, away) - defence(ix, { ...town, posts: {} })} while the party is away)`
+        Posts hold back <strong>{held(below)}</strong> strength tonight
+        {town.party.length && !town.camp && held(leaving) !== held(below)
+          ? ` (${held(leaving)} once the chosen party goes down)`
           : ""}
-        .{warningDays(ix, { ...town, buildings: {} }) ? " A lookout is watching the pit." : ""}
+        .
+        {warningDays(ix, { ...town, buildings: {} }, below)
+          ? " A lookout is watching the pit."
+          : ""}
         {gotWords.length ? ` Yesterday the posts brought in ${gotWords.join(" and ")}.` : ""}
       </p>
       <ul className="cards">
@@ -167,7 +184,11 @@ export function PostsPanel({ town, act }: { town: TownState; act: Act }) {
                 {on.map((h) => (
                   <li key={h.id}>
                     {h.name}
-                    {fitForPost(h, new Set()) ? "" : " (laid up)"}{" "}
+                    {outingOf(town, h.id)
+                      ? " (away below, back to it on return)"
+                      : fitForPost(h, below)
+                        ? ""
+                        : " (laid up)"}{" "}
                     <button
                       type="button"
                       className="link"
