@@ -1,6 +1,7 @@
 /**
  * The town: buildings and house rules.
  */
+import type { Stat } from "./core";
 import type { PorterRules } from "./dungeon";
 
 /** Materials by item id, e.g. { "iron-ore": 4 } (DESIGN.md §8, content/materials/). */
@@ -57,6 +58,11 @@ export type BuildingEffect =
   | { type: "burial"; gold: number }
   /** Injuries mend this many extra days for every day in town (the Apothecary). */
   | { type: "healing"; amount: number }
+  /**
+   * A workshop (M7.14, DESIGN.md §18.1): this many heroes (or porters) can
+   * work its benches at once, on the recipes in content/recipes/ for it.
+   */
+  | { type: "workshop"; benches: number }
   /**
    * The parties ride a cage down past this many floors (the Mine Cage): a
    * trip skips their rooms and the days they take. Never the target floor,
@@ -273,4 +279,44 @@ export interface ResearchRules {
   damage: readonly [number, number];
   /** Once Mastered, this percent of the monster's resistances still works (immunities stay). */
   masteredResist: number;
+}
+
+/**
+ * A recipe (M7.14, DESIGN.md §18.1, content/recipes/): something a workshop
+ * makes. The materials and gold are paid when the job is queued (and given
+ * back if it's called off); then the workers at the benches put in the work
+ * a day at a time.
+ */
+export interface RecipeDef {
+  id: string;
+  /** The workshop building it's made in, and the level that needs (default 1). */
+  workshop: string;
+  level?: number;
+  /** Item id made, and how many (default 1). Materials go to the store, the rest to the store room. */
+  makes: string;
+  count?: number;
+  /** What the job is called, if the item's name won't do ("4 rolls of bandages"). */
+  name?: string;
+  materials: MaterialCost;
+  gold?: number;
+  /** Work it takes, in days of one average worker. */
+  work: number;
+  /** The stat that speeds it up (STR at the forge, INT at the still). */
+  stat: Stat;
+}
+
+/**
+ * How work at the benches goes (M7.14). A worker puts in `perDay` work a day,
+ * plus `perStat` for every point of the recipe's stat over 10 (never below
+ * `minDay`); porters work at `porter` of that. A day at the benches isn't a
+ * day off: workers rest at `rest` of the usual rate. Each workshop holds at
+ * most `queue` jobs waiting.
+ */
+export interface WorkshopRules {
+  perDay: number;
+  perStat: number;
+  minDay: number;
+  porter: number;
+  rest: number;
+  queue: number;
 }

@@ -1688,3 +1688,15 @@ sup.down {
 .report-tricks {
   font-style: italic;
 }
+
+/* M7.14 workshops */
+.workshop h3 {
+  margin-bottom: 0.25rem;
+}
+.workshop .recipes {
+  list-style: none;
+  padding-left: 0;
+}
+.workshop .recipes li {
+  margin: 0.25rem 0;
+}

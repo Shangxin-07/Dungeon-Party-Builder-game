@@ -26,6 +26,7 @@ import type {
   SkillDef,
   StatusDef,
   TransformDef,
+  RecipeDef,
   TraitDef,
 } from "./types";
 import fighterClass from "./classes/fighter";
@@ -137,6 +138,21 @@ import scoutingSkill from "./skills/scouting";
 import leadershipSkill from "./skills/leadership";
 import leadershipRules from "./leadership";
 import researchRules from "./research";
+import workshopRules from "./workshops";
+import sawmillBuilding from "./buildings/sawmill";
+import planksMaterial from "./materials/planks";
+import planksRecipe from "./recipes/planks";
+import woodenShieldRecipe from "./recipes/wooden-shield";
+import staffRecipe from "./recipes/staff";
+import shortBowRecipe from "./recipes/short-bow";
+import ironSwordRecipe from "./recipes/iron-sword";
+import ironShieldRecipe from "./recipes/iron-shield";
+import chainmailRecipe from "./recipes/chainmail";
+import scaleMailRecipe from "./recipes/scale-mail";
+import silverSwordRecipe from "./recipes/silver-sword";
+import healingPotionRecipe from "./recipes/healing-potion";
+import bandagesRecipe from "./recipes/bandages";
+import greaterHealingPotionRecipe from "./recipes/greater-healing-potion";
 import loreSkill from "./skills/lore";
 import goblinEarSpecimen from "./specimens/goblin-ear";
 import spiderFangSpecimen from "./specimens/spider-fang";
@@ -309,6 +325,8 @@ export const classes: readonly ClassDef[] = [
 /** Building materials and rarer things: items the guild keeps rather than sells. */
 export const materials: readonly ItemDef[] = [
   timberMaterial,
+  // Sawn at the Sawmill (M7.14).
+  planksMaterial,
   ironOreMaterial,
   spiderSilkMaterial,
   boneDustMaterial,
@@ -583,12 +601,30 @@ export const buildings: readonly BuildingDef[] = [
   templeBuilding,
   graveyardBuilding,
   apothecaryBuilding,
+  // Workshops (M7.14): the Blacksmith and Apothecary have benches too.
+  sawmillBuilding,
   mineCageBuilding,
   // Only deals with Evil heroes (DESIGN.md §7).
   blackMarketBuilding,
 ];
 
 export const transforms: readonly TransformDef[] = [risenTransform];
+
+/** What the workshops make (M7.14, DESIGN.md §18.1). */
+export const recipes: readonly RecipeDef[] = [
+  planksRecipe,
+  woodenShieldRecipe,
+  staffRecipe,
+  shortBowRecipe,
+  ironSwordRecipe,
+  ironShieldRecipe,
+  chainmailRecipe,
+  scaleMailRecipe,
+  silverSwordRecipe,
+  healingPotionRecipe,
+  bandagesRecipe,
+  greaterHealingPotionRecipe,
+];
 
 export const injuries: readonly InjuryDef[] = [
   brokenArmInjury,
@@ -649,6 +685,8 @@ export const library: Library = {
   leadership: leadershipRules,
   traits,
   research: researchRules,
+  recipes,
+  workshops: workshopRules,
 };
 
 export { heroNames } from "./names";

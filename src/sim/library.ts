@@ -18,6 +18,7 @@ import type {
   AlignmentDef,
   PerkDef,
   PostDef,
+  RecipeDef,
   RoomDef,
   SkillDef,
   StatusDef,
@@ -45,6 +46,7 @@ export interface Index {
   injury(id: string): InjuryDef;
   transform(id: string): TransformDef;
   post(id: string): PostDef;
+  recipe(id: string): RecipeDef;
   trait(id: string): TraitDef;
   lair(id: string): LairDef;
   /** The floor at this depth. */
@@ -85,6 +87,7 @@ export function indexLibrary(lib: Library): Index {
       injury: table("injury", lib.injuries),
       transform: table("transform", lib.transforms ?? []),
       post: table("post", lib.posts ?? []),
+      recipe: table("recipe", lib.recipes ?? []),
       trait: table("trait", lib.traits ?? []),
       lair: table("lair", lib.lairs ?? []),
       floor: (depth) => {

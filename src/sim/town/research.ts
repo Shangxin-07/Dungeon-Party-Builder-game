@@ -33,6 +33,7 @@ export { monsterNeeds, monsterTier, researchTiers, TIER_NAMES } from "../researc
 import { type Desk, type ShelfItem, type TownState, TownError } from "./state";
 import { built, findHero, total } from "./read";
 import { edit, listWords, news, roll } from "./internal";
+import { leaveBench } from "./workshops";
 
 /** Research desks the Library has (0 until it's built). */
 export const researchDesks = (ix: Index, town: TownState) => total(ix, town, "researchDesks");
@@ -147,11 +148,12 @@ export function assignDesk(
       throw new TownError(
         researchDesks(ix, t) ? "Every desk in the Library is taken." : "Research needs a Library.",
       );
-    // Off any post: one job at a time.
+    // Off any post or bench: one job at a time.
     for (const id of Object.keys(t.posts ?? {})) {
       t.posts[id] = t.posts[id]!.filter((x) => x !== heroId);
       if (!t.posts[id]!.length) delete t.posts[id];
     }
+    leaveBench(t, heroId);
     desks.push({ hero: heroId, ...(topic ? { topic } : {}) });
   } else desks[at] = { hero: heroId, ...(topic ? { topic } : {}) };
   return t;

@@ -315,10 +315,25 @@ export interface TownState {
    * DESIGN.md §18.3), by depth: a rough feel, dated. Scouts' `intel` is better.
    */
   sightings?: Record<number, Sighting>;
+  /** Workshops (M7.14, DESIGN.md §18.1), by building id: who works there and what's queued. */
+  workshops?: Record<string, Workshop>;
   /** Huge beasts' lairs (M7.08), by lair id: the day the beast was killed. Missing: none yet. */
   lairs?: Record<string, { slain?: number }>;
   /** What the posts brought in yesterday: materials by id, and gold. */
   gathered?: { day: number; materials: Record<string, number>; gold: number };
+}
+
+/** A workshop's benches and queue (M7.14). Workers away below keep their bench. */
+export interface Workshop {
+  workers: string[];
+  /** Jobs in order; the first is worked on. `done` is the work put in so far. */
+  queue: Job[];
+}
+
+export interface Job {
+  id: string;
+  recipe: string;
+  done: number;
 }
 
 /** A party's feel for a floor (M7.13): how many were living there, and how strong. */
@@ -405,6 +420,8 @@ export type LedgerKind =
   | "wages"
   /** Heroes' shares of the haul (M7.12). */
   | "shares"
+  /** Gold paid for workshop jobs, and given back when one is called off (M7.14). */
+  | "crafting"
   | "built"
   | "repairs"
   | "stolen"

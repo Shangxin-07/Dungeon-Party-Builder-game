@@ -39,6 +39,8 @@ export type {
   ResearchState,
   ShelfItem,
   Desk,
+  Workshop,
+  Job,
   TownIntel,
 } from "./state";
 export {
@@ -129,6 +131,22 @@ export { answerRaise, raiseWords, rest, waitUntilBack, launchAndWait } from "./d
 export { payDay, payShares, splitShares } from "./pay";
 export { floorKnowledge, fogBand, pitMap, watchRange } from "./fog";
 export type { FloorKnowledge, FloorSource } from "./fog";
+export {
+  assignBench,
+  benchOf,
+  benches,
+  cancelJob,
+  cantQueue,
+  canWork,
+  costWords,
+  openWorkshops,
+  queueDays,
+  queueJob,
+  recipesAt,
+  recipeWords,
+  workRate,
+  workshopIds,
+} from "./workshops";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
 export { launch, giveUp, outingView } from "./launch";
 export { assignPost, postOf, trade } from "./posts";

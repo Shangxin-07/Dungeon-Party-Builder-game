@@ -33,8 +33,12 @@ describe("materials", () => {
     expect(fresh().materials).toEqual({});
   });
 
-  it("each turn up in some loot table, and something needs each one", () => {
-    const dropped = new Set(library.lootTables.flatMap((t) => t.entries.map((e) => e.item)));
+  it("each turn up in some loot table (or a workshop), and something needs each one", () => {
+    const dropped = new Set([
+      ...library.lootTables.flatMap((t) => t.entries.map((e) => e.item)),
+      // M7.14: some are only made, like planks at the Sawmill.
+      ...library.recipes.map((r) => r.makes),
+    ]);
     const wanted = new Set(
       library.buildings.flatMap((b) =>
         b.levels.flatMap((l) => [
@@ -45,6 +49,7 @@ describe("materials", () => {
         ]),
       ),
     );
+    for (const r of library.recipes) for (const m of Object.keys(r.materials)) wanted.add(m);
     for (const m of materials) {
       expect(dropped.has(m.id), m.id).toBe(true);
       expect(wanted.has(m.id), m.id).toBe(true);
