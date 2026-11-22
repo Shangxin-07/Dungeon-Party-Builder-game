@@ -25,6 +25,11 @@ import {
   rescueTarget,
   outingOf,
   setOrders,
+  barricadeChoices,
+  materialWords,
+  sealsNow,
+  sealWord,
+  setSeal,
   type TownState,
 } from "../../sim/town";
 import { RETREATS } from "../Expedition";
@@ -58,6 +63,10 @@ export function PartyPanel({
   const openLairs = knownLairs(ix, town).filter((l) => !lairSlain(town, l.id));
   const lairDef = town.orders.lair && !target ? ix.lair(town.orders.lair) : undefined;
   const lairName = lairDef?.name.replace(/^The /, "the ");
+  // Sealing the stairs below the target floor (M7.16): an ordinary delve only.
+  const floor = town.orders.targetFloor;
+  const canSeal = !scouting && !sneaking && !target && floor < ix.lib.floors.length;
+  const sealHere = sealsNow(ix, town).find((x) => x.floor === floor);
   const lairBeast = lairDef ? ix.monster(lairDef.monster) : undefined;
   const quiet = partyStealth(ix, party);
   const bestScout = party
@@ -268,7 +277,41 @@ export function PartyPanel({
             </select>
           </label>
         )}
+        {canSeal ? (
+          <label
+            title={`Carry a barricade down and seal the stairs below floor ${floor}: nothing comes up them until the floor below wears it down. Built after the floor is walked, before any hunting. A party that turns back first brings the materials home.`}
+          >
+            Stairs{" "}
+            <select
+              value={town.orders.seal ?? ""}
+              onChange={(e) => act((t) => setSeal(ix, t, e.target.value || undefined))}
+            >
+              <option value="">leave the stairs open</option>
+              {barricadeChoices(ix, town).map(({ barricade: b, why }) => (
+                <option
+                  key={b.id}
+                  value={b.id}
+                  disabled={!!why && town.orders.seal !== b.id}
+                  title={b.description}
+                >
+                  seal them: {b.name.toLowerCase()} (
+                  {[materialWords(ix, b.materials), b.gold ? `${b.gold} gold` : ""]
+                    .filter(Boolean)
+                    .join(", ")}
+                  ){why ? `: ${why.toLowerCase().replace(/\.$/, "")}` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
       </div>
+      {canSeal && sealHere ? (
+        <p className="small muted">
+          The stairs below floor {floor} are already sealed ({sealHere.name.toLowerCase()},{" "}
+          {sealWord(sealHere.percent)}, {sealHere.percent}% left). A new barricade replaces it if
+          it's stronger than what's left.
+        </p>
+      ) : null}
       {scouting ? (
         <p className="mission small">
           Scout party: down to floor {town.orders.targetFloor}, slipping past fights where{" "}

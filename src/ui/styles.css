@@ -1005,6 +1005,12 @@ sup.down {
   font-weight: normal;
 }
 
+/* A sealed stairhead (M7.16), between two floors. */
+.pressure .seal-row td {
+  padding-left: 1.2em;
+  border-left: 3px solid var(--muted);
+}
+
 .card.damaged {
   border-color: #e48a7a;
 }

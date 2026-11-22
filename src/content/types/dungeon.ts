@@ -2,6 +2,7 @@
  * The dungeon: encounters, loot tables, rooms, floors, secrets, porters,
  * searching, population, hunting and raids.
  */
+import type { MaterialCost } from "./town";
 import type { DamageType } from "./core";
 
 export interface EncounterDef {
@@ -334,6 +335,40 @@ export interface DungeonRules {
   raids: RaidRules;
   /** "Clear the floor" orders (M6): the party stays on its target floor and hunts. */
   hunting: HuntRules;
+  /** Barricaded stairheads (M7.16): how the floor below wears a seal down. */
+  seals: SealRules;
+}
+
+/**
+ * Holding the stairs (M7.16, DESIGN.md §18.3b). A sealed stairhead stops the
+ * floor below pushing monsters up. Each day it loses `wearPerDay`, plus
+ * `perMonster` for every monster the floor below has over its capacity, so
+ * the fuller it gets behind the seal, the faster the seal goes.
+ */
+export interface SealRules {
+  perMonster: number;
+  wearPerDay: number;
+  /**
+   * A sealed-off floor holds at most this many times its capacity: any more
+   * and they turn on each other. It caps the flood when the seal gives way.
+   */
+  crowding: number;
+}
+
+/** A barricade a party can build at the top of a flight of stairs (M7.16, content/barricades/). */
+export interface BarricadeDef {
+  id: string;
+  name: string;
+  /** For the orders panel. */
+  description: string;
+  /** Carried down from the store when the party sets off. */
+  materials: MaterialCost;
+  /** Gold, paid at the same time. */
+  gold?: number;
+  /** How much pressure it takes before it gives way. */
+  strength: number;
+  /** Hours the party spends building it. */
+  hours: number;
 }
 
 export interface HuntRules {

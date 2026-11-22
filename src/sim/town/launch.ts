@@ -66,6 +66,7 @@ import { recordSightings } from "./fog";
 import { restHero, lowestHp, wasDowned, maybeInjure } from "./wounds";
 import { dayInTown, quitters, guildFeels } from "./days";
 import { newBody } from "./bodies";
+import { carrySeal, placeSeal, sealHome } from "./seals";
 
 /**
  * Send the party. It's away until the town hears of it: see the top of this
@@ -108,6 +109,8 @@ export function launch(
 
   const orders = { ...t.orders };
   if (target) orders.targetFloor = Math.max(orders.targetFloor, site?.floor ?? 0);
+  // The barricade goes down with the party (M7.16).
+  carrySeal(ix, t, orders);
   // Who leads, and how unruly the party is (M7.05, DESIGN.md §17.5).
   const cmd = partyCommand(ix, party, t.leader);
   const result = runExpedition(ix, party, orders, seed, t.dungeon.floors, {
@@ -173,6 +176,8 @@ export function launch(
   // So is a hunt (M7.10): one party clearing a floor mustn't send the next
   // party, fresh recruits perhaps, off to clear it too. Parties on file keep theirs.
   delete t.orders.clearPercent;
+  // And so is sealing the stairs (M7.16): it uses up what's in the store.
+  delete t.orders.seal;
   return t;
 }
 
@@ -180,9 +185,13 @@ export function launch(
 // Day by day
 // ---------------------------------------------------------------------------
 
-/** Kills made by parties out below during the trip's days so far come off the dungeon. */
-export function landKills(t: TownState): void {
+/**
+ * Kills made by parties out below during the trip's days so far come off the
+ * dungeon, and any stairs they sealed are sealed (M7.16).
+ */
+export function landKills(ix: Index, t: TownState): void {
   for (const o of t.outings ?? []) {
+    placeSeal(ix, t, o);
     const today = t.day - o.left;
     for (; o.killsLanded <= today; o.killsLanded++) {
       const k = o.result.dayKills?.[o.killsLanded];
@@ -301,6 +310,7 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
   const risenBefore = new Map((t.risen ?? []).map((r) => [r.id, r]));
   t.outings = t.outings.filter((x) => x !== o);
   landAllKills(t, o);
+  sealHome(ix, t, o);
   const kills = heroKills(party, result);
   // Every kill teaches the Library a little (M7.07).
   learnFromKills(ix, t, result.kills);
@@ -810,6 +820,7 @@ export function hearOfLoss(
   deserterReturns(ix, t, o);
   t.outings = t.outings.filter((x) => x !== o);
   landAllKills(t, o);
+  placeSeal(ix, t, o, true);
   const result = o.result;
   const site = t.sites.find((s) => s.id === o.site);
   const knowWhere = how !== "given-up";

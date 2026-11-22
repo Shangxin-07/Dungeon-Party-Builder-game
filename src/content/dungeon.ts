@@ -15,6 +15,10 @@ export default defineDungeonRules({
   // "Clear the floor by N%": a party gives up after 12 extra rooms. How long
   // each takes is in content/time.ts (about 4 a day).
   hunting: { maxRooms: 12 },
+  // A sealed stairhead (M7.16) loses 1 a day, plus a quarter for every monster
+  // the floor below has over its capacity: they're all pushing on it. Penned
+  // in past half as many again as the floor holds, they turn on each other.
+  seals: { perMonster: 0.25, wearPerDay: 1, crowding: 1.5 },
   raids: {
     // 1 point of strength that gets past the walls is about one floor-1 monster.
     powerPerStrength: 3,

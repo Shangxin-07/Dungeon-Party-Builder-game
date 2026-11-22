@@ -9,7 +9,7 @@ import type { Index } from "../library";
 import { type HaulItem } from "../loot";
 import { createRng, type Rng } from "../rng";
 import { getRoom } from "../rooms";
-import { DEFAULT_ORDERS, type StandingOrders, describeRetreat, lairOf } from "./orders";
+import { DEFAULT_ORDERS, type StandingOrders, describeRetreat, lairOf, sealOf } from "./orders";
 import { lairsOn, partyStealth, sneakChance } from "../stealth";
 import type { FloorIntel } from "./report";
 import type { ExpeditionResult, ExpeditionExtras } from "./report";
@@ -107,8 +107,14 @@ export function breakOut(
   return trip.walkOut(floor);
 }
 
+/** "a plank barricade", "an iron-bound gate". */
+const aOrAn = (name: string) => `${/^[aeiou]/i.test(name) ? "an" : "a"} ${name.toLowerCase()}`;
+
 /** One trip, from setting off to coming home (or not). */
 export class Expedition extends TripRescue {
+  /** The stairs the party sealed (M7.16). */
+  protected sealed?: ExpeditionResult["sealed"];
+
   /** See holedNight. */
   night(floor: number) {
     this.depth = this.deepest = floor;
@@ -169,6 +175,7 @@ export class Expedition extends TripRescue {
       "depart",
       `${names} set off for ${mission}. Orders: ${describeRetreat(retreat)}; ` +
         `${loot === "everything" ? "carry everything" : "leave the junk"}` +
+        `${this.sealing() ? `; seal the stairs below floor ${targetFloor} with ${aOrAn(this.sealing()!.name)}` : ""}` +
         `${this.huntGoal() ? `; thin out floor ${targetFloor} by ${this.orders.clearPercent}%` : ""}.`,
     );
 
@@ -269,11 +276,53 @@ export class Expedition extends TripRescue {
         }
       }
     }
+    this.buildSeal();
+    if (this.wiped) return this.finish("wiped");
     const hunted = this.hunt();
     if (hunted) return hunted;
     this.roomNo = 0;
     this.emit("retreat", `Floor ${targetFloor} is done. The party heads for home.`);
     return this.goHome("returned");
+  }
+
+  /** The barricade the party carries down to seal the stairs with (M7.16), if it can. */
+  protected sealing() {
+    const id = sealOf(this.orders);
+    if (!id || this.orders.targetFloor >= this.ix.lib.floors.length) return undefined;
+    return this.ix.barricade(id);
+  }
+
+  /**
+   * Seal the stairs below the target floor (M7.16, DESIGN.md §18.3b): the
+   * party spends the barricade's hours building at the stairhead, and
+   * something may come up the stairs while it works.
+   */
+  protected buildSeal(): void {
+    const b = this.sealing();
+    const up = this.conscious();
+    if (!b || !up.length) return;
+    const floor = this.orders.targetFloor;
+    this.campIfTired();
+    this.roomNo = 0;
+    this.emit(
+      "seal",
+      `At the head of the stairs down to floor ${floor + 1}, ${list(up.map((h) => h.name))} set to work on ${aOrAn(b.name)}.`,
+    );
+    this.pass(b.hours);
+    if (this.rng.chance(WANDER_CHANCE)) {
+      const monsters = this.rollMonsters();
+      if (monsters.length) {
+        this.emit("fight", "Something comes up the stairs to see what the hammering is.");
+        this.fight(monsters);
+        if (this.wiped) return;
+        this.betweenRooms();
+      }
+    }
+    this.sealed = { floor, barricade: b.id, day: this.tripDay() };
+    this.emit(
+      "seal",
+      `The stairs below floor ${floor} are sealed. Nothing is coming up that way for a while.`,
+    );
   }
 
   /** The lair the orders send the party to (M7.08). */
@@ -573,6 +622,7 @@ export class Expedition extends TripRescue {
       ...(this.scouting() ? { intel: wiped ? [] : this.intelNow(), slipped: this.slipped } : {}),
       ...(this.sneaking() ? { sneaked: this.sneaked } : {}),
       ...(this.lairVisit ? { lair: this.lairVisit } : {}),
+      ...(this.sealed ? { sealed: this.sealed } : {}),
     };
   }
 

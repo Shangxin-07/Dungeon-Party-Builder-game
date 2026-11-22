@@ -25,6 +25,7 @@ import type {
   TransformDef,
   TraitDef,
   LairDef,
+  BarricadeDef,
 } from "../content/types";
 
 export interface Index {
@@ -49,6 +50,7 @@ export interface Index {
   recipe(id: string): RecipeDef;
   trait(id: string): TraitDef;
   lair(id: string): LairDef;
+  barricade(id: string): BarricadeDef;
   /** The floor at this depth. */
   floor(depth: number): FloorDef;
 }
@@ -90,6 +92,7 @@ export function indexLibrary(lib: Library): Index {
       recipe: table("recipe", lib.recipes ?? []),
       trait: table("trait", lib.traits ?? []),
       lair: table("lair", lib.lairs ?? []),
+      barricade: table("barricade", lib.barricades ?? []),
       floor: (depth) => {
         const f = lib.floors.find((x) => x.depth === depth);
         if (!f) throw new Error(`No floor defined at depth ${depth}`);

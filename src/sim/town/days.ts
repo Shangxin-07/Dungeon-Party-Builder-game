@@ -38,6 +38,7 @@ import { newBody, rise, risenClimb } from "./bodies";
 import { checkCamp, raidSpoils, tidyPosts, workPosts } from "./posts";
 import { researchTiers, studyDay, tidyDesks } from "./research";
 import { payDay } from "./pay";
+import { sealsBroke } from "./seals";
 import { folkDay, folkScared } from "./folk";
 import { tidyBenches, workshopDay } from "./workshops";
 import { arrivals, hearOfLoss, landKills, launch, remember, returnHero } from "./launch";
@@ -54,6 +55,7 @@ export function nightfall(
 ): RaidReport | undefined {
   const { dungeon, day } = dungeonDay(ix, t.dungeon);
   t.dungeon = dungeon;
+  sealsBroke(t, day.broke);
   const targets = ix.lib.buildings
     .filter((b) => !b.raidProof && (t.buildings[b.id] ?? 0) > 0 && !t.damaged.includes(b.id))
     .map((b) => b.id);
@@ -452,7 +454,7 @@ export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
  */
 export function rest(ix: Index, town: TownState, names: readonly string[]): TownState {
   const t = edit(town);
-  landKills(t);
+  landKills(ix, t);
   const away = awaySet(t);
   nightfall(ix, t, away);
   endOfDay(ix, t, away);

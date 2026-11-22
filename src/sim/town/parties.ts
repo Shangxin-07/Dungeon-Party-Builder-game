@@ -58,7 +58,8 @@ export function saveParty(ix: Index, town: TownState, slot: number, name?: strin
   if (!town.party.length) throw new TownError("Pick some heroes first.");
   const t = edit(town);
   t.parties ??= [];
-  const orders = ordinaryOrders(t.orders);
+  // Sealing the stairs (M7.16) is a one-off: it isn't kept on file.
+  const { seal: _seal, ...orders } = ordinaryOrders(t.orders);
   const old = t.parties[slot];
   while (t.parties.length < slot) t.parties.push(emptyParty(t.parties.length));
   t.parties[slot] = {

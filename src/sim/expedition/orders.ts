@@ -54,6 +54,12 @@ export interface StandingOrders {
    * percent of the monsters living there are dead. Retreat orders still apply.
    */
   clearPercent?: number;
+  /**
+   * Seal the stairs below the target floor (M7.16, DESIGN.md §18.3b) with
+   * this barricade (content/barricades/): once the floor is walked, before
+   * any hunting. Only on an ordinary delve.
+   */
+  seal?: string;
 }
 
 /** A scout mission (M7.08): not on a search. */
@@ -67,6 +73,12 @@ export const isSneaking = (orders: StandingOrders): boolean =>
 /** The lair this trip goes for (M7.08), if any. */
 export const lairOf = (orders: StandingOrders): string | undefined =>
   orders.rescue ? undefined : orders.lair;
+
+/** The barricade this trip carries down to seal the stairs with (M7.16), if any. */
+export const sealOf = (orders: StandingOrders): string | undefined =>
+  orders.rescue || orders.mission === "scout" || orders.mission === "sneak"
+    ? undefined
+    : orders.seal;
 
 export const DEFAULT_ORDERS: StandingOrders = {
   targetFloor: 1,

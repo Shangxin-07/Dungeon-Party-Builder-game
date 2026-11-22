@@ -95,6 +95,7 @@ export {
   usualDays,
   grumbles,
   cantLaunch,
+  cantSeal,
 } from "./read";
 export { newTown, tidyFreeHires } from "./start";
 export {
@@ -162,6 +163,7 @@ export {
   setFolkJob,
   whyNoSettlers,
 } from "./folk";
+export { barricadeChoices, sealsNow, sealWord, setSeal } from "./seals";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
 export { launch, giveUp, outingView } from "./launch";
 export { assignPost, postOf, trade } from "./posts";
