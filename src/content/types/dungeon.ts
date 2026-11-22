@@ -243,6 +243,23 @@ export interface ScoutRules {
   staleDays: number;
   /** Scouts count monsters roughly: the floor's numbers are rounded to this. */
   roundTo: number;
+  /** What the town can see of the floors (M7.13, DESIGN.md §18.3). */
+  fog: FogRules;
+}
+
+/**
+ * Fog over the floors (M7.13, DESIGN.md §18.3): the pit map shows only what
+ * the town knows. Watchtowers watch the top floors; deeper floors show the
+ * last word from a party or scouts, dated, until it's too old to trust.
+ */
+export interface FogRules {
+  /**
+   * How full a floor feels, by population / capacity: the first band whose
+   * `below` is above that. The last band takes everything else.
+   */
+  bands: readonly { below: number; name: string }[];
+  /** Word from below older than this many days is forgotten: "unknown". */
+  fadeDays: number;
 }
 
 /**

@@ -10,4 +10,15 @@ export default defineScoutRules({
   slipMax: 0.8,
   staleDays: 10,
   roundTo: 5,
+  // M7.13 fog: a floor under 40% full is quiet; at capacity it pushes its
+  // extras up (floor 1: out of the pit). Word from below lasts three weeks.
+  fog: {
+    bands: [
+      { below: 0.4, name: "quiet" },
+      { below: 0.75, name: "busy" },
+      { below: 1, name: "crowded" },
+      { below: 99, name: "full" },
+    ],
+    fadeDays: 21,
+  },
 });
