@@ -45,6 +45,8 @@ import type {
   TownRules,
   TownsfolkRules,
   WorkshopRules,
+  OfferDef,
+  OfferRules,
 } from "./town";
 
 /** Everything the simulation needs, indexed by kind. */
@@ -98,6 +100,9 @@ export interface Library {
   workshops: WorkshopRules;
   /** Settlers (M7.15). */
   townsfolk: TownsfolkRules;
+  /** Town news (M7.17). */
+  offers: readonly OfferDef[];
+  offerRules: OfferRules;
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -142,6 +147,8 @@ export const definePost = (def: PostDef): PostDef => def;
 
 export const defineRecipe = (def: RecipeDef): RecipeDef => def;
 
+export const defineOffer = <T extends OfferDef>(def: T): T => def;
+export const defineOfferRules = (def: OfferRules): OfferRules => def;
 export const defineWorkshopRules = (def: WorkshopRules): WorkshopRules => def;
 
 export const defineTownsfolkRules = (def: TownsfolkRules): TownsfolkRules => def;

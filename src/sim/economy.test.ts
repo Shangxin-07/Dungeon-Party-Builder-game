@@ -44,7 +44,7 @@ describe("retainers", () => {
     const t: TownState = { ...fresh(), gold: 0 };
     const after = rest(ix, t, heroNames);
     expect(after.gold).toBe(0);
-    expect(after.news.at(-1)!.text).toMatch(/couldn't pay/);
+    expect(after.news.map((n) => n.text)).toContainEqual(expect.stringMatching(/couldn't pay/));
     for (const h of after.roster) {
       expect(h.moraleLog.some((n) => n.reason === "wasn't paid")).toBe(true);
       if (h.motivation === "gold")

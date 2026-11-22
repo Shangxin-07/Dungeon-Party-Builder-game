@@ -7,6 +7,7 @@
 import type {
   LairDef,
   BarricadeDef,
+  OfferDef,
   AbilityDef,
   AlignmentDef,
   BuildingDef,
@@ -141,6 +142,18 @@ import leadershipRules from "./leadership";
 import researchRules from "./research";
 import workshopRules from "./workshops";
 import townsfolkRules from "./townsfolk";
+import offerRules from "./offers";
+import coastCaravanOffer from "./offers/coast-caravan";
+import deepTradersOffer from "./offers/deep-traders";
+import oreContractOffer from "./offers/ore-contract";
+import silkContractOffer from "./offers/silk-contract";
+import boneDustContractOffer from "./offers/bone-dust-contract";
+import planksContractOffer from "./offers/planks-contract";
+import digAWellOffer from "./offers/dig-a-well";
+import harvestFeastOffer from "./offers/harvest-feast";
+import seedCornOffer from "./offers/seed-corn";
+import oldShaftOffer from "./offers/old-shaft";
+import wanderingHeroOffer from "./offers/wandering-hero";
 import cottagesBuilding from "./buildings/cottages";
 import farmBuilding from "./buildings/farm";
 import sawmillBuilding from "./buildings/sawmill";
@@ -357,6 +370,21 @@ export const specimens: readonly ItemDef[] = [
 
 /** Huge beasts' lairs (M7.08, DESIGN.md §17.8), off the main tunnels. */
 export const lairs: readonly LairDef[] = [mireWallowLair];
+
+/** Town news (M7.17, DESIGN.md §18.1c): offers that turn up in town and go away again. */
+export const offers: readonly OfferDef[] = [
+  coastCaravanOffer,
+  deepTradersOffer,
+  oreContractOffer,
+  silkContractOffer,
+  boneDustContractOffer,
+  planksContractOffer,
+  digAWellOffer,
+  harvestFeastOffer,
+  seedCornOffer,
+  oldShaftOffer,
+  wanderingHeroOffer,
+];
 
 /** Stairhead barricades (M7.16, DESIGN.md §18.3b): what a party can seal the stairs with. */
 export const barricades: readonly BarricadeDef[] = [plankBarricade, ironBoundGate];
@@ -705,6 +733,8 @@ export const library: Library = {
   recipes,
   workshops: workshopRules,
   townsfolk: townsfolkRules,
+  offers,
+  offerRules,
 };
 
 export { heroNames } from "./names";

@@ -85,6 +85,15 @@ import {
   folkJobs,
   folkRoom,
   setFolkJob,
+  offersOf,
+  takeContract,
+  cantDeliver,
+  deliverContract,
+  cantGrant,
+  grantPetition,
+  cantWelcome,
+  welcomeVisitor,
+  sellToCaravan,
   sealsNow,
   settleByRule,
   nextCommand,
@@ -201,6 +210,36 @@ function sawPlanks(t: TownState): TownState {
   const queued = t.workshops?.sawmill?.queue.length ?? 0;
   if (queued < 2 && (t.materials.timber ?? 0) >= 3 && (t.materials.planks ?? 0) < 12)
     t = queueJob(ix, t, "sawmill", "planks");
+  return t;
+}
+
+/**
+ * Town news (M7.17): take on any contract it can deliver at once, grant
+ * petitions with gold to spare, welcome any visitor who'll stay, and sell
+ * caravans the silk and bone dust over half a dozen.
+ */
+function answerOffers(t: TownState): TownState {
+  for (const o of offersOf(t)) {
+    const def = ix.offer(o.def);
+    if (def.kind === "contract" && (o.taken || !cantDeliver(ix, t, o.id))) {
+      if (!o.taken) t = takeContract(ix, t, o.id);
+      if (!cantDeliver(ix, t, o.id)) {
+        t = deliverContract(ix, t, o.id);
+        tally.contracts++;
+      }
+    } else if (def.kind === "petition" && t.gold >= 250 && !cantGrant(ix, t, o.id)) {
+      t = grantPetition(ix, t, o.id);
+      tally.petitions++;
+    } else if (def.kind === "visitor" && !cantWelcome(ix, t, o.id)) {
+      t = welcomeVisitor(ix, t, o.id);
+      tally.visitors++;
+    } else if (def.kind === "caravan") {
+      for (const id of ["spider-silk", "bone-dust"]) {
+        const spare = (t.materials[id] ?? 0) - 6;
+        if (spare > 0 && def.buys[id]) t = sellToCaravan(ix, t, o.id, id, spare);
+      }
+    }
+  }
   return t;
 }
 
@@ -452,6 +491,7 @@ function step(t: TownState): TownState {
   t = manPosts(t);
   t = sawPlanks(t);
   t = placeFolk(t);
+  t = answerOffers(t);
   if (policy === "idle") return rest(ix, t, heroNames);
   // Go when everyone is healed and nobody is tired or hurt.
   const ready = t.party.every((id) => {
@@ -497,6 +537,11 @@ const tally = {
   overCommand: 0,
   /** --seal: barricades carried down. */
   seals: 0,
+  /** Town news (M7.17): offers seen, contracts delivered, petitions granted, visitors who joined. */
+  offers: 0,
+  contracts: 0,
+  petitions: 0,
+  visitors: 0,
   resurrected: 0,
   buried: 0,
   rose: 0,
@@ -576,6 +621,7 @@ function play(seed: number, print: boolean) {
     // Every trip that set off (some are never heard of again).
     tally.trips += t.outings.filter((o) => o.left === t.day && !launched.has(o.id)).length;
     for (const o of t.outings) launched.add(o.id);
+    for (const o of t.offers ?? []) if (!launched.has(o.id)) (launched.add(o.id), tally.offers++);
     for (const c of CHECKPOINTS)
       if (c <= days && t.day >= c && !seen.has(c)) {
         seen.add(c);
@@ -725,6 +771,8 @@ if (runs === 1) {
         .map(([d, g]) => `day ${d}: ${[...g].sort((a, b) => a - b)[Math.floor(g.length / 2)]}`)
         .join(", ") +
       `\n  townsfolk at the end: ${(settlers / runs).toFixed(1)}, taxes per town ${((tally.ledger.taxes ?? 0) / runs).toFixed(0)}` +
+      `\n  town news per town: ${(tally.offers / runs).toFixed(1)} offers, ${(tally.contracts / runs).toFixed(1)} contracts delivered (${((tally.ledger.contracts ?? 0) / runs).toFixed(0)} gold), ` +
+      `${(tally.petitions / runs).toFixed(1)} petitions granted, ${(tally.visitors / runs).toFixed(1)} visitors joined, caravans ${((tally.ledger.trade ?? 0) / runs).toFixed(0)} gold net` +
       (sealStairs ? `\n  stairs sealed per town: ${(tally.seals / runs).toFixed(1)}` : "") +
       `\n  pay per town: ${payLine(tally.ledger)}` +
       `\n  pay per town, first ${EARLY} days: ${payLine(tally.early)}`,

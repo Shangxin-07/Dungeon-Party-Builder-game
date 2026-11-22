@@ -1715,3 +1715,13 @@ sup.down {
 .folk-jobs li {
   margin: 0.25rem 0;
 }
+
+/* Town news (M7.17): one card per offer. */
+.offers {
+  display: grid;
+  gap: 10px;
+}
+
+.offer h4 {
+  margin: 0 0 4px;
+}
