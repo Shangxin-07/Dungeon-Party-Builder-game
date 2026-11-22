@@ -6,6 +6,7 @@
  */
 import type {
   LairDef,
+  BarricadeDef,
   AbilityDef,
   AlignmentDef,
   BuildingDef,
@@ -144,6 +145,10 @@ import cottagesBuilding from "./buildings/cottages";
 import farmBuilding from "./buildings/farm";
 import sawmillBuilding from "./buildings/sawmill";
 import planksMaterial from "./materials/planks";
+import ironBandsMaterial from "./materials/iron-bands";
+import ironBandsRecipe from "./recipes/iron-bands";
+import plankBarricade from "./barricades/plank-barricade";
+import ironBoundGate from "./barricades/iron-bound-gate";
 import planksRecipe from "./recipes/planks";
 import woodenShieldRecipe from "./recipes/wooden-shield";
 import staffRecipe from "./recipes/staff";
@@ -330,6 +335,7 @@ export const materials: readonly ItemDef[] = [
   timberMaterial,
   // Sawn at the Sawmill (M7.14).
   planksMaterial,
+  ironBandsMaterial,
   ironOreMaterial,
   spiderSilkMaterial,
   boneDustMaterial,
@@ -351,6 +357,9 @@ export const specimens: readonly ItemDef[] = [
 
 /** Huge beasts' lairs (M7.08, DESIGN.md §17.8), off the main tunnels. */
 export const lairs: readonly LairDef[] = [mireWallowLair];
+
+/** Stairhead barricades (M7.16, DESIGN.md §18.3b): what a party can seal the stairs with. */
+export const barricades: readonly BarricadeDef[] = [plankBarricade, ironBoundGate];
 
 /** Posts round the pit (DESIGN.md §8): duties for heroes at home. */
 export const posts: readonly PostDef[] = [barricadePost, lookoutPost, salvagePost, seamPost];
@@ -619,6 +628,7 @@ export const transforms: readonly TransformDef[] = [risenTransform];
 /** What the workshops make (M7.14, DESIGN.md §18.1). */
 export const recipes: readonly RecipeDef[] = [
   planksRecipe,
+  ironBandsRecipe,
   woodenShieldRecipe,
   staffRecipe,
   shortBowRecipe,
@@ -683,6 +693,7 @@ export const library: Library = {
   scouting: scoutRules,
   stealth: stealthRules,
   lairs,
+  barricades,
   time: timeRules,
   fallen: fallenRules,
   transforms,

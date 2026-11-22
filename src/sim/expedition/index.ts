@@ -15,7 +15,7 @@
  * fights.ts (rooms, fights, the risen), rescue.ts (lost parties, porters) and
  * run.ts (the trip from start to finish).
  */
-export { DEFAULT_ORDERS, describeRetreat, isScouting, isSneaking, lairOf } from "./orders";
+export { DEFAULT_ORDERS, describeRetreat, isScouting, isSneaking, lairOf, sealOf } from "./orders";
 export type { RetreatRule, LootRule, StandingOrders } from "./orders";
 export type {
   ExpeditionEventKind,

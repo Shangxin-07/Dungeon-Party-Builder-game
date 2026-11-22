@@ -653,6 +653,18 @@ export function validateLibrary(lib: Library): string[] {
     if (!(r.work > 0)) err(`${w}: work must be above 0`);
     if (!Object.keys(r.materials).length && !r.gold) err(`${w}: must cost something`);
   }
+  // Barricades (M7.16): what they cost, how strong, how long to build.
+  ids("barricade", lib.barricades ?? []);
+  for (const b of lib.barricades ?? []) {
+    const w = `barricade "${b.id}"`;
+    materialCost(w, b.materials);
+    if ((b.gold ?? 0) < 0) err(`${w}: gold can't be negative`);
+    if (!(b.strength > 0)) err(`${w}: strength must be above 0`);
+    if (!(b.hours > 0)) err(`${w}: hours must be above 0`);
+  }
+  const seals = lib.dungeon.seals;
+  if (seals.perMonster < 0 || seals.wearPerDay < 0) err("dungeon seals: can't be negative");
+  if (!(seals.crowding >= 1)) err("dungeon seals: crowding must be 1 or more");
   const ws = lib.workshops;
   if (ws.perDay <= 0 || ws.minDay <= 0 || ws.perStat < 0) err("workshops: bad work rates");
   if (ws.porter < 0 || ws.rest < 0 || ws.rest > 1) err("workshops: porter >= 0, rest 0-1");

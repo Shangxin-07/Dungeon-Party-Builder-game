@@ -50,6 +50,8 @@ describe("materials", () => {
       ),
     );
     for (const r of library.recipes) for (const m of Object.keys(r.materials)) wanted.add(m);
+    // M7.16: stairhead barricades.
+    for (const b of library.barricades) for (const m of Object.keys(b.materials)) wanted.add(m);
     for (const m of materials) {
       expect(dropped.has(m.id), m.id).toBe(true);
       expect(wanted.has(m.id), m.id).toBe(true);

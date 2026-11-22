@@ -13,6 +13,8 @@ import {
   defence,
   forecast,
   pitMap,
+  sealsNow,
+  sealWord,
   watchRange,
   type PitNight,
   type TownState,
@@ -306,6 +308,7 @@ function PressureMap({ town }: { town: TownState }) {
   const below = awaySet(town);
   const known = pitMap(ix, town, below);
   const watch = watchRange(ix, town, below);
+  const seals = sealsNow(ix, town);
   return (
     <>
       <h3>Dungeon pressure</h3>
@@ -336,7 +339,8 @@ function PressureMap({ town }: { town: TownState }) {
                 : k.band
                   ? bandWidth(k.band)
                   : 0;
-            return (
+            const seal = seals.find((x) => x.floor === def.depth);
+            return [
               <tr key={def.id} className={k.source === "none" ? "muted" : undefined}>
                 <td>
                   {def.depth}: {def.name}
@@ -394,8 +398,21 @@ function PressureMap({ town }: { town: TownState }) {
                     </span>
                   )}
                 </td>
-              </tr>
-            );
+              </tr>,
+              seal ? (
+                <tr key={`${def.id}-seal`} className="seal-row">
+                  <td colSpan={4} className="small">
+                    Stairs down sealed: {seal.name.toLowerCase()},{" "}
+                    <span className={seal.percent < 34 ? "warn" : undefined}>
+                      {sealWord(seal.percent)} ({seal.percent}%)
+                    </span>
+                    <span className="muted">
+                      , put up {seal.by ? `by ${seal.by} ` : ""}on day {seal.day}
+                    </span>
+                  </td>
+                </tr>
+              ) : null,
+            ];
           })}
         </tbody>
       </table>

@@ -9,7 +9,7 @@ import type { Index } from "../library";
 import { isLow } from "../morale";
 import { partyCommand, type Command } from "../leadership";
 import { gearCheck } from "../report";
-import { isScouting, isSneaking, lairOf, type StandingOrders } from "../expedition";
+import { isScouting, isSneaking, lairOf, sealOf, type StandingOrders } from "../expedition";
 import { knownLairs, lairSlain } from "../stealth";
 import { monsterTier } from "../research";
 import { tripDays } from "../expedition/clock";
@@ -489,6 +489,9 @@ export function usualHours(ix: Index, orders: StandingOrders, lift = 0): number 
     );
     hours += tunnels * (time.hunt + time.fight.hours);
   }
+  // Sealing the stairs (M7.16).
+  const seal = sealOf(orders);
+  if (seal && target < ix.lib.floors.length) hours += ix.barricade(seal).hours;
   return hours;
 }
 
@@ -553,5 +556,21 @@ export function cantLaunch(ix: Index, town: TownState): string | undefined {
     if (lairSlain(town, lair) && isSneaking(town.orders))
       return `The ${ix.monster(def.monster).name} is dead: there's nothing to sneak past.`;
   }
+  return cantSeal(ix, town, town.orders);
+}
+
+/**
+ * Why the party can't carry this seal down (M7.16), or undefined if it can
+ * (or isn't sealing anything).
+ */
+export function cantSeal(ix: Index, town: TownState, orders: StandingOrders): string | undefined {
+  const id = sealOf(orders);
+  if (!id) return undefined;
+  const b = ix.barricade(id);
+  if (orders.targetFloor >= ix.lib.floors.length)
+    return `Floor ${orders.targetFloor} is the bottom: there are no stairs below it to seal.`;
+  const short = materialsShort(ix, town, b.materials);
+  if (short) return `The ${b.name.toLowerCase()} needs ${short} more.`;
+  if (town.gold < (b.gold ?? 0)) return `The ${b.name.toLowerCase()} costs ${b.gold} gold.`;
   return undefined;
 }

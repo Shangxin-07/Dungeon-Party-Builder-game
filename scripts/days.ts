@@ -16,6 +16,7 @@
  *   npm run days -- --policy climb --build --days 120 # go deeper as the party levels up (floors 4-5)
  *   npm run days -- --camp --unlucky --palisade-first # no timber ever drops: trade ore for it
  *   npm run days -- --policy 2 --build --haul salvage # salvage what breaks down, sell the rest
+ *   npm run days -- --camp --policy 1 --build --seal  # seal the stairs below the target floor with planks
  *
  * The bot restocks used supplies, keeps one hero on the bench and sends the
  * freshest heroes (unless --static), and rests until the party is at 90% HP
@@ -43,6 +44,7 @@ import {
   trainPorter,
   cancelRescue,
   cantLaunch,
+  cantSeal,
   chooseLevelUp,
   chooseLevelClass,
   built,
@@ -83,6 +85,7 @@ import {
   folkJobs,
   folkRoom,
   setFolkJob,
+  sealsNow,
   settleByRule,
   nextCommand,
   type HaulRule,
@@ -139,6 +142,8 @@ const porterCount = Number(arg("porters") ?? 0);
 const multiclass = flag("multiclass");
 const twoParties = flag("parties");
 const camp = flag("camp");
+/** Seal the stairs below the target floor (M7.16) when the old seal is nearly gone. */
+const sealStairs = flag("seal");
 const haulRule = (arg("haul") ?? "sell") as HaulRule;
 
 const DEFENCES = ["palisade", "gate", "watchtower"];
@@ -463,6 +468,16 @@ function step(t: TownState): TownState {
     targetFloor: Math.max(targetFloor(t), site2?.floor ?? 0),
     clearPercent: clear || undefined,
   });
+  if (sealStairs && !t.orders.rescue) {
+    const floor = t.orders.targetFloor;
+    const left = sealsNow(ix, t).find((x) => x.floor === floor)?.days ?? 0;
+    const out = t.outings.some((o) => o.result.orders.seal);
+    const order = { ...t.orders, seal: "plank-barricade" };
+    if (left < 3 && !out && !cantSeal(ix, t, order)) {
+      t = setOrders(ix, t, order);
+      tally.seals++;
+    }
+  }
   if (nextCommand(ix, t).over > 0) tally.overCommand++;
   return launch(ix, t, heroNames);
 }
@@ -480,6 +495,8 @@ const tally = {
   disobeyed: 0,
   leaderTraits: 0,
   overCommand: 0,
+  /** --seal: barricades carried down. */
+  seals: 0,
   resurrected: 0,
   buried: 0,
   rose: 0,
@@ -708,6 +725,7 @@ if (runs === 1) {
         .map(([d, g]) => `day ${d}: ${[...g].sort((a, b) => a - b)[Math.floor(g.length / 2)]}`)
         .join(", ") +
       `\n  townsfolk at the end: ${(settlers / runs).toFixed(1)}, taxes per town ${((tally.ledger.taxes ?? 0) / runs).toFixed(0)}` +
+      (sealStairs ? `\n  stairs sealed per town: ${(tally.seals / runs).toFixed(1)}` : "") +
       `\n  pay per town: ${payLine(tally.ledger)}` +
       `\n  pay per town, first ${EARLY} days: ${payLine(tally.early)}`,
   );

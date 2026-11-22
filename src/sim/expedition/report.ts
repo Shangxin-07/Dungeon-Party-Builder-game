@@ -45,6 +45,8 @@ export type ExpeditionEventKind =
   | "camp"
   /** The party can't get home and barricades itself in to wait for help (M7.02). */
   | "holed"
+  /** The party barricades the stairs below its floor (M7.16). */
+  | "seal"
   /** Raids on the town reuse the trip log format. */
   | "raid";
 
@@ -116,6 +118,11 @@ export interface ExpeditionResult {
    * its supplies last. The living stay there, alive, waiting for help.
    */
   holed?: { floor: number; room: number; supplies: number };
+  /**
+   * The stairs this party sealed (M7.16): below `floor`, with `barricade`,
+   * on day `day` of the trip (0 = the day it set off).
+   */
+  sealed?: { floor: number; barricade: string; day: number };
   log: ExpeditionEvent[];
   /** Where the party fell, if it was wiped. */
   wipeSite?: { floor: number; room: number };

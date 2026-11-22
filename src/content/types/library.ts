@@ -31,6 +31,7 @@ import type {
   ScoutRules,
   StealthRules,
   LairDef,
+  BarricadeDef,
   TimeRules,
   FloorDef,
   DungeonRules,
@@ -78,6 +79,8 @@ export interface Library {
   /** Sneak missions and lairs (M7.08). */
   stealth: StealthRules;
   lairs: readonly LairDef[];
+  /** Stairhead barricades (M7.16). */
+  barricades: readonly BarricadeDef[];
   /** The trip clock (M7.01): hours below. */
   time: TimeRules;
   fallen: FallenRules;
@@ -165,6 +168,7 @@ export const defineSearchRules = (def: SearchRules): SearchRules => def;
 export const defineScoutRules = (def: ScoutRules): ScoutRules => def;
 export const defineStealthRules = (def: StealthRules): StealthRules => def;
 export const defineLair = (def: LairDef): LairDef => def;
+export const defineBarricade = (def: BarricadeDef): BarricadeDef => def;
 
 export const defineTimeRules = (def: TimeRules): TimeRules => def;
 

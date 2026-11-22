@@ -7,6 +7,9 @@
  *    where they arrive stronger than the locals and raise that floor's level.
  * 3. Floor 1's extra climb out of the pit: the overflow the town has to face.
  *
+ * A sealed stairhead (M7.16) stops step 2 at those stairs: the floor below
+ * keeps its extras, and they wear the seal down until it gives way.
+ *
  * Every floor also settles a little way back towards its usual level each day,
  * so killing monsters (which makes room and stops the push-up) lets it calm down.
  * Monster levels are depth-equivalent: level 2 means "as strong as floor 2",
@@ -31,6 +34,23 @@ export interface DungeonState {
   days: number;
   /** Part-monsters bred so far, carried into the next day so fractional rates add up. */
   spawnCarry: number;
+  /**
+   * Barricaded stairheads (M7.16), by the floor above them: seals[1] holds
+   * the stairs between floors 1 and 2.
+   */
+  seals?: Record<number, Seal>;
+}
+
+/** A barricade across the top of a flight of stairs (M7.16, DESIGN.md §18.3b). */
+export interface Seal {
+  /** content/barricades/ */
+  barricade: string;
+  strength: number;
+  /** Strength when it was built. */
+  max: number;
+  /** Town day it went up, and who put it up. */
+  day: number;
+  by?: string;
 }
 
 /** What one day did to the dungeon. */
@@ -43,6 +63,8 @@ export interface DungeonDay {
   overflow: { count: number; level: number };
   /** Overflow strength = monsters × level, rounded (DESIGN.md §8). */
   strength: number;
+  /** Seals that gave way today, by the floor above them (M7.16). */
+  broke?: number[];
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -120,11 +142,25 @@ export function dungeonDay(ix: Index, d: DungeonState): { dungeon: DungeonState;
   arrive(out.floors[bottom]!, spawned, bottom + 1);
 
   // 2. Push the extras up, bottom first, so a crowd can ripple all the way up in one day.
+  // A seal over the stairs holds them back, and they wear it down (M7.16).
   const pushedUp = out.floors.map(() => 0);
   let overflow = { count: 0, level: 0 };
+  const broke: number[] = [];
   for (let i = bottom; i >= 0; i--) {
     const f = out.floors[i]!;
     const extra = f.population - caps[i]!;
+    const seal = i > 0 ? out.seals?.[i] : undefined;
+    if (seal) {
+      const press = rules.seals.wearPerDay + Math.max(0, extra) * rules.seals.perMonster;
+      seal.strength = round2(seal.strength - press);
+      if (seal.strength > 0) {
+        // Penned in, they turn on each other: a sealed floor holds only so many.
+        f.population = Math.min(f.population, Math.floor(caps[i]! * rules.seals.crowding));
+        continue;
+      }
+      delete out.seals![i];
+      broke.push(i);
+    }
     if (extra <= 0) continue;
     const level = evict(f, extra, defs[i]?.evictedLevelDrop ?? rules.evictedLevelDrop);
     pushedUp[i] = extra;
@@ -143,7 +179,25 @@ export function dungeonDay(ix: Index, d: DungeonState): { dungeon: DungeonState;
 
   out.days += 1;
   const strength = Math.round(overflow.count * overflow.level);
-  return { dungeon: out, day: { spawned, pushedUp, overflow, strength } };
+  if (out.seals && !Object.keys(out.seals).length) delete out.seals;
+  return {
+    dungeon: out,
+    day: { spawned, pushedUp, overflow, strength, ...(broke.length ? { broke } : {}) },
+  };
+}
+
+/**
+ * Days a seal should hold if the floor below stays as it is now (M7.16): a
+ * guess, since the floor below only gets fuller. Infinity if nothing wears it.
+ */
+export function sealDays(ix: Index, d: DungeonState, above: number): number {
+  const seal = d.seals?.[above];
+  if (!seal) return 0;
+  const below = d.floors[above];
+  const cap = ix.floor(above + 1).capacity;
+  const rules = ix.lib.dungeon.seals;
+  const press = rules.wearPerDay + Math.max(0, (below?.population ?? 0) - cap) * rules.perMonster;
+  return press > 0 ? Math.ceil(seal.strength / press) : Infinity;
 }
 
 /** What the expedition needs to know about each floor today. */

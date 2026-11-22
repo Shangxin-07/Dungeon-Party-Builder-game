@@ -148,6 +148,8 @@ export interface Outing {
   result: ExpeditionResult;
   /** Days of the trip whose kills have come off the dungeon. */
   killsLanded: number;
+  /** The seal this party built (M7.16) is up in the dungeon. */
+  sealPlaced?: boolean;
   /**
    * The guild gave them up for lost before hearing anything (M7.02): they're
    * off the roster and the payroll, on the memorial as lost. If they do come
