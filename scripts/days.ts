@@ -79,6 +79,10 @@ import {
   assignBench,
   benches,
   queueJob,
+  folkIdle,
+  folkJobs,
+  folkRoom,
+  setFolkJob,
   settleByRule,
   nextCommand,
   type HaulRule,
@@ -192,6 +196,21 @@ function sawPlanks(t: TownState): TownState {
   const queued = t.workshops?.sawmill?.queue.length ?? 0;
   if (queued < 2 && (t.materials.timber ?? 0) >= 3 && (t.materials.planks ?? 0) < 12)
     t = queueJob(ix, t, "sawmill", "planks");
+  return t;
+}
+
+/**
+ * Townsfolk (M7.15): put everyone to work, salvage first (timber and ore),
+ * then the Sawmill, then the lookout.
+ */
+function placeFolk(t: TownState): TownState {
+  if (!t.folk?.count) return t;
+  t = { ...t, folk: { ...t.folk, jobs: {} } };
+  for (const job of ["post:salvage", "workshop:sawmill", "post:lookout"]) {
+    if (!folkJobs(ix, t).includes(job)) continue;
+    const n = Math.min(folkIdle(t), folkRoom(ix, t, job));
+    if (n > 0) t = setFolkJob(ix, t, job, n);
+  }
   return t;
 }
 
@@ -427,6 +446,7 @@ function step(t: TownState): TownState {
   }
   t = manPosts(t);
   t = sawPlanks(t);
+  t = placeFolk(t);
   if (policy === "idle") return rest(ix, t, heroNames);
   // Go when everyone is healed and nobody is tired or hurt.
   const ready = t.party.every((id) => {
@@ -606,6 +626,7 @@ if (runs === 1) {
   let trapped = 0;
   let built = 0;
   let unpaid = 0;
+  let settlers = 0;
   const secrets = { found: 0, missed: 0, gold: 0 };
   const deepest: number[] = [];
   const levels = library.buildings.reduce((s, b) => s + b.levels.length - b.startLevel, 0);
@@ -616,6 +637,7 @@ if (runs === 1) {
     built += library.buildings.reduce((s, b) => s + (t.buildings[b.id] ?? 0) - b.startLevel, 0);
     unpaid += tally.unpaid;
     tally.unpaid = 0;
+    settlers += t.folk?.count ?? 0;
     const r = t.pit.filter((n) => n.outcome !== "held");
     raids += r.length;
     beaten += r.filter((n) => n.outcome === "repelled").length;
@@ -685,6 +707,7 @@ if (runs === 1) {
       Object.entries(goldAt)
         .map(([d, g]) => `day ${d}: ${[...g].sort((a, b) => a - b)[Math.floor(g.length / 2)]}`)
         .join(", ") +
+      `\n  townsfolk at the end: ${(settlers / runs).toFixed(1)}, taxes per town ${((tally.ledger.taxes ?? 0) / runs).toFixed(0)}` +
       `\n  pay per town: ${payLine(tally.ledger)}` +
       `\n  pay per town, first ${EARLY} days: ${payLine(tally.early)}`,
   );

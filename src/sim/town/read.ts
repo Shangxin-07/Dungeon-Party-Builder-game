@@ -75,7 +75,23 @@ export function postWorkers(
     .filter((h): h is Hero => !!h && fitForPost(h, away));
 }
 
-/** Effects of every post, once per hero working it. */
+/**
+ * Townsfolk working a post today (M7.15): those put on it, within the slots
+ * the heroes at home leave free. Only posts that take settlers.
+ */
+export function postFolk(
+  ix: Index,
+  town: TownState,
+  postId: string,
+  away: ReadonlySet<string> = new Set(),
+): number {
+  const post = ix.post(postId);
+  if (!post.settlers || (!town.camp && post.campOnly)) return 0;
+  const room = Math.max(0, post.slots - postWorkers(ix, town, postId, away).length);
+  return Math.min(town.folk?.jobs[`post:${postId}`] ?? 0, room);
+}
+
+/** Effects of every post, once per hero working it (townsfolk add no defence). */
 export function postEffects(
   ix: Index,
   town: TownState,
@@ -85,6 +101,8 @@ export function postEffects(
   for (const p of openPosts(ix, town)) {
     const n = postWorkers(ix, town, p.id, away).length;
     for (let i = 0; i < n; i++) out.push(...p.effects);
+    const folk = postFolk(ix, town, p.id, away);
+    for (let i = 0; i < folk; i++) out.push(...p.effects.filter((e) => e.type !== "defence"));
   }
   return out;
 }

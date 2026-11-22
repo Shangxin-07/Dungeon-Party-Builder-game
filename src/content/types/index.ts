@@ -84,6 +84,7 @@ export type {
   ResearchRules,
   RecipeDef,
   WorkshopRules,
+  TownsfolkRules,
 } from "./town";
 export {
   defineClass,
@@ -104,6 +105,7 @@ export {
   definePost,
   defineRecipe,
   defineWorkshopRules,
+  defineTownsfolkRules,
   defineOpening,
   defineResearchRules,
   defineDungeonRules,

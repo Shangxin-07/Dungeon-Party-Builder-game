@@ -139,6 +139,9 @@ import leadershipSkill from "./skills/leadership";
 import leadershipRules from "./leadership";
 import researchRules from "./research";
 import workshopRules from "./workshops";
+import townsfolkRules from "./townsfolk";
+import cottagesBuilding from "./buildings/cottages";
+import farmBuilding from "./buildings/farm";
 import sawmillBuilding from "./buildings/sawmill";
 import planksMaterial from "./materials/planks";
 import planksRecipe from "./recipes/planks";
@@ -603,6 +606,9 @@ export const buildings: readonly BuildingDef[] = [
   apothecaryBuilding,
   // Workshops (M7.14): the Blacksmith and Apothecary have benches too.
   sawmillBuilding,
+  // Townsfolk (M7.15): housing and food.
+  cottagesBuilding,
+  farmBuilding,
   mineCageBuilding,
   // Only deals with Evil heroes (DESIGN.md §7).
   blackMarketBuilding,
@@ -687,6 +693,7 @@ export const library: Library = {
   research: researchRules,
   recipes,
   workshops: workshopRules,
+  townsfolk: townsfolkRules,
 };
 
 export { heroNames } from "./names";

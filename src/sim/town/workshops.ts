@@ -164,16 +164,38 @@ export function workRate(ix: Index, h: Hero, r: RecipeDef): number {
 export const canWork = (h: Hero, away: ReadonlySet<string>) =>
   !away.has(h.id) && h.condition === "ok" && h.hp > 0 && !(h.injuries ?? []).length;
 
+/** Townsfolk at a workshop's benches today (M7.15): in the seats the heroes leave. */
+export function benchFolk(ix: Index, town: TownState, shopId: string): number {
+  const seats = benches(ix, town, shopId) - (town.workshops?.[shopId]?.workers.length ?? 0);
+  return Math.min(town.folk?.jobs[`workshop:${shopId}`] ?? 0, Math.max(0, seats));
+}
+
+/** Everyone working a workshop today: heroes at home and fit, then townsfolk. */
+function hands(
+  ix: Index,
+  town: TownState,
+  shopId: string,
+  away: ReadonlySet<string>,
+): { hero?: Hero; rate: (r: RecipeDef) => number }[] {
+  const w = shopOf(town, shopId);
+  const heroes = w.workers
+    .slice(0, benches(ix, town, shopId))
+    .map((id) => findHero(town, id))
+    .filter((h): h is Hero => !!h && canWork(h, away))
+    .map((h) => ({ hero: h, rate: (r: RecipeDef) => workRate(ix, h, r) }));
+  const folk = Array.from({ length: benchFolk(ix, town, shopId) }, () => ({
+    rate: () => ix.lib.workshops.settler,
+  }));
+  return [...heroes, ...folk];
+}
+
 /** Days left on the queue at today's pace (Infinity with nobody working). */
 export function queueDays(ix: Index, town: TownState, shopId: string, away: ReadonlySet<string>) {
   const w = shopOf(town, shopId);
-  const workers = w.workers
-    .slice(0, benches(ix, town, shopId))
-    .map((id) => findHero(town, id))
-    .filter((h): h is Hero => !!h && canWork(h, away));
+  const workers = hands(ix, town, shopId, away);
   return w.queue.map((job) => {
     const r = ix.recipe(job.recipe);
-    const pace = workers.reduce((s, h) => s + workRate(ix, h, r), 0);
+    const pace = workers.reduce((s, h) => s + h.rate(r), 0);
     return pace ? (r.work - job.done) / pace : Infinity;
   });
 }
@@ -186,20 +208,17 @@ export function workshopDay(ix: Index, t: TownState, away: ReadonlySet<string>):
   const worked = new Set<string>();
   for (const [shopId, w] of Object.entries(t.workshops ?? {})) {
     if (!w.queue.length) continue;
-    const workers = w.workers
-      .slice(0, benches(ix, t, shopId))
-      .map((id) => findHero(t, id))
-      .filter((h): h is Hero => !!h && canWork(h, away));
+    const workers = hands(ix, t, shopId, away);
     if (!workers.length) continue;
     const made: RecipeDef[] = [];
     for (const h of workers) {
-      worked.add(h.id);
+      if (h.hero) worked.add(h.hero.id);
       // Each worker's day goes on the front job; what's left over starts the next.
       let left = 1;
       while (left > 0 && w.queue.length) {
         const job: Job = w.queue[0]!;
         const r = ix.recipe(job.recipe);
-        const rate = workRate(ix, h, r);
+        const rate = h.rate(r);
         const need = r.work - job.done;
         if (rate * left < need - 1e-9) {
           job.done = Math.round((job.done + rate * left) * 100) / 100;

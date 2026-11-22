@@ -1700,3 +1700,12 @@ sup.down {
 .workshop .recipes li {
   margin: 0.25rem 0;
 }
+
+/* M7.15 townsfolk */
+.folk-jobs {
+  list-style: none;
+  padding-left: 0;
+}
+.folk-jobs li {
+  margin: 0.25rem 0;
+}

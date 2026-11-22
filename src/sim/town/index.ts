@@ -40,6 +40,7 @@ export type {
   ShelfItem,
   Desk,
   Workshop,
+  Folk,
   Job,
   TownIntel,
 } from "./state";
@@ -74,6 +75,7 @@ export {
   willDeal,
   materialWords,
   postWorkers,
+  postFolk,
   openPosts,
   postEffects,
   fitForPost,
@@ -146,7 +148,20 @@ export {
   recipeWords,
   workRate,
   workshopIds,
+  benchFolk,
 } from "./workshops";
+export {
+  folkAt,
+  folkIdle,
+  folkJobs,
+  folkOf,
+  folkRoom,
+  foodGrown,
+  housing,
+  jobName,
+  setFolkJob,
+  whyNoSettlers,
+} from "./folk";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
 export { launch, giveUp, outingView } from "./launch";
 export { assignPost, postOf, trade } from "./posts";

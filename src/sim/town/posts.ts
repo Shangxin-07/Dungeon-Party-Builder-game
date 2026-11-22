@@ -9,7 +9,7 @@ import { rollLootTable } from "../loot";
 import type { Index } from "../library";
 import type { RaidReport } from "../raid";
 import { type TownState, TownError } from "./state";
-import { campNeeds, findHero, haulPrice, openPosts, postWorkers } from "./read";
+import { campNeeds, findHero, haulPrice, openPosts, postFolk, postWorkers } from "./read";
 import { addMaterials, book, edit, listWords, news, roll, useMaterials } from "./internal";
 import { materialWords, materialsShort } from "./read";
 import { leaveBench } from "./workshops";
@@ -74,7 +74,7 @@ function bank(
 export function workPosts(ix: Index, t: TownState, away: ReadonlySet<string>): void {
   const found: string[] = [];
   for (const p of openPosts(ix, t)) {
-    const workers = postWorkers(ix, t, p.id, away).length;
+    const workers = postWorkers(ix, t, p.id, away).length + postFolk(ix, t, p.id, away);
     for (const e of p.effects) {
       if (e.type !== "gather") continue;
       for (let i = 0; i < workers * e.rolls; i++)

@@ -13,6 +13,8 @@ import {
   TownError,
   waitUntilBack,
   retainerBill,
+  foodGrown,
+  housing,
   type TownState,
   type TripReport,
 } from "../../sim/town";
@@ -47,6 +49,7 @@ import { Memorial } from "./Memorial";
 import { CampPanel, PostsPanel } from "./Posts";
 import { ResearchPanel } from "./Research";
 import { WorkshopsPanel } from "./Workshops";
+import { FolkPanel } from "./Folk";
 
 /** A new game starts at the mining camp (the opening, DESIGN.md §8); it can be skipped on day 1. */
 export const freshTown = () => newTown(ix, heroNames, Date.now() % 2 ** 31, { camp: true });
@@ -281,6 +284,7 @@ export function TownPlay({ initial }: { initial: Game }) {
       />
       {town.camp ? null : <PostsPanel town={town} act={act} />}
       {town.camp ? null : <WorkshopsPanel town={town} act={act} />}
+      {town.camp ? null : <FolkPanel town={town} act={act} />}
       {town.camp ? null : <ResearchPanel town={town} act={act} />}
       <Roster town={town} act={act} />
       {town.freeHires > 0 ? null : <Recruits town={town} act={act} />}
@@ -321,6 +325,12 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
       <span>
         Roster <strong>{town.roster.length}</strong>/{rosterSize(ix, town)}
       </span>
+      {town.folk?.count || foodGrown(ix, town) ? (
+        <span title="Townsfolk, and the food in store (M7.15)">
+          Townsfolk <strong>{town.folk?.count ?? 0}</strong>/{housing(ix, town)}, food{" "}
+          <strong>{town.folk?.food ?? 0}</strong>
+        </span>
+      ) : null}
       {town.camp ? <span>At the mining camp</span> : null}
       <span title="What holds back what climbs out of the pit tonight, with those below away">
         Defence <strong>{defence(ix, town, awaySet(town))}</strong>
