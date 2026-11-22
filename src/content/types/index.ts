@@ -86,6 +86,13 @@ export type {
   ResearchRules,
   RecipeDef,
   WorkshopRules,
+  OfferDef,
+  OfferRules,
+  PetitionEffect,
+  CaravanOffer,
+  ContractOffer,
+  PetitionOffer,
+  VisitorOffer,
   TownsfolkRules,
 } from "./town";
 export {
@@ -107,6 +114,8 @@ export {
   definePost,
   defineRecipe,
   defineWorkshopRules,
+  defineOffer,
+  defineOfferRules,
   defineTownsfolkRules,
   defineOpening,
   defineResearchRules,

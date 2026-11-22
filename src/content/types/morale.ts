@@ -97,6 +97,8 @@ export const MORALE_FACTS = [
   "foughtRisen",
   /** 1 if this hero was brought back from the dead at the Temple. */
   "resurrected",
+  /** A treat the town laid on (M7.17 petitions): the petition's amount, for everyone at home. */
+  "townTreat",
   /**
    * Alignment in the dungeon (DESIGN.md §7, content/events/): kind deeds the
    * party did on the trip (a stranger healed, a shrine honoured)...

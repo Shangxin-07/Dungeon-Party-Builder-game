@@ -87,7 +87,9 @@ describe("raises (M7.12)", () => {
     const t = rest(ix, at(fresh(), "gold"), heroNames);
     const h = t.roster[0]!;
     expect(h.raiseAsk).toEqual({ amount: r.share, day: 1, waited: 0, kind: "share" });
-    expect(t.news.at(-1)!.text).toMatch(/half a share more of every haul/);
+    expect(t.news.map((n) => n.text)).toContainEqual(
+      expect.stringMatching(/half a share more of every haul/),
+    );
     const yes = answerRaise(ix, t, h.id, true).roster[0]!;
     expect(shareUnits(ix, yes)).toBe(1 + r.share);
     expect(retainer(ix, yes)).toBe(retainer(ix, h));

@@ -253,7 +253,7 @@ describe("morale", () => {
     expect(after.stash.filter((x) => x === "bandages").length).toBe(
       t.stash.filter((x) => x === "bandages").length + 1,
     );
-    expect(after.news.at(-1)!.text).toMatch(/quits/);
+    expect(after.news.map((n) => n.text)).toContainEqual(expect.stringMatching(/quits/));
   });
 
   it("at low morale, a glory hound may refuse to turn back", () => {

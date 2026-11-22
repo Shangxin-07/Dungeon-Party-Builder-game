@@ -50,6 +50,7 @@ import { CampPanel, PostsPanel } from "./Posts";
 import { ResearchPanel } from "./Research";
 import { WorkshopsPanel } from "./Workshops";
 import { FolkPanel } from "./Folk";
+import { OffersPanel } from "./Offers";
 
 /** A new game starts at the mining camp (the opening, DESIGN.md §8); it can be skipped on day 1. */
 export const freshTown = () => newTown(ix, heroNames, Date.now() % 2 ** 31, { camp: true });
@@ -260,6 +261,7 @@ export function TownPlay({ initial }: { initial: Game }) {
       <TalkPanel town={town} />
       <LostPanel town={town} act={act} />
       <FallenPanel town={town} act={act} />
+      {town.camp ? null : <OffersPanel town={town} act={act} />}
       {town.camp ? null : (
         <PartyPanel
           town={town}

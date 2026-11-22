@@ -92,7 +92,7 @@ describe("raises", () => {
   it("are asked for every few levels", () => {
     const t = rest(ix, at(fresh(), 1 + r.everyLevels), heroNames);
     expect(t.roster[0]!.raiseAsk).toEqual({ amount: r.amount, day: 1, waited: 0 });
-    expect(t.news.at(-1)!.text).toMatch(/asks for a raise/);
+    expect(t.news.map((n) => n.text)).toContainEqual(expect.stringMatching(/asks for a raise/));
     expect(rest(ix, at(fresh(), r.everyLevels), heroNames).roster[0]!.raiseAsk).toBeUndefined();
   });
 

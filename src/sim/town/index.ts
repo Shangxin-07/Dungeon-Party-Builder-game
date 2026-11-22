@@ -41,6 +41,7 @@ export type {
   Desk,
   Workshop,
   Folk,
+  Offer,
   Job,
   TownIntel,
 } from "./state";
@@ -163,6 +164,21 @@ export {
   setFolkJob,
   whyNoSettlers,
 } from "./folk";
+export {
+  buyFromCaravan,
+  cantDeliver,
+  cantGrant,
+  cantWelcome,
+  deliverContract,
+  dismissOffer,
+  grantPetition,
+  offerHeadline,
+  offersOf,
+  petitionWords,
+  sellToCaravan,
+  takeContract,
+  welcomeVisitor,
+} from "./offers";
 export { barricadeChoices, sealsNow, sealWord, setSeal } from "./seals";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
 export { launch, giveUp, outingView } from "./launch";
