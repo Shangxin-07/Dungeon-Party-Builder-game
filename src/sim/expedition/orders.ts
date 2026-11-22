@@ -38,8 +38,17 @@ export interface StandingOrders {
    * "scout" (M7.08, DESIGN.md §17.8): map the floors down to the target
    * floor. The best scout slips the party past fights where they can, it
    * never hunts, and it brings home floor intel. Ignored on a search.
+   *
+   * "sneak" (M7.08): creep down to `lair` and back, getting past every fight
+   * unheard if the party's worst Stealth allows, and fetch what can be taken
+   * from the lair without waking its beast. Needs `lair`.
    */
-  mission?: "rescue" | "recover" | "scout";
+  mission?: "rescue" | "recover" | "scout" | "sneak";
+  /**
+   * A huge beast's lair to go for (M7.08, content/lairs/), on its floor: a
+   * sneak mission fetches from it, a delve fights the beast. Ignored on a search.
+   */
+  lair?: string;
   /**
    * Clear the target floor (M6): after walking it, stay and hunt until this
    * percent of the monsters living there are dead. Retreat orders still apply.
@@ -50,6 +59,14 @@ export interface StandingOrders {
 /** A scout mission (M7.08): not on a search. */
 export const isScouting = (orders: StandingOrders): boolean =>
   orders.mission === "scout" && !orders.rescue;
+
+/** A sneak mission (M7.08): not on a search. */
+export const isSneaking = (orders: StandingOrders): boolean =>
+  orders.mission === "sneak" && !orders.rescue;
+
+/** The lair this trip goes for (M7.08), if any. */
+export const lairOf = (orders: StandingOrders): string | undefined =>
+  orders.rescue ? undefined : orders.lair;
 
 export const DEFAULT_ORDERS: StandingOrders = {
   targetFloor: 1,

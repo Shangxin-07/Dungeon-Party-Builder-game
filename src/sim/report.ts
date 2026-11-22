@@ -59,6 +59,8 @@ export interface ReportIntel {
   /** Room names, in words. */
   features: string[];
   hazards: string[];
+  /** Huge beasts' lairs found off the floor (M7.08), in words, and whether the beast is dead. */
+  lairs: string[];
   rooms: number;
   of: number;
 }
@@ -217,6 +219,10 @@ export function scoutingReport(
       slipped: seen.slipped,
       features: seen.features.map((id) => ix.room(id).name),
       hazards: seen.hazards.map((id) => ix.room(id).name),
+      lairs: (seen.lairs ?? []).map((id) => {
+        const l = ix.lair(id);
+        return town.lairs?.[id]?.slain ? `${l.name} (the beast is dead)` : l.name;
+      }),
       rooms: seen.rooms,
       of: seen.of,
     };

@@ -325,6 +325,19 @@ export function validateLibrary(lib: Library): string[] {
       err(`${w}: unknown damage type "${r.trap.damageType}"`);
   }
 
+  // Lairs (M7.08): a beast, its floor, and what can be taken from it.
+  ids("lair", lib.lairs ?? []);
+  for (const l of lib.lairs ?? []) {
+    const w = `lair "${l.id}"`;
+    if (!monsterIds.has(l.monster)) err(`${w}: unknown monster "${l.monster}"`);
+    if (!lib.floors.some((f) => f.depth === l.floor)) err(`${w}: no floor ${l.floor}`);
+    for (const t of [l.fetch, l.hoard]) if (!lootIds.has(t)) err(`${w}: unknown loot table "${t}"`);
+    if (l.calms < 0) err(`${w}: calms can't be negative`);
+  }
+  for (const i of lib.items)
+    if (i.unlock && !monsterIds.has(i.unlock.monster))
+      err(`item "${i.id}": unlocked by unknown monster "${i.unlock.monster}"`);
+
   const depths = new Set<number>();
   for (const f of lib.floors) {
     const w = `floor "${f.id}"`;

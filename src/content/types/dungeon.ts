@@ -185,6 +185,50 @@ export interface SearchRules {
 }
 
 /**
+ * A huge beast's lair (M7.08, DESIGN.md §17.8): off the main tunnels, so
+ * ordinary trips never go in. Scouts find it, a sneak party can fetch
+ * something from it, and a delve party sent for it fights the beast.
+ * Add one by creating a file in content/lairs/.
+ */
+export interface LairDef {
+  id: string;
+  name: string;
+  floor: number;
+  /** The beast that lives there. */
+  monster: string;
+  /** How scouts write it up: "<scout> <found>." */
+  found: string;
+  /** Logged when a party walks in. */
+  description: string;
+  /** Loot table a sneak party can take from it unheard, and the line for it: "<hero> <fetched>." */
+  fetch: string;
+  fetched: string;
+  /** Loot table for the party that kills the beast. */
+  hoard: string;
+  /** Monsters that leave the floor once the beast is dead: it's that much safer. */
+  calms: number;
+}
+
+/**
+ * Sneak missions (M7.08, DESIGN.md §17.8, content/stealth.ts): getting past
+ * monsters unheard.
+ */
+export interface StealthRules {
+  /**
+   * Chance to get past a group = base + (party Stealth − hearing) / 100,
+   * kept within min-max. The party's Stealth is its worst hero's, less
+   * `perExtraHero` for every hero over `quietParty`.
+   */
+  base: number;
+  min: number;
+  max: number;
+  quietParty: number;
+  perExtraHero: number;
+  /** A monster's hearing = PER × this + its `hearing`. A group hears by its sharpest ear. */
+  earPerPer: number;
+}
+
+/**
  * Scout missions (M7.08, DESIGN.md §17.8, content/scouting.ts): slipping
  * past fights, and how long floor intel stays fresh.
  */

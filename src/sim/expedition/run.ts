@@ -4,12 +4,13 @@
  */
 import { theName } from "../research";
 import type { FloorPressure } from "../dungeon";
-import { type Hero } from "../hero";
+import { heroSheet, type Hero } from "../hero";
 import type { Index } from "../library";
 import { type HaulItem } from "../loot";
 import { createRng, type Rng } from "../rng";
 import { getRoom } from "../rooms";
-import { DEFAULT_ORDERS, type StandingOrders, describeRetreat } from "./orders";
+import { DEFAULT_ORDERS, type StandingOrders, describeRetreat, lairOf } from "./orders";
+import { lairsOn, partyStealth, sneakChance } from "../stealth";
 import type { FloorIntel } from "./report";
 import type { ExpeditionResult, ExpeditionExtras } from "./report";
 import { PARTY_HURT_BELOW, WANDER_CHANCE } from "./tuning";
@@ -161,7 +162,9 @@ export class Expedition extends TripRescue {
         ? `floor ${targetFloor} to look for the missing`
         : this.scouting()
           ? `floor ${targetFloor} to scout ${targetFloor === 1 ? "it" : `the floors down to it`}`
-          : `floor ${targetFloor}`;
+          : this.lair()
+            ? `${this.lair()!.name.replace(/^The /, "the ")} on floor ${this.lair()!.floor}${this.sneaking() ? ", as quietly as they can" : ", to kill what lives there"}`
+            : `floor ${targetFloor}`;
     this.emit(
       "depart",
       `${names} set off for ${mission}. Orders: ${describeRetreat(retreat)}; ` +
@@ -219,6 +222,22 @@ export class Expedition extends TripRescue {
           if (i + 1 === Math.max(1, Math.min(site.room, rooms.length))) this.visitSite(site);
         }
 
+        // A lair (M7.08) lies off the middle of its floor.
+        const lair = this.lair();
+        if (
+          lair &&
+          !this.lairVisit &&
+          lair.floor === depth &&
+          i + 1 === Math.ceil(rooms.length / 2)
+        ) {
+          this.visitLair();
+          if (this.wiped) return this.finish("wiped");
+          if (this.sneaking() && !this.fledFrom) {
+            this.emit("retreat", "With what they came for, the party creeps back the way it came.");
+            return this.goHome("returned");
+          }
+        }
+
         const lastRoom = depth === targetFloor && i === rooms.length - 1 && !this.huntGoal();
         const reason = lastRoom ? undefined : this.retreatReason();
         if (reason && this.fledFrom) {
@@ -257,11 +276,78 @@ export class Expedition extends TripRescue {
     return this.goHome("returned");
   }
 
+  /** The lair the orders send the party to (M7.08). */
+  protected lair() {
+    const id = lairOf(this.orders);
+    return id ? this.ix.lair(id) : undefined;
+  }
+
+  /**
+   * Into a huge beast's lair (M7.08, DESIGN.md §17.8). A sneak party creeps
+   * in for what it came for, if the beast doesn't hear it; a delve party, or
+   * a sneak party that's heard, faces the beast with nowhere to slip off to.
+   * Something nothing can hurt sends the party running (the ward, M7.07).
+   */
+  protected visitLair(): void {
+    const lair = this.lair()!;
+    this.roomNo++;
+    this.roomsVisited++;
+    this.emit("room", `${lair.name}. ${lair.description}`);
+    this.pass(this.ix.lib.time.room);
+    const beast = this.ix.monster(lair.monster);
+    if (this.extras.slainLairs?.includes(lair.id)) {
+      this.emit("quiet", `The ${beast.name} is dead. Only the black water moves.`);
+      this.lairVisit = { id: lair.id, outcome: "empty" };
+      return;
+    }
+    this.seen.add(lair.monster);
+    if (this.sneaking()) {
+      const up = this.conscious();
+      const quiet = partyStealth(this.ix, up);
+      if (up.length && this.rng.chance(sneakChance(this.ix, quiet.value, [lair.monster]))) {
+        this.sneaked.past++;
+        const who = [...up].sort(
+          (a, b) =>
+            (heroSheet(this.ix, b).skills.stealth ?? 0) -
+            (heroSheet(this.ix, a).skills.stealth ?? 0),
+        )[0]!;
+        this.emit("scout", `${who.name} ${lair.fetched}. The ${beast.name} never stirs.`);
+        this.findLoot(lair.fetch, "the wallow", true);
+        this.lairVisit = { id: lair.id, outcome: "fetched" };
+        return;
+      }
+      this.sneaked.heard++;
+      this.emit("fight", `The ${beast.name} heaves itself out of the water. It heard them.`);
+    }
+    const before = this.kills.length;
+    this.fight([lair.monster], { cornered: true });
+    const slain = this.kills.slice(before).includes(lair.monster);
+    if (slain && !this.wiped) {
+      this.emit("loot", `The ${beast.name} is dead. The party wades in after what it swallowed.`);
+      this.findLoot(lair.hoard, "the wallow", true);
+    }
+    this.lairVisit = {
+      id: lair.id,
+      outcome: slain ? "slain" : this.fledFrom ? "fled" : "fought",
+    };
+    if (!this.wiped) this.betweenRooms();
+  }
+
   /** A scout writes up a room they walked (M7.08): a feature, a hazard, or nothing much. */
   protected noteRoom(id: string): void {
     const n = this.notes();
     if (!n) return;
     n.rooms++;
+    // Halfway along a floor, scouts find any lair off it (M7.08), and glimpse its beast.
+    if (!n.lairs && n.of && n.rooms >= Math.ceil(n.of / 2)) {
+      n.lairs = [];
+      for (const lair of lairsOn(this.ix, n.floor)) {
+        n.lairs.push(lair.id);
+        this.seen.add(lair.monster);
+        const scout = this.best("scouting");
+        this.emit("scout", `${scout ? scout.hero.name : "The party"} ${lair.found}.`);
+      }
+    }
     const room = this.ix.room(id);
     const kind =
       room.intel ??
@@ -281,6 +367,7 @@ export class Expedition extends TripRescue {
         monsters: { ...n.monsters },
         features: [...n.features],
         hazards: [...n.hazards],
+        ...(n.lairs ? { lairs: [...n.lairs] } : {}),
         level: f?.level ?? n.level,
         population: pop > 0 ? Math.max(1, Math.round(pop / round) * round) : 0,
       };
@@ -290,8 +377,9 @@ export class Expedition extends TripRescue {
   /** Kills on the target floor a "clear the floor" order asks for (0: no such order). */
   protected huntGoal(): number {
     const pct = this.orders.clearPercent ?? 0;
-    // Scouts (M7.08) never hunt.
-    if (pct <= 0 || this.orders.rescue || this.scouting() || !this.floors) return 0;
+    // Scouts and sneak parties (M7.08) never hunt.
+    if (pct <= 0 || this.orders.rescue || this.scouting() || this.sneaking() || !this.floors)
+      return 0;
     const pop =
       this.depth === this.orders.targetFloor
         ? this.huntStart
@@ -483,6 +571,8 @@ export class Expedition extends TripRescue {
       gifts: wiped || holed ? [] : this.gifts,
       parleys: this.parleys,
       ...(this.scouting() ? { intel: wiped ? [] : this.intelNow(), slipped: this.slipped } : {}),
+      ...(this.sneaking() ? { sneaked: this.sneaked } : {}),
+      ...(this.lairVisit ? { lair: this.lairVisit } : {}),
     };
   }
 

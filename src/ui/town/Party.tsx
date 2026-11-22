@@ -5,7 +5,8 @@ import { Fold } from "../Fold";
 import { library } from "../../content";
 import type { Row } from "../../content/types";
 import { describeParty, partyAlignment } from "../../sim/alignment";
-import { describeRetreat, isScouting, type LootRule } from "../../sim/expedition";
+import { describeRetreat, isScouting, isSneaking, type LootRule } from "../../sim/expedition";
+import { knownLairs, lairSlain, partyStealth, sneakChance } from "../../sim/stealth";
 import { heroSheet, heroTitle } from "../../sim/hero";
 import { commandOf, leadershipOf, traitsOf } from "../../sim/leadership";
 import {
@@ -53,6 +54,13 @@ export function PartyPanel({
   const target = rescueTarget(town);
   const cmd = nextCommand(ix, town);
   const scouting = isScouting(town.orders);
+  const sneaking = isSneaking(town.orders);
+  const lairChoices = knownLairs(ix, town).filter((l) => !sneaking || !lairSlain(town, l.id));
+  const openLairs = knownLairs(ix, town).filter((l) => !lairSlain(town, l.id));
+  const lairDef = town.orders.lair && !target ? ix.lair(town.orders.lair) : undefined;
+  const lairName = lairDef?.name.replace(/^The /, "the ");
+  const lairBeast = lairDef ? ix.monster(lairDef.monster) : undefined;
+  const quiet = partyStealth(ix, party);
   const bestScout = party
     .map((h) => ({ name: h.name, value: heroSheet(ix, h).skills.scouting ?? 0 }))
     .sort((a, b) => b.value - a.value)[0];
@@ -140,23 +148,56 @@ export function PartyPanel({
 
       <div className="controls">
         {target ? null : (
-          <label title="A scout party slips past fights where its best scout can, never hunts, and brings home what it saw on each floor for the scouting report.">
+          <label title="Scouts slip past fights where their best scout can and bring home what they saw. A sneak party creeps to a lair the scouts found and back, as quiet as its loudest member, to fetch what it can without waking the beast.">
             Mission{" "}
             <select
-              value={scouting ? "scout" : "delve"}
+              value={sneaking ? "sneak" : scouting ? "scout" : "delve"}
               onChange={(e) =>
                 act((t) => {
-                  const { mission: _, ...rest } = t.orders;
-                  return setOrders(
-                    ix,
-                    t,
-                    e.target.value === "scout" ? { ...rest, mission: "scout" } : rest,
-                  );
+                  const { mission: _, lair: __, ...rest } = t.orders;
+                  const m = e.target.value;
+                  if (m === "scout") return setOrders(ix, t, { ...rest, mission: "scout" });
+                  if (m === "sneak") {
+                    const l = openLairs[0]!;
+                    return setOrders(ix, t, {
+                      ...rest,
+                      mission: "sneak",
+                      lair: l.id,
+                      targetFloor: l.floor,
+                    });
+                  }
+                  return setOrders(ix, t, rest);
                 })
               }
             >
               <option value="delve">delve</option>
               <option value="scout">scout</option>
+              <option value="sneak" disabled={!openLairs.length}>
+                sneak{openLairs.length ? "" : " (scouts haven't found a lair yet)"}
+              </option>
+            </select>
+          </label>
+        )}
+        {target || scouting || !lairChoices.length ? null : (
+          <label title="A huge beast's lair the scouts found, off the main tunnels. Ordinary trips never go in.">
+            Lair{" "}
+            <select
+              value={town.orders.lair ?? ""}
+              onChange={(e) =>
+                act((t) => {
+                  const { lair: _, ...rest } = t.orders;
+                  const l = lairChoices.find((x) => x.id === e.target.value);
+                  return setOrders(ix, t, l ? { ...rest, lair: l.id, targetFloor: l.floor } : rest);
+                })
+              }
+            >
+              {sneaking ? null : <option value="">stay out of lairs</option>}
+              {lairChoices.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {sneaking ? "sneak into" : "kill what lives in"} {l.name.replace(/^The /, "the ")}{" "}
+                  (floor {l.floor})
+                </option>
+              ))}
             </select>
           </label>
         )}
@@ -203,7 +244,7 @@ export function PartyPanel({
             <option value="valuable">leave the junk</option>
           </select>
         </label>
-        {scouting ? null : (
+        {scouting || sneaking ? null : (
           <label
             title={`After walking floor ${town.orders.targetFloor}, stay and hunt until this share of its monsters are dead. Each extra room takes about ${ix.lib.time.hunt} hours plus any fight; retreat orders still apply.`}
           >
@@ -235,6 +276,26 @@ export function PartyPanel({
           {bestScout ? `${bestScout.name} (Scouting ${bestScout.value})` : "the best scout"} can
           (about {Math.round(slipChance * 100)}% of them), and back with what they saw. It won't
           hunt, and it won't bring home much loot.
+        </p>
+      ) : null}
+      {sneaking ? (
+        <p className="mission small">
+          Sneak party: down to floor {town.orders.targetFloor} and{" "}
+          {lairName ? `into ${lairName}` : "back"}, as quiet as its loudest member
+          {quiet.hero ? ` (${quiet.hero.name}, Stealth ${quiet.value + quiet.crowd}` : " ("}
+          {quiet.crowd ? `, less ${quiet.crowd} for a party of ${party.length}` : ""}). Unheard
+          about {Math.round(sneakChance(ix, quiet.value, ["goblin"]) * 100)}% of the time by a
+          goblin band
+          {lairBeast
+            ? `, ${Math.round(sneakChance(ix, quiet.value, [lairBeast.id]) * 100)}% by the ${lairBeast.name}`
+            : ""}
+          . Heard means a fight. Heavy armour and some weapons are noisy; small parties sneak best.
+        </p>
+      ) : null}
+      {!sneaking && lairBeast && !target ? (
+        <p className="mission small warn">
+          This party will go into {lairName} to kill the {lairBeast.name}
+          {town.lairs?.[town.orders.lair!]?.slain ? " (it's already dead)" : ""}.
         </p>
       ) : null}
 
@@ -391,7 +452,11 @@ export function PartiesOnFile({
                       : ""}
                   </p>
                   <p className="small muted">
-                    {isScouting(p.orders) ? "Scouting down to floor" : "Floor"}{" "}
+                    {isScouting(p.orders)
+                      ? "Scouting down to floor"
+                      : isSneaking(p.orders)
+                        ? "Sneaking down to floor"
+                        : "Floor"}{" "}
                     {p.orders.targetFloor}, {describeRetreat(p.orders.retreat)}
                     {p.orders.clearPercent ? `, thinning it out by ${p.orders.clearPercent}%` : ""}.
                   </p>

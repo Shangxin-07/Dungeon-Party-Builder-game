@@ -41,6 +41,9 @@ export function ScoutingReport({ town, party }: { town: TownState; party: readon
           {r.intel.of > r.intel.rooms ? ` of ${r.intel.of}` : ""} rooms.
           {r.intel.features.length ? ` Found: ${r.intel.features.join(", ").toLowerCase()}.` : ""}
           {r.intel.hazards.length ? ` Traps: ${r.intel.hazards.join(", ").toLowerCase()}.` : ""}
+          {r.intel.lairs.length ? (
+            <span className="warn"> Lair: {r.intel.lairs.join(", ")}.</span>
+          ) : null}
         </p>
       ) : (
         <p className="small muted">

@@ -5,6 +5,7 @@
  * list below. No engine code changes are needed. The content tests check every id and reference.
  */
 import type {
+  LairDef,
   AbilityDef,
   AlignmentDef,
   BuildingDef,
@@ -111,6 +112,7 @@ import frostLanceAbility from "./abilities/frost-lance";
 import fireballAbility from "./abilities/fireball";
 import circleOfHealingAbility from "./abilities/circle-of-healing";
 import cleaveAbility from "./abilities/cleave";
+import tailSweepAbility from "./abilities/tail-sweep";
 import aimedShotAbility from "./abilities/aimed-shot";
 import crushAbility from "./abilities/crush";
 import disarmAbility from "./abilities/disarm";
@@ -219,6 +221,14 @@ import rescueRules from "./rescue";
 import wearRules from "./wear";
 import searchRules from "./searching";
 import scoutRules from "./scouting";
+import stealthRules from "./stealth";
+import stealthSkill from "./skills/stealth";
+import mireBehemothMonster from "./monsters/mire-behemoth";
+import shedScaleSpecimen from "./specimens/shed-scale";
+import scalePiercerItem from "./items/scale-piercer";
+import wallowScalesLoot from "./loot/wallow-scales";
+import behemothHoardLoot from "./loot/behemoth-hoard";
+import mireWallowLair from "./lairs/mire-wallow";
 import timeRules from "./time";
 import minersCacheSecret from "./secrets/miners-cache";
 import falseFloorSecret from "./secrets/false-floor";
@@ -314,7 +324,12 @@ export const specimens: readonly ItemDef[] = [
   etchedSkullSpecimen,
   trollToothSpecimen,
   foremansTallySpecimen,
+  // The Mire Behemoth's (M7.08).
+  shedScaleSpecimen,
 ];
+
+/** Huge beasts' lairs (M7.08, DESIGN.md §17.8), off the main tunnels. */
+export const lairs: readonly LairDef[] = [mireWallowLair];
 
 /** Posts round the pit (DESIGN.md §8): duties for heroes at home. */
 export const posts: readonly PostDef[] = [barricadePost, lookoutPost, salvagePost, seamPost];
@@ -344,6 +359,8 @@ export const items: readonly ItemDef[] = [
   maceItem,
   // The deep floors (M6.21): from the Blacksmith's forge and the Apothecary.
   silverSwordItem,
+  // The Behemoth's bane (M7.08), sold once the Library has Studied it.
+  scalePiercerItem,
   greaterHealingPotionItem,
   // Makeshift kit from the mining camp (the opening, DESIGN.md §8).
   pickAxeItem,
@@ -379,6 +396,7 @@ export const abilities: readonly AbilityDef[] = [
   fireballAbility,
   circleOfHealingAbility,
   cleaveAbility,
+  tailSweepAbility,
   aimedShotAbility,
   crushAbility,
   disarmAbility,
@@ -430,6 +448,8 @@ export const monsters: readonly MonsterDef[] = [
   // Floors 4 and 5 (M6.21).
   ghoulMonster,
   ghastMonster,
+  // Lives only in its wallow (M7.08, content/lairs/).
+  mireBehemothMonster,
   caveTrollMonster,
   sporecallerMonster,
   lostDelverMonster,
@@ -441,6 +461,7 @@ export const skills: readonly SkillDef[] = [
   scoutingSkill,
   leadershipSkill,
   loreSkill,
+  stealthSkill,
 ];
 
 /** Leader traits (M7.05, DESIGN.md §17.5), earned on a leader's watch. */
@@ -499,6 +520,9 @@ export const encounters: readonly EncounterDef[] = [
   delverHauntEncounter,
 ];
 export const lootTables: readonly LootTableDef[] = [
+  // The Mire Behemoth's wallow (M7.08).
+  wallowScalesLoot,
+  behemothHoardLoot,
   trinketIdentifiedLoot,
   goblinLoot,
   // Events (DESIGN.md §7).
@@ -615,6 +639,8 @@ export const library: Library = {
   secrets,
   searching: searchRules,
   scouting: scoutRules,
+  stealth: stealthRules,
+  lairs,
   time: timeRules,
   fallen: fallenRules,
   transforms,

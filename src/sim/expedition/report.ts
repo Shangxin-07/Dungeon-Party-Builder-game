@@ -171,6 +171,10 @@ export interface ExpeditionResult {
   intel?: FloorIntel[];
   /** Fights a scout party slipped past (M7.08). */
   slipped?: number;
+  /** Fights a sneak party got past unheard, and fights it was heard in (M7.08). */
+  sneaked?: { past: number; heard: number };
+  /** The lair the party went into (M7.08), and how that went. */
+  lair?: { id: string; outcome: "fetched" | "slain" | "fled" | "fought" | "empty" };
 }
 
 /**
@@ -196,6 +200,8 @@ export interface FloorIntel {
   /** Rooms they walked here, out of the rooms the floor had this time. */
   rooms: number;
   of: number;
+  /** Huge beasts' lairs they found (M7.08, content/lairs/). */
+  lairs?: string[];
 }
 
 /** Where a lost party fell, as a rescue party will find it (DESIGN.md §10). */
@@ -237,6 +243,8 @@ export interface ExpeditionExtras {
   lift?: number;
   /** The party's leader and how unruly the party is (M7.05, see sim/leadership.ts). */
   leader?: TripLeader;
+  /** Lairs whose beast is already dead (M7.08). */
+  slainLairs?: readonly string[];
   /** How far the guild has researched each monster (M7.07): monster id -> tier 2 or 3. */
   research?: Readonly<Record<string, number>>;
 }

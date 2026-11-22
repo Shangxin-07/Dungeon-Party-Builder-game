@@ -153,5 +153,7 @@ export function cancelRescue(_ix: Index, town: TownState): TownState {
  */
 function ordinaryOrders(o: StandingOrders): StandingOrders {
   const { rescue: _, mission, ...orders } = o;
-  return !o.rescue && mission === "scout" ? { ...orders, mission } : orders;
+  return !o.rescue && (mission === "scout" || mission === "sneak")
+    ? { ...orders, mission }
+    : orders;
 }
