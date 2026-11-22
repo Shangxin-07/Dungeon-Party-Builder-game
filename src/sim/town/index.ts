@@ -12,7 +12,8 @@
  * per topic: state.ts (the TownState shape), read.ts (reading the town, no
  * changes), start.ts, roster.ts, gear.ts, market.ts, parties.ts, buildings.ts,
  * wounds.ts, days.ts (a day passing), bodies.ts (the fallen), posts.ts (posts
- * round the pit and the opening), launch.ts.
+ * round the pit and the opening), launch.ts, haul.ts and debrief.ts (what
+ * comes home, M7.03).
  * internal.ts holds shared helpers and isn't re-exported here.
  */
 export { TOWN_VERSION, LEDGER_DAYS, TRIP_HISTORY, TownError, newRecord } from "./state";
@@ -32,6 +33,9 @@ export type {
   LedgerLine,
   News,
   Construction,
+  HeldItem,
+  HaulRule,
+  HaulChoice,
 } from "./state";
 export {
   buildingEffects,
@@ -115,3 +119,19 @@ export { answerRaise, rest, waitUntilBack, launchAndWait } from "./days";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
 export { launch, giveUp, outingView } from "./launch";
 export { assignPost, postOf, trade } from "./posts";
+export {
+  HAUL_RULES,
+  salvageYield,
+  salvageList,
+  salvageOf,
+  homeHaggler,
+  haulSale,
+  ruleChoice,
+  haulPlan,
+  setHaulRule,
+  settleHaul,
+  settleByRule,
+  salvageStash,
+} from "./haul";
+export { tripTally } from "./debrief";
+export type { Tally, FloorTally, SlainLine } from "./debrief";

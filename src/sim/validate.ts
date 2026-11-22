@@ -330,6 +330,14 @@ export function validateLibrary(lib: Library): string[] {
     }
   };
 
+  // Salvage (M7.03): items break down into materials, never into themselves.
+  for (const i of lib.items) {
+    materialCost(`item "${i.id}" salvage`, i.salvage);
+    if (i.salvage && i.slot === "material") err(`item "${i.id}": materials can't be salvaged`);
+  }
+  for (const [tag, cost] of Object.entries(lib.town.salvage?.byTag ?? {}))
+    materialCost(`town: salvage for tag "${tag}"`, cost);
+
   // Posts and the opening (DESIGN.md §8).
   ids("post", lib.posts ?? []);
   for (const p of lib.posts ?? []) {

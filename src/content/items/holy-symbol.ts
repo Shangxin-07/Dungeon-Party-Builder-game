@@ -8,6 +8,7 @@ export default defineItem({
   slot: "offhand",
   value: 45,
   tags: ["holy", "symbol"],
+  salvage: { "deep-silver": 1 },
   passives: [
     { type: "modifyStat", stat: "spellPower", amount: 2 },
     { type: "modifyStat", stat: "resist", amount: 2 },

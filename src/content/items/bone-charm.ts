@@ -8,6 +8,7 @@ export default defineItem({
   slot: "offhand",
   value: 55,
   tags: ["charm", "unholy"],
+  salvage: { "bone-dust": 2 },
   passives: [
     { type: "modifyStat", stat: "spellPower", amount: 3 },
     { type: "modifyStat", stat: "mana", amount: 8 },

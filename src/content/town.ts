@@ -31,6 +31,16 @@ export default defineTownRules({
   sellRate: 0.5,
   // M6 balance pass: the Market takes a cut of loot (coins excepted).
   haulRate: 0.7,
+  // M7.03: what the Blacksmith gets out of an item with no salvage list.
+  salvage: {
+    byTag: {
+      metal: { "iron-ore": 1 },
+      silver: { "deep-silver": 1 },
+      bone: { "bone-dust": 1 },
+      wood: { timber: 1 },
+      cloth: { "spider-silk": 1 },
+    },
+  },
   // A haggler with Appraisal 70 and CHA 14 gets 8% more; never above 90%.
   haggle: { perAppraisal: 0.002, perCha: 0.01, max: 0.9 },
   // Porters: cheap hands who carry loot and run for it if the party falls.

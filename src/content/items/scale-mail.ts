@@ -6,6 +6,7 @@ export default defineItem({
   slot: "armor",
   value: 120,
   tags: ["armor", "heavy"],
+  salvage: { "iron-ore": 5 },
   passives: [
     { type: "modifyStat", stat: "armor", amount: 6 },
     { type: "modifyStat", stat: "evasion", amount: -3 },

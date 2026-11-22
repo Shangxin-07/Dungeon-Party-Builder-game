@@ -9,7 +9,7 @@ import type { HaulItem } from "../loot";
 import type { RaidReport } from "../raid";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 15;
+export const TOWN_VERSION = 16;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 export const PIT_HISTORY = 60;
@@ -166,8 +166,16 @@ export interface TripReport {
   /** The party as it left town. */
   party: Hero[];
   result: ExpeditionResult;
-  /** Gold the Market paid for the haul. */
+  /**
+   * What the haul was worth at the Market the day it came home: coins plus
+   * the rest at the haggled rate. Before M7.03 the Market paid this at once;
+   * now only the coins are paid (`coins`) and the rest waits in the debrief.
+   */
   goldEarned: number;
+  /** Coins paid straight into the purse (M7.03). Missing on older trips. */
+  coins?: number;
+  /** Pieces of haul held for the debrief: sell, salvage or keep (M7.03). */
+  held?: number;
   /** Who haggled with the Market, and the share of loot value it paid (M6). */
   haggledBy?: string;
   lootRate?: number;
@@ -270,9 +278,33 @@ export interface TownState {
    * mining camp, before it can send parties down. Missing in older saves.
    */
   camp?: boolean;
+  /** The haul waiting in the debrief (M7.03), oldest first. */
+  haul: HeldItem[];
+  /** What the debrief proposes for each new haul (M7.03). */
+  haulRule: HaulRule;
   /** What the posts brought in yesterday: materials by id, and gold. */
   gathered?: { day: number; materials: Record<string, number>; gold: number };
 }
+
+/**
+ * A piece of a trip's haul waiting in the debrief (M7.03, DESIGN.md §17.4):
+ * the player sells it, salvages it into materials, or keeps it.
+ */
+export interface HeldItem extends HaulItem {
+  id: string;
+  /** The party that brought it home, and the day it did. */
+  from: string;
+  day: number;
+}
+
+/**
+ * What the debrief proposes for a new haul (DESIGN.md §17.4): sell it all,
+ * salvage what breaks down and sell the rest, or keep it all.
+ */
+export type HaulRule = "sell" | "salvage" | "keep";
+
+/** What happens to one piece of held haul. */
+export type HaulChoice = "sell" | "salvage" | "keep";
 
 /** A party on file: who goes, who carries, and their orders. Gear stays on the heroes. */
 export interface SavedParty {

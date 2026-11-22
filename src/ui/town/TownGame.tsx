@@ -36,7 +36,8 @@ import { FallenPanel, LostPanel, TalkPanel } from "../Lost";
 import { Accounts } from "../Accounts";
 import type { Act } from "./shared";
 import { Saves } from "./Saves";
-import { TripTown, BackPanel } from "./Trip";
+import { TripTown } from "./Trip";
+import { DebriefPanel } from "./Debrief";
 import { AwayPanel, awayLine } from "./Away";
 import { PartyPanel } from "./Party";
 import { Roster } from "./Roster";
@@ -224,8 +225,9 @@ export function TownPlay({ initial }: { initial: Game }) {
           {error}
         </p>
       ) : null}
-      <BackPanel
+      <DebriefPanel
         town={town}
+        act={act}
         onWatch={(trip) => {
           setWatching({ trip });
           window.scrollTo({ top: 0 });

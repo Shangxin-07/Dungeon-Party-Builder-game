@@ -15,13 +15,15 @@
  *   npm run days -- --camp --policy 1 --build       # start at the mining camp (the opening)
  *   npm run days -- --policy climb --build --days 120 # go deeper as the party levels up (floors 4-5)
  *   npm run days -- --camp --unlucky --palisade-first # no timber ever drops: trade ore for it
+ *   npm run days -- --policy 2 --build --haul salvage # salvage what breaks down, sell the rest
  *
  * The bot restocks used supplies, keeps one hero on the bench and sends the
  * freshest heroes (unless --static), and rests until the party is at 90% HP
  * and nobody is tired or injured, then sends it down. It spends
  * level-ups (the wanted perk if there is one, else the first; free points go
  * in the class's first main stat) and sends a rescue party when someone is
- * trapped. With --parties it fills the roster for two whole parties and
+ * trapped. It settles each haul the day it comes home by the haul rule
+ * (--haul sell|salvage|keep, default sell: the old way). With --parties it fills the roster for two whole parties and
  * alternates them, the way a player with two parties on file would. With --build it also builds and upgrades everything else once
  * the defences are up, cheapest first, keeping a few days' wages in hand.
  */
@@ -74,6 +76,8 @@ import {
   buy,
   equip,
   wageBill,
+  settleByRule,
+  type HaulRule,
   type TownState,
 } from "../src/sim/town";
 import { validateLibrary } from "../src/sim/validate";
@@ -126,6 +130,7 @@ const porterCount = Number(arg("porters") ?? 0);
 const multiclass = flag("multiclass");
 const twoParties = flag("parties");
 const camp = flag("camp");
+const haulRule = (arg("haul") ?? "sell") as HaulRule;
 
 const DEFENCES = ["palisade", "gate", "watchtower"];
 
@@ -436,6 +441,8 @@ const tally = {
   campRaids: 0,
   /** Materials brought home, by id (DESIGN.md §8). */
   materials: {} as Record<string, number>,
+  /** Materials the Blacksmith got out of the haul (--haul salvage). */
+  salvaged: {} as Record<string, number>,
 };
 /** Gold in the coffers at these days, for the summary. */
 const CHECKPOINTS = [10, 20, 40, 60, 90];
@@ -461,6 +468,11 @@ function play(seed: number, print: boolean) {
     const heard = new Set((t.trips ?? []).map((x) => x.seed));
     const wasCamp = t.camp;
     t = step(t);
+    const store = { ...t.materials };
+    t = settleByRule(ix, t, haulRule);
+    for (const [id, n] of Object.entries(t.materials))
+      if (n > (store[id] ?? 0))
+        tally.salvaged[id] = (tally.salvaged[id] ?? 0) + n - (store[id] ?? 0);
     if (wasCamp && !t.camp) {
       tally.campHeld.push(t.day);
       tally.campRaids += t.pit.filter((n) => n.outcome !== "held").length;
@@ -610,6 +622,11 @@ if (runs === 1) {
       `${(tally.putDown / runs).toFixed(1)} risen put down\n` +
       `  materials brought home per town: ${
         Object.entries(tally.materials)
+          .map(([id, n]) => `${(n / runs).toFixed(1)} ${ix.item(id).name.toLowerCase()}`)
+          .join(", ") || "none"
+      }\n` +
+      `  salvaged per town: ${
+        Object.entries(tally.salvaged)
           .map(([id, n]) => `${(n / runs).toFixed(1)} ${ix.item(id).name.toLowerCase()}`)
           .join(", ") || "none"
       }\n` +

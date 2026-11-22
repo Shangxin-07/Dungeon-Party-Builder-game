@@ -126,6 +126,8 @@ export function newTown(
     bodies: [],
     risen: [],
     materials: {},
+    haul: [],
+    haulRule: "sell",
     posts: {},
   };
   // M6: the first heroes turn up untrained. The player picks their classes
