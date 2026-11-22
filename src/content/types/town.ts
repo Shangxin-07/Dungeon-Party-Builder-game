@@ -353,3 +353,83 @@ export interface TownsfolkRules {
   /** A raid that gets through: this share of the settlers leave (rounded up). */
   fleeOnRaid: number;
 }
+
+/**
+ * Town news (M7.17, DESIGN.md §18.1c): offers that turn up in town, want an
+ * answer, and go away again (content/offers/).
+ */
+interface OfferCommon {
+  id: string;
+  /** The headline: "A caravan from the coast". */
+  name: string;
+  /** What it says when it turns up, for the news and the panel. */
+  text: string;
+  /** Relative chance of being the one that turns up. */
+  weight: number;
+  /** Days it waits for an answer before it goes. */
+  days: number;
+  /** Not before this town day. */
+  minDay?: number;
+  /** Only with this building standing. */
+  needs?: string;
+}
+
+/** A caravan: buys materials, sells a few things the Market doesn't. */
+export interface CaravanOffer extends OfferCommon {
+  kind: "caravan";
+  /** Gold it pays for each of these materials, as many as you have. */
+  buys: Readonly<Record<string, number>>;
+  /** What it sells, one of each, at these prices. */
+  sells: readonly { item: string; price: number }[];
+}
+
+/** A contract: deliver materials by a day for gold. */
+export interface ContractOffer extends OfferCommon {
+  kind: "contract";
+  wants: MaterialCost;
+  reward: number;
+  /** Days from taking it on to deliver. */
+  deadline: number;
+}
+
+/** What granting a petition does. */
+export type PetitionEffect =
+  /** Settlers move in, if there's room in the Cottages. */
+  | { type: "folk"; count: number }
+  /** Food into the town's store. */
+  | { type: "food"; amount: number }
+  /** Morale for every hero at home. */
+  | { type: "morale"; amount: number }
+  /** Materials into the store. */
+  | { type: "materials"; materials: MaterialCost };
+
+/** A petition from the townsfolk: costs gold (and materials), does some good. */
+export interface PetitionOffer extends OfferCommon {
+  kind: "petition";
+  gold: number;
+  materials?: MaterialCost;
+  effect: PetitionEffect;
+  /** Only once there are this many settlers. */
+  minFolk?: number;
+}
+
+/**
+ * A visitor: a well-known hero passing through who'll join, free and kitted,
+ * if their favourite building is standing (and there's room on the roster).
+ */
+export interface VisitorOffer extends OfferCommon {
+  kind: "visitor";
+  /** Base classes they might be; picked at random. */
+  classes?: readonly string[];
+  /** The best of this many rolls of their class's main stats. */
+  picks: number;
+}
+
+export type OfferDef = CaravanOffer | ContractOffer | PetitionOffer | VisitorOffer;
+
+/** How often offers turn up (M7.17, content/offers.ts). */
+export interface OfferRules {
+  /** Chance a day that something turns up, while fewer than `max` are waiting. */
+  chancePerDay: number;
+  max: number;
+}

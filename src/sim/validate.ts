@@ -662,6 +662,45 @@ export function validateLibrary(lib: Library): string[] {
     if (!(b.strength > 0)) err(`${w}: strength must be above 0`);
     if (!(b.hours > 0)) err(`${w}: hours must be above 0`);
   }
+  // Town news (M7.17): what each offer names has to exist.
+  ids("offer", lib.offers ?? []);
+  for (const o of lib.offers ?? []) {
+    const w = `offer "${o.id}"`;
+    if (!(o.weight > 0)) err(`${w}: weight must be above 0`);
+    if (!Number.isInteger(o.days) || o.days < 1)
+      err(`${w}: days must be a whole number, 1 or more`);
+    if (o.needs && !lib.buildings.some((b) => b.id === o.needs))
+      err(`${w}: needs unknown building "${o.needs}"`);
+    if (o.kind === "caravan") {
+      for (const [id, price] of Object.entries(o.buys)) {
+        if (lib.items.find((i) => i.id === id)?.slot !== "material")
+          err(`${w}: buys "${id}", which isn't a material`);
+        if (!(price > 0)) err(`${w}: price for "${id}" must be above 0`);
+      }
+      for (const x of o.sells) {
+        if (!itemIds.has(x.item)) err(`${w}: sells unknown item "${x.item}"`);
+        if (!(x.price > 0)) err(`${w}: price for "${x.item}" must be above 0`);
+      }
+    } else if (o.kind === "contract") {
+      materialCost(w, o.wants);
+      if (!Object.keys(o.wants).length) err(`${w}: must want something`);
+      if (!(o.reward > 0) || !(o.deadline >= 1)) err(`${w}: needs a reward and a deadline`);
+    } else if (o.kind === "petition") {
+      if (o.gold < 0) err(`${w}: gold can't be negative`);
+      materialCost(w, o.materials);
+      if (o.effect.type === "materials") materialCost(`${w} effect`, o.effect.materials);
+    } else if (o.kind === "visitor") {
+      for (const c of o.classes ?? [])
+        if (
+          (lib.classes.find((x) => x.id === c)?.kind ?? "base") !== "base" ||
+          !lib.classes.some((x) => x.id === c)
+        )
+          err(`${w}: "${c}" isn't a base class`);
+      if (!Number.isInteger(o.picks) || o.picks < 1) err(`${w}: picks must be 1 or more`);
+    }
+  }
+  const or = lib.offerRules;
+  if (or.chancePerDay < 0 || or.chancePerDay > 1 || !(or.max >= 1)) err("offers: bad rules");
   const seals = lib.dungeon.seals;
   if (seals.perMonster < 0 || seals.wearPerDay < 0) err("dungeon seals: can't be negative");
   if (!(seals.crowding >= 1)) err("dungeon seals: crowding must be 1 or more");

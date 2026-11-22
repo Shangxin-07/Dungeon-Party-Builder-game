@@ -58,6 +58,7 @@ export default defineMoraleRules({
     { fact: "comradeRose", amount: -3, cap: 9, reason: "a friend's body rose in the dark" },
     { fact: "foughtRisen", amount: -6, cap: 12, reason: "had to fight a risen friend" },
     { fact: "resurrected", amount: -10, reason: "came back from the dead, shaken" },
+    { fact: "townTreat", amount: 1, cap: 10, reason: "enjoyed the town's feast" },
     { fact: "wantedPerk", amount: 8, reason: "got the training they wanted" },
     { fact: "levelUp", amount: 2, reason: "levelled up" },
     // Leaders and deserters (M7.05).

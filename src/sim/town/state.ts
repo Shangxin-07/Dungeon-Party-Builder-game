@@ -321,6 +321,10 @@ export interface TownState {
   workshops?: Record<string, Workshop>;
   /** Townsfolk (M7.15): how many, the food in store, and how many work each job. */
   folk?: Folk;
+  /** Town news (M7.17): offers waiting for an answer. */
+  offers?: Offer[];
+  /** The offers' own random stream (M7.17), so they don't change the town's other dice. */
+  offerSeed?: number;
   /** Huge beasts' lairs (M7.08), by lair id: the day the beast was killed. Missing: none yet. */
   lairs?: Record<string, { slain?: number }>;
   /** What the posts brought in yesterday: materials by id, and gold. */
@@ -438,6 +442,12 @@ export type LedgerKind =
   | "crafting"
   /** Townsfolk's taxes and market days (M7.15). */
   | "taxes"
+  /** Bought from and sold to caravans (M7.17). */
+  | "trade"
+  /** Paid for contracts delivered (M7.17). */
+  | "contracts"
+  /** Petitions granted (M7.17). */
+  | "petitions"
   | "built"
   | "repairs"
   | "stolen"
@@ -457,6 +467,22 @@ export interface LedgerLine {
 
 /** How many days of accounts the town keeps. */
 export const LEDGER_DAYS = 30;
+
+/** An offer waiting in town (M7.17, content/offers/). */
+export interface Offer {
+  id: string;
+  /** content/offers/ */
+  def: string;
+  /** Day it turned up, and the last day it waits (a contract taken on: the last day to deliver). */
+  day: number;
+  until: number;
+  /** A contract the guild has taken on. */
+  taken?: boolean;
+  /** A caravan's wares already bought, by index. */
+  bought?: number[];
+  /** A visitor: who they are. */
+  hero?: Hero;
+}
 
 /** One line of town news. */
 export interface News {

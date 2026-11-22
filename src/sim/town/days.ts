@@ -39,6 +39,7 @@ import { checkCamp, raidSpoils, tidyPosts, workPosts } from "./posts";
 import { researchTiers, studyDay, tidyDesks } from "./research";
 import { payDay } from "./pay";
 import { sealsBroke } from "./seals";
+import { offersDay } from "./offers";
 import { folkDay, folkScared } from "./folk";
 import { tidyBenches, workshopDay } from "./workshops";
 import { arrivals, hearOfLoss, landKills, launch, remember, returnHero } from "./launch";
@@ -460,6 +461,7 @@ export function rest(ix: Index, town: TownState, names: readonly string[]): Town
   endOfDay(ix, t, away);
   arrivals(ix, t);
   freshRecruits(ix, t, names);
+  offersDay(ix, t, names);
   return t;
 }
 
