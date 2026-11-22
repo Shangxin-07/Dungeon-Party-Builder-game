@@ -85,6 +85,8 @@ export interface ExpeditionReport {
   /** Turned back early, by the retreat rule. */
   retreated: number;
   wiped: number;
+  /** Couldn't get home, so holed up to wait for help (M7.02). */
+  holed: number;
   /** Average heroes who died per trip. */
   deaths: number;
   /** Average real value of the haul brought home. */
@@ -117,6 +119,7 @@ export function expeditionReport(
     returned: 0,
     retreated: 0,
     wiped: 0,
+    holed: 0,
     deaths: 0,
     haul: 0,
     dropped: 0,
@@ -144,6 +147,7 @@ export function expeditionReport(
     returned: avg(r.returned),
     retreated: avg(r.retreated),
     wiped: avg(r.wiped),
+    holed: avg(r.holed),
     deaths: avg(r.deaths),
     haul: avg(r.haul),
     dropped: avg(r.dropped),

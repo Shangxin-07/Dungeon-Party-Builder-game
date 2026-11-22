@@ -24,6 +24,12 @@ export class TripBase {
   protected haul: HaulItem[] = [];
   protected kills: string[] = [];
   protected floorKills: Record<number, number> = {};
+  /** Kills by day of the trip, then floor (M7.02): they come off the dungeon night by night. */
+  protected dayKills: Record<number, Record<number, number>> = {};
+  /** Set on a party breaking out after holing up: it won't hole up again. */
+  protected noHolingUp = false;
+  /** Where the party holed up, if it couldn't get home (M7.02). */
+  protected holed?: { floor: number; room: number; supplies: number };
   protected log: ExpeditionEvent[] = [];
   protected depth = 0;
   protected roomNo = 0;
@@ -40,6 +46,8 @@ export class TripBase {
   protected followers: Hero[] = [];
   protected siteVisited?: string;
   protected siteLeft: HaulItem[] = [];
+  /** A rescue mission left the site's dead where they lie (M7.02). */
+  protected siteBodiesLeft = false;
   protected gearTaken: string[] = [];
   protected bodies: Body[] = [];
   protected risenMet: string[] = [];
@@ -128,6 +136,16 @@ export class TripBase {
     if (!(hours > 0)) return;
     this.hours = Math.round((this.hours + hours) * 100) / 100;
     this.awake = sleep ? 0 : this.awake + hours;
+  }
+
+  /** The day of the trip it is now: 0 is the day the party set off. */
+  protected tripDay(): number {
+    return Math.floor((this.ix.lib.time.startHour + this.hours) / 24);
+  }
+
+  /** On a search for the living (M7.02), travelling light and fast. */
+  protected onRescue(): boolean {
+    return !!this.orders.rescue && this.orders.mission === "rescue";
   }
 
   /** Make camp if the party has been awake too long. */

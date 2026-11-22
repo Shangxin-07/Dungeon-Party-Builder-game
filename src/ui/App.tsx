@@ -21,7 +21,7 @@ export function App() {
         <h1>Dungeon Party Builder</h1>
         <p className="lede">
           Recruit a party, gear them up, and send them into the dungeon. Once they leave town,
-          they're on their own. You can only watch.
+          they're on their own: you'll hear how it went when they're back.
         </p>
         <nav className="tabs" aria-label="Sections">
           <button

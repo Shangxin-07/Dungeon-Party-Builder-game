@@ -82,7 +82,7 @@ export function PitPanel({
           note={
             last
               ? `${last.climbed} climbed out${last.climbed ? ` at level ${last.level.toFixed(1)}` : ""}: ${OUTCOME_TEXT[last.outcome]}.`
-              : "Rest a day or send a party down to see what climbs out."
+              : "Pass a day or send a party down to see what climbs out."
           }
         />
         {ahead.map((f, i) => (

@@ -41,6 +41,44 @@ export interface RescueRules {
   carryChance: number;
   /** HP share the rescued come home with. */
   rescuedHpPercent: number;
+  /**
+   * Background trips (M7.02, DESIGN.md §17.3). Days after the expected day
+   * back that a party is "overdue", then "possibly lost"; and the day past
+   * due the guild gives a party that hasn't come home up for lost.
+   */
+  overdueDays: number;
+  lostDays: number;
+  giveUpDays: number;
+  /** Holing up: a party that can't get home barricades itself in to wait for help. */
+  holeUp: HoleUpRules;
+  /**
+   * Rescue missions (for the living) walk rooms at this share of the usual
+   * time, and the best scout slips the party past a fight with chance
+   * (Scouting + slipBase)%, at most slipMax.
+   */
+  rescuePace: number;
+  slipBase: number;
+  slipMax: number;
+}
+
+/** When a party holes up instead of heading home, and how long it lasts (M7.02). */
+export interface HoleUpRules {
+  /** Never on floors above this: from floor 1 the party just walks out. */
+  minFloor: number;
+  /**
+   * Hole up on the way home when more are down than are standing to carry
+   * them, or when everyone standing is below this share of max HP (percent)
+   * with nothing left to heal them.
+   */
+  weakBelow: number;
+  /** Supplies last baseDays, plus a day per medicinePerDay of the best Medicine, up to maxDays. */
+  baseDays: number;
+  medicinePerDay: number;
+  maxDays: number;
+  /** Each night holed up, chance monsters find them: a fight with nowhere to run. */
+  foundChance: number;
+  /** HP the downed and the hurt get back each day holed up, as a share of max HP (percent). */
+  healPercent: number;
 }
 
 /** What becomes of the dead (DESIGN.md §10). Tune freely. */

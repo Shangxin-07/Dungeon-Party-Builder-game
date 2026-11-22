@@ -18,8 +18,17 @@ export interface StandingOrders {
   targetFloor: number;
   retreat: RetreatRule;
   loot: LootRule;
-  /** A rescue run: the id of the lost party's site to reach (DESIGN.md §10). */
+  /**
+   * A search (DESIGN.md §10, §17.3): the id of a lost party's site to reach,
+   * or of a party that's overdue (M7.02), to look for wherever it is.
+   */
   rescue?: string;
+  /**
+   * What a search is for (M7.02). "rescue": the living, travelling light and
+   * fast, slipping past fights where the scout can; it leaves bodies and gear.
+   * "recover" (the default): the dead and everything they had, at walking pace.
+   */
+  mission?: "rescue" | "recover";
   /**
    * Clear the target floor (M6): after walking it, stay and hunt until this
    * percent of the monsters living there are dead. Retreat orders still apply.

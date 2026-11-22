@@ -105,6 +105,8 @@ export function newTown(
     orders: DEFAULT_ORDERS,
     records: {},
     memorial: [],
+    trips: [],
+    outings: [],
     nextHeroId: 1,
     dungeon: newDungeon(ix),
     damaged: [],

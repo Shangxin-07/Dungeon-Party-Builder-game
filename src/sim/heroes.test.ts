@@ -13,12 +13,14 @@ import {
   chooseLevelUp,
   grumbles,
   launch,
+  launchAndWait,
   newTown,
   planRescue,
   rest,
   setOrders,
   TOWN_VERSION,
   upgrade,
+  type Outing,
   type TownState,
 } from "./town";
 import { validateLibrary } from "./validate";
@@ -169,7 +171,7 @@ describe("levelling up", () => {
   });
 
   it("comes from trips: kills shared by the party, plus a little per floor", () => {
-    const t = launch(ix, fresh(2), heroNames);
+    const t = launchAndWait(ix, fresh(2), heroNames);
     const trip = t.lastTrip!;
     for (const h of trip.party) {
       const now = t.roster.find((x) => x.id === h.id);
@@ -287,21 +289,31 @@ describe("morale", () => {
   });
 });
 
-/** Send the party to floor 3 with no retreat until someone is trapped. */
-function wipeWithSurvivor(): TownState {
-  for (let seed = 0; seed < 400; seed++) {
-    const t = setOrders(ix, fresh(seed), orders({ targetFloor: 3, retreat: { kind: "never" } }));
-    const after = launch(ix, t, heroNames);
-    if (after.sites.some((s) => s.trapped.length)) return after;
+/**
+ * Send the party to floor 3 with no retreat until someone is trapped, and
+ * pass the days until it falls (M7.02: the town doesn't know yet).
+ */
+function wipeWithSurvivor(from = 0): { t: TownState; o: Outing; seed: number } {
+  for (let seed = from; seed < 400; seed++) {
+    let t = launch(
+      ix,
+      setOrders(ix, fresh(seed), orders({ targetFloor: 3, retreat: { kind: "never" } })),
+      heroNames,
+    );
+    const o = t.outings[0]!;
+    if (o.result.outcome !== "wiped") continue;
+    while (t.outings[0]?.fell === undefined) t = rest(ix, t, heroNames);
+    if (t.sites.some((s) => s.outing === o.id && s.trapped.length))
+      return { t, o: t.outings[0]!, seed };
   }
   throw new Error("no wipe with a survivor in 400 seeds");
 }
 
 describe("wipes and rescue runs", () => {
-  it("leave a site: the dead lie there with their gear, the trapped wait for rescue", () => {
-    const t = wipeWithSurvivor();
-    const site = t.sites[0]!;
-    const sent = t.lastTrip!.party.map((h) => h.name);
+  it("leave a site the town doesn't know about: the dead with their gear, the trapped waiting", () => {
+    const { t, o } = wipeWithSurvivor();
+    const site = t.sites.find((s) => s.outing === o.id)!;
+    const sent = o.party.map((h) => h.name);
     const dead = site.bodies.map((b) => b.hero.name);
     for (const b of site.bodies) {
       expect(sent).toContain(b.hero.name);
@@ -310,31 +322,41 @@ describe("wipes and rescue runs", () => {
     }
     for (const x of site.trapped) {
       expect(sent).toContain(x.hero.name);
-      expect(x.until).toBe(
-        t.lastTrip!.day + t.lastTrip!.result.days + library.rescue.windowDays - 1,
-      );
+      // The rescue clock starts when they fell, not when the town hears.
+      expect(x.until).toBe(o.fell! + library.rescue.windowDays - 1);
     }
     for (const it of site.items.filter((i) => i.keep)) expect(dead).toContain(it.owner);
-    expect(t.lastTrip!.trapped).toEqual(site.trapped.map((x) => x.hero.name));
+    // In town they're still just away: no news, nobody missing from the roster.
+    for (const id of o.heroes) expect(t.roster.some((h) => h.id === id)).toBe(true);
+    expect(t.news.some((n) => sent.some((name) => n.text.includes(`${name} is trapped`)))).toBe(
+      false,
+    );
+    expect(t.lastTrip).toBeUndefined();
   });
 
-  it("the trapped die if nobody comes in time, and the guild takes it hard", () => {
-    let t = wipeWithSurvivor();
-    const site = t.sites[0]!;
+  it("the trapped die if nobody comes in time, and the guild gives them up for lost", () => {
+    let { t, o } = wipeWithSurvivor();
+    const site = t.sites.find((s) => s.outing === o.id)!;
     const names = site.trapped.map((x) => x.hero.name);
-    while (t.day <= site.trapped[0]!.until) t = rest(ix, t, heroNames);
-    for (const n of names) expect(t.memorial.map((m) => m.name)).toContain(n);
-    expect(t.news.some((n) => /Nobody came/.test(n.text))).toBe(true);
+    while (t.outings.length) t = rest(ix, t, heroNames);
+    expect(t.day).toBe(o.expected + library.rescue.giveUpDays);
+    for (const n of names) expect(t.memorial.find((m) => m.name === n)?.fate).toBe("lost");
+    expect(t.news.some((n) => /up for lost/.test(n.text))).toBe(true);
     expect(t.sites.flatMap((s) => s.trapped)).toEqual([]);
+    expect(t.sites.find((s) => s.party === o.name)?.unknown).toBe(true);
   });
 
-  it("a rescue run brings the trapped home and recovers what it can carry", () => {
+  it("a rescue party sent after an overdue party brings the trapped home", () => {
     // Try a few wipes until a rescue party gets through.
-    for (let seed = 0; seed < 400; seed++) {
-      const t0 = setOrders(ix, fresh(seed), orders({ targetFloor: 3, retreat: { kind: "never" } }));
-      let t = launch(ix, t0, heroNames);
-      const site = t.sites.find((s) => s.trapped.length);
-      if (!site) continue;
+    let seed = 0;
+    for (let tries = 0; tries < 30; tries++) {
+      const found = wipeWithSurvivor(seed);
+      seed = found.seed + 1;
+      let { t } = found;
+      const { o } = found;
+      // Nobody knows yet: a search can only be ordered once they're overdue.
+      expect(() => planRescue(ix, t, o.id, "rescue")).toThrow(/isn't due back/);
+      while (t.day <= o.expected) t = rest(ix, t, heroNames);
       // A strong, fresh rescue party.
       t = structuredClone(t);
       for (let i = 0; i < 3; i++) {
@@ -344,25 +366,27 @@ describe("wipes and rescue runs", () => {
           rng(i),
         );
         gainXp(ix, h, xpForLevel(ix, 6), rng(i));
-        h.hp = 999;
-        h.hp = Math.min(h.hp, 10 + h.stats.END * 3 + h.stats.STR);
+        h.hp = Math.min(999, 10 + h.stats.END * 3 + h.stats.STR);
         t.roster.push(h);
         t.records[h.id] = { trips: 0, kills: 0, joined: t.day, deepest: 0, seen: [] };
       }
       t.party = ["r0", "r1", "r2"];
-      t = planRescue(ix, t, site.id);
-      // The party was already ordered to floor 3, so the rescue goes at least to the site.
-      expect(t.orders.targetFloor).toBeGreaterThanOrEqual(site.floor);
-      const after = launch(ix, t, heroNames);
-      if (!after.lastTrip!.rescued?.length) continue;
-      const back = after.lastTrip!.rescued!;
-      for (const n of back) expect(after.roster.map((h) => h.name)).toContain(n);
-      const rescued = after.roster.find((h) => h.name === back[0])!;
+      t = planRescue(ix, t, o.id, "rescue");
+      expect(t.orders.targetFloor).toBe(3);
+      const after = launchAndWait(ix, t, heroNames);
+      const back = after.trips.at(-1)!;
+      if (!back.rescued?.length) continue;
+      for (const n of back.rescued) expect(after.roster.map((h) => h.name)).toContain(n);
+      const rescued = after.roster.find((h) => h.name === back.rescued![0])!;
       expect(rescued.moraleLog.some((n) => /trapped/.test(n.reason))).toBe(true);
-      expect(after.orders.rescue).toBeUndefined();
-      expect(after.lastTrip!.result.log.some((e) => e.kind === "site")).toBe(true);
-      // Gear brought back goes to the store room, not the Market.
-      for (const g of after.lastTrip!.recovered ?? []) expect(after.stash).toContain(g.item);
+      // The searchers bring the news: the lost party is accounted for.
+      expect(after.outings).toEqual([]);
+      expect(back.result.log.some((e) => e.kind === "site")).toBe(true);
+      // A rescue travels light: the dead are left for a recovery party.
+      const site = after.sites.find((s) => s.party === o.name);
+      if (site) expect(site.unknown).toBeUndefined();
+      for (const m of after.memorial.filter((m) => o.heroes.includes(m.heroId!)))
+        expect(m.fate).toBe("dead");
       return;
     }
     throw new Error("no rescue got through");
@@ -389,7 +413,7 @@ describe("wipes and rescue runs", () => {
 
 describe("saves from before M5", () => {
   it("give old heroes personalities, and play on", () => {
-    const t = launch(ix, fresh(), heroNames);
+    const t = launchAndWait(ix, fresh(), heroNames);
     const old = JSON.parse(JSON.stringify(t)) as Record<string, unknown> & TownState;
     old.version = 3;
     for (const k of ["sites", "scavenged", "departed", "nextThingId", "news"])
@@ -421,7 +445,7 @@ describe("saves from before M5", () => {
     // The same save gives the same personalities every time.
     expect(migrateTown(ix, structuredClone(old))).toEqual(up);
     expect(up.sites).toEqual([]);
-    expect(launch(ix, rest(ix, up, heroNames), heroNames).day).toBeGreaterThan(up.day);
+    expect(launchAndWait(ix, rest(ix, up, heroNames), heroNames).day).toBeGreaterThan(up.day);
   });
 });
 

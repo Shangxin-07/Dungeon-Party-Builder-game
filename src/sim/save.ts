@@ -186,6 +186,13 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
   12: (_ix, old) => ({ ...old, version: 13, materials: {} }),
   // Posts round the pit (DESIGN.md §8). Older games are past the opening.
   13: (_ix, old) => ({ ...old, version: 14, posts: {} }),
+  // Background trips (M7.02): nobody is out, and the last trip starts the list.
+  14: (_ix, old) => ({
+    ...old,
+    version: 15,
+    outings: [],
+    trips: old.lastTrip ? [old.lastTrip] : [],
+  }),
 };
 
 /**
@@ -306,12 +313,14 @@ export function missingContent(ix: Index, town: TownState): string[] {
     d.took.forEach(item);
   }
   // History the town screen shows: the last trip and recent raids.
-  const trip = town.lastTrip;
-  if (trip) {
+  // Trips heard of (M7.02 keeps a few) and parties still out.
+  const trips = [...(town.trips ?? []), ...(town.lastTrip ? [town.lastTrip] : [])];
+  for (const trip of [...trips, ...(town.outings ?? [])]) {
     trip.party.forEach(hero);
     trip.result.kills.forEach(monster);
     for (const h of [...trip.result.haul, ...(trip.result.porterHaul ?? [])]) item(h.item);
   }
+  for (const o of town.outings ?? []) o.porterParty.forEach(hero);
   for (const r of town.raids) {
     r.raiders.forEach(monster);
     r.defenders.forEach(hero);

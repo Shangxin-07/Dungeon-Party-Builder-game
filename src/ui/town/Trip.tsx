@@ -1,18 +1,21 @@
 /**
- * What the last trip changed in town, and a link to watch it again.
+ * What a trip changed in town (the debrief), and a link to watch it again.
  */
+import { Fold } from "../Fold";
+import { timeBelow } from "../../sim/expedition";
 import { heroSheet } from "../../sim/hero";
-import { materialWords, type TownState } from "../../sim/town";
+import { materialWords, type TownState, type TripReport } from "../../sim/town";
 import { ix } from "../game";
 import { describeRaid } from "../Pit";
 
-/** What the last trip changed in town: gold, kills per hero, the fallen. */
-export function TripTown({ town }: { town: TownState }) {
-  const trip = town.lastTrip!;
+/** What a trip changed in town: gold, kills per hero, the fallen. */
+export function TripTown({ town, trip }: { town: TownState; trip: TripReport }) {
+  const back = trip.back ?? trip.day + trip.result.days;
   const fallen = town.memorial.filter(
-    (m) => m.day === trip.day + trip.result.days && m.cause !== "raid",
+    (m) => m.cause !== "raid" && trip.party.some((h) => h.id === m.heroId || h.name === m.name),
   );
-  const quiet = trip.result.days - trip.raids.length;
+  const nights = back - trip.day;
+  const quiet = nights - trip.raids.length;
   return (
     <div className="trip-town">
       <h4>Meanwhile, at the pit</h4>
@@ -27,9 +30,7 @@ export function TripTown({ town }: { town: TownState }) {
       ) : null}
       {quiet ? (
         <p className="small">
-          {quiet === trip.result.days
-            ? "Every night"
-            : `${quiet} other ${quiet === 1 ? "night" : "nights"}`}{" "}
+          {quiet === nights ? "Every night" : `${quiet} other ${quiet === 1 ? "night" : "nights"}`}{" "}
           the walls held.
         </p>
       ) : null}
@@ -154,24 +155,67 @@ export function TripTown({ town }: { town: TownState }) {
   );
 }
 
-export function LastTrip({ town, onWatch }: { town: TownState; onWatch: () => void }) {
-  const trip = town.lastTrip!;
-  const r = trip.result;
-  const what = {
-    returned: "came home with orders carried out",
-    retreated: "turned back early",
-    wiped: "fell in the dungeon",
-  }[r.outcome];
+const WHAT = {
+  returned: "came home with orders carried out",
+  retreated: "turned back early",
+  wiped: "fell in the dungeon",
+  holed: "holed up below",
+} as const;
+
+/**
+ * Parties back from below (M7.02): the newest trip's debrief, open, and the
+ * few before it. Each can be watched from the start, now it's over.
+ */
+export function BackPanel({
+  town,
+  onWatch,
+}: {
+  town: TownState;
+  onWatch: (trip: TripReport) => void;
+}) {
+  const trips = [...(town.trips ?? [])].reverse();
+  if (!trips.length) return null;
+  const [newest, ...older] = trips;
   return (
-    <p className={`last-trip last-${r.outcome}`}>
-      Last trip (day {trip.day}): the party reached floor {r.deepestFloor} and {what}.{" "}
-      {trip.goldEarned ? `+${trip.goldEarned} gold. ` : ""}
-      {trip.materials && Object.keys(trip.materials).length
-        ? `+${materialWords(ix, trip.materials)}. `
-        : ""}
-      <button type="button" className="link" onClick={onWatch}>
-        Watch it again
-      </button>
-    </p>
+    <Fold
+      id="back"
+      title="Back from below"
+      defaultOpen={newest!.back === town.day}
+      summary={summary(newest!)}
+      actions={
+        <button type="button" className="btn" onClick={() => onWatch(newest!)}>
+          Watch the trip
+        </button>
+      }
+    >
+      <TripTown town={town} trip={newest!} />
+      {older.length ? (
+        <>
+          <h3>Earlier trips</h3>
+          <ul className="small">
+            {older.map((t) => (
+              <li key={t.seed}>
+                {summary(t)}{" "}
+                <button type="button" className="link" onClick={() => onWatch(t)}>
+                  Watch it
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+    </Fold>
+  );
+}
+
+function summary(trip: TripReport): string {
+  const r = trip.result;
+  const name = trip.name ?? "The party";
+  const when = trip.back ? `day ${trip.day} to ${trip.back}` : `day ${trip.day}`;
+  const time = r.hours !== undefined ? `, ${timeBelow(r.hours)} below` : "";
+  return (
+    `${name} (${when}${time}) reached floor ${r.deepestFloor} and ${WHAT[r.outcome]}.` +
+    `${trip.goldEarned ? ` +${trip.goldEarned} gold.` : ""}` +
+    `${trip.materials && Object.keys(trip.materials).length ? ` +${materialWords(ix, trip.materials)}.` : ""}`
   );
 }

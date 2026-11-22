@@ -16,7 +16,7 @@ import {
   autoStart,
   fence,
   haulPrice,
-  launch,
+  launchAndWait,
   launchWarnings,
   newTown,
   shopStock,
@@ -97,7 +97,7 @@ describe("room events (DESIGN.md §7)", () => {
         h.hp = 999;
         h.stats = { ...h.stats, STR: 30, END: 30, DEX: 30 };
       }
-      const t = launch(ex, { ...t0, orders: orders() }, heroNames);
+      const t = launchAndWait(ex, { ...t0, orders: orders() }, heroNames);
       const gifts = t.lastTrip!.result.gifts ?? [];
       if (!gifts.length) continue;
       found = true;

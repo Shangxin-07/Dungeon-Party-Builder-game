@@ -8,7 +8,7 @@ import type { Index } from "../library";
 import { type HaulItem } from "../loot";
 import { createRng, type Rng } from "../rng";
 import { getRoom } from "../rooms";
-import { type StandingOrders, describeRetreat } from "./orders";
+import { DEFAULT_ORDERS, type StandingOrders, describeRetreat } from "./orders";
 import type { ExpeditionResult, ExpeditionExtras } from "./report";
 import { WANDER_CHANCE } from "./tuning";
 import { list } from "./trip";
@@ -55,8 +55,97 @@ export function planFloor(ix: Index, depth: number, rng: Rng): string[] {
   return rooms;
 }
 
+/**
+ * A night for a party holed up on `floor` (M7.02): they rest and patch each
+ * other up, and monsters may find them (a fight with nowhere to run).
+ * `ready`: they're fit to try for home now.
+ */
+export function holedNight(
+  ix: Index,
+  heroes: readonly Hero[],
+  floor: number,
+  floors: readonly FloorPressure[] | undefined,
+  seed: number,
+): {
+  party: Hero[];
+  found: boolean;
+  wiped: boolean;
+  ready: boolean;
+  floorKills: Record<number, number>;
+} {
+  const trip = new Expedition(
+    ix,
+    heroes,
+    { ...DEFAULT_ORDERS, targetFloor: floor },
+    createRng(seed),
+    floors,
+  );
+  return trip.night(floor);
+}
+
+/**
+ * A holed-up party tries for home on its own (M7.02), when its food runs out
+ * or it's fit to walk again. Nothing makes it hole up a second time.
+ */
+export function breakOut(
+  ix: Index,
+  heroes: readonly Hero[],
+  floor: number,
+  floors: readonly FloorPressure[] | undefined,
+  seed: number,
+): ExpeditionResult {
+  const trip = new Expedition(
+    ix,
+    heroes,
+    { ...DEFAULT_ORDERS, targetFloor: floor },
+    createRng(seed),
+    floors,
+  );
+  return trip.walkOut(floor);
+}
+
 /** One trip, from setting off to coming home (or not). */
 export class Expedition extends TripRescue {
+  /** See holedNight. */
+  night(floor: number) {
+    this.depth = this.deepest = floor;
+    const rules = this.ix.lib.rescue.holeUp;
+    this.pass(24, true);
+    this.firstAid();
+    for (const h of this.alive()) {
+      this.heal(h, Math.max(1, Math.round((this.maxHp(h) * rules.healPercent) / 100)));
+      this.restoreMana(h, this.maxMana(h));
+    }
+    let found = false;
+    if (this.rng.chance(rules.foundChance)) {
+      const monsters = this.rollMonsters();
+      if (monsters.length) {
+        found = true;
+        this.emit("fight", "Something has found the barricade. There's nowhere to run.");
+        this.fight(monsters);
+        if (!this.wiped) this.betweenRooms();
+      }
+    }
+    return {
+      party: this.party,
+      found,
+      wiped: this.wiped || !this.conscious().length,
+      ready: !this.wiped && !this.cantGetHome(),
+      floorKills: this.floorKills,
+    };
+  }
+
+  /** See breakOut. */
+  walkOut(floor: number): ExpeditionResult {
+    this.depth = this.deepest = floor;
+    this.noHolingUp = true;
+    this.emit(
+      "depart",
+      `${list(this.alive().map((h) => h.name))} break out and make for the surface.`,
+    );
+    return this.goHome("retreated");
+  }
+
   run(): ExpeditionResult {
     const { targetFloor, retreat, loot } = this.orders;
     const porters = this.extras.porters ?? [];
@@ -66,7 +155,9 @@ export class Expedition extends TripRescue {
     const site = this.extras.site;
     const mission = site
       ? `floor ${site.floor} to find ${site.trapped.length ? list(site.trapped.map((h) => h.name)) : "the lost party"}`
-      : `floor ${targetFloor}`;
+      : this.orders.rescue
+        ? `floor ${targetFloor} to look for the missing`
+        : `floor ${targetFloor}`;
     this.emit(
       "depart",
       `${names} set off for ${mission}. Orders: ${describeRetreat(retreat)}; ` +
@@ -106,11 +197,13 @@ export class Expedition extends TripRescue {
         this.roomsVisited++;
         this.emit("room", `${room.name}. ${this.rng.pick(room.descriptions)}`);
         getRoom(room.behaviour)(this.context(room.id));
+        // A rescue mission (M7.02) hurries through the rooms.
+        const pace = this.onRescue() ? this.ix.lib.rescue.rescuePace : 1;
         this.pass(
-          (room.hours ?? time.room) + (time.behaviours[room.behaviour] ?? 0),
+          (room.hours ?? time.room) * pace + (time.behaviours[room.behaviour] ?? 0),
           !!room.rest && !this.wiped,
         );
-        if (!this.wiped) this.search();
+        if (!this.wiped && !this.onRescue()) this.search();
         if (!this.wiped) this.betweenRooms();
         if (this.wiped) return this.finish("wiped");
 
@@ -213,6 +306,7 @@ export class Expedition extends TripRescue {
     const time = this.ix.lib.time;
     for (let d = this.depth; d >= this.first; d--) {
       this.depth = d;
+      if (this.cantGetHome()) return this.holeUp();
       this.campIfTired();
       this.pass(time.climbPerFloor);
       if (!this.rng.chance(WANDER_CHANCE)) continue;
@@ -236,13 +330,56 @@ export class Expedition extends TripRescue {
     return this.finish(outcome);
   }
 
+  /**
+   * Holing up (M7.02, DESIGN.md §17.3): on the way home, a party that can't
+   * carry its downed, or is too weak to fight its way up with nothing left to
+   * heal, barricades itself in where it is and waits for help instead of
+   * fighting to the end. From floor holeUp.minFloor down only.
+   */
+  protected cantGetHome(): boolean {
+    const rules = this.ix.lib.rescue.holeUp;
+    if (this.noHolingUp || this.depth < rules.minFloor) return false;
+    const up = this.conscious();
+    if (!up.length) return false;
+    const downed = this.party.filter((h) => h.condition === "downed").length;
+    if (downed > up.length) return true;
+    const weak = up.every((h) => h.hp < (this.maxHp(h) * rules.weakBelow) / 100);
+    const heal = (id: string) => this.ix.item(id).tags.includes("heal");
+    return weak && !this.alive().some((h) => h.pack.some(heal));
+  }
+
+  protected holeUp(): ExpeditionResult {
+    const rules = this.ix.lib.rescue.holeUp;
+    const medic = this.best("medicine")?.value ?? 0;
+    const supplies = Math.min(
+      rules.maxDays,
+      rules.baseDays + Math.floor(medic / rules.medicinePerDay),
+    );
+    const downed = this.party.filter((h) => h.condition === "downed").map((h) => h.name);
+    const why = downed.length
+      ? `They can't carry ${list(downed)} all the way up. The party`
+      : "Too weak to fight their way out, the party";
+    this.emit(
+      "holed",
+      `${why} barricades itself in a cleared room on floor ${this.depth} and waits for help. ` +
+        `The food will last about ${supplies} days.`,
+    );
+    this.holed = { floor: this.depth, room: this.roomNo, supplies };
+    return this.finish("holed");
+  }
+
   protected finish(outcome: ExpeditionResult["outcome"]): ExpeditionResult {
     const wiped = outcome === "wiped";
+    const holed = outcome === "holed";
     let porterHaul: HaulItem[] = [];
     const porters: ExpeditionResult["porters"] = [];
     if (wiped) {
       this.emit("wipe", "Nobody is left standing. The party lies where it fell.");
       porterHaul = this.portersRun(porters);
+    } else if (holed) {
+      // Porters stay with the party: there's no sending anyone up.
+      for (const p of this.extras.porters ?? [])
+        porters.push({ id: p.id, name: p.name, home: false });
     } else {
       for (const p of this.extras.porters ?? [])
         porters.push({ id: p.id, name: p.name, home: true });
@@ -255,18 +392,21 @@ export class Expedition extends TripRescue {
       hours: this.hours,
       roomsVisited: this.roomsVisited,
       party: this.party,
-      haul: wiped ? [] : this.haul,
-      leftBehind: wiped ? this.haul.filter((h) => !porterHaul.includes(h)) : [],
+      haul: wiped || holed ? [] : this.haul,
+      leftBehind: wiped || holed ? this.haul.filter((h) => !porterHaul.includes(h)) : [],
       porterHaul,
       porters,
       kills: this.kills,
       floorKills: this.floorKills,
+      dayKills: this.dayKills,
+      holed: this.holed,
       log: this.log,
       wipeSite: wiped ? { floor: this.depth, room: this.roomNo } : undefined,
       seen: [...this.seen],
       rescued: this.followers,
       siteVisited: this.siteVisited,
       siteLeft: this.siteLeft,
+      siteBodiesLeft: this.siteBodiesLeft || undefined,
       gearTaken: this.gearTaken,
       bodies: this.bodies,
       risenMet: this.risenMet,
@@ -275,7 +415,7 @@ export class Expedition extends TripRescue {
       secrets: this.secrets,
       huntRooms: this.hunts,
       deeds: this.deeds,
-      gifts: wiped ? [] : this.gifts,
+      gifts: wiped || holed ? [] : this.gifts,
       parleys: this.parleys,
     };
   }

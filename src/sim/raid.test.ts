@@ -8,7 +8,7 @@ import {
   builderHands,
   defence,
   forecast,
-  launch,
+  launchAndWait,
   newTown,
   partySlots,
   repair,
@@ -117,7 +117,7 @@ describe("nights at the pit", () => {
   });
 
   it("happen while a party is away, and only the heroes left behind can defend", () => {
-    const t = launch(
+    const t = launchAndWait(
       ix,
       crowded({ ...fresh(), orders: { ...fresh().orders, targetFloor: 2 } }),
       heroNames,
@@ -131,7 +131,7 @@ describe("nights at the pit", () => {
 
   it("thin out the dungeon when a party kills monsters", () => {
     const t0 = fresh();
-    const t = launch(ix, t0, heroNames);
+    const t = launchAndWait(ix, t0, heroNames);
     const killed = t.lastTrip!.result.floorKills[1] ?? 0;
     expect(killed).toBeGreaterThan(0);
     // The day's push-up may have refilled it a little, but the kills came off first.
@@ -186,7 +186,7 @@ describe("building work", () => {
     let t = stocked({ ...fresh(), gold: 1000, orders: { ...fresh().orders, targetFloor: 2 } });
     t = upgrade(ix, upgrade(ix, t, "gate"), "palisade");
     expect(t.construction).toHaveLength(2);
-    t = launch(ix, t, heroNames);
+    t = launchAndWait(ix, t, heroNames);
     const days = t.lastTrip!.result.days;
     expect(t.buildings.gate).toBe(1); // 1 day of work
     expect(t.buildings.palisade).toBe(days >= 2 ? 1 : 0);
@@ -240,7 +240,7 @@ describe("saves", () => {
   });
 
   it("upgrade an M3 town, keeping its heroes", () => {
-    const t = launch(ix, fresh(), heroNames);
+    const t = launchAndWait(ix, fresh(), heroNames);
     const old = structuredClone(t) as Partial<TownState> & Record<string, unknown>;
     old.version = 1;
     for (const k of ["dungeon", "damaged", "pit", "raids", "construction"]) delete old[k];

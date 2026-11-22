@@ -13,6 +13,9 @@ export class TripRescue extends TripFights {
   /** The rescue party reaches where the lost party fell (DESIGN.md §10). */
   protected visitSite(site: SiteVisit): void {
     this.siteVisited = site.id;
+    // Too late for anyone who couldn't hold out this long (M7.02).
+    const late = site.trapped.filter((h) => (site.until?.[h.id] ?? Infinity) < this.hours);
+    site = { ...site, trapped: site.trapped.filter((h) => !late.includes(h)) };
     const names = [...site.trapped.map((h) => h.name), ...site.bodies.map((b) => b.hero.name)];
     this.emit(
       "site",
@@ -31,6 +34,20 @@ export class TripRescue extends TripFights {
         "site",
         `${h.name} is alive! Weak and starving, but alive. They'll walk out with the party.`,
       );
+    }
+    for (const h of late)
+      this.emit("site", `They're too late for ${h.name}. There's nothing to be done.`);
+    // A rescue mission travels light (M7.02): the living only. The dead and
+    // their gear wait for a recovery party.
+    if (this.onRescue()) {
+      if (site.bodies.length || site.items.length)
+        this.emit(
+          "site",
+          "Travelling light, they leave the dead and the gear for a recovery party.",
+        );
+      this.siteLeft = [...site.items];
+      this.siteBodiesLeft = true;
+      return;
     }
     for (const b of site.bodies) {
       this.emit(

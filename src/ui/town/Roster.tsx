@@ -25,6 +25,7 @@ import {
   trainMiner,
   trainMiners,
   trainPorter,
+  outingOf,
   unequip,
   unpackItem,
   wage,
@@ -47,8 +48,15 @@ import {
 import { SLOT_NAMES, describeItem, describeKit, tally, type Act } from "./shared";
 
 export function Roster({ town, act }: { town: TownState; act: Act }) {
+  const home = town.roster.filter((h) => !outingOf(town, h.id));
+  const away = town.roster.length - home.length;
   return (
-    <Fold id="roster" title="Roster" defaultOpen summary={`${town.roster.length} in the guild`}>
+    <Fold
+      id="roster"
+      title="Roster"
+      defaultOpen
+      summary={`${town.roster.length} in the guild${away ? `, ${away} away below` : ""}`}
+    >
       {!town.camp && town.roster.some((h) => !h.porter && inCampClass(ix, h)) ? (
         <p className="small">
           The camp is held, and the miners can train for the dungeon. Pick each one's class on their
@@ -59,15 +67,26 @@ export function Roster({ town, act }: { town: TownState; act: Act }) {
           .
         </p>
       ) : null}
-      {town.roster.length ? (
+      {home.length ? (
         <ul className="hero-cards">
-          {town.roster.map((h) => (
+          {home.map((h) => (
             <HeroCard key={h.id} town={town} hero={h} act={act} />
           ))}
         </ul>
+      ) : away ? (
+        <p className="muted">Everyone is down below.</p>
       ) : (
         <p className="muted">Nobody is left in the guild. Hire someone below.</p>
       )}
+      {(town.outings ?? []).map((o) => (
+        <p key={o.id} className="small muted">
+          Away with <strong>{o.name}</strong>:{" "}
+          {[...o.party, ...o.porterParty]
+            .map((h) => `${h.name} (${h.porter ? "porter" : heroTitle(ix, h, true)})`)
+            .join(", ")}
+          . Nothing can be changed for them until they're back.
+        </p>
+      ))}
     </Fold>
   );
 }

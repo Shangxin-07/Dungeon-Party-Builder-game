@@ -9,12 +9,15 @@ import type { HaulItem } from "../loot";
 import type { RaidReport } from "../raid";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 14;
+export const TOWN_VERSION = 15;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 export const PIT_HISTORY = 60;
 
 export const RAID_HISTORY = 5;
+
+/** How many finished trips the town keeps for the debrief and the replay. */
+export const TRIP_HISTORY = 4;
 
 /** A hero's career so far. */
 export interface HeroRecord {
@@ -40,8 +43,29 @@ export interface LostSite {
   id: string;
   floor: number;
   room: number;
-  /** Day the news reached town. */
+  /** Day the party fell (M7.02: the town may hear of it later, or never). */
   day: number;
+  /**
+   * The party still out (M7.02) whose site this is: the town hasn't heard
+   * what happened yet, so nothing shows. Cleared when it hears.
+   */
+  outing?: string;
+  /**
+   * The town knows the party is lost but not where (M7.02: it was given up
+   * for lost with nobody to say what happened). Shown by `heading` and `party`.
+   */
+  unknown?: boolean;
+  /** The party this site was hidden for, once the town has heard (search orders follow it). */
+  outingWas?: string;
+  /** The floor the party was heading for, and its name (M7.02). */
+  heading?: number;
+  party?: string;
+  /** Day the town heard of this site (M7.02): its dead lie still riseDays from then at least. */
+  heard?: number;
+  /** A party that holed up (M7.02): the trapped are holding out together. */
+  holed?: boolean;
+  /** A party sent to this site is on its way (M7.02): the site waits for it. */
+  visitor?: string;
   trapped: Trapped[];
   /** The bodies of those who died there (DESIGN.md §10). Left too long, they rise. */
   bodies: Body[];
@@ -71,7 +95,10 @@ export interface Memorial {
   classId: string;
   day: number;
   floor: number;
-  /** "dead" for good. "lost" only appears in saves from before rescue runs. */
+  /**
+   * "dead" for good. "lost": went down and was never heard of again (M7.02;
+   * in saves from before rescue runs, lost before rescues existed).
+   */
   fate: "dead" | "lost";
   /** "raid" if they died defending the town (floor is then 0). */
   cause?: "raid";
@@ -93,10 +120,48 @@ export interface PitNight {
   outcome: RaidReport["outcome"];
 }
 
+/**
+ * A party out in the dungeon (M7.02, DESIGN.md §17.1). Its whole trip was
+ * simulated when it set off, but the town only learns what happened as the
+ * days pass: kills come off the dungeon night by night, and the rest lands on
+ * the day they climb out, or when someone brings news of them.
+ */
+export interface Outing {
+  id: string;
+  /** "Party A", or whoever leads it. */
+  name: string;
+  /** Day it set off, and the day it's expected back (worked out from the orders alone). */
+  left: number;
+  expected: number;
+  /** Hero and porter ids: away until the town hears of them. */
+  heroes: string[];
+  porters: string[];
+  seed: number;
+  /** The heroes and porters as they left town. */
+  party: Hero[];
+  porterParty: Hero[];
+  /** What happens to them. Hidden from the town until it hears. */
+  result: ExpeditionResult;
+  /** Days of the trip whose kills have come off the dungeon. */
+  killsLanded: number;
+  /**
+   * The guild gave them up for lost before hearing anything (M7.02): they're
+   * off the roster and the payroll, on the memorial as lost. If they do come
+   * home, they're welcomed back.
+   */
+  givenUp?: number;
+  /** Day the party fell or holed up, and where (the town doesn't know yet). */
+  fell?: number;
+  site?: string;
+}
+
 /** What came back from the last trip, for the watch and results screens. */
 export interface TripReport {
   /** Day the party set off. */
   day: number;
+  /** The party's name (M7.02), and the day the town heard how it went. */
+  name?: string;
+  back?: number;
   seed: number;
   /** The party as it left town. */
   party: Hero[];
@@ -151,7 +216,12 @@ export interface TownState {
   orders: StandingOrders;
   records: Record<string, HeroRecord>;
   memorial: Memorial[];
+  /** The newest of `trips`, kept for older saves and quick checks. */
   lastTrip?: TripReport;
+  /** The last few trips the town has heard about, oldest first (M7.02). */
+  trips: TripReport[];
+  /** Parties out in the dungeon now (M7.02). */
+  outings: Outing[];
   /** Next number for a hero id. */
   nextHeroId: number;
   /** The monster population, floor by floor (DESIGN.md §4). */

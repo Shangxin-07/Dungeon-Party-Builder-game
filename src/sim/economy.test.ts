@@ -14,7 +14,7 @@ import {
   autoStart,
   buy,
   haulPrice,
-  launch,
+  launchAndWait,
   newTown,
   rest,
   sell,
@@ -64,7 +64,7 @@ describe("the Market", () => {
     let t = fresh();
     t = buy(ix, t, "bandages");
     t = sell(ix, t, "bandages");
-    t = launch(ix, t, heroNames);
+    t = launchAndWait(ix, t, heroNames);
     const kinds = new Set(t.ledger.map((l) => l.kind));
     expect(kinds).toEqual(
       new Set(["bought", "sold", "wages", ...(t.lastTrip!.goldEarned ? ["haul"] : [])]),
@@ -133,7 +133,7 @@ describe("the Cleric", () => {
 
 describe("saves from before M6", () => {
   it("start the books empty, and play on", () => {
-    const t = launch(ix, fresh(), heroNames);
+    const t = launchAndWait(ix, fresh(), heroNames);
     const old = JSON.parse(JSON.stringify(t)) as Record<string, unknown>;
     old.version = 4;
     delete old.ledger;

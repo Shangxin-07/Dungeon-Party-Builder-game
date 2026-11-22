@@ -12,7 +12,7 @@ import { createRng } from "./rng";
 import {
   autoStart,
   bury,
-  launch,
+  launchAndWait,
   newTown,
   planRescue,
   rest,
@@ -117,7 +117,7 @@ function deathOnTrip(): TownState {
       targetFloor: 2,
       retreat: { kind: "never" },
     });
-    const t = launch(ix, t0, heroNames);
+    const t = launchAndWait(ix, t0, heroNames);
     if (t.lastTrip!.result.outcome !== "wiped" && t.bodies.length) return t;
   }
   throw new Error("nobody died on a trip the party came home from");
@@ -180,7 +180,7 @@ function wipeWithBody(): TownState {
       targetFloor: 3,
       retreat: { kind: "never" },
     });
-    const after = launch(ix, t, heroNames);
+    const after = launchAndWait(ix, t, heroNames);
     if (after.sites.some((s) => s.bodies.length)) return after;
   }
   throw new Error("no wipe left a body");
@@ -191,7 +191,10 @@ describe("bodies left in the dungeon", () => {
     let t = wipeWithBody();
     const site = t.sites.find((s) => s.bodies.length)!;
     const b = site.bodies[0]!;
-    while (t.day < b.died + library.fallen.riseDays) t = rest(ix, t, heroNames);
+    // Bodies lie still at least riseDays (and while the town hasn't heard, M7.02).
+    for (let i = 0; i < 30 && !t.risen.some((x) => x.body.hero.id === b.hero.id); i++)
+      t = rest(ix, t, heroNames);
+    expect(t.day).toBeGreaterThanOrEqual(b.died + library.fallen.riseDays);
     const r = t.risen.find((x) => x.body.hero.id === b.hero.id)!;
     expect(r).toBeTruthy();
     expect(r.floor).toBeLessThanOrEqual(site.floor);
@@ -210,7 +213,7 @@ describe("bodies left in the dungeon", () => {
         retreat: { kind: "never" },
       });
       for (const h of t0.roster) if (t0.party.includes(h.id)) h.hp = 1;
-      let t = launch(ix, t0, heroNames);
+      let t = launchAndWait(ix, t0, heroNames);
       const site = t.sites.find((s) => s.bodies.length && s.floor === 1);
       if (!site) continue;
       t = structuredClone(t);
@@ -222,7 +225,7 @@ describe("bodies left in the dungeon", () => {
       }
       t.party = t.roster.filter((h) => h.id.startsWith("v")).map((h) => h.id);
       t = planRescue(ix, { ...t, orders: { ...t.orders, targetFloor: 1 } }, site.id);
-      const after = launch(ix, t, heroNames);
+      const after = launchAndWait(ix, t, heroNames);
       if (after.lastTrip!.result.outcome === "wiped") continue;
       const names = site.bodies.map((b) => b.hero.name);
       expect(after.bodies.map((b) => b.hero.name)).toEqual(expect.arrayContaining(names));
@@ -305,7 +308,7 @@ describe("the risen", () => {
     let t = fresh(3);
     t = { ...t, risen: [risen()] };
     // Everyone joined on day 1; the risen hero died on day 3.
-    const after = launch(lix, t, heroNames);
+    const after = launchAndWait(lix, t, heroNames);
     expect(after.lastTrip!.result.risenMet).toEqual(["r1"]);
     const sent = after.lastTrip!.party.map((h) => h.id);
     const knew = after.roster.filter((h) => sent.includes(h.id));

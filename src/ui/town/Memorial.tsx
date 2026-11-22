@@ -20,7 +20,11 @@ export function Memorial({ town }: { town: TownState }) {
             , day {m.day}.{" "}
             <span className="muted">
               {m.record.trips} {m.record.trips === 1 ? "trip" : "trips"}, {m.record.kills} kills.
-              {m.fate === "lost" ? " Lost before rescue runs existed: never found." : ""}
+              {m.fate === "lost"
+                ? m.heroId
+                  ? " Never came home, and nobody knows what happened."
+                  : " Lost before rescue runs existed: never found."
+                : ""}
               {m.buried ? ` Buried on day ${m.buried}.` : ""}
               {m.risen && !m.buried ? " Their body rose in the dark." : ""}
             </span>

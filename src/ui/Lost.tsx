@@ -9,7 +9,6 @@ import {
   bury,
   cancelRescue,
   grumbles,
-  planRescue,
   resurrect,
   resurrectQuote,
   materialWords,
@@ -18,20 +17,42 @@ import {
 import { risenName } from "../sim/fallen";
 import { heroTitle } from "../sim/hero";
 import { ix } from "./game";
+import { SearchButtons } from "./town/Away";
 
 type Act = (f: (t: TownState) => TownState) => void;
 
 /** Where parties fell, who's waiting, and what the monsters walked off with. */
 export function LostPanel({ town, act }: { town: TownState; act: Act }) {
   const risen = town.risen ?? [];
-  if (!town.sites.length && !town.scavenged.length && !risen.length) return null;
+  // Sites of parties the town hasn't heard from yet stay hidden (M7.02).
+  const sites = town.sites.filter((s) => !s.outing);
+  if (!sites.length && !town.scavenged.length && !risen.length) return null;
   const byFloor = new Map<number, typeof town.scavenged>();
   for (const g of town.scavenged) byFloor.set(g.floor, [...(byFloor.get(g.floor) ?? []), g]);
   return (
     <Fold id="lost" title="Lost in the dungeon" className="lost" defaultOpen>
       <ul className="sites">
-        {town.sites.map((s) => {
+        {sites.map((s) => {
           const planned = town.orders.rescue === s.id;
+          if (s.unknown)
+            return (
+              <li key={s.id} className={`site${planned ? " planned" : ""}`}>
+                <h3>
+                  {s.party ?? "A party"}, lost on the way to floor {s.heading ?? s.floor}{" "}
+                  <span className="muted small">(given up for lost)</span>
+                </h3>
+                <p className="small">
+                  They were heading for floor {s.heading ?? s.floor} and never came back. Nobody
+                  knows where they are, or whether anyone is still alive. A party sent to look
+                  searches the way down.
+                </p>
+                {planned ? (
+                  <PlannedNote act={act} />
+                ) : (
+                  <SearchButtons town={town} act={act} id={s.id} planned={false} />
+                )}
+              </li>
+            );
           const arrive = town.day + s.floor - 1;
           const gear = s.items.filter((i) => i.keep).length;
           const loot = s.items.length - gear;
@@ -69,27 +90,12 @@ export function LostPanel({ town, act }: { town: TownState; act: Act }) {
                 {loot ? ` and ${loot} things they'd found` : ""} still lie there.
                 {gear || loot ? " Monsters pick it over every night." : ""}
               </p>
-              {planned ? (
-                <p className="small">
-                  <strong>The next trip is a rescue run.</strong>{" "}
-                  <button
-                    type="button"
-                    className="link"
-                    onClick={() => act((t) => cancelRescue(ix, t))}
-                  >
-                    Cancel
-                  </button>
-                </p>
+              {s.visitor ? (
+                <p className="small muted">A party is on its way there.</p>
+              ) : planned ? (
+                <PlannedNote act={act} />
               ) : (
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => act((t) => planRescue(ix, t, s.id))}
-                >
-                  {s.trapped.length
-                    ? "Send the next party to find them"
-                    : "Send the next party to bring them home"}
-                </button>
+                <SearchButtons town={town} act={act} id={s.id} planned={false} />
               )}
             </li>
           );
@@ -136,6 +142,17 @@ export function LostPanel({ town, act }: { town: TownState; act: Act }) {
         </>
       ) : null}
     </Fold>
+  );
+}
+
+function PlannedNote({ act }: { act: Act }) {
+  return (
+    <p className="small">
+      <strong>The next party to go down will search here.</strong>{" "}
+      <button type="button" className="link" onClick={() => act((t) => cancelRescue(ix, t))}>
+        Cancel
+      </button>
+    </p>
   );
 }
 

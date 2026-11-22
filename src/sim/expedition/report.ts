@@ -39,6 +39,8 @@ export type ExpeditionEventKind =
   | "parley"
   /** The party camps in a tunnel after a long day awake (M7.01). */
   | "camp"
+  /** The party can't get home and barricades itself in to wait for help (M7.02). */
+  | "holed"
   /** Raids on the town reuse the trip log format. */
   | "raid";
 
@@ -76,9 +78,10 @@ export interface ExpeditionEvent {
 export interface ExpeditionResult {
   /**
    * "returned": did what it was told. "retreated": turned back early.
-   * "wiped": nobody left standing.
+   * "wiped": nobody left standing. "holed": couldn't get home, so it
+   * barricaded itself in to wait for help (M7.02); see `holed`.
    */
-  outcome: "returned" | "retreated" | "wiped";
+  outcome: "returned" | "retreated" | "wiped" | "holed";
   orders: StandingOrders;
   deepestFloor: number;
   /**
@@ -98,6 +101,17 @@ export interface ExpeditionResult {
   kills: string[];
   /** Monsters killed on each floor (summoned ones don't count), for the dungeon's population. */
   floorKills: Record<number, number>;
+  /**
+   * The same kills by the day of the trip they happened on (0 = the day the
+   * party set off), so they come off the dungeon night by night (M7.02).
+   * Missing on trips saved before then.
+   */
+  dayKills?: Record<number, Record<number, number>>;
+  /**
+   * Where a party that couldn't get home holed up (M7.02), and how many days
+   * its supplies last. The living stay there, alive, waiting for help.
+   */
+  holed?: { floor: number; room: number; supplies: number };
   log: ExpeditionEvent[];
   /** Where the party fell, if it was wiped. */
   wipeSite?: { floor: number; room: number };
@@ -109,6 +123,8 @@ export interface ExpeditionResult {
   siteVisited?: string;
   /** What the party couldn't carry away from that site. */
   siteLeft: HaulItem[];
+  /** A rescue mission came for the living only and left the dead there (M7.02). */
+  siteBodiesLeft?: boolean;
   /** Ids of scavenged gear taken back from the monsters carrying it. */
   gearTaken: string[];
   /**
@@ -146,8 +162,13 @@ export interface SiteVisit {
   floor: number;
   /** The room they fell in. The rescue party gets there after that many rooms. */
   room: number;
-  /** Trapped heroes still alive when the rescue party arrives. */
+  /** Trapped heroes who may still be alive when the rescue party arrives. */
   trapped: Hero[];
+  /**
+   * Hours into the trip by which each trapped hero (by id) has to be reached
+   * (M7.02): any later and they're gone. Missing: they'll still be there.
+   */
+  until?: Record<string, number>;
   /** The bodies of those who died there. */
   bodies: Body[];
   /** Their gear and the haul they were carrying. */

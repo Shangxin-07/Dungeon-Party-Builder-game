@@ -5,7 +5,7 @@ import { DEFAULT_ORDERS, type StandingOrders } from "../expedition";
 import type { Hero } from "../hero";
 import type { Index } from "../library";
 import { type TownState, type SavedParty, TownError } from "./state";
-import { partySlots, findHero } from "./read";
+import { partySlots, findHero, searchFloor } from "./read";
 import { edit, hero } from "./internal";
 
 /** Add a hero to the party, or take them out of it. */
@@ -49,7 +49,7 @@ export function saveParty(ix: Index, town: TownState, slot: number, name?: strin
   if (!town.party.length) throw new TownError("Pick some heroes first.");
   const t = edit(town);
   t.parties ??= [];
-  const { rescue: _, ...orders } = t.orders;
+  const { rescue: _, mission: __, ...orders } = t.orders;
   const old = t.parties[slot];
   while (t.parties.length < slot) t.parties.push(emptyParty(t.parties.length));
   t.parties[slot] = {
@@ -99,31 +99,38 @@ export function pickParty(ix: Index, town: TownState, slot: number): TownState {
     .slice(0, partySlots(ix, t))
     .map((h) => h.id);
   t.porters = porters.slice(0, ix.lib.town.porters.slots).map((h) => h.id);
-  const rescue = t.orders.rescue;
-  t.orders = { ...p.orders, ...(rescue ? { rescue } : {}) };
-  if (rescue) {
-    const site = t.sites.find((s) => s.id === rescue);
-    if (site) t.orders.targetFloor = Math.max(t.orders.targetFloor, site.floor);
-  }
+  const { rescue, mission } = t.orders;
+  t.orders = { ...p.orders, ...(rescue ? { rescue, mission } : {}) };
+  const floor = searchFloor(t);
+  if (floor) t.orders.targetFloor = Math.max(t.orders.targetFloor, floor);
   return t;
 }
 
-/** Make the next trip a rescue run to a lost party's site (DESIGN.md §10). */
-export function planRescue(_ix: Index, town: TownState, siteId: string): TownState {
-  const site = town.sites.find((s) => s.id === siteId);
-  if (!site) throw new TownError("Nobody is waiting there any more.");
-  return {
-    ...town,
-    orders: {
-      ...town.orders,
-      rescue: site.id,
-      targetFloor: Math.max(town.orders.targetFloor, site.floor),
-    },
-  };
+/**
+ * Make the next trip a search (DESIGN.md §10, §17.3): for a lost party's
+ * site, or for a party that's out and overdue. A "rescue" mission comes back
+ * for the living, travelling fast; a "recover" mission brings home the dead
+ * and everything they had.
+ */
+export function planRescue(
+  _ix: Index,
+  town: TownState,
+  id: string,
+  mission: "rescue" | "recover" = "recover",
+): TownState {
+  const site = town.sites.find((s) => s.id === id && !s.outing);
+  const outing = (town.outings ?? []).find((o) => o.id === id);
+  if (!site && !outing) throw new TownError("Nobody is waiting there any more.");
+  if (outing && town.day <= outing.expected)
+    throw new TownError(`${outing.name} isn't due back until day ${outing.expected}.`);
+  const t = { ...town, orders: { ...town.orders, rescue: id, mission } };
+  const floor = searchFloor(t) ?? 1;
+  t.orders.targetFloor = Math.max(t.orders.targetFloor, floor);
+  return t;
 }
 
 /** Back to an ordinary trip. */
 export function cancelRescue(_ix: Index, town: TownState): TownState {
-  const { rescue: _, ...orders } = town.orders;
+  const { rescue: _, mission: __, ...orders } = town.orders;
   return { ...town, orders };
 }
