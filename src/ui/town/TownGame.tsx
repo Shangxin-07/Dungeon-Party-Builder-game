@@ -179,12 +179,27 @@ export function TownPlay({ initial }: { initial: Game }) {
           heroes={trip.party}
           log={trip.result.log}
           results={
-            <Results result={trip.result}>
-              <TripTown town={town} trip={trip} />
-              <button type="button" className="btn btn-main" onClick={() => setWatching(false)}>
-                Back to town
-              </button>
-            </Results>
+            trip.account ? (
+              // A deserter's account (M7.05): it ends where they ran.
+              <div className="results">
+                <h3>{trip.account.by} ran</h3>
+                <p>
+                  That's all {trip.account.by} saw. Nothing more is known of{" "}
+                  {trip.name ?? "the party"} until someone comes back or finds them.{" "}
+                  {trip.account.blame}
+                </p>
+                <button type="button" className="btn btn-main" onClick={() => setWatching(false)}>
+                  Back to town
+                </button>
+              </div>
+            ) : (
+              <Results result={trip.result}>
+                <TripTown town={town} trip={trip} />
+                <button type="button" className="btn btn-main" onClick={() => setWatching(false)}>
+                  Back to town
+                </button>
+              </Results>
+            )
           }
         />
       </section>

@@ -11,7 +11,13 @@ import type { Index } from "../library";
 import { type HaulItem } from "../loot";
 import { createRng, type Rng } from "../rng";
 import { type StandingOrders } from "./orders";
-import type { ExpeditionEventKind, HeroStatus, ExpeditionEvent, ExpeditionExtras } from "./report";
+import type {
+  Deserter,
+  ExpeditionEventKind,
+  HeroStatus,
+  ExpeditionEvent,
+  ExpeditionExtras,
+} from "./report";
 
 export const an = (name: string) => (/^[aeiou]/i.test(name) ? `an ${name}` : `a ${name}`);
 
@@ -69,6 +75,14 @@ export class TripBase {
   /** The trip clock (M7.01): hours since setting off, and hours since the party last slept. */
   protected hours = 0;
   protected awake = 0;
+  /** Leaders (M7.05): heroes who slipped away, big fights won, and the leader going down. */
+  protected deserters: Deserter[] = [];
+  protected bigWins = 0;
+  protected leaderFell = false;
+  /** The leader just went down: the next order check, the party may lose heart. */
+  protected leaderShaken = false;
+  /** Fighters who set off (M7.05): monster groups grow with them. */
+  protected fighters = 0;
 
   constructor(
     protected ix: Index,
@@ -90,6 +104,7 @@ export class TripBase {
       equipment: { ...h.equipment },
       pack: [...h.pack],
     }));
+    this.fighters = this.party.filter((h) => h.condition === "ok").length;
     const deepest = Math.max(...ix.lib.floors.map((f) => f.depth));
     this.orders = {
       ...orders,

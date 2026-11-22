@@ -14,14 +14,27 @@ import type { Index } from "./library";
 
 export type Facts = Partial<Record<MoraleFact, number>>;
 
+/** On a trip: the leader's CHA, and extra loss percent from their traits (M7.05). */
+export interface MoraleOpts {
+  leaderCha?: number;
+  leaderLoss?: number;
+}
+
 /** How many morale notes each hero keeps. */
 const LOG_LENGTH = 10;
 
-/** Share of each morale loss a hero actually feels (WIL and a leader's CHA help). */
-export function lossFactor(ix: Index, hero: Hero, leaderCha = 10): number {
+/**
+ * Share of each morale loss a hero actually feels (WIL and a leader's CHA
+ * help). `leaderLoss`: extra percent from the leader's traits (M7.05).
+ */
+export function lossFactor(ix: Index, hero: Hero, leaderCha = 10, leaderLoss = 0): number {
   const m = ix.lib.morale;
   const wil = heroSheet(ix, hero).stats.WIL;
-  const f = 1 - (wil - 10) * m.stabilityPerWil - Math.max(0, leaderCha - 10) * m.leaderPerCha;
+  const f =
+    1 -
+    (wil - 10) * m.stabilityPerWil -
+    Math.max(0, leaderCha - 10) * m.leaderPerCha +
+    leaderLoss / 100;
   return Math.max(0.5, Math.min(1.5, f));
 }
 
@@ -39,10 +52,10 @@ export function moraleChanges(
   ix: Index,
   hero: Hero,
   facts: Facts,
-  opts: { leaderCha?: number } = {},
+  opts: MoraleOpts = {},
 ): { amount: number; reason: string }[] {
   const out: { amount: number; reason: string }[] = [];
-  const loss = lossFactor(ix, hero, opts.leaderCha);
+  const loss = lossFactor(ix, hero, opts.leaderCha, opts.leaderLoss);
   const m = ix.lib.morale;
   const favourite = ix.building(hero.favourite).name;
   for (const r of moraleRules(ix, hero)) {
@@ -71,7 +84,7 @@ export function applyMorale(
   hero: Hero,
   facts: Facts,
   day: number,
-  opts: { leaderCha?: number } = {},
+  opts: MoraleOpts = {},
 ): number {
   const before = hero.morale;
   for (const c of moraleChanges(ix, hero, facts, opts)) {

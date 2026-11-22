@@ -9,7 +9,7 @@ export default defineMonster({
   overrides: { maxHp: 34 },
   weapon: { name: "notched cleaver", damageType: "slashing", attack: 5 },
   row: "front",
-  tags: ["goblinoid", "humanoid"],
+  tags: ["goblinoid", "humanoid", "cunning"],
   ai: "brute",
   loot: "goblin-loot",
   variant: { of: "goblin", chance: 0.15, minLevel: 2 },

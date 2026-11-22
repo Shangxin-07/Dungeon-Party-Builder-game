@@ -1269,6 +1269,30 @@ sup.down {
   font-style: italic;
 }
 
+.log-x-desert,
+.log-x-leader {
+  color: var(--bad);
+  font-style: italic;
+}
+
+/* Leaders and command (M7.05). */
+.command {
+  margin: 0.4rem 0;
+}
+
+.command select {
+  max-width: 100%;
+}
+
+.leader-mark {
+  color: var(--accent, inherit);
+}
+
+.leader-record ul {
+  margin: 0.2rem 0;
+  padding-left: 1.1rem;
+}
+
 .log-x-site {
   color: var(--accent);
   font-weight: 600;

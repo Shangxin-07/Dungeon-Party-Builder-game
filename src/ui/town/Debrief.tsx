@@ -40,6 +40,9 @@ const RULE_WORDS: Record<HaulRule, string> = {
   keep: "Keep everything",
 };
 
+/** A deserter's account (M7.05) shares its trip's seed: tell them apart. */
+const tripKey = (t: TripReport) => `${t.seed}:${t.account?.by ?? ""}`;
+
 const hoursWord = (h: number) => {
   const day = Math.floor((ix.lib.time.startHour + h) / 24) + 1;
   const hour = Math.floor((ix.lib.time.startHour + h) % 24);
@@ -60,10 +63,10 @@ export function DebriefPanel({
   onWatch: (trip: TripReport) => void;
 }) {
   const trips = [...(town.trips ?? [])].reverse();
-  const [pick, setPick] = useState<number>();
+  const [pick, setPick] = useState<string>();
   const waiting = town.haul ?? [];
   if (!trips.length && !waiting.length) return null;
-  const trip = trips.find((t) => t.seed === pick) ?? trips[0];
+  const trip = trips.find((t) => tripKey(t) === pick) ?? trips[0];
   const others = trips.filter((t) => t !== trip);
   const body = (
     <>
@@ -74,9 +77,9 @@ export function DebriefPanel({
           <h3>Earlier trips</h3>
           <ul className="small">
             {others.map((t) => (
-              <li key={t.seed}>
+              <li key={tripKey(t)}>
                 {summary(t)}{" "}
-                <button type="button" className="link" onClick={() => setPick(t.seed)}>
+                <button type="button" className="link" onClick={() => setPick(tripKey(t))}>
                   Debrief
                 </button>{" "}
                 <button type="button" className="link" onClick={() => onWatch(t)}>
@@ -142,6 +145,27 @@ function Debrief({
           Watch it
         </button>
       </p>
+      {trip.account ? (
+        <p className="small warn account">
+          This is {trip.account.by}'s account, and only theirs: they slipped away on floor{" "}
+          {trip.account.floor} and came home alone. It stops where they ran, and nothing after is
+          known until the party is heard of. {trip.account.blame} The replay is the real thing, up
+          to that point.
+        </p>
+      ) : null}
+      {trip.leader || trip.deserters?.length ? (
+        <p className="small">
+          {trip.leader ? `Led by ${trip.leader}.` : ""}
+          {trip.traits?.length
+            ? ` ${trip.leader} came back ${trip.traits.join(" and ").toLowerCase()}.`
+            : ""}
+          {trip.deserters?.length && !trip.account
+            ? ` Deserted: ${trip.deserters
+                .map((d) => `${d.name} on floor ${d.floor}${d.home ? "" : " (never made it home)"}`)
+                .join(", ")}.`
+            : ""}
+        </p>
+      ) : null}
       <details>
         <summary>
           <strong>Time below:</strong>{" "}
@@ -404,6 +428,9 @@ function summary(trip: TripReport): string {
   const r = trip.result;
   const name = trip.name ?? "The party";
   const when = trip.back ? `day ${trip.day} to ${trip.back}` : `day ${trip.day}`;
+  // A deserter's account (M7.05): all anyone knows is where they left the party.
+  if (trip.account)
+    return `${name} (${when}): ${trip.account.by} came home alone and says they left the party on floor ${trip.account.floor}.`;
   const time = r.hours !== undefined ? `, ${timeBelow(r.hours)} below` : "";
   const coin = trip.coins ?? trip.goldEarned;
   return (

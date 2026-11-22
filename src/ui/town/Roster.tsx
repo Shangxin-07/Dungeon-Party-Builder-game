@@ -19,7 +19,9 @@ import {
   equip,
   fightsToTrain,
   kitOut,
+  nextCommand,
   packItem,
+  setLeader,
   setRow,
   toggleParty,
   trainMiner,
@@ -35,6 +37,7 @@ import { ix } from "../game";
 import { HeroBars, StatSheet } from "../Watch";
 import { useFold } from "../Fold";
 import { mood } from "../../sim/morale";
+import { commandOf, leadershipOf } from "../../sim/leadership";
 import {
   AbilityList,
   ClassList,
@@ -182,6 +185,8 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
   const tier = fatigueTier(ix, h);
   const low = h.morale < ix.lib.morale.low;
   const trainReady = h.porter && !fightsToTrain(ix, h);
+  const cmd = nextCommand(ix, town);
+  const leads = !h.porter && cmd.leader?.id === h.id;
 
   return (
     <li className={`hero-card compact${inParty ? " in-party" : ""}${open ? " open" : ""}`}>
@@ -199,6 +204,7 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
         </span>
         {h.levelUps.length ? <span className="badge">Level up!</span> : null}
         {h.raiseAsk ? <span className="badge">Wants a raise</span> : null}
+        {leads ? <span className="badge">Leader</span> : null}
       </button>
       <HeroBars hero={h} />
       <p className="small quiet">
@@ -271,6 +277,16 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
             </button>
           ))}
         </div>
+        {inParty && !h.porter && !leads ? (
+          <button
+            type="button"
+            className="link small"
+            title={`Leadership ${leadershipOf(ix, h)}: command ${commandOf(ix, h)}`}
+            onClick={() => act((t) => setLeader(ix, t, h.id))}
+          >
+            Make leader
+          </button>
+        ) : null}
         <button type="button" className="link small" aria-expanded={open} onClick={toggle}>
           {open ? "Less" : "Stats, gear and more"}
         </button>
@@ -295,6 +311,7 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
           <div>
             <ClassList hero={h} town={town} />
             <PerkList hero={h} />
+            <LeaderRecordList hero={h} town={town} />
             <AbilityList hero={h} />
             <HeroGear town={town} hero={h} act={act} supplies={supplies} packFull={packFull} />
             <p className="record muted small">
@@ -435,5 +452,44 @@ function HeroGear({
         {!h.pack.length && !supplies.length ? <span className="muted small">Empty.</span> : null}
       </div>
     </>
+  );
+}
+
+/** Their time leading (M7.05): Leadership and command, traits, and grudges they hold. */
+function LeaderRecordList({ hero: h, town }: { hero: Hero; town: TownState }) {
+  if (h.porter) return null;
+  const traits = h.lead?.traits ?? [];
+  const grudges = (h.grudges ?? [])
+    .map((id) => town.roster.find((x) => x.id === id)?.name)
+    .filter((n): n is string => !!n);
+  return (
+    <div className="leader-record small">
+      <h4>Leading</h4>
+      <p>
+        Leadership <strong>{leadershipOf(ix, h)}</strong>: can lead{" "}
+        <strong>{commandOf(ix, h)}</strong> well.
+        {h.lead?.trips
+          ? ` Led ${h.lead.trips} ${h.lead.trips === 1 ? "trip" : "trips"}.`
+          : " Has never led a party."}
+      </p>
+      {traits.length ? (
+        <ul>
+          {traits.map((t) => {
+            const def = ix.lib.traits.find((d) => d.id === t.id);
+            if (!def) return null;
+            return (
+              <li key={t.id} className={def.tone === "bad" ? "warn" : "good"}>
+                <strong>{def.name}</strong> ({t.party}, day {t.day}
+                {t.left ? `; fades in ${t.left} ${t.left === 1 ? "trip" : "trips"}` : ""}):{" "}
+                {def.description}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+      {grudges.length ? (
+        <p className="warn">Won't forgive {grudges.join(" or ")} for deserting.</p>
+      ) : null}
+    </div>
   );
 }

@@ -7,6 +7,7 @@ import { describeParty, partyAlignment } from "../alignment";
 import { fatigueTier, heroSheet, inCampClass, type Hero } from "../hero";
 import type { Index } from "../library";
 import { isLow } from "../morale";
+import { partyCommand, type Command } from "../leadership";
 import type { StandingOrders } from "../expedition";
 import { tripDays } from "../expedition/clock";
 import type { LostSite, Outing, TownState } from "./state";
@@ -256,6 +257,15 @@ export function maxHp(ix: Index, hero: Hero): number {
 }
 
 /** Things worth knowing before launch. Empty means good to go. */
+/** The next party's command (M7.05): who leads, and how far their command stretches. */
+export function nextCommand(ix: Index, town: TownState): Command {
+  const party = town.party.map((id) => findHero(town, id)).filter((h): h is Hero => !!h);
+  return partyCommand(ix, party, town.leader);
+}
+
+/** 4.5 as "4.5", 4 as "4". */
+export const fmtCommand = (n: number) => String(Math.round(n * 10) / 10);
+
 export function launchWarnings(ix: Index, town: TownState): string[] {
   const out: string[] = [];
   const party = town.party.map((id) => findHero(town, id)).filter((h): h is Hero => !!h);
@@ -267,6 +277,27 @@ export function launchWarnings(ix: Index, town: TownState): string[] {
   }
   if (party.length && !party.some((h) => h.row === "front"))
     out.push("Nobody is in the front row. Monsters will go straight for the back.");
+  // Command (M7.05): over it, the party is unruly.
+  const cmd = nextCommand(ix, town);
+  if (cmd.leader && cmd.over > 0) {
+    const risky = party
+      .filter((h) => (cmd.disobey[h.id] ?? 0) >= 0.1)
+      .sort((a, b) => (cmd.disobey[b.id] ?? 0) - (cmd.disobey[a.id] ?? 0))
+      .map((h) => h.name);
+    out.push(
+      `The party needs ${fmtCommand(cmd.used)} command and ${cmd.leader.name} has ${cmd.command}: ` +
+        `it's unruly, so orders may be ignored${risky.length ? `, most likely by ${listAnd(risky)}` : ""}, ` +
+        `and someone may desert before a bad fight.`,
+    );
+  }
+  const grudges = party.flatMap((h) =>
+    (h.grudges ?? [])
+      .filter((id) => party.some((x) => x.id === id))
+      .map(
+        (id) => `${h.name} won't forgive ${party.find((x) => x.id === id)!.name} for deserting.`,
+      ),
+  );
+  out.push(...grudges);
   const aligned = partyAlignment(ix, party);
   if (aligned.divided || aligned.mismatched.length) out.push(describeParty(ix, party));
   // Holy and unholy gear (DESIGN.md §7): Good heroes hate carrying cursed things.

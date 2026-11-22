@@ -7,8 +7,12 @@ import type { Row } from "../../content/types";
 import { describeParty, partyAlignment } from "../../sim/alignment";
 import { describeRetreat, type LootRule } from "../../sim/expedition";
 import { heroSheet, heroTitle } from "../../sim/hero";
+import { commandOf, leadershipOf, traitsOf } from "../../sim/leadership";
 import {
   cantLaunch,
+  fmtCommand,
+  nextCommand,
+  setLeader,
   launchWarnings,
   partyOnFile,
   partySlots,
@@ -47,6 +51,7 @@ export function PartyPanel({
     "hp-30";
   const row = (r: Row) => party.filter((h) => h.row === r);
   const target = rescueTarget(town);
+  const cmd = nextCommand(ix, town);
 
   return (
     <Fold
@@ -91,8 +96,14 @@ export function PartyPanel({
                 <div key={h.id} className="formation-hero">
                   <HeroBars hero={h} />
                   <span className="muted small">
+                    {cmd.leader?.id === h.id ? (
+                      <strong className="leader-mark">Leader · </strong>
+                    ) : null}
                     {heroTitle(ix, h, true)} · {ix.alignment(h.alignment).name} · morale {h.morale}{" "}
                     · {describeKit(h)}
+                    {cmd.leader && cmd.leader.id !== h.id
+                      ? ` · costs ${fmtCommand(cmd.costs[h.id] ?? 1)} command`
+                      : ""}
                   </span>
                 </div>
               ))
@@ -102,6 +113,7 @@ export function PartyPanel({
           </div>
         ))}
       </div>
+      {party.length ? <LeaderLine town={town} act={act} /> : null}
       {party.length ? (
         <p
           className={`small${partyAlignment(ix, party).divided || partyAlignment(ix, party).mismatched.length ? " warn" : " muted"}`}
@@ -398,5 +410,57 @@ export function PartiesOnFile({
         })}
       </ul>
     </Fold>
+  );
+}
+
+/**
+ * Who leads the party, and how far their command stretches (M7.05, DESIGN.md
+ * §17.5). Over command, the party is unruly.
+ */
+function LeaderLine({ town, act }: { town: TownState; act: Act }) {
+  const cmd = nextCommand(ix, town);
+  const party = town.party.map((id) => town.roster.find((h) => h.id === id)!).filter(Boolean);
+  if (!cmd.leader) return null;
+  const traits = traitsOf(ix, cmd.leader);
+  const over = cmd.used - cmd.command;
+  return (
+    <div className={`command small${cmd.over > 0 ? " warn" : ""}`}>
+      <label title="The leader's Leadership (CHA + WIL, and better with every trip they lead) sets how many heroes they can lead well. Cunning monsters go for the leader first.">
+        Led by{" "}
+        <select
+          value={cmd.leader.id}
+          onChange={(e) => act((t) => setLeader(ix, t, e.target.value))}
+        >
+          {party.map((h) => (
+            <option key={h.id} value={h.id}>
+              {h.name} (Leadership {leadershipOf(ix, h)}, command {commandOf(ix, h)})
+            </option>
+          ))}
+        </select>
+      </label>{" "}
+      <span
+        className="command-meter"
+        title="Each hero costs command by alignment step from the leader: same 1, one step 1.5, two steps 2. Porters are free."
+      >
+        Command used{" "}
+        <strong>
+          {fmtCommand(cmd.used)} / {cmd.command}
+        </strong>
+      </span>
+      {traits.length ? (
+        <span className="muted"> · {traits.map((t) => t.name).join(", ")}</span>
+      ) : null}
+      {cmd.over > 0 ? (
+        <span>
+          {" "}
+          ·{" "}
+          {over > 0
+            ? `${fmtCommand(over)} over: the party is unruly, and may ignore orders or desert.`
+            : "Doubted: the party is unruly even within command."}
+        </span>
+      ) : (
+        <span className="muted"> · within command.</span>
+      )}
+    </div>
   );
 }

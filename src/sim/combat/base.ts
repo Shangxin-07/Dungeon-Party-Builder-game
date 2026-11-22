@@ -49,6 +49,8 @@ export class BattleBase {
     carrying?: { index: number; item: string },
     protected level = 1,
     risen: readonly Hero[] = [],
+    /** The party's leader (M7.05): cunning monsters go for them first. */
+    protected leaderId?: string,
   ) {
     for (const hero of party) {
       if (hero.condition === "ok") this.fighters.push(this.fromHero(hero));
@@ -104,7 +106,7 @@ export class BattleBase {
       derived: sheet.derived,
       passives: sheet.passives,
       skills: sheet.skills,
-      tags: sheet.tags,
+      tags: hero.id === this.leaderId ? [...sheet.tags, "leader"] : sheet.tags,
       weapon: weaponDef
         ? {
             name: weaponDef.name.toLowerCase(),

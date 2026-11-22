@@ -120,6 +120,8 @@ export interface CombatOptions {
    * risenHero() makes them. They join the end of the monster list.
    */
   risen?: readonly Hero[];
+  /** Hero id of the party's leader (M7.05): fights with a "leader" tag, which cunning monsters hunt. */
+  leader?: string;
 }
 
 /** The basic weapon attack every fighter has. Not a content file, so "attack" is a reserved id. */

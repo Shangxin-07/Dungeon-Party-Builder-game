@@ -9,7 +9,7 @@ export default defineMonster({
   overrides: { maxHp: 54 },
   weapon: { name: "ghostly pick", damageType: "cold", attack: 7 },
   row: "front",
-  tags: ["undead", "spirit"],
+  tags: ["undead", "spirit", "cunning"],
   // The dead hate the righteous (DESIGN.md §7): Good heroes are hit first.
   hunts: ["align:good"],
   ai: "brute",

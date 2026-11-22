@@ -159,7 +159,7 @@ describe("new buildings", () => {
     const t = build({ ...fresh(), gold: 1000 }, "blacksmith");
     expect(shopStock(ix, t)).toContain("iron-sword");
     expect(shopStock(ix, fresh())).not.toContain("iron-sword");
-    expect(partySlots(ix, t)).toBe(3);
+    expect(partySlots(ix, t)).toBe(4);
   });
 });
 
@@ -172,13 +172,13 @@ describe("building work", () => {
     t = upgrade(ix, t, "guild-hall");
     expect(t.gold).toBe(1000 - 300);
     expect(underConstruction(t, "guild-hall")).toMatchObject({ level: 2, daysLeft: days });
-    expect(partySlots(ix, t)).toBe(3);
+    expect(partySlots(ix, t)).toBe(4);
     expect(() => upgrade(ix, t, "guild-hall")).toThrow(/already/);
     for (let i = 1; i < days; i++) t = rest(ix, t, heroNames);
     expect(t.buildings["guild-hall"]).toBe(1);
     t = rest(ix, t, heroNames);
     expect(t.buildings["guild-hall"]).toBe(2);
-    expect(partySlots(ix, t)).toBe(4);
+    expect(partySlots(ix, t)).toBe(5);
     expect(t.construction).toEqual([]);
   });
 

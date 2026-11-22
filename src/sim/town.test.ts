@@ -53,9 +53,9 @@ describe("a new town", () => {
     expect(t.gold).toBe(rules.startingGold);
     expect(t.roster.map((h) => h.classId)).toEqual(rules.startingRoster);
     expect(t.freeHires).toBe(0);
-    expect(partySlots(ix, t)).toBe(3);
-    expect(rosterSize(ix, t)).toBe(6);
-    expect(t.party).toHaveLength(3);
+    expect(partySlots(ix, t)).toBe(4);
+    expect(rosterSize(ix, t)).toBe(8);
+    expect(t.party).toHaveLength(4);
     // Kitted out from the store room: every hero has a weapon.
     for (const h of t.roster) expect(h.equipment.weapon).toBeDefined();
   });
@@ -122,8 +122,11 @@ describe("town actions", () => {
     expect(t.roster.at(-1)!.classId).toBe("scout");
     expect(t.gold).toBe(10_000 - rules.hireCost);
     expect(t.recruits.map((h) => h.id)).not.toContain(recruit.id);
-    t = hire(ix, t, t.recruits[0]!.id);
-    expect(t.roster).toHaveLength(6);
+    while (t.roster.length < 8) {
+      if (!t.recruits.length) t = rest(ix, t, heroNames);
+      t = hire(ix, t, t.recruits[0]!.id);
+    }
+    if (!t.recruits.length) t = rest(ix, t, heroNames);
     expect(() => hire(ix, t, t.recruits[0]!.id)).toThrow(/roster is full/);
     const later = rest(ix, fresh(), heroNames);
     expect(() => hire(ix, { ...later, gold: 0 }, later.recruits[0]!.id)).toThrow(/gold/);
@@ -179,18 +182,23 @@ describe("town actions", () => {
   });
 
   it("limit the party to the Guild Hall's slots, and upgrading adds one", () => {
-    let t = { ...fresh(), gold: 1000 };
-    const fourth = t.roster[3]!;
-    expect(() => toggleParty(ix, t, fourth.id)).toThrow(/full/);
+    let t = { ...rest(ix, fresh(), heroNames), gold: 1000 };
+    t = hire(ix, t, t.recruits[0]!.id, "fighter");
+    const fifth = t.roster[4]!;
+    expect(() => toggleParty(ix, t, fifth.id)).toThrow(/full/);
     t = build(t, "guild-hall");
-    expect(t.gold).toBe(700);
-    expect(partySlots(ix, t)).toBe(4);
-    expect(rosterSize(ix, t)).toBe(8);
-    t = toggleParty(ix, t, fourth.id);
-    expect(t.party).toHaveLength(4);
+    expect(t.gold).toBe(1000 - rules.hireCost - 300);
+    expect(partySlots(ix, t)).toBe(5);
+    expect(rosterSize(ix, t)).toBe(10);
+    t = toggleParty(ix, t, fifth.id);
+    expect(t.party).toHaveLength(5);
     t = build(build({ ...t, gold: 1600 }, "guild-hall"), "guild-hall");
-    expect(partySlots(ix, t)).toBe(6);
-    expect(rosterSize(ix, t)).toBe(12);
+    expect(partySlots(ix, t)).toBe(8);
+    expect(rosterSize(ix, t)).toBe(16);
+    // M7.05: a fifth level, for parties of ten.
+    t = build({ ...t, gold: 2000 }, "guild-hall");
+    expect(partySlots(ix, t)).toBe(10);
+    expect(rosterSize(ix, t)).toBe(20);
     expect(() => upgrade(ix, t, "guild-hall")).toThrow(/bigger/);
   });
 });
@@ -261,7 +269,7 @@ describe("launching a party", () => {
     expect(wipe!.news.some((n) => /up for lost/.test(n.text))).toBe(true);
     expect(wipe!.sites.find((s) => s.party)?.unknown).toBe(true);
     expect(wipe!.party).toEqual([]);
-    expect(wipe!.roster).toHaveLength(1);
+    expect(wipe!.roster).toHaveLength(0);
     expect(wipe!.lastTrip).toBeUndefined();
   });
 
@@ -281,10 +289,10 @@ describe("launching a party", () => {
 });
 
 describe("parties on file", () => {
-  /** A town with all six roster slots filled, as two parties of three. */
-  const sixHeroes = () => {
+  /** A town with all eight roster slots filled, as two parties of four. */
+  const eightHeroes = () => {
     let t = { ...fresh(), gold: 1000 };
-    while (t.roster.length < 6) {
+    while (t.roster.length < 8) {
       if (!t.recruits.length) t = rest(ix, t, heroNames);
       t = hire(ix, t, t.recruits[0]!.id, "fighter");
       t = kitOut(ix, t, t.roster.at(-1)!.id);
@@ -293,8 +301,8 @@ describe("parties on file", () => {
   };
 
   it("saves two parties with their orders, and swaps between them", () => {
-    let t = sixHeroes();
-    const [a, b] = [t.roster.slice(0, 3), t.roster.slice(3, 6)].map((hs) => hs.map((h) => h.id));
+    let t = eightHeroes();
+    const [a, b] = [t.roster.slice(0, 4), t.roster.slice(4, 8)].map((hs) => hs.map((h) => h.id));
     t = saveParty(ix, t, 0);
     expect(t.party).toEqual(a);
     for (const id of t.party) t = toggleParty(ix, t, id);
@@ -313,19 +321,19 @@ describe("parties on file", () => {
   });
 
   it("only has so many slots, and needs someone in the party", () => {
-    const t = sixHeroes();
+    const t = eightHeroes();
     expect(() => saveParty(ix, t, rules.savedParties)).toThrow(/parties on file/);
     expect(() => saveParty(ix, { ...t, party: [] }, 0)).toThrow(/heroes/);
     expect(() => pickParty(ix, t, 1)).toThrow(/Nothing on file/);
   });
 
   it("leaves out heroes who are no longer with the guild", () => {
-    let t = saveParty(ix, sixHeroes(), 0);
+    let t = saveParty(ix, eightHeroes(), 0);
     const gone = t.party[1]!;
     t = dismiss(ix, t, gone);
     expect(partyOnFile(t, 0).heroes.map((h) => h.id)).not.toContain(gone);
     t = pickParty(ix, t, 0);
-    expect(t.party).toHaveLength(2);
+    expect(t.party).toHaveLength(3);
     expect(t.party).not.toContain(gone);
   });
 });

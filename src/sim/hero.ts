@@ -101,6 +101,30 @@ export interface Hero {
    * it was when the hero earns enough XP for that level again.
    */
   lost?: LostLevel[];
+  /** Their time as a leader (M7.05, DESIGN.md §17.5). Missing until they first lead. */
+  lead?: LeaderRecord;
+  /** Ids of deserters this hero won't forgive (M7.05). */
+  grudges?: string[];
+}
+
+/** A leader's record (M7.05): trips led, Leadership earned by it, and traits. */
+export interface LeaderRecord {
+  trips: number;
+  /** Leadership points earned by leading (added to the skill). */
+  points: number;
+  /** Trips in a row they brought everyone home. */
+  streak: number;
+  traits: LeaderTraitNote[];
+}
+
+/** A trait a leader picked up, and when. */
+export interface LeaderTraitNote {
+  id: string;
+  day: number;
+  /** The party they were leading. */
+  party: string;
+  /** Trips left before it fades, for traits that do. */
+  left?: number;
 }
 
 /** A level that has been put into a class and spent. */
@@ -175,6 +199,9 @@ export function heroPassives(ix: Index, hero: Hero): PassiveEffect[] {
   out.push(...depthPassives(ix, hero));
   for (const inj of hero.injuries ?? []) out.push(...ix.injury(inj.id).passives);
   out.push(...(fatigueTier(ix, hero)?.passives ?? []));
+  // Leading makes a better leader (M7.05).
+  const led = Math.floor(hero.lead?.points ?? 0);
+  if (led > 0) out.push({ type: "modifySkill", skill: "leadership", amount: led });
   return out;
 }
 

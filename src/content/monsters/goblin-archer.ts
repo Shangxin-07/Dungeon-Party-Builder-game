@@ -9,7 +9,7 @@ export default defineMonster({
   overrides: { maxHp: 16 },
   weapon: { name: "crude bow", damageType: "piercing", attack: 2, ranged: true },
   row: "back",
-  tags: ["goblinoid", "humanoid"],
+  tags: ["goblinoid", "humanoid", "cunning"],
   ai: "archer",
   abilities: { "aimed-shot": 2 },
   loot: "goblin-loot",

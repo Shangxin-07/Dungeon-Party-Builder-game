@@ -3,7 +3,7 @@
  * fight itself, and the risen who walk the floors.
  */
 import { foeSheet, runCombat, type Side } from "../combat";
-import { rollEncounter } from "../encounter";
+import { floorPower, levelPower, rollEncounter } from "../encounter";
 import { risenHero, risenName, type Risen } from "../fallen";
 import { partyAlignment } from "../alignment";
 import { heroSheet, type Hero } from "../hero";
@@ -49,8 +49,14 @@ export class TripFights extends TripCare {
     return partyAlignment(this.ix, this.alive()).alignment?.id ?? "divided";
   }
 
-  /** Who speaks for the party: the most charming conscious hero of its alignment. */
+  /**
+   * Who speaks for the party: its leader (M7.05) while they're on their feet,
+   * else the most charming conscious hero of its alignment.
+   */
   protected leader(): Hero | undefined {
+    const chosen = this.extras.leader?.id;
+    const lead = chosen ? this.conscious().find((h) => h.id === chosen) : undefined;
+    if (lead) return lead;
     const align = this.alignmentNow();
     const up = this.conscious();
     const ours = up.filter((h) => h.alignment === align);
@@ -101,12 +107,88 @@ export class TripFights extends TripCare {
   /** A group of monsters from the current floor, as it is today. Empty if it's been cleared out. */
   protected rollMonsters(): string[] {
     const f = this.floors?.[this.depth - 1];
-    if (!f) return rollEncounter(this.ix, this.depth, this.rng);
+    const scale = this.fightScale();
+    if (!f) return rollEncounter(this.ix, this.depth, this.rng, scale > 1 ? { scale } : {});
     if (f.population <= 0) return [];
     return rollEncounter(this.ix, this.depth, this.rng, {
       level: f.level,
       max: f.population,
+      ...(scale > 1 ? { scale } : {}),
     });
+  }
+
+  /** Bigger parties meet bigger groups (M7.05): ×(1 + perFighter per fighter over `over`). */
+  protected fightScale(): number {
+    const s = this.ix.lib.leadership.scaling;
+    return 1 + s.perFighter * Math.max(0, this.fighters - s.over);
+  }
+
+  /** Monster power of a usual fight here, for this party's size. */
+  protected usualPower(): number {
+    const f = this.floors?.[this.depth - 1];
+    return (f ? levelPower(f.level) : floorPower(this.depth)) * this.fightScale();
+  }
+
+  /** A group that looks bad (M7.05): well above a usual fight, or led by a boss. */
+  protected looksBad(monsters: readonly string[], ratio: number): boolean {
+    const power = monsters.reduce((s, id) => s + this.ix.monster(id).power, 0);
+    return (
+      power >= ratio * this.usualPower() || monsters.some((id) => !!this.ix.monster(id).variant)
+    );
+  }
+
+  /**
+   * Before a fight that looks bad, an unruly hero may slip away and head home
+   * alone (M7.05, DESIGN.md §17.5). At most one a fight; never the leader,
+   * never the last one standing.
+   */
+  protected desertions(monsters: readonly string[]): void {
+    const lead = this.extras.leader;
+    if (!lead || !Object.keys(lead.desert).length) return;
+    if (!this.looksBad(monsters, this.ix.lib.leadership.desert.badFight)) return;
+    for (const h of this.conscious()) {
+      const chance = lead.desert[h.id] ?? 0;
+      if (h.id === lead.id || chance <= 0 || this.conscious().length <= 1) continue;
+      if (!this.rng.chance(chance)) continue;
+      this.desert(h, monsters);
+      return;
+    }
+  }
+
+  /** A hero runs for it: a porter's odds of getting home alone, from this floor. */
+  protected desert(h: Hero, monsters: readonly string[]): void {
+    const names = [...new Set(monsters.map((id) => this.ix.monster(id).name.toLowerCase()))];
+    const from = list(names);
+    this.emit(
+      "desert",
+      `${h.name} takes one look at the ${from} and slips away into the dark, alone.`,
+    );
+    const esc = this.ix.lib.town.porters.escape;
+    const sheet = heroSheet(this.ix, h);
+    const chance = Math.max(
+      0.05,
+      Math.min(
+        0.95,
+        esc.base +
+          (sheet.stats.DEX + sheet.stats.END - 20) * esc.perStat -
+          (this.depth - 1) * esc.perFloor,
+      ),
+    );
+    const home = this.rng.chance(chance);
+    const time = this.ix.lib.time;
+    this.deserters.push({
+      id: h.id,
+      name: h.name,
+      hero: structuredClone(h),
+      home,
+      left: this.hours,
+      back: Math.round((this.hours + time.climbPerFloor * this.depth) * 100) / 100,
+      floor: this.depth,
+      room: this.roomNo,
+      saw: this.log.length,
+      from,
+    });
+    this.party = this.party.filter((x) => x.id !== h.id);
   }
 
   protected fight(monsters: readonly string[], opts: { surprise?: boolean } = {}): Side | "none" {
@@ -123,12 +205,16 @@ export class TripFights extends TripCare {
     }
     // A risen guild mate haunting this floor may join the fight (DESIGN.md §10).
     const risen = this.risenJoins(monsters);
+    if (monsters.length) this.desertions(monsters);
+    const lead = this.extras.leader?.id;
+    const leaderUp = !!lead && this.conscious().some((h) => h.id === lead);
     const result = runCombat(this.ix, this.party, monsters, {
       seed: this.rng.int(0, 2 ** 31 - 1),
       surprise: opts.surprise,
       level: this.floors?.[this.depth - 1]?.level ?? this.depth,
       carrying: carried && { index: carried.index, item: carried.gear.item },
       risen: risen.map((r) => risenHero(this.ix, r)),
+      ...(lead ? { leader: lead } : {}),
     });
     const summoned = new Set(result.log.filter((e) => e.kind === "summon").map((e) => e.target));
     const foes = result.fighters.filter((f) => f.side === "monsters" && !summoned.has(f.uid));
@@ -166,6 +252,7 @@ export class TripFights extends TripCare {
     if (result.winner === "monsters") this.wiped = true;
     else if (result.winner === "none") this.emit("fight", "The monsters slink off into the dark.");
     else {
+      if (lead && this.looksBad(monsters, this.ix.lib.leadership.bigWin)) this.bigWins++;
       for (const id of result.kills) {
         const table = this.ix.monster(id).loot;
         if (table) this.findLoot(table, `on the ${this.ix.monster(id).name}`, false);
@@ -185,6 +272,16 @@ export class TripFights extends TripCare {
         this.repack();
       }
       for (const r of risen) if (result.risenSlain.includes(r.id)) this.putDown(r);
+    }
+    // The leader goes down (M7.05): the party may lose heart.
+    const leaderNow = lead && this.party.find((h) => h.id === lead);
+    if (leaderUp && leaderNow && leaderNow.condition !== "ok" && !this.wiped) {
+      this.leaderFell = true;
+      this.leaderShaken = true;
+      this.emit(
+        "leader",
+        `${leaderNow.name} ${leaderNow.condition === "dead" ? "is dead" : "is down"}, and the party looks to each other.`,
+      );
     }
     return result.winner;
   }

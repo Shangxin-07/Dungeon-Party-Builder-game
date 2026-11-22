@@ -9,7 +9,7 @@ export default defineMonster({
   overrides: { maxHp: 26 },
   weapon: { name: "lashing tendrils", damageType: "crushing", attack: 3, ranged: true },
   row: "back",
-  tags: ["plant"],
+  tags: ["plant", "cunning"],
   ai: "caster",
   abilities: { "spore-burst": 1 },
   loot: "spore-loot",

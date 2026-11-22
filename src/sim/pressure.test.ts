@@ -10,7 +10,16 @@ import { createHero, type Hero } from "./hero";
 import { indexLibrary } from "./library";
 import { scoutingReport } from "./report";
 import { createRng } from "./rng";
-import { answerRaise, autoStart, launchAndWait, newTown, rest, wage, type TownState } from "./town";
+import {
+  answerRaise,
+  autoStart,
+  launchAndWait,
+  newTown,
+  rest,
+  toggleParty,
+  wage,
+  type TownState,
+} from "./town";
 
 const ix = indexLibrary(library);
 const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
@@ -131,7 +140,8 @@ describe("raises", () => {
 
 describe("the bench", () => {
   it("upsets a Glory hero who was fit to go", () => {
-    const t = fresh();
+    const f = fresh();
+    const t = toggleParty(ix, f, f.party.at(-1)!);
     const benched = t.roster.find((h) => !t.party.includes(h.id))!;
     const glory = {
       ...t,

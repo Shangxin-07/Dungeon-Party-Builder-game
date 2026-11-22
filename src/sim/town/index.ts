@@ -40,6 +40,8 @@ export type {
 export {
   buildingEffects,
   partySlots,
+  nextCommand,
+  fmtCommand,
   rosterSize,
   defence,
   warningDays,
@@ -104,6 +106,7 @@ export type { RestockLine } from "./market";
 export { kitOut, equip, unequip, packItem, unpackItem, setRow } from "./gear";
 export {
   toggleParty,
+  setLeader,
   setOrders,
   savedParty,
   partyLetter,

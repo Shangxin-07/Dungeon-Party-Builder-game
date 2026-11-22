@@ -1,8 +1,10 @@
 import { defineBuilding } from "../types";
 
 /**
- * The Guild Hall sets how many heroes go down together and how many the guild
- * can keep (DESIGN.md §8). More levels are just more rows.
+ * The Guild Hall sets the most heroes that can go down together and how many
+ * the guild can keep (DESIGN.md §8). Since M7.05 a party's leader decides how
+ * many follow orders well (§17.5); the hall is the hard cap. More levels are
+ * just more rows.
  */
 export default defineBuilding({
   id: "guild-hall",
@@ -18,15 +20,6 @@ export default defineBuilding({
       cost: 0,
       materials: { timber: 6 },
       days: 3,
-      summary: "3 heroes per party, 6 on the roster",
-      effects: [
-        { type: "partySlots", amount: 3 },
-        { type: "rosterSize", amount: 6 },
-      ],
-    },
-    {
-      cost: 300,
-      days: 3,
       summary: "4 heroes per party, 8 on the roster",
       effects: [
         { type: "partySlots", amount: 4 },
@@ -34,9 +27,8 @@ export default defineBuilding({
       ],
     },
     {
-      cost: 600,
-      materials: { "iron-ore": 6, "spider-silk": 3 },
-      days: 5,
+      cost: 300,
+      days: 3,
       summary: "5 heroes per party, 10 on the roster",
       effects: [
         { type: "partySlots", amount: 5 },
@@ -44,13 +36,34 @@ export default defineBuilding({
       ],
     },
     {
-      cost: 1000,
-      materials: { "iron-ore": 10, "spider-silk": 6 },
-      days: 7,
+      cost: 600,
+      materials: { "iron-ore": 6, "spider-silk": 3 },
+      days: 5,
       summary: "6 heroes per party, 12 on the roster",
       effects: [
         { type: "partySlots", amount: 6 },
         { type: "rosterSize", amount: 12 },
+      ],
+    },
+    {
+      cost: 1000,
+      materials: { "iron-ore": 10, "spider-silk": 6 },
+      days: 7,
+      summary: "8 heroes per party, 16 on the roster",
+      effects: [
+        { type: "partySlots", amount: 8 },
+        { type: "rosterSize", amount: 16 },
+      ],
+    },
+    {
+      // M7.05: the biggest parties want what only the deep floors give.
+      cost: 2000,
+      materials: { "iron-ore": 12, "deep-silver": 4, glowcap: 6 },
+      days: 9,
+      summary: "10 heroes per party, 20 on the roster",
+      effects: [
+        { type: "partySlots", amount: 10 },
+        { type: "rosterSize", amount: 20 },
       ],
     },
   ],
