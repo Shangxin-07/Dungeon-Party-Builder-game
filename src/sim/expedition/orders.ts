@@ -3,7 +3,11 @@
  */
 export type RetreatRule =
   | { kind: "never" }
-  /** Turn back when any hero drops below this share of max HP, or goes down. */
+  /**
+   * Turn back when any hero still standing drops below this share of max HP,
+   * or the party as a whole is badly hurt: half of it down or dead, or under
+   * half its HP (M7.06). One hero down or dead alone doesn't turn it back.
+   */
   | { kind: "hero-hp-below"; percent: number }
   /** Turn back as soon as anyone goes down. */
   | { kind: "hero-downed" }
@@ -47,7 +51,7 @@ export function describeRetreat(rule: RetreatRule): string {
     case "never":
       return "never turn back";
     case "hero-hp-below":
-      return `turn back if anyone drops below ${rule.percent}% HP`;
+      return `turn back if anyone standing drops below ${rule.percent}% HP, or the party is badly hurt`;
     case "hero-downed":
       return "turn back if anyone goes down";
     case "out-of-potions":

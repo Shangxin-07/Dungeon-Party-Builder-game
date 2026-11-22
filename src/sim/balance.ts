@@ -89,6 +89,10 @@ export interface ExpeditionReport {
   holed: number;
   /** Average heroes who died per trip. */
   deaths: number;
+  /** Share of all heroes sent who died (deaths ÷ party size). */
+  heroDeaths: number;
+  /** Trips where someone died but the party wasn't wiped: a loss that stings (M7.06). */
+  someLost: number;
   /** Average real value of the haul brought home. */
   haul: number;
   /** Average items left behind because packs were full. */
@@ -121,6 +125,8 @@ export function expeditionReport(
     wiped: 0,
     holed: 0,
     deaths: 0,
+    heroDeaths: 0,
+    someLost: 0,
     haul: 0,
     dropped: 0,
     fights: 0,
@@ -136,7 +142,10 @@ export function expeditionReport(
       r.hours += result.hours ?? 0;
       r.days += result.days;
     }
-    r.deaths += result.party.filter((h) => h.condition === "dead").length;
+    const dead = result.party.filter((h) => h.condition === "dead").length;
+    r.deaths += dead;
+    r.heroDeaths += dead / party.length;
+    if (dead && result.outcome !== "wiped") r.someLost++;
     r.haul += result.haul.reduce((s, h) => s + h.value, 0);
     r.dropped += result.log.filter((e) => e.kind === "drop" && e.text.startsWith("Packs")).length;
     r.fights += result.log.filter((e) => e.kind === "fight" && e.monsters).length;
@@ -149,6 +158,8 @@ export function expeditionReport(
     wiped: avg(r.wiped),
     holed: avg(r.holed),
     deaths: avg(r.deaths),
+    heroDeaths: avg(r.heroDeaths),
+    someLost: avg(r.someLost),
     haul: avg(r.haul),
     dropped: avg(r.dropped),
     fights: avg(r.fights),

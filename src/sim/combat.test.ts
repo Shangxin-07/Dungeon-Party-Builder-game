@@ -188,14 +188,14 @@ describe("downed heroes (custom content)", () => {
     expect(validateLibrary(testLib)).toEqual([]);
   });
 
-  it("bleeds out after three rounds if nobody helps", () => {
+  it("bleeds out after two rounds if nobody helps", () => {
     const tank = make("Tank", "wall", { hp: 10_000, mana: 0 });
     const victim = make("Victim", "wall", { hp: 1, mana: 0 });
     // The sniper shoots the weakest standing hero: the victim first.
     const r = runCombat(tix, [tank, victim], ["sniper"], { seed: 1, maxRounds: 8 });
     const lines = texts(r.log);
     expect(lines).toContain("Victim goes down!");
-    expect(lines).toContain("Victim is bleeding out (2 rounds left).");
+    expect(lines).toContain("Victim is bleeding out (1 round left).");
     expect(lines).toContain("Victim has bled out.");
     expect(r.party[1]!.condition).toBe("dead");
     expect(r.winner).toBe("none");

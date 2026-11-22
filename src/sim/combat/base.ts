@@ -13,8 +13,11 @@ import { type Rng } from "../rng";
 import { computeDerived } from "../stats";
 import { type Side, type Fighter, type CombatEvent, type Tone } from "./types";
 
-/** Rounds a downed hero lasts before bleeding out, unless someone heals them. */
-export const BLEED_ROUNDS = 3;
+/**
+ * Rounds a downed hero lasts before bleeding out, unless someone heals them.
+ * 2 since M7.06 (was 3): a hero who goes down mid-fight needs help quickly.
+ */
+export const BLEED_ROUNDS = 2;
 
 /** Extra damage, in percent, for a fighter who is ambushing. */
 export const AMBUSH_BONUS = 50;

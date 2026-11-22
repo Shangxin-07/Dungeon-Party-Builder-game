@@ -22,3 +22,15 @@ export const REVIVE_SCALE = 0.6;
 
 /** With the "valuable" loot rule, finds worth less than this per slot are left. */
 export const VALUABLE_PER_SLOT = 8;
+
+/**
+ * The "badly hurt" retreat order (M7.06) weighs the whole party: turn back
+ * when the party's HP, counting the downed as nothing, is below this percent.
+ */
+export const PARTY_HURT_BELOW = 50;
+
+/**
+ * Bringing the downed round gets harder as the day wears on (M7.06): the
+ * revive chance drops by up to this share by the time the party needs to camp.
+ */
+export const REVIVE_LATE = 0.5;
