@@ -16,9 +16,9 @@ import {
   setLeader,
   launchWarnings,
   partyOnFile,
-  partySlots,
   pickParty,
   renameParty,
+  sameOrders,
   saveParty,
   savedParty,
   cancelRescue,
@@ -44,7 +44,6 @@ export function PartyPanel({
   onLaunch: (prep?: (t: TownState) => TownState) => void;
 }) {
   const party = town.party.map((id) => town.roster.find((h) => h.id === id)!).filter(Boolean);
-  const slots = partySlots(ix, town);
   const why = cantLaunch(ix, town);
   const warnings = launchWarnings(ix, town);
   const retreatId =
@@ -89,7 +88,7 @@ export function PartyPanel({
         <>
           The party{" "}
           <span className="muted">
-            ({party.length}/{slots})
+            ({party.length} {party.length === 1 ? "hero" : "heroes"})
           </span>
         </>
       }
@@ -139,12 +138,12 @@ export function PartyPanel({
           {describeParty(ix, party)}
         </p>
       ) : null}
-      {slots > party.length ? (
+      {party.length ? null : (
         <p className="muted small">
-          {slots - party.length} empty {slots - party.length === 1 ? "slot" : "slots"}. Add heroes
-          from the roster below.
+          Add heroes from the roster below. There's no limit: the leader's command says how many go
+          well together.
         </p>
-      ) : null}
+      )}
 
       <div className="controls">
         {target ? null : (
@@ -415,13 +414,16 @@ export function PartiesOnFile({
               why = (e as Error).message;
             }
           }
-          const current =
+          const sameCrew =
             !!p &&
             heroes.length > 0 &&
             sameIds(
               town.party,
               heroes.map((h) => h.id),
             );
+          // Same heroes but other orders: launching now would not follow the card.
+          const drifted = sameCrew && !sameOrders(p.orders, town.orders);
+          const current = sameCrew && !drifted;
           return (
             <li key={slot} className={`card party-card${current ? " in-party" : ""}`}>
               {p ? (
@@ -442,6 +444,9 @@ export function PartiesOnFile({
                       }}
                     />
                     {current ? <span className="muted small"> (picked)</span> : null}
+                    {drifted ? (
+                      <span className="muted small"> (picked, with other orders)</span>
+                    ) : null}
                   </h4>
                   <p className="small">
                     {heroes.length
@@ -460,6 +465,16 @@ export function PartiesOnFile({
                     {p.orders.targetFloor}, {describeRetreat(p.orders.retreat)}
                     {p.orders.clearPercent ? `, thinning it out by ${p.orders.clearPercent}%` : ""}.
                   </p>
+                  {drifted ? (
+                    <p className="small warn">
+                      The party below has these heroes but not these orders: floor{" "}
+                      {town.orders.targetFloor}
+                      {town.orders.clearPercent
+                        ? `, thinning it out by ${town.orders.clearPercent}%`
+                        : ", no hunting"}
+                      . Pick to use the orders on file, or save the changes.
+                    </p>
+                  ) : null}
                   {why ? (
                     <p className="small warn">{why}</p>
                   ) : tired.length ? (
@@ -491,7 +506,7 @@ export function PartiesOnFile({
                       title="Keep the party below, its porters and orders, in this slot"
                       onClick={() => act((t) => saveParty(ix, t, slot))}
                     >
-                      {current ? "Save changes" : "Replace with current"}
+                      {sameCrew ? "Save changes" : "Replace with current"}
                     </button>
                   </div>
                 </>

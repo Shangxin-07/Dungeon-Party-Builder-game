@@ -5,7 +5,7 @@ import { DEFAULT_ORDERS, type StandingOrders } from "../expedition";
 import type { Hero } from "../hero";
 import type { Index } from "../library";
 import { type TownState, type SavedParty, TownError } from "./state";
-import { partySlots, findHero, searchFloor } from "./read";
+import { findHero, searchFloor } from "./read";
 import { edit, hero } from "./internal";
 
 /** Add a hero to the party, or take them out of it. */
@@ -25,8 +25,7 @@ export function toggleParty(ix: Index, town: TownState, heroId: string): TownSta
     t.party = t.party.filter((id) => id !== heroId);
     if (t.leader === heroId) delete t.leader;
   } else {
-    if (t.party.length >= partySlots(ix, t))
-      throw new TownError(`The party is full (${partySlots(ix, t)} slots).`);
+    // No cap on heroes (M7.10): the leader's command decides how well they go together.
     t.party.push(heroId);
   }
   return t;
@@ -105,10 +104,7 @@ export function pickParty(ix: Index, town: TownState, slot: number): TownState {
   const { heroes, porters } = partyOnFile(town, slot);
   if (!heroes.length) throw new TownError(`Nobody from ${p.name} is still with the guild.`);
   const t = edit(town);
-  t.party = heroes
-    .filter((h) => !h.porter)
-    .slice(0, partySlots(ix, t))
-    .map((h) => h.id);
+  t.party = heroes.filter((h) => !h.porter).map((h) => h.id);
   t.porters = porters.slice(0, ix.lib.town.porters.slots).map((h) => h.id);
   if (p.leader && t.party.includes(p.leader)) t.leader = p.leader;
   else delete t.leader;
@@ -140,6 +136,23 @@ export function planRescue(
   const floor = searchFloor(t) ?? 1;
   t.orders.targetFloor = Math.max(t.orders.targetFloor, floor);
   return t;
+}
+
+/**
+ * Whether the next party's orders are the ones on file: same floor, retreat,
+ * loot, hunting, mission and lair. A search planned on top doesn't count.
+ */
+export function sameOrders(onFile: StandingOrders, next: StandingOrders): boolean {
+  const a = ordinaryOrders(onFile);
+  const b = ordinaryOrders(next);
+  return (
+    a.targetFloor === b.targetFloor &&
+    JSON.stringify(a.retreat) === JSON.stringify(b.retreat) &&
+    a.loot === b.loot &&
+    (a.clearPercent ?? 0) === (b.clearPercent ?? 0) &&
+    a.mission === b.mission &&
+    a.lair === b.lair
+  );
 }
 
 /** Back to an ordinary trip. */

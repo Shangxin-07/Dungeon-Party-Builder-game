@@ -121,8 +121,10 @@ export function trainPorter(
   delete trained.porter;
   roll(t, (rng) => gainXp(ix, trained, banked, rng, built(t)));
   t.roster[t.roster.findIndex((x) => x.id === heroId)] = trained;
+  // A porter already going with the party stays with it, now as one of the heroes.
+  const going = (t.porters ?? []).includes(heroId);
   t.porters = (t.porters ?? []).filter((id) => id !== heroId);
-  if (t.party.length < partySlots(ix, t)) t.party.push(heroId);
+  if (going || t.party.length < partySlots(ix, t)) t.party.push(heroId);
   return t;
 }
 
