@@ -316,7 +316,10 @@ export function missingContent(ix: Index, town: TownState): string[] {
   for (const i of Object.values(town.intel ?? {})) {
     Object.keys(i.monsters).forEach(monster);
     for (const id of [...i.features, ...i.hazards]) check("room", ix.room, id);
+    for (const id of i.lairs ?? []) check("lair", ix.lair, id);
   }
+  Object.keys(town.lairs ?? {}).forEach((id) => check("lair", ix.lair, id));
+  check("lair", ix.lair, town.orders.lair);
   Object.keys(town.buildings).forEach(building);
   town.damaged.forEach(building);
   for (const c of town.construction) building(c.building);

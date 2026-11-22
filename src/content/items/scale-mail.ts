@@ -5,9 +5,11 @@ export default defineItem({
   name: "Scale Mail",
   slot: "armor",
   value: 120,
-  tags: ["armor", "heavy"],
+  tags: ["armor", "heavy", "noisy"],
   salvage: { "iron-ore": 5 },
   passives: [
+    // Noisy (M7.08): a sneak party goes by its loudest member.
+    { type: "modifySkill", skill: "stealth", amount: -20 },
     { type: "modifyStat", stat: "armor", amount: 6 },
     { type: "modifyStat", stat: "evasion", amount: -3 },
   ],

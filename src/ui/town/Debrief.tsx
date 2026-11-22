@@ -43,6 +43,22 @@ const RULE_WORDS: Record<HaulRule, string> = {
   keep: "Keep everything",
 };
 
+/** How a lair went (M7.08), in words. */
+function lairLine(id: string, outcome: string): string {
+  const lair = ix.lair(id);
+  const beast = ix.monster(lair.monster).name;
+  const where = lair.name.replace(/^The /, "the ");
+  return (
+    {
+      fetched: `They crept into ${where} and out again without waking the ${beast}.`,
+      slain: `They killed the ${beast} and emptied ${where}.`,
+      fled: `They ran from the ${beast}: nothing they had could hurt it. The Library needs to study it first.`,
+      fought: `They fought the ${beast} and couldn't finish it.`,
+      empty: `${where[0]!.toUpperCase()}${where.slice(1)} was empty: the ${beast} is dead.`,
+    }[outcome as "fetched"] ?? ""
+  );
+}
+
 /** A deserter's account (M7.05) shares its trip's seed: tell them apart. */
 const tripKey = (t: TripReport) => `${t.seed}:${t.account?.by ?? ""}`;
 
@@ -182,6 +198,16 @@ function Debrief({
             ? `, slipping past ${r.slipped} ${r.slipped === 1 ? "group" : "groups"} of monsters`
             : ""}
           . What they saw is in the scouting report.
+        </p>
+      ) : null}
+      {r.lair && !trip.account ? (
+        <p
+          className={`small ${r.lair.outcome === "fetched" || r.lair.outcome === "slain" ? "good" : "warn"}`}
+        >
+          {lairLine(r.lair.id, r.lair.outcome)}
+          {r.sneaked
+            ? ` On the way they got past ${r.sneaked.past} ${r.sneaked.past === 1 ? "group" : "groups"} unheard and were heard by ${r.sneaked.heard}.`
+            : ""}
         </p>
       ) : null}
       <details>

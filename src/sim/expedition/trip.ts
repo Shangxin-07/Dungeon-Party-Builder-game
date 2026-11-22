@@ -10,13 +10,14 @@ import { heroSheet, type Hero } from "../hero";
 import type { Index } from "../library";
 import { type HaulItem } from "../loot";
 import { createRng, type Rng } from "../rng";
-import { isScouting, type StandingOrders } from "./orders";
+import { isScouting, isSneaking, type StandingOrders } from "./orders";
 import type {
   Deserter,
   ExpeditionEventKind,
   HeroStatus,
   ExpeditionEvent,
   ExpeditionExtras,
+  ExpeditionResult,
   FloorIntel,
 } from "./report";
 
@@ -90,6 +91,10 @@ export class TripBase {
   protected intel = new Map<number, FloorIntel>();
   /** Fights a scout party slipped past (M7.08). */
   protected slipped = 0;
+  /** A sneak party's fights got past unheard, and heard (M7.08). */
+  protected sneaked = { past: 0, heard: 0 };
+  /** The lair the party went into, and how it went (M7.08). */
+  protected lairVisit?: ExpeditionResult["lair"];
 
   constructor(
     protected ix: Index,
@@ -173,6 +178,11 @@ export class TripBase {
   /** On a scout mission (M7.08). */
   protected scouting(): boolean {
     return isScouting(this.orders);
+  }
+
+  /** On a sneak mission (M7.08). */
+  protected sneaking(): boolean {
+    return isSneaking(this.orders);
   }
 
   /** A scout's notes on the floor they're on (M7.08). */

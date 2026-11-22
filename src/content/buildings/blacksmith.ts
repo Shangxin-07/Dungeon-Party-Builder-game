@@ -16,7 +16,11 @@ export default defineBuilding({
       days: 3,
       summary: "Sells iron swords, war axes, longbows and iron shields. Salvages loot (60% yield)",
       effects: [
-        { type: "sells", items: ["iron-sword", "war-axe", "longbow", "iron-shield"] },
+        {
+          type: "sells",
+          // The scale-piercer only once the Library has Studied the Mire Behemoth (M7.08).
+          items: ["iron-sword", "war-axe", "longbow", "iron-shield", "scale-piercer"],
+        },
         { type: "salvage", amount: 60 },
       ],
     },
@@ -28,7 +32,15 @@ export default defineBuilding({
       effects: [
         {
           type: "sells",
-          items: ["iron-sword", "war-axe", "longbow", "iron-shield", "scale-mail", "iron-staff"],
+          items: [
+            "iron-sword",
+            "war-axe",
+            "longbow",
+            "iron-shield",
+            "scale-mail",
+            "iron-staff",
+            "scale-piercer",
+          ],
         },
         { type: "salvage", amount: 80 },
       ],
@@ -49,6 +61,7 @@ export default defineBuilding({
             "scale-mail",
             "iron-staff",
             "silver-sword",
+            "scale-piercer",
           ],
         },
         { type: "salvage", amount: 100 },

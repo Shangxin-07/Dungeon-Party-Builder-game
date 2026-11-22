@@ -9,7 +9,9 @@ import type { Index } from "../library";
 import { isLow } from "../morale";
 import { partyCommand, type Command } from "../leadership";
 import { gearCheck } from "../report";
-import { isScouting, type StandingOrders } from "../expedition";
+import { isScouting, isSneaking, lairOf, type StandingOrders } from "../expedition";
+import { knownLairs, lairSlain } from "../stealth";
+import { monsterTier } from "../research";
 import { tripDays } from "../expedition/clock";
 import type { LostSite, Outing, TownState } from "./state";
 
@@ -182,7 +184,11 @@ export function shopStock(ix: Index, town: TownState): string[] {
   for (const e of effects(ix, town)) {
     if (e.type === "sells") for (const id of e.items) if (!out.includes(id)) out.push(id);
   }
-  return out;
+  // A bane (M7.08) is only made once the Library knows the beast well enough.
+  return out.filter((id) => {
+    const u = ix.item(id).unlock;
+    return !u || monsterTier(ix, town, u.monster) >= u.tier;
+  });
 }
 
 export const buyPrice = (item: ItemDef) => item.value;
@@ -440,7 +446,7 @@ export function usualHours(ix: Index, orders: StandingOrders, lift = 0): number 
   }
   // Hunting: about one side tunnel and fight for every couple of monsters to kill.
   const pct = orders.clearPercent ?? 0;
-  if (pct > 0 && !orders.rescue && !isScouting(orders)) {
+  if (pct > 0 && !orders.rescue && !isScouting(orders) && !isSneaking(orders)) {
     const floor = ix.floor(target);
     const tunnels = Math.min(
       ix.lib.dungeon.hunting.maxRooms,
@@ -501,6 +507,18 @@ export function cantLaunch(ix: Index, town: TownState): string | undefined {
     const inj = h.injuries?.[0];
     if (inj)
       return `${h.name} is laid up with a ${ix.injury(inj.id).name.toLowerCase()} for ${inj.days} more ${inj.days === 1 ? "day" : "days"}. Pick someone else.`;
+  }
+  // Lairs (M7.08): only ones scouts have found, on the floor the party is going to.
+  const lair = lairOf(town.orders);
+  if (isSneaking(town.orders) && !lair) return "Pick a lair for the sneak party to go into.";
+  if (lair) {
+    const def = ix.lair(lair);
+    if (!knownLairs(ix, town).some((l) => l.id === lair))
+      return `Nobody knows the way to ${def.name.replace(/^The /, "the ")} yet. Send scouts to floor ${def.floor} first.`;
+    if (town.orders.targetFloor !== def.floor)
+      return `${def.name} is on floor ${def.floor}: send the party to floor ${def.floor}.`;
+    if (lairSlain(town, lair) && isSneaking(town.orders))
+      return `The ${ix.monster(def.monster).name} is dead: there's nothing to sneak past.`;
   }
   return undefined;
 }

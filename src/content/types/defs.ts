@@ -131,6 +131,11 @@ export interface ItemDef {
    * so the debrief can send it there instead of selling it.
    */
   research?: ItemResearch;
+  /**
+   * Only sold once the guild has researched this monster to `tier` (M7.08):
+   * a bane the Library worked out how to make.
+   */
+  unlock?: { monster: string; tier: number };
 }
 
 /**
@@ -241,6 +246,11 @@ export interface MonsterDef {
    * anything left standing runs for it.
    */
   ward?: { name: string; tier: number };
+  /**
+   * How well it hears a sneak party (M7.08, DESIGN.md §17.8), added to its
+   * PER-based hearing: negative for the nearly deaf. Default 0.
+   */
+  hearing?: number;
 }
 
 /**

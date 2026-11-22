@@ -308,6 +308,8 @@ export interface TownState {
    * by floor depth. Missing in older saves: nothing scouted yet.
    */
   intel?: Record<number, TownIntel>;
+  /** Huge beasts' lairs (M7.08), by lair id: the day the beast was killed. Missing: none yet. */
+  lairs?: Record<string, { slain?: number }>;
   /** What the posts brought in yesterday: materials by id, and gold. */
   gathered?: { day: number; materials: Record<string, number>; gold: number };
 }

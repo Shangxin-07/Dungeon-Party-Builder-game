@@ -8,6 +8,7 @@ import { risenHero, risenName, type Risen } from "../fallen";
 import { partyAlignment } from "../alignment";
 import { heroSheet, type Hero } from "../hero";
 import { reactToParty } from "../reactions";
+import { partyStealth, sneakChance } from "../stealth";
 import { type RoomContext } from "../rooms";
 import type { CarriedGear } from "./report";
 import { an, list } from "./trip";
@@ -191,10 +192,14 @@ export class TripFights extends TripCare {
     this.party = this.party.filter((x) => x.id !== h.id);
   }
 
-  protected fight(monsters: readonly string[], opts: { surprise?: boolean } = {}): Side | "none" {
+  protected fight(
+    monsters: readonly string[],
+    opts: { surprise?: boolean; cornered?: boolean } = {},
+  ): Side | "none" {
     if (monsters.length) this.count(monsters);
-    if (monsters.length && this.reacts(monsters)) return "none";
-    if (monsters.length && this.slipPast(monsters)) return "none";
+    if (monsters.length && !opts.cornered && this.reacts(monsters)) return "none";
+    if (monsters.length && !opts.cornered && this.sneakPast(monsters)) return "none";
+    if (monsters.length && !opts.cornered && this.slipPast(monsters)) return "none";
     // Monsters on this floor may have picked up a lost hero's gear.
     const loose = this.extras.gear?.[this.depth]?.filter((g) => !this.gearTaken.includes(g.id));
     let carried: { gear: CarriedGear; index: number } | undefined;
@@ -316,6 +321,29 @@ export class TripFights extends TripCare {
     }
     this.emit("scout", `${scout.hero.name} leads the party quietly past the ${list(names)}.`);
     return true;
+  }
+
+  /**
+   * A sneak party (M7.08, DESIGN.md §17.8) tries to get past every group
+   * unheard: its worst Stealth against the group's sharpest ear. Heard means
+   * a fight.
+   */
+  protected sneakPast(monsters: readonly string[]): boolean {
+    if (!this.sneaking()) return false;
+    const up = this.conscious();
+    if (!up.length) return false;
+    const quiet = partyStealth(this.ix, up);
+    const names = [...new Set(monsters.map((id) => this.ix.monster(id).name.toLowerCase()))];
+    if (this.rng.chance(sneakChance(this.ix, quiet.value, monsters))) {
+      this.sneaked.past++;
+      for (const id of monsters) this.seen.add(id);
+      this.emit("scout", `The party creeps past the ${list(names)} without a sound.`);
+      return true;
+    }
+    this.sneaked.heard++;
+    const who = quiet.hero && up.length > 1 ? `${quiet.hero.name} makes a noise and the` : "The";
+    this.emit("scout", `${who} ${list(names)} hear the party coming.`);
+    return false;
   }
 
   /** Scouts (M7.08) note every group they meet, fought or not. */

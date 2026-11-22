@@ -14,6 +14,8 @@
  */
 import {
   isScouting,
+  isSneaking,
+  lairOf,
   runExpedition,
   type Deserter,
   type ExpeditionResult,
@@ -113,6 +115,7 @@ export function launch(
     risen: t.risen ?? [],
     lift: liftFloors(ix, t),
     research: researchTiers(ix, t),
+    slainLairs: Object.keys(t.lairs ?? {}).filter((id) => t.lairs?.[id]?.slain),
     leader: cmd.leader && {
       id: cmd.leader.id,
       disobey: cmd.disobey,
@@ -154,14 +157,17 @@ export function launch(
     ? `to look for ${target.outing?.name ?? site?.party ?? "the lost"} on floor ${orders.targetFloor}`
     : isScouting(orders)
       ? `to scout ${orders.targetFloor === 1 ? "floor 1" : `floors 1 to ${orders.targetFloor}`}`
-      : `for floor ${orders.targetFloor}`;
+      : lairOf(orders)
+        ? `${isSneaking(orders) ? "to sneak into" : "to take on what lives in"} ${ix.lair(lairOf(orders)!).name.replace(/^The /, "the ")}`
+        : `for floor ${orders.targetFloor}`;
   news(t, `${called} set off ${goal}. Expected back on day ${expected}.`);
   t.party = [];
   t.porters = [];
   delete t.leader;
   t.orders = cancelRescue(ix, t).orders;
-  // A scout mission (M7.08) is a one-off: the next party delves, unless it's on file as scouts.
-  if (t.orders.mission === "scout") delete t.orders.mission;
+  // Scout and sneak missions (M7.08) are one-offs: the next party delves, unless it's on file.
+  if (t.orders.mission === "scout" || t.orders.mission === "sneak") delete t.orders.mission;
+  delete t.orders.lair;
   return t;
 }
 
@@ -339,6 +345,7 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
   t.stash.push(...recovered.map((h) => h.item));
   t.scavenged = t.scavenged.filter((g) => !result.gearTaken.includes(g.id));
   bringIntel(ix, t, o);
+  lairNews(ix, t, o);
 
   const { xp, levels, xpEach } = tripXp(ix, t, result);
 
@@ -625,6 +632,39 @@ function bringIntel(ix: Index, t: TownState, o: Outing): void {
       `${slipped ? `, slipping past ${slipped} ${slipped === 1 ? "group" : "groups"} of monsters` : ""}. The scouting report has what they saw.`,
     "good",
   );
+}
+
+/**
+ * Back from a lair (M7.08): what the party fetched, or the beast dead. A dead
+ * beast's floor is that much safer: `calms` of its monsters move off.
+ */
+function lairNews(ix: Index, t: TownState, o: Outing): void {
+  const visit = o.result.lair;
+  if (!visit) return;
+  const lair = ix.lair(visit.id);
+  const beast = ix.monster(lair.monster).name;
+  switch (visit.outcome) {
+    case "fetched":
+      news(
+        t,
+        `${o.name} crept into ${lair.name.replace(/^The /, "the ")} and out again, unheard.`,
+        "good",
+      );
+      break;
+    case "slain": {
+      t.lairs = { ...(t.lairs ?? {}), [lair.id]: { slain: t.day } };
+      const f = t.dungeon.floors[lair.floor - 1];
+      if (f) f.population = Math.max(0, f.population - lair.calms);
+      news(t, `${o.name} killed the ${beast}! Floor ${lair.floor} is quieter without it.`, "good");
+      break;
+    }
+    case "fled":
+      news(t, `${o.name} ran from the ${beast}: nothing they had could hurt it.`, "bad");
+      break;
+    case "fought":
+      news(t, `${o.name} fought the ${beast} and couldn't finish it.`, "bad");
+      break;
+  }
 }
 
 /** Experience: kills shared by everyone still alive, plus a little per floor. */
