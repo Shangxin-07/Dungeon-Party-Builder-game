@@ -11,7 +11,7 @@ import { createRng } from "./rng";
 import {
   autoStart,
   cantLaunch,
-  launch,
+  launchAndWait,
   materialsShort,
   newTown,
   rest,
@@ -64,7 +64,7 @@ describe("materials", () => {
       for (let d = 0; d < 3 || (cantLaunch(ix, t) && d < 30); d++) t = rest(ix, t, heroNames);
       if (cantLaunch(ix, t)) break;
       const before = { ...t.materials };
-      t = launch(ix, t, heroNames);
+      t = launchAndWait(ix, t, heroNames);
       const trip = t.lastTrip!.materials ?? {};
       for (const [id, n] of Object.entries(trip)) {
         expect(t.materials[id]).toBe((before[id] ?? 0) + n);

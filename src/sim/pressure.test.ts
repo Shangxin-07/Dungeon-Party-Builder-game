@@ -10,7 +10,7 @@ import { createHero, type Hero } from "./hero";
 import { indexLibrary } from "./library";
 import { scoutingReport } from "./report";
 import { createRng } from "./rng";
-import { answerRaise, autoStart, launch, newTown, rest, wage, type TownState } from "./town";
+import { answerRaise, autoStart, launchAndWait, newTown, rest, wage, type TownState } from "./town";
 
 const ix = indexLibrary(library);
 const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
@@ -107,7 +107,7 @@ describe("raises", () => {
     const sent = { ...t, party: [asker.id, ...t.party.filter((id) => id !== asker.id)] };
     let away = sent;
     for (let i = 0; i < 4; i++) {
-      away = launch(ix, away, heroNames);
+      away = launchAndWait(ix, away, heroNames);
       if (!away.roster.some((h) => h.id === asker.id)) return; // fell on the trip; nothing to check
     }
     expect(away.day - t.day).toBeGreaterThanOrEqual(r.patienceDays);
@@ -119,7 +119,7 @@ describe("raises", () => {
   it("aren't asked for while the hero is away", () => {
     const t = at(fresh(), 1 + r.everyLevels);
     const asker = t.roster[0]!;
-    const sent = launch(
+    const sent = launchAndWait(
       ix,
       { ...t, party: [asker.id, ...t.party.filter((id) => id !== asker.id)] },
       heroNames,
@@ -137,7 +137,7 @@ describe("the bench", () => {
       ...t,
       roster: t.roster.map((h) => (h.id === benched.id ? { ...h, motivation: "glory" } : h)),
     };
-    const after = launch(ix, glory, heroNames);
+    const after = launchAndWait(ix, glory, heroNames);
     const h = after.roster.find((x) => x.id === benched.id)!;
     expect(h.moraleLog.some((n) => n.reason === "left behind while others went down")).toBe(true);
   });

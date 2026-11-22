@@ -38,6 +38,7 @@ export type { MoraleFact, MoraleRule, AlignmentDef, MotivationDef, MoraleRulesDe
 export type {
   LevelRules,
   RescueRules,
+  HoleUpRules,
   FallenRules,
   TransformDef,
   InjuryDef,

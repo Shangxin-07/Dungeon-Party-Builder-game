@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 import { heroNames, library } from "../content";
 import { indexLibrary } from "./library";
 import { importSave, missingContent } from "./save";
-import { cantLaunch, launch, rest, TOWN_VERSION } from "./town";
+import { cantLaunch, launchAndWait, rest, TOWN_VERSION } from "./town";
 
 const ix = indexLibrary(library);
 const dir = join(import.meta.dirname, "fixtures", "saves");
@@ -54,7 +54,7 @@ describe("saves from earlier versions", () => {
     for (let d = 0; d < 3; d++) next = rest(ix, next, heroNames);
     expect(next.day).toBe(t.day + 3);
     if (!cantLaunch(ix, next)) {
-      const after = launch(ix, next, heroNames);
+      const after = launchAndWait(ix, next, heroNames);
       expect(after.day).toBeGreaterThan(next.day);
     }
   });

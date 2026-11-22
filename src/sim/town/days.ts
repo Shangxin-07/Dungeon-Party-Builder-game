@@ -1,14 +1,22 @@
 /**
  * A day passing in town: the pit at night, morale, quitting, wages and raises.
  */
-import { dungeonDay } from "../dungeon";
+import { applyKills, dungeonDay } from "../dungeon";
+import { breakOut, holedNight } from "../expedition";
 import { EQUIP_SLOTS, type Hero } from "../hero";
 import { gainXp } from "../levels";
 import type { Index } from "../library";
 import type { HaulItem } from "../loot";
 import { applyMorale, type Facts } from "../morale";
 import { resolveRaid, type RaidReport } from "../raid";
-import { PIT_HISTORY, RAID_HISTORY, type TownState, TownError, newRecord } from "./state";
+import {
+  PIT_HISTORY,
+  RAID_HISTORY,
+  type LostSite,
+  type TownState,
+  TownError,
+  newRecord,
+} from "./state";
 import {
   defence,
   restMorale,
@@ -19,7 +27,8 @@ import {
   standing,
   built,
   findHero,
-  rescueSite,
+  awaySet,
+  rescueTarget,
 } from "./read";
 import { news, book, roll, edit, hero, listWords, gearOf } from "./internal";
 import { freshRecruits } from "./start";
@@ -28,6 +37,7 @@ import { buildersWork } from "./buildings";
 import { restHero, healInjuries, wasDowned, maybeInjure } from "./wounds";
 import { newBody, rise, risenClimb } from "./bodies";
 import { checkCamp, raidSpoils, tidyPosts, workPosts } from "./posts";
+import { arrivals, hearOfLoss, landKills, launch, remember, returnHero } from "./launch";
 
 /**
  * Night falls on day `t.day`: the dungeon breeds and pushes up, and whatever
@@ -183,8 +193,9 @@ export function quit(ix: Index, t: TownState, h: Hero): void {
 /** Anyone at 0 morale walks out. Returns their names. */
 export function quitters(ix: Index, t: TownState): string[] {
   const out: string[] = [];
+  const away = awaySet(t);
   for (const h of [...t.roster]) {
-    if (h.morale > 0) continue;
+    if (h.morale > 0 || away.has(h.id)) continue;
     quit(ix, t, h);
     out.push(h.name);
   }
@@ -198,7 +209,10 @@ export function guildFeels(
   facts: Facts,
   except: ReadonlySet<string>,
 ): void {
-  for (const h of t.roster) if (!except.has(h.id)) applyMorale(ix, h, facts, t.day);
+  // Those out in the dungeon hear it when they're back (M7.02).
+  const away = awaySet(t);
+  for (const h of t.roster)
+    if (!except.has(h.id) && !away.has(h.id)) applyMorale(ix, h, facts, t.day);
 }
 
 /**
@@ -207,26 +221,25 @@ export function guildFeels(
  */
 export function sitesNight(ix: Index, t: TownState): void {
   const rules = ix.lib.rescue;
-  for (const site of t.sites) {
+  for (const site of [...t.sites]) {
+    // A party is on its way here: the site waits for it (M7.02).
+    if (site.visitor && (t.outings ?? []).some((o) => o.id === site.visitor)) continue;
+    site.visitor = undefined;
+    // Nobody in town knows about this yet (M7.02): no news, no grief.
+    const hidden = !!site.outing;
+    if (site.holed && site.trapped.length) holdingOut(ix, t, site);
     for (const x of site.trapped.filter((x) => x.until < t.day)) {
       site.trapped = site.trapped.filter((y) => y !== x);
-      site.items.push(...gearOf(ix, x.hero));
-      site.bodies.push(newBody(t, x.hero, t.day, site.floor));
-      t.memorial.push({
-        heroId: x.hero.id,
-        name: x.hero.name,
-        classId: x.hero.classId,
-        day: t.day,
-        floor: site.floor,
-        fate: "dead",
-        record: t.records[x.hero.id] ?? newRecord(t.day),
-      });
+      diesAtSite(ix, t, site, x.hero);
+      if (hidden || site.unknown) continue;
       news(t, `Nobody came for ${x.hero.name}. They died waiting on floor ${site.floor}.`, "bad");
       guildFeels(ix, t, { abandoned: 1 }, new Set());
     }
-    // The dead who lie too long get up again.
+    // The dead who lie too long get up again: riseDays after they died, and
+    // the town always gets that long after it hears to fetch them (M7.02).
+    const since = (b: { died: number }) => t.day - Math.max(b.died, site.heard ?? 0);
     for (const b of [...site.bodies]) {
-      if (b.risen || t.day - b.died < ix.lib.fallen.riseDays) continue;
+      if (hidden || b.risen || since(b) < ix.lib.fallen.riseDays) continue;
       site.bodies = site.bodies.filter((x) => x !== b);
       rise(ix, t, site, b);
     }
@@ -249,9 +262,98 @@ export function sitesNight(ix: Index, t: TownState): void {
     }
     site.items = kept;
   }
-  t.sites = t.sites.filter((s) => s.trapped.length || s.items.length || s.bodies.length);
-  if (t.orders.rescue && !rescueSite(t)) t.orders = cancelRescue(ix, t).orders;
+  t.sites = t.sites.filter(
+    (s) => s.trapped.length || s.items.length || s.bodies.length || s.outing,
+  );
+  if (t.orders.rescue && !rescueTarget(t)) t.orders = cancelRescue(ix, t).orders;
   risenClimb(ix, t);
+}
+
+/**
+ * Someone dies at a lost party's site: their body and gear lie there. The
+ * memorial says so if the town knows of the site (if it only knows they're
+ * missing, they stay on it as lost).
+ */
+function diesAtSite(ix: Index, t: TownState, site: LostSite, h: Hero): void {
+  site.items.push(...gearOf(ix, h));
+  site.bodies.push(newBody(t, h, t.day, site.floor));
+  if (site.outing) return;
+  remember(t, {
+    heroId: h.id,
+    name: h.name,
+    classId: h.classId,
+    day: t.day,
+    floor: site.unknown ? (site.heading ?? site.floor) : site.floor,
+    fate: site.unknown ? "lost" : "dead",
+    record: t.records[h.id] ?? newRecord(t.day),
+  });
+}
+
+/**
+ * A night for a party holed up below (M7.02, DESIGN.md §17.3): they patch
+ * each other up, and monsters may find the barricade. Once they're fit to
+ * walk, or the food runs out, they try for home on their own.
+ */
+function holdingOut(ix: Index, t: TownState, site: LostSite): void {
+  const heroes = site.trapped.map((x) => x.hero);
+  const night = roll(t, (rng) =>
+    holedNight(ix, heroes, site.floor, t.dungeon.floors, rng.int(0, 2 ** 31 - 1)),
+  );
+  t.dungeon = applyKills(t.dungeon, night.floorKills);
+  const hidden = !!site.outing;
+  const until = site.trapped[0]!.until;
+  const fell: Hero[] = [];
+  for (const x of site.trapped) {
+    const h = night.party.find((p) => p.id === x.hero.id)!;
+    x.hero = h;
+    if (night.wiped || h.condition === "dead") fell.push(h);
+  }
+  if (fell.length) {
+    site.trapped = site.trapped.filter((x) => !fell.includes(x.hero));
+    for (const h of fell) diesAtSite(ix, t, site, h);
+    if (!hidden && !site.unknown)
+      news(
+        t,
+        `Monsters found the barricade on floor ${site.floor}. ${listWords(fell.map((h) => h.name))} fell.`,
+        "bad",
+      );
+  }
+  if (!site.trapped.length || !(night.ready || until <= t.day)) return;
+
+  // Make a break for it.
+  const out = roll(t, (rng) =>
+    breakOut(
+      ix,
+      site.trapped.map((x) => x.hero),
+      site.floor,
+      t.dungeon.floors,
+      rng.int(0, 2 ** 31 - 1),
+    ),
+  );
+  t.dungeon = applyKills(t.dungeon, out.floorKills);
+  const lost = (t.outings ?? []).find((o) => o.id === site.outing);
+  const home = out.outcome === "wiped" ? [] : out.party.filter((h) => h.condition !== "dead");
+  const died = out.party.filter((h) => !home.includes(h));
+  site.trapped = [];
+  site.holed = undefined;
+  if (out.wipeSite) site.floor = out.wipeSite.floor;
+  for (const h of died) diesAtSite(ix, t, site, h);
+  if (!home.length) return;
+  // The survivors know what happened: the town hears it from them.
+  if (lost) hearOfLoss(ix, t, lost, "home", new Set(home.map((h) => h.id)));
+  site.unknown = undefined;
+  for (const h of home) {
+    returnHero(t, h);
+    applyMorale(ix, findHero(t, h.id)!, { wasTrapped: 1 }, t.day);
+  }
+  const days = t.day - site.day;
+  news(
+    t,
+    `${listWords(home.map((h) => h.name))} ${home.length > 1 ? "have" : "has"} fought their way home ` +
+      `after ${days} ${days === 1 ? "day" : "days"} holed up on floor ${site.floor}` +
+      `${died.length ? `. ${listWords(died.map((h) => h.name))} didn't make it` : ""}.`,
+    died.length ? "bad" : "good",
+  );
 }
 
 /**
@@ -263,10 +365,12 @@ export function payWages(ix: Index, t: TownState): void {
   // starts when the camp is held and the guild proper opens its books.
   if (t.camp) return;
   const unpaid: Hero[] = [];
+  const away = awaySet(t);
   for (const h of t.roster) {
     const w = wage(ix, h);
     if (t.gold >= w) book(t, "wages", -w);
-    else unpaid.push(h);
+    // Those out below hear about it when they're back: they're paid what's owed.
+    else if (!away.has(h.id)) unpaid.push(h);
   }
   if (!unpaid.length) return;
   for (const h of unpaid) applyMorale(ix, h, { unpaid: 1 }, t.day);
@@ -338,11 +442,58 @@ export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
   tidyPosts(t);
 }
 
-/** Spend a day in town. Everyone heals, night falls, and new recruits turn up. */
+/**
+ * The next day. Those at home heal, parties below get on with their trips
+ * (their kills thin the dungeon tonight), night falls at the pit, and in the
+ * morning anyone whose trip is over is home, and new recruits turn up.
+ */
 export function rest(ix: Index, town: TownState, names: readonly string[]): TownState {
   const t = edit(town);
-  nightfall(ix, t, new Set());
-  endOfDay(ix, t, new Set());
+  landKills(t);
+  const away = awaySet(t);
+  nightfall(ix, t, away);
+  endOfDay(ix, t, away);
+  arrivals(ix, t);
   freshRecruits(ix, t, names);
+  return t;
+}
+
+/**
+ * Next day, again and again, until a party is back or heard of, or there's
+ * other news worth stopping for: a raid, a finished building, anything in
+ * the news. At most `maxDays` days.
+ */
+export function waitUntilBack(
+  ix: Index,
+  town: TownState,
+  names: readonly string[],
+  maxDays = 30,
+): TownState {
+  let t = town;
+  for (let i = 0; i < maxDays && (t.outings ?? []).length; i++) {
+    const before = t;
+    t = rest(ix, t, names);
+    const heard = t.outings.length !== before.outings.length;
+    const raided = t.raids.at(-1) !== before.raids.at(-1) && t.raids.at(-1)?.day === before.day;
+    const built = t.construction.length < before.construction.length;
+    const said = t.news.some((n) => n.day === t.day && !before.news.includes(n));
+    if (heard || raided || built || said) break;
+  }
+  return t;
+}
+
+/**
+ * Send the party and pass the days until the town hears what became of it
+ * (home, or lost). For tests and the days bot: the old one-click trip.
+ */
+export function launchAndWait(
+  ix: Index,
+  town: TownState,
+  names: readonly string[],
+  maxDays = 60,
+): TownState {
+  let t = launch(ix, town, names);
+  const id = t.outings.at(-1)!.id;
+  for (let i = 0; i < maxDays && t.outings.some((o) => o.id === id); i++) t = rest(ix, t, names);
   return t;
 }

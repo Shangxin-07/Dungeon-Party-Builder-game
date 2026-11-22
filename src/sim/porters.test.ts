@@ -12,6 +12,7 @@ import {
   haggler,
   hirePorter,
   launch,
+  launchAndWait,
   newTown,
   rest,
   setOrders,
@@ -86,7 +87,7 @@ describe("porters", () => {
     for (let seed = 1; seed <= 8; seed++) {
       const t = withPorter(seed);
       const p = t.roster.at(-1)!;
-      const after = launch(ix, t, heroNames);
+      const after = launchAndWait(ix, t, heroNames);
       const r = after.lastTrip!.result;
       for (const e of r.log)
         if (e.combat) {
@@ -109,11 +110,13 @@ describe("porters", () => {
     for (let seed = 0; seed < 300 && (home < 1 || lost < 1); seed++) {
       let t = withPorter(seed);
       t = setOrders(ix, t, { ...t.orders, targetFloor: 3, retreat: { kind: "never" } });
-      const after = launch(ix, t, heroNames);
-      const r = after.lastTrip!.result;
+      const r = launch(ix, t, heroNames).outings[0]!.result;
       if (r.outcome !== "wiped") continue;
+      const after = launchAndWait(ix, t, heroNames);
       const run = r.porters[0]!;
       if (run.home) {
+        // The porter brings the news home the day the party fell.
+        expect(after.lastTrip!.result.log).toEqual(r.log);
         home++;
         expect(after.roster.some((h) => h.id === run.id)).toBe(true);
         for (const item of r.porterHaul) expect(r.leftBehind).not.toContain(item);

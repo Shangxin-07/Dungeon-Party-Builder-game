@@ -59,6 +59,9 @@ import {
   repair,
   repairCost,
   rest,
+  outingOf,
+  outingStatus,
+  giveUp,
   restock,
   restockPlan,
   rosterSize,
@@ -154,7 +157,7 @@ function manPosts(t: TownState): TownState {
       : ["barricade", "barricade", "barricade", "lookout"];
   let posted = { ...t, posts: {} as Record<string, string[]> };
   const free = (id: string) => ix.post(id).slots - (posted.posts[id]?.length ?? 0);
-  const heroes = t.roster.filter((h) => t.camp || !t.party.includes(h.id));
+  const heroes = t.roster.filter((h) => !outingOf(t, h.id) && (t.camp || !t.party.includes(h.id)));
   heroes.forEach((h, i) => {
     const id = [...order.slice(i), ...order].find(
       (p) => (!h.porter || ix.post(p).porters) && free(p) > 0,
@@ -172,7 +175,7 @@ function properKit(t: TownState): TownState {
   if (t.camp) return t;
   t = trainMiners(ix, t);
   for (const h of t.roster) {
-    if (h.porter) continue;
+    if (h.porter || outingOf(t, h.id)) continue;
     for (const id of ix.cls(h.classId).startingKit) {
       const item = ix.item(id);
       const slot = item.slot as keyof Hero["equipment"];
@@ -245,6 +248,7 @@ function step(t: TownState): TownState {
   // Spend level-ups: into the main class, or with --multiclass into any
   // advanced or combo class that's open, else one second base class.
   for (const h of t.roster) {
+    if (outingOf(t, h.id)) continue;
     while (findHero(t, h.id)?.levelUps.length) {
       let up = findHero(t, h.id)!.levelUps[0]!;
       if (!up.classId) {
@@ -281,15 +285,35 @@ function step(t: TownState): TownState {
       tally.buried++;
     }
   }
-  // Go and get anyone who's trapped, or else the bodies before they rise.
-  const site =
-    t.sites.find((s) => s.trapped.some((x) => x.until >= t.day + s.floor - 1)) ??
-    t.sites.find((s) => s.bodies.some((b) => !b.risen) && s.floor <= targetFloor(t));
-  if (site && !t.orders.rescue) t = planRescue(ix, t, site.id);
-  if (!site && t.orders.rescue) t = cancelRescue(ix, t);
+  // Go and get anyone known to be trapped, or look for a party that's
+  // possibly lost (a fast rescue), or else bring the bodies home before they
+  // rise. Sites the town hasn't heard of yet don't count.
+  const known = t.sites.filter((s) => !s.outing && !s.visitor);
+  const trapped = known.find(
+    (s) => !s.unknown && s.trapped.some((x) => x.until >= t.day + s.floor - 1),
+  );
+  // Only with a full party at home to send. Without one, give them up for
+  // lost, to free their places on the roster and stop their wages.
+  const atHome = t.roster.filter((h) => !h.porter && !outingOf(t, h.id)).length;
+  if (atHome < partySlots(ix, t))
+    for (const o of t.outings)
+      if (outingStatus(ix, t, o) === "lost" && o.givenUp === undefined) t = giveUp(ix, t, o.id);
+  const missing =
+    atHome >= partySlots(ix, t)
+      ? t.outings.find((o) => outingStatus(ix, t, o) === "lost")
+      : undefined;
+  const bodies = known.find(
+    (s) =>
+      (s.unknown || s.bodies.some((b) => !b.risen)) && (s.heading ?? s.floor) <= targetFloor(t),
+  );
+  if (!t.orders.rescue) {
+    if (trapped) t = planRescue(ix, t, trapped.id, "rescue");
+    else if (missing) t = planRescue(ix, t, missing.id, "rescue");
+    else if (bodies) t = planRescue(ix, t, bodies.id, "recover");
+  } else if (!trapped && !missing && !bodies) t = cancelRescue(ix, t);
   // Agree to raises while the gold holds out (a month of the new wage bill).
   for (const h of t.roster)
-    if (h.raiseAsk)
+    if (h.raiseAsk && !outingOf(t, h.id))
       t = answerRaise(ix, t, h.id, t.gold > 30 * (wageBill(ix, t) + h.raiseAsk.amount));
   // Put back what the last trip used up, as far as the gold goes.
   const plan = restockPlan(ix, t);
@@ -297,9 +321,11 @@ function step(t: TownState): TownState {
   const okd = plan.filter((l) => (budget -= l.cost) >= 0);
   if (okd.length) t = restock(ix, t, okd);
   // Porters (--porters N): keep N, and train one when the party is short.
-  const fighters = () => t.roster.filter((h) => !h.porter);
-  for (const p of t.roster.filter((h) => h.porter && !fightsToTrain(ix, h)))
-    if (fighters().length < partySlots(ix, t) + 1) {
+  // Heroes out below can't be picked, kitted or trained until they're back.
+  const fighters = () => t.roster.filter((h) => !h.porter && !outingOf(t, h.id));
+  const allFighters = () => t.roster.filter((h) => !h.porter);
+  for (const p of t.roster.filter((h) => h.porter && !fightsToTrain(ix, h) && !outingOf(t, h.id)))
+    if (allFighters().length < partySlots(ix, t) + 1) {
       t = trainPorter(ix, t, p.id, bestClass(ix, p.stats));
       t = kitOut(ix, t, p.id);
     }
@@ -314,14 +340,14 @@ function step(t: TownState): TownState {
   t = {
     ...t,
     porters: t.roster
-      .filter((h) => h.porter && h.condition === "ok" && !h.injuries.length)
+      .filter((h) => h.porter && h.condition === "ok" && !h.injuries.length && !outingOf(t, h.id))
       .slice(0, library.town.porters.slots)
       .map((h) => h.id),
   };
   // Keep a hero on the bench so the party can rotate (a whole second party with --parties).
   if (
     rotate &&
-    fighters().length < partySlots(ix, t) * (twoParties ? 2 : 1) + (twoParties ? 0 : 1) &&
+    allFighters().length < partySlots(ix, t) * (twoParties ? 2 : 1) + (twoParties ? 0 : 1) &&
     t.roster.length < rosterSize(ix, t) &&
     t.recruits.length &&
     t.gold >= hirePrice(ix, t, t.recruits[0]!) + 60
@@ -332,13 +358,22 @@ function step(t: TownState): TownState {
   const fit = (h: Hero) => h.condition === "ok" && h.hp >= heroSheet(ix, h).derived.maxHp * 0.9;
   const tiredness = (h: Hero) => h.fatigue + (h.injuries.length ? 50 : 0) + (fit(h) ? 0 : 100);
   if (twoParties) {
-    // Two fixed parties in roster order; send the one whose most worn-out hero is freshest.
+    // Two fixed parties in roster order; send the one at home whose most
+    // worn-out hero is freshest. Both can be below at once (M7.02).
     const n = partySlots(ix, t);
-    const fs = fighters();
+    const fs = allFighters();
     const worst = (hs: Hero[]) => Math.max(...hs.map(tiredness));
-    const halves = [fs.slice(0, n), fs.slice(n, 2 * n)].filter((hs) => hs.length);
+    // A half still being hired for waits until it's whole, unless it's the only one.
+    const halves = [fs.slice(0, n), fs.slice(n, 2 * n)].filter(
+      (hs, i) => hs.length && (i === 0 || hs.length === n) && !hs.some((h) => outingOf(t, h.id)),
+    );
     const pick = halves.sort((a, b) => worst(a) - worst(b))[0] ?? [];
+    if (!pick.length && t.outings.length && !missing) return rest(ix, t, heroNames);
     t = { ...t, party: pick.map((h) => h.id) };
+  } else if (t.outings.some((o) => o.givenUp === undefined) && !missing) {
+    // One party: wait for it to come home, unless it's possibly lost and
+    // whoever is at home (hiring if need be) can go and look for it.
+    return rest(ix, t, heroNames);
   } else if (rotate) {
     const best = fighters()
       .sort((a, b) => tiredness(a) - tiredness(b))
@@ -354,7 +389,12 @@ function step(t: TownState): TownState {
   while (t.party.length < partySlots(ix, t)) {
     const spare = fighters().find((h) => !t.party.includes(h.id));
     if (spare) t = toggleParty(ix, t, spare.id);
-    else if (t.recruits.length && t.gold >= hirePrice(ix, t, t.recruits[0]!) + 30) t = signUp(t);
+    else if (
+      t.recruits.length &&
+      t.roster.length < rosterSize(ix, t) &&
+      t.gold >= hirePrice(ix, t, t.recruits[0]!) + 30
+    )
+      t = signUp(t);
     else break;
   }
   t = manPosts(t);
@@ -365,6 +405,9 @@ function step(t: TownState): TownState {
     return fit(h) && !fatigueTier(ix, h) && !h.injuries.length;
   });
   if (!ready || cantLaunch(ix, t)) return rest(ix, t, heroNames);
+  // Nobody goes down alone: wait for recruits (M7.02: with parties out of
+  // sight for days, a lone hero sent after them was a common way to lose a guild).
+  if (t.party.length < Math.min(2, partySlots(ix, t))) return rest(ix, t, heroNames);
   const site2 = t.sites.find((s) => s.id === t.orders.rescue);
   t = setOrders(ix, t, {
     ...t.orders,
@@ -402,6 +445,7 @@ function play(seed: number, print: boolean) {
   let t = autoStart(ix, newTown(ix, heroNames, seed, { camp }));
   let printed = 0;
   const seen = new Set<number>();
+  const launched = new Set<string>();
   const unpaidDays = new Set<number>();
   const roseNews = new Set<string>();
   if (print) {
@@ -414,7 +458,7 @@ function play(seed: number, print: boolean) {
     );
   }
   while (t.day <= days) {
-    const trip = t.lastTrip;
+    const heard = new Set((t.trips ?? []).map((x) => x.seed));
     const wasCamp = t.camp;
     t = step(t);
     if (wasCamp && !t.camp) {
@@ -422,29 +466,22 @@ function play(seed: number, print: boolean) {
       tally.campRaids += t.pit.filter((n) => n.outcome !== "held").length;
     }
     if (t.camp) tally.campDeaths = t.memorial.length;
-    console.log(
-      t.day,
-      t.camp ? "camp" : "",
-      JSON.stringify(t.posts),
-      JSON.stringify(t.materials),
-      t.gold,
-      JSON.stringify(t.buildings),
-      t.construction.map((c) => c.building).join(),
-    );
     // Count days the wages went unpaid (from the news, which says so).
     for (const n of t.news) if (n.text.startsWith("The guild couldn't pay")) unpaidDays.add(n.day);
     for (const n of t.news)
       if (/never brought home/.test(n.text)) roseNews.add(`${n.day}${n.text}`);
-    if (t.lastTrip && t.lastTrip.seed !== trip?.seed) {
-      tally.trapped += t.lastTrip.trapped?.length ?? 0;
-      tally.rescued += t.lastTrip.rescued?.length ?? 0;
-      tally.earned += t.lastTrip.goldEarned;
-      for (const [id, n] of Object.entries(t.lastTrip.materials ?? {}))
+    for (const trip of t.trips.filter((x) => !heard.has(x.seed))) {
+      tally.trapped += trip.trapped?.length ?? 0;
+      tally.rescued += trip.rescued?.length ?? 0;
+      tally.earned += trip.goldEarned;
+      for (const [id, n] of Object.entries(trip.materials ?? {}))
         tally.materials[id] = (tally.materials[id] ?? 0) + n;
-      tally.trips++;
-      tally.injuries += Object.keys(t.lastTrip.injuries ?? {}).length;
-      tally.putDown += t.lastTrip.result.risenSlain.length;
+      tally.injuries += Object.keys(trip.injuries ?? {}).length;
+      tally.putDown += trip.result.risenSlain.length;
     }
+    // Every trip that set off (some are never heard of again).
+    tally.trips += t.outings.filter((o) => o.left === t.day && !launched.has(o.id)).length;
+    for (const o of t.outings) launched.add(o.id);
     for (const c of CHECKPOINTS)
       if (c <= days && t.day >= c && !seen.has(c)) {
         seen.add(c);
@@ -489,6 +526,10 @@ if (runs === 1) {
           .join("\n"),
     );
   for (const n of t.news) console.log(`  day ${n.day}: ${n.text}`);
+  for (const m of t.memorial)
+    console.log(
+      `  memorial: ${m.name}, ${m.fate}${m.cause ? ` (${m.cause})` : ""}, day ${m.day}, floor ${m.floor}`,
+    );
 } else {
   const firstRaid: number[] = [];
   let raids = 0;

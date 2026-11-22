@@ -9,7 +9,7 @@ import { migrateTown } from "./save";
 import {
   autoStart,
   cantLaunch,
-  launch,
+  launchAndWait,
   launchWarnings,
   newTown,
   rest,
@@ -29,7 +29,7 @@ const withHero = (t: TownState, i: number, f: (h: Hero) => Hero): TownState => (
 
 describe("fatigue", () => {
   it("builds up on a trip and wears off in town", () => {
-    const t = launch(ix, fresh(), heroNames);
+    const t = launchAndWait(ix, fresh(), heroNames);
     const trip = t.lastTrip!;
     const fights = trip.result.log.filter((e) => e.kind === "fight" && e.monsters).length;
     const gained = w.fatiguePerTripDay * trip.result.days + w.fatiguePerFight * fights;
@@ -61,7 +61,7 @@ describe("fatigue", () => {
 
   it("costs morale when a worn-out hero is sent down", () => {
     const t = withHero(fresh(), 0, (h) => ({ ...h, fatigue: 80 }));
-    const after = launch(ix, t, heroNames);
+    const after = launchAndWait(ix, t, heroNames);
     const notes = after.lastTrip!.morale![t.roster[0]!.id] ?? [];
     if (after.roster.some((h) => h.id === t.roster[0]!.id))
       expect(notes.some((n) => n.reason === "was sent down worn out")).toBe(true);
@@ -87,8 +87,8 @@ describe("injuries", () => {
     let injured = 0;
     for (let seed = 1; seed <= 40 && !injured; seed++) {
       const t = fresh(seed);
-      const after = launch(ix, { ...t, orders: { ...t.orders, targetFloor: 3 } }, heroNames);
-      for (const [id, list] of Object.entries(after.lastTrip!.injuries ?? {})) {
+      const after = launchAndWait(ix, { ...t, orders: { ...t.orders, targetFloor: 3 } }, heroNames);
+      for (const [id, list] of Object.entries(after.lastTrip?.injuries ?? {})) {
         injured += list.length;
         const h = after.roster.find((x) => x.id === id);
         if (h) expect(h.injuries.map((i) => i.id)).toEqual(expect.arrayContaining(list));
@@ -102,7 +102,7 @@ describe("restocking", () => {
   it("lists what the trip used, from the store room first, and puts it back", () => {
     // Find a trip that used something up.
     for (let seed = 1; seed <= 30; seed++) {
-      const t = launch(
+      const t = launchAndWait(
         ix,
         { ...fresh(seed), orders: { ...fresh(seed).orders, targetFloor: 2 } },
         heroNames,
@@ -138,7 +138,7 @@ describe("restocking", () => {
 
 describe("saves from before wear and tear", () => {
   it("start everyone rested and whole", () => {
-    const t = launch(ix, fresh(), heroNames);
+    const t = launchAndWait(ix, fresh(), heroNames);
     const old = JSON.parse(JSON.stringify(t)) as Record<string, unknown> & {
       roster: Record<string, unknown>[];
     };
@@ -153,6 +153,6 @@ describe("saves from before wear and tear", () => {
       expect(h.fatigue).toBe(0);
       expect(h.injuries).toEqual([]);
     }
-    expect(launch(ix, rest(ix, up, heroNames), heroNames).day).toBeGreaterThan(up.day);
+    expect(launchAndWait(ix, rest(ix, up, heroNames), heroNames).day).toBeGreaterThan(up.day);
   });
 });

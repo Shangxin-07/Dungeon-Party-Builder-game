@@ -10,7 +10,7 @@ import { classOptions } from "./levels";
 import { indexLibrary } from "./library";
 import { moraleChanges } from "./morale";
 import { createRng } from "./rng";
-import { autoStart, cantLaunch, launch, launchWarnings, newTown } from "./town";
+import { autoStart, cantLaunch, launchAndWait, launchWarnings, newTown } from "./town";
 
 const ix = indexLibrary(library);
 let n = 0;
@@ -103,7 +103,7 @@ describe("alignment and morale", () => {
     expect(cantLaunch(ix, bad)).toBeUndefined();
     expect(launchWarnings(ix, bad).join(" ")).toMatch(/clashes with a Good party/);
     const fine = make(["good", "good", "good"]);
-    const after = (t: typeof bad) => launch(ix, t, heroNames);
+    const after = (t: typeof bad) => launchAndWait(ix, t, heroNames);
     const reasons = (t: typeof bad) =>
       after(t).roster.flatMap((h) => h.moraleLog.map((m) => m.reason));
     expect(reasons(bad)).toContain("clashed with the party");

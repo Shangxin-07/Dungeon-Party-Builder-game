@@ -111,6 +111,7 @@ export class TripFights extends TripCare {
 
   protected fight(monsters: readonly string[], opts: { surprise?: boolean } = {}): Side | "none" {
     if (monsters.length && this.reacts(monsters)) return "none";
+    if (monsters.length && this.slipPast(monsters)) return "none";
     // Monsters on this floor may have picked up a lost hero's gear.
     const loose = this.extras.gear?.[this.depth]?.filter((g) => !this.gearTaken.includes(g.id));
     let carried: { gear: CarriedGear; index: number } | undefined;
@@ -156,6 +157,8 @@ export class TripFights extends TripCare {
     const real = result.kills.filter((id) => !this.ix.monster(id).summonOnly).length;
     if (real) {
       this.floorKills[this.depth] = (this.floorKills[this.depth] ?? 0) + real;
+      const today = (this.dayKills[this.tripDay()] ??= {});
+      today[this.depth] = (today[this.depth] ?? 0) + real;
       const f = this.floors?.[this.depth - 1];
       if (f) f.population = Math.max(0, f.population - real);
     }
@@ -184,6 +187,21 @@ export class TripFights extends TripCare {
       for (const r of risen) if (result.risenSlain.includes(r.id)) this.putDown(r);
     }
     return result.winner;
+  }
+
+  /**
+   * A rescue mission (M7.02) travels light: the best scout may lead the party
+   * quietly past a fight (Scouting + slipBase)%, at most slipMax.
+   */
+  protected slipPast(monsters: readonly string[]): boolean {
+    if (!this.onRescue()) return false;
+    const rs = this.ix.lib.rescue;
+    const scout = this.best("scouting");
+    const chance = Math.min(rs.slipMax, Math.max(0, ((scout?.value ?? 0) + rs.slipBase) / 100));
+    if (!scout || !this.rng.chance(chance)) return false;
+    const names = [...new Set(monsters.map((id) => this.ix.monster(id).name.toLowerCase()))];
+    this.emit("scout", `${scout.hero.name} leads the party quietly past the ${list(names)}.`);
+    return true;
   }
 
   /** Risen heroes on this floor who come out for this fight: each at most once a trip. */

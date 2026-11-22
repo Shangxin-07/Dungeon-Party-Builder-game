@@ -46,7 +46,7 @@ const rules: [string, RetreatRule][] = [
 for (const [label, retreat] of rules) {
   console.log(`\nFull expeditions, retreat rule: ${label}`);
   console.log(
-    "Target  Returned  Retreated  Wiped  Deaths  Fights  Haul  Dropped  Hours/floor  Days",
+    "Target  Returned  Retreated  Wiped  Holed  Deaths  Fights  Haul  Dropped  Hours/floor  Days",
   );
   for (const targetFloor of [1, 2, 3]) {
     const orders = { targetFloor, retreat, loot: "everything" } as const;
@@ -57,6 +57,7 @@ for (const [label, retreat] of rules) {
         pct(r.returned).padEnd(9),
         pct(r.retreated).padEnd(10),
         pct(r.wiped).padEnd(6),
+        pct(r.holed).padEnd(6),
         r.deaths.toFixed(2).padEnd(7),
         r.fights.toFixed(1).padEnd(7),
         r.haul.toFixed(0).padEnd(5),

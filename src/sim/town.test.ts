@@ -13,6 +13,7 @@ import {
   kitOut,
   haulPrice,
   launch,
+  launchAndWait,
   newTown,
   packItem,
   partyOnFile,
@@ -95,7 +96,7 @@ describe("a new town", () => {
   });
 
   it("is plain data that survives a JSON round trip", () => {
-    const t = launch(ix, fresh(), heroNames);
+    const t = launchAndWait(ix, fresh(), heroNames);
     expect(JSON.parse(JSON.stringify(t))).toEqual(t);
   });
 });
@@ -108,7 +109,7 @@ describe("town actions", () => {
     kitOut(ix, t, t.roster[0]!.id);
     buy(ix, t, "healing-potion");
     dismiss(ix, t, t.roster[0]!.id);
-    launch(ix, t, heroNames);
+    launchAndWait(ix, t, heroNames);
     rest(ix, t, heroNames);
     expect(JSON.stringify(t)).toBe(before);
   });
@@ -199,12 +200,12 @@ describe("launching a party", () => {
     const t = fresh();
     expect(cantLaunch(ix, t)).toBeUndefined();
     expect(cantLaunch(ix, { ...t, party: [] })).toMatch(/at least one/);
-    expect(() => launch(ix, { ...t, party: [] }, heroNames)).toThrow();
+    expect(() => launchAndWait(ix, { ...t, party: [] }, heroNames)).toThrow();
   });
 
   it("runs the trip, sells the haul and moves the clock on", () => {
     const t = fresh(3);
-    const after = launch(ix, t, heroNames);
+    const after = launchAndWait(ix, t, heroNames);
     const trip = after.lastTrip!;
     expect(trip.result.outcome).toBe("returned");
     expect(after.day).toBe(t.day + trip.result.days);
@@ -233,29 +234,35 @@ describe("launching a party", () => {
   });
 
   it("is deterministic", () => {
-    expect(launch(ix, fresh(9), heroNames)).toEqual(launch(ix, fresh(9), heroNames));
+    expect(launchAndWait(ix, fresh(9), heroNames)).toEqual(launchAndWait(ix, fresh(9), heroNames));
   });
 
-  it("loses the whole party on a wipe: some dead, some trapped, and the town carries on", () => {
+  it("loses the whole party on a wipe, and the town only hears it's lost when it gives up waiting", () => {
     let wipe: TownState | undefined;
+    let sent: string[] = [];
     for (let seed = 0; seed < 200 && !wipe; seed++) {
       const t = setOrders(ix, fresh(seed), {
         targetFloor: 3,
         retreat: { kind: "never" },
         loot: "everything",
       });
-      const after = launch(ix, t, heroNames);
-      if (after.lastTrip!.result.outcome === "wiped") wipe = after;
+      const out = launch(ix, t, heroNames).outings[0]!;
+      if (out.result.outcome !== "wiped") continue;
+      wipe = launchAndWait(ix, t, heroNames);
+      sent = out.heroes;
+      // Nobody came home to say, so it took until the guild gave up waiting.
+      expect(wipe.day).toBe(out.expected + library.rescue.giveUpDays);
     }
     expect(wipe).toBeDefined();
-    const sent = wipe!.lastTrip!.party.map((h) => h.id);
     for (const id of sent) expect(wipe!.roster.map((h) => h.id)).not.toContain(id);
-    const trapped = wipe!.sites.flatMap((s) => s.trapped.map((x) => x.hero.id));
-    // Each is dead, or trapped, unless they died waiting during the trip home.
-    expect(wipe!.memorial.length + trapped.length).toBe(sent.length);
+    // Nobody knows who's dead and who's trapped: they're all lost.
+    const lost = wipe!.memorial.filter((m) => sent.includes(m.heroId!));
+    expect(lost.map((m) => m.fate)).toEqual(sent.map(() => "lost"));
+    expect(wipe!.news.some((n) => /up for lost/.test(n.text))).toBe(true);
+    expect(wipe!.sites.find((s) => s.party)?.unknown).toBe(true);
     expect(wipe!.party).toEqual([]);
     expect(wipe!.roster).toHaveLength(1);
-    expect(wipe!.lastTrip!.goldEarned).toBe(0);
+    expect(wipe!.lastTrip).toBeUndefined();
   });
 
   it("rest heals the wounded", () => {

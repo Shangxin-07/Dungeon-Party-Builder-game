@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { heroNames } from "../../content";
 import {
+  awaySet,
   defence,
   launch,
   newTown,
@@ -11,8 +12,10 @@ import {
   rest,
   rosterSize,
   TownError,
+  waitUntilBack,
   wageBill,
   type TownState,
+  type TripReport,
 } from "../../sim/town";
 import type { RaidReport } from "../../sim/raid";
 import { ix } from "../game";
@@ -33,7 +36,8 @@ import { FallenPanel, LostPanel, TalkPanel } from "../Lost";
 import { Accounts } from "../Accounts";
 import type { Act } from "./shared";
 import { Saves } from "./Saves";
-import { TripTown, LastTrip } from "./Trip";
+import { TripTown, BackPanel } from "./Trip";
+import { AwayPanel, awayLine } from "./Away";
 import { PartyPanel } from "./Party";
 import { Roster } from "./Roster";
 import { Recruits } from "./Recruits";
@@ -138,7 +142,7 @@ export function TownPlay({ initial }: { initial: Game }) {
   const [game, setGame] = useState(initial);
   const { slot, town } = game;
   const setTown = (t: TownState) => setGame((g) => ({ ...g, town: t }));
-  const [watching, setWatching] = useState<false | "trip" | RaidReport>(false);
+  const [watching, setWatching] = useState<false | { trip: TripReport } | RaidReport>(false);
   const [error, setError] = useState<string>();
 
   useEffect(() => {
@@ -156,8 +160,36 @@ export function TownPlay({ initial }: { initial: Game }) {
     }
   };
 
-  const trip = town.lastTrip;
-  if (watching && typeof watching === "object") {
+  if (watching && "trip" in watching) {
+    const trip = watching.trip;
+    return (
+      <section className="town" aria-labelledby="watch-heading">
+        <h2 id="watch-heading">
+          Day {trip.day}:{" "}
+          {trip.name
+            ? `${trip.name} sets off`
+            : `${trip.party.map((h) => h.name).join(", ")} go down`}
+        </h2>
+        <p className="muted">
+          {trip.party.map((h) => h.name).join(", ")}. This is how it went, from the day they set
+          off.
+        </p>
+        <TripPlayer
+          heroes={trip.party}
+          log={trip.result.log}
+          results={
+            <Results result={trip.result}>
+              <TripTown town={town} trip={trip} />
+              <button type="button" className="btn btn-main" onClick={() => setWatching(false)}>
+                Back to town
+              </button>
+            </Results>
+          }
+        />
+      </section>
+    );
+  }
+  if (watching) {
     const raid = watching;
     return (
       <section className="town" aria-labelledby="watch-heading">
@@ -183,28 +215,6 @@ export function TownPlay({ initial }: { initial: Game }) {
       </section>
     );
   }
-  if (watching && trip) {
-    return (
-      <section className="town" aria-labelledby="watch-heading">
-        <h2 id="watch-heading">
-          Day {trip.day}: {trip.party.map((h) => h.name).join(", ")} go down
-        </h2>
-        <p className="muted">They're on their own now. You can only watch.</p>
-        <TripPlayer
-          heroes={trip.party}
-          log={trip.result.log}
-          results={
-            <Results result={trip.result}>
-              <TripTown town={town} />
-              <button type="button" className="btn btn-main" onClick={() => setWatching(false)}>
-                Back to town
-              </button>
-            </Results>
-          }
-        />
-      </section>
-    );
-  }
 
   return (
     <section className="town" aria-label="Town">
@@ -214,7 +224,14 @@ export function TownPlay({ initial }: { initial: Game }) {
           {error}
         </p>
       ) : null}
-      {trip ? <LastTrip town={town} onWatch={() => setWatching("trip")} /> : null}
+      <BackPanel
+        town={town}
+        onWatch={(trip) => {
+          setWatching({ trip });
+          window.scrollTo({ top: 0 });
+        }}
+      />
+      <AwayPanel town={town} act={act} />
       <CampPanel town={town} act={act} />
       {town.freeHires > 0 ? <Recruits town={town} act={act} /> : null}
       {town.camp ? <PostsPanel town={town} act={act} /> : null}
@@ -230,8 +247,6 @@ export function TownPlay({ initial }: { initial: Game }) {
             try {
               setTown(launch(ix, prep ? prep(town) : town, heroNames));
               setError(undefined);
-              setWatching("trip");
-              window.scrollTo({ top: 0 });
             } catch (e) {
               if (e instanceof TownError) setError(e.message);
               else throw e;
@@ -293,8 +308,8 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
           Party slots <strong>{partySlots(ix, town)}</strong>
         </span>
       )}
-      <span>
-        Defence <strong>{defence(ix, town)}</strong>
+      <span title="What holds back what climbs out of the pit tonight, with those below away">
+        Defence <strong>{defence(ix, town, awaySet(town))}</strong>
       </span>
       {town.construction.length ? (
         <span
@@ -308,14 +323,32 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
       {town.damaged.length ? (
         <span className="damaged-note">{town.damaged.length} damaged</span>
       ) : null}
+      {(town.outings ?? []).map((o) => {
+        const line = awayLine(town, o);
+        return (
+          <span key={o.id} className={line.tone ?? undefined}>
+            <strong>{o.name}</strong> · {line.text}
+          </span>
+        );
+      })}
       <button
         type="button"
         className="btn"
-        title="Everyone heals, night falls at the pit, and new recruits turn up"
+        title="Everyone at home heals, parties below carry on, night falls at the pit, and new recruits turn up"
         onClick={() => act((t) => rest(ix, t, heroNames))}
       >
-        Rest a day
+        Next day
       </button>
+      {(town.outings ?? []).length ? (
+        <button
+          type="button"
+          className="btn"
+          title="Pass the days until a party is back or heard of, or something else happens"
+          onClick={() => act((t) => waitUntilBack(ix, t, heroNames))}
+        >
+          Wait until someone's back
+        </button>
+      ) : null}
     </div>
   );
 }

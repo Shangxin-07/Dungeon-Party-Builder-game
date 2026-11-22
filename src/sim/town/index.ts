@@ -15,7 +15,7 @@
  * round the pit and the opening), launch.ts.
  * internal.ts holds shared helpers and isn't re-exported here.
  */
-export { TOWN_VERSION, LEDGER_DAYS, TownError, newRecord } from "./state";
+export { TOWN_VERSION, LEDGER_DAYS, TRIP_HISTORY, TownError, newRecord } from "./state";
 export type {
   HeroRecord,
   Trapped,
@@ -25,6 +25,7 @@ export type {
   Memorial,
   PitNight,
   TripReport,
+  Outing,
   TownState,
   SavedParty,
   LedgerKind,
@@ -69,6 +70,13 @@ export {
   maxHp,
   launchWarnings,
   rescueSite,
+  rescueTarget,
+  searchFloor,
+  outingOf,
+  outingStatus,
+  awaySet,
+  usualHours,
+  usualDays,
   grumbles,
   cantLaunch,
 } from "./read";
@@ -103,7 +111,7 @@ export {
   cancelRescue,
 } from "./parties";
 export { nextLevel, underConstruction, upgrade, builderHands, repair } from "./buildings";
-export { answerRaise, rest } from "./days";
+export { answerRaise, rest, waitUntilBack, launchAndWait } from "./days";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
-export { launch } from "./launch";
+export { launch, giveUp, outingView } from "./launch";
 export { assignPost, postOf, trade } from "./posts";

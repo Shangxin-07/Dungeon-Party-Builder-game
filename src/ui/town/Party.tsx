@@ -17,7 +17,8 @@ import {
   saveParty,
   savedParty,
   cancelRescue,
-  rescueSite,
+  rescueTarget,
+  outingOf,
   setOrders,
   type TownState,
 } from "../../sim/town";
@@ -45,7 +46,7 @@ export function PartyPanel({
     RETREATS.find((r) => JSON.stringify(r.rule) === JSON.stringify(town.orders.retreat))?.id ??
     "hp-30";
   const row = (r: Row) => party.filter((h) => h.row === r);
-  const site = rescueSite(town);
+  const target = rescueTarget(town);
 
   return (
     <Fold
@@ -71,13 +72,10 @@ export function PartyPanel({
         </>
       }
     >
-      {site ? (
+      {target ? (
         <p className="mission">
-          Rescue run: down to floor {site.floor} to find{" "}
-          {site.trapped.length
-            ? site.trapped.map((x) => x.hero.name).join(" and ")
-            : `what's left of ${site.bodies.map((b) => b.hero.name).join(" and ") || "the lost party"}`}
-          .{" "}
+          {town.orders.mission === "rescue" ? "Rescue party" : "Recovery party"}: down to floor{" "}
+          {town.orders.targetFloor} to {missionGoal(town)}.{" "}
           <button type="button" className="link" onClick={() => act((t) => cancelRescue(ix, t))}>
             Make it an ordinary trip
           </button>
@@ -224,6 +222,18 @@ export function PartyPanel({
   );
 }
 
+/** What a search is for, in words, without giving away what the town doesn't know. */
+function missionGoal(town: TownState): string {
+  const target = rescueTarget(town);
+  if (!target) return "";
+  if (target.outing || target.site?.outing)
+    return `look for ${target.outing?.name ?? "the missing party"}`;
+  const site = target.site!;
+  if (site.unknown) return `look for ${site.party ?? "the lost party"}`;
+  if (site.trapped.length) return `find ${site.trapped.map((x) => x.hero.name).join(" and ")}`;
+  return `bring home what's left of ${site.bodies.map((b) => b.hero.name).join(" and ") || "the lost party"}`;
+}
+
 /** Same heroes, any order. */
 export const sameIds = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && a.every((id) => b.includes(id));
@@ -281,7 +291,9 @@ export function PartiesOnFile({
           const { heroes, porters } = partyOnFile(town, slot);
           let why: string | undefined;
           let tired: string[] = [];
-          if (p && heroes.length) {
+          const out = heroes.map((h) => outingOf(town, h.id)).find(Boolean);
+          if (out) why = `Away below with ${out.name}.`;
+          else if (p && heroes.length) {
             try {
               const picked = pickParty(ix, town, slot);
               why = cantLaunch(ix, picked);

@@ -388,6 +388,7 @@ const OUTCOMES = {
   returned: "Back home, orders carried out",
   retreated: "Turned back early, as ordered",
   wiped: "The party fell",
+  holed: "Holed up below, waiting for help",
 } as const;
 
 /** The trip summary: where they got to, who fell, and the haul guessed vs real. */

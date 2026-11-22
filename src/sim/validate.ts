@@ -516,6 +516,15 @@ export function validateLibrary(lib: Library): string[] {
   if (rs.windowDays < 1) err("rescue: windowDays must be at least 1");
   if (rs.rescuedHpPercent <= 0 || rs.rescuedHpPercent > 100)
     err("rescue: rescuedHpPercent must be 1-100");
+  if (!(rs.overdueDays >= 1 && rs.lostDays >= rs.overdueDays && rs.giveUpDays > rs.lostDays))
+    err("rescue: needs 1 <= overdueDays <= lostDays < giveUpDays");
+  const hu = rs.holeUp;
+  if (hu.baseDays < 1 || hu.maxDays < hu.baseDays) err("rescue: holeUp days must be 1 or more");
+  for (const k of ["foundChance", "slipMax"] as const) {
+    const v = k === "foundChance" ? hu.foundChance : rs.slipMax;
+    if (v < 0 || v > 1) err(`rescue: ${k} must be 0-1`);
+  }
+  if (rs.rescuePace <= 0 || rs.rescuePace > 1) err("rescue: rescuePace must be above 0, at most 1");
 
   // The fallen (DESIGN.md §10).
   ids("transform", lib.transforms);

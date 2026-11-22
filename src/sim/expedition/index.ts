@@ -27,5 +27,5 @@ export type {
   ExpeditionExtras,
 } from "./report";
 export { DOWNED_LOAD } from "./tuning";
-export { runExpedition, planFloor } from "./run";
+export { runExpedition, planFloor, holedNight, breakOut } from "./run";
 export { tripDays, tripClock, timeBelow } from "./clock";

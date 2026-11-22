@@ -17,7 +17,7 @@ import {
   hire,
   hirePrice,
   kitOut,
-  launch,
+  launchAndWait,
   marketRate,
   newTown,
   rest,
@@ -157,7 +157,7 @@ describe("hidden caches", () => {
 
   it("are tallied in town, with the gold they brought in", () => {
     let t = fresh(5);
-    for (let i = 0; i < 6; i++) t = launch(ix, rest(ix, t, heroNames), heroNames);
+    for (let i = 0; i < 6; i++) t = launchAndWait(ix, rest(ix, t, heroNames), heroNames);
     expect(t.secrets.found + t.secrets.missed).toBeGreaterThan(0);
     if (t.secrets.found) expect(t.secrets.gold).toBeGreaterThan(0);
   });
@@ -168,8 +168,8 @@ describe("clear the floor", () => {
     let more = 0;
     for (let s = 1; s <= 10; s++) {
       const t = fresh(s);
-      const plain = launch(ix, t, heroNames).lastTrip!.result;
-      const hunt = launch(ix, setOrders(ix, t, { ...t.orders, clearPercent: 75 }), heroNames)
+      const plain = launchAndWait(ix, t, heroNames).lastTrip!.result;
+      const hunt = launchAndWait(ix, setOrders(ix, t, { ...t.orders, clearPercent: 75 }), heroNames)
         .lastTrip!.result;
       const goal = Math.ceil(t.dungeon.floors[0]!.population * 0.75);
       if (hunt.outcome !== "returned") continue;
@@ -210,6 +210,6 @@ describe("saves", () => {
     expect(up.version).toBe(TOWN_VERSION);
     expect(up.freeHires).toBe(0);
     expect(up.secrets).toEqual({ found: 0, missed: 0, gold: 0 });
-    expect(launch(ix, up, heroNames).day).toBeGreaterThan(up.day);
+    expect(launchAndWait(ix, up, heroNames).day).toBeGreaterThan(up.day);
   });
 });

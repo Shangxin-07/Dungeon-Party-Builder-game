@@ -7,7 +7,7 @@ import type { Index } from "../library";
 import type { HaulItem } from "../loot";
 import { createRng, type Rng } from "../rng";
 import { type TownState, type LedgerKind, LEDGER_DAYS, type News, TownError } from "./state";
-import { findHero } from "./read";
+import { findHero, outingOf } from "./read";
 
 /** How many lines of news the town keeps. */
 export const NEWS_LENGTH = 12;
@@ -57,9 +57,12 @@ export function edit(town: TownState): TownState {
   return structuredClone(town);
 }
 
+/** A hero at home, for the player's actions: those out in the dungeon can't be touched. */
 export function hero(town: TownState, id: string): Hero {
   const h = findHero(town, id);
   if (!h) throw new TownError("No such hero in the guild.");
+  const out = outingOf(town, id);
+  if (out) throw new TownError(`${h.name} is away with ${out.name}.`);
   return h;
 }
 

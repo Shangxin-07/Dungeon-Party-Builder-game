@@ -7,7 +7,9 @@ import { describeParty, partyAlignment } from "../alignment";
 import { fatigueTier, heroSheet, inCampClass, type Hero } from "../hero";
 import type { Index } from "../library";
 import { isLow } from "../morale";
-import type { TownState } from "./state";
+import type { StandingOrders } from "../expedition";
+import { tripDays } from "../expedition/clock";
+import type { LostSite, Outing, TownState } from "./state";
 
 /** Effects of every working building (damaged ones do nothing until repaired). */
 export function effects(ix: Index, town: TownState): BuildingEffect[] {
@@ -292,21 +294,125 @@ export function launchWarnings(ix: Index, town: TownState): string[] {
       out.push(`${h.name} is unhappy (morale ${h.morale}).${risk}`);
     }
   }
+  const target = rescueTarget(town);
+  const floor = searchFloor(town);
+  if (target && floor && town.orders.targetFloor < floor)
+    out.push(`The search needs the party to go down to floor ${floor}.`);
   const site = rescueSite(town);
-  if (site) {
+  if (site && !site.unknown) {
     const arrive = town.day + site.floor - 1;
     const alive = site.trapped.filter((x) => x.until >= arrive);
-    if (town.orders.targetFloor < site.floor)
-      out.push(`The rescue needs the party to go down to floor ${site.floor}.`);
     if (site.trapped.length && !alive.length)
-      out.push("They can't get there in time to save anyone, but the gear is still there.");
+      out.push(
+        "They're unlikely to get there in time to save anyone, but the gear is still there.",
+      );
+    if (site.visitor) out.push("Another party is already on its way there.");
   }
+  if (target && town.orders.mission === "rescue" && site?.bodies.length && !site.unknown)
+    out.push("A rescue party comes back for the living only: the dead and the gear stay there.");
   return out;
 }
 
-/** The site the current orders are a rescue run to, if any. */
-export const rescueSite = (town: TownState) =>
-  town.orders.rescue ? town.sites.find((s) => s.id === town.orders.rescue) : undefined;
+/**
+ * What the current orders are a search for (DESIGN.md §17.3): a lost
+ * party's site, or a party that's out and overdue (with the site the town
+ * doesn't know about yet, if it fell). Undefined: an ordinary trip.
+ */
+export function rescueTarget(town: TownState): { site?: LostSite; outing?: Outing } | undefined {
+  const id = town.orders.rescue;
+  if (!id) return undefined;
+  const site = town.sites.find((s) => s.id === id);
+  if (site) return { site };
+  const outing = (town.outings ?? []).find((o) => o.id === id);
+  if (!outing) return undefined;
+  return { outing, site: town.sites.find((s) => s.outing === outing.id) };
+}
+
+/** The site the current orders are a search for, if the town knows of it. */
+export const rescueSite = (town: TownState) => {
+  const site = rescueTarget(town)?.site;
+  return site && !site.outing ? site : undefined;
+};
+
+/**
+ * The floor a search has to reach: the site's, if the town knows where it
+ * is, else the floor the missing party was heading for.
+ */
+export function searchFloor(town: TownState): number | undefined {
+  const target = rescueTarget(town);
+  if (!target) return undefined;
+  if (target.outing) return target.outing.result.orders.targetFloor;
+  const s = target.site!;
+  return s.unknown ? (s.heading ?? s.floor) : s.floor;
+}
+
+// ---------------------------------------------------------------------------
+// Parties out in the dungeon (M7.02)
+// ---------------------------------------------------------------------------
+
+/** The party a hero is out with, if they're away. */
+export const outingOf = (town: TownState, heroId: string) =>
+  (town.outings ?? []).find((o) => o.heroes.includes(heroId) || o.porters.includes(heroId));
+
+/** Everyone out in the dungeon. */
+export const awaySet = (town: TownState): Set<string> =>
+  new Set((town.outings ?? []).flatMap((o) => [...o.heroes, ...o.porters]));
+
+/**
+ * How a party that's out looks from town (DESIGN.md §17.3): only the clock
+ * and the expected day back. "overdue" from the day after, "lost" (possibly
+ * lost) a day or two later.
+ */
+export function outingStatus(ix: Index, town: TownState, o: Outing): "out" | "overdue" | "lost" {
+  const late = town.day - o.expected;
+  if (late >= ix.lib.rescue.lostDays) return "lost";
+  if (late >= ix.lib.rescue.overdueDays) return "overdue";
+  return "out";
+}
+
+/**
+ * Hours a trip usually takes, from the orders alone (DESIGN.md §17.2): the
+ * floors' rooms at their usual length, there and back, plus hunting. Never
+ * from what actually happens, so it can't give the outcome away.
+ */
+export function usualHours(ix: Index, orders: StandingOrders, lift = 0): number {
+  const time = ix.lib.time;
+  const target = orders.targetFloor;
+  const first = Math.max(1, Math.min(1 + Math.floor(lift), target));
+  const roomHours = (r: (typeof ix.lib.rooms)[number]) =>
+    (r.hours ?? time.room) +
+    (time.behaviours[r.behaviour] ?? 0) +
+    (r.behaviour === "fight" ? time.fight.hours : 0);
+  let hours = 2 * time.cagePerFloor * (first - 1);
+  for (let depth = first; depth <= target; depth++) {
+    const floor = ix.floor(depth);
+    const fixed = (floor.fixedRooms ?? []).map((id) => ix.room(id));
+    const options = ix.lib.rooms.filter(
+      (r) => depth >= r.floors[0] && depth <= r.floors[1] && !fixed.some((f) => f.id === r.id),
+    );
+    const weight = options.reduce((a, r) => a + r.weight, 0) || 1;
+    const usual = options.reduce((a, r) => a + roomHours(r) * r.weight, 0) / weight;
+    const count = (floor.rooms[0] + floor.rooms[1]) / 2;
+    hours += time.stairs + (count - fixed.length) * usual;
+    hours += fixed.reduce((a, r) => a + roomHours(r), 0);
+    hours += time.climbPerFloor;
+  }
+  // Hunting: about one side tunnel and fight for every couple of monsters to kill.
+  const pct = orders.clearPercent ?? 0;
+  if (pct > 0 && !orders.rescue) {
+    const floor = ix.floor(target);
+    const tunnels = Math.min(
+      ix.lib.dungeon.hunting.maxRooms,
+      Math.ceil(((floor.capacity ?? 0) * pct) / 100 / 2.5),
+    );
+    hours += tunnels * (time.hunt + time.fight.hours);
+  }
+  return hours;
+}
+
+/** Days a trip with these orders usually takes (see usualHours). */
+export const usualDays = (ix: Index, orders: StandingOrders, lift = 0) =>
+  tripDays(ix.lib.time.startHour, usualHours(ix, orders, lift));
 
 /** Things heroes are saying in town: complaints and wishes (DESIGN.md §6, §8). */
 export function grumbles(ix: Index, town: TownState): { hero: string; text: string }[] {
@@ -346,6 +452,8 @@ export function cantLaunch(ix: Index, town: TownState): string | undefined {
   for (const id of [...town.party, ...(town.porters ?? [])]) {
     const h = findHero(town, id);
     if (!h) return "Someone in the party has left the guild.";
+    const out = outingOf(town, id);
+    if (out) return `${h.name} is away with ${out.name}.`;
     if (h.condition !== "ok" || h.hp <= 0) return `${h.name} can't walk yet. Let them rest.`;
     if (inCampClass(ix, h))
       return `${h.name} is still a miner. Pick a class for them on the roster first.`;
