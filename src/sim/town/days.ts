@@ -42,7 +42,9 @@ import { sealsBroke } from "./seals";
 import { offersDay } from "./offers";
 import { folkDay, folkScared } from "./folk";
 import { tidyBenches, workshopDay } from "./workshops";
-import { arrivals, hearOfLoss, landKills, launch, remember, returnHero } from "./launch";
+import { arrivals, landKills, launch } from "./launch";
+import { hearOfLoss } from "./lost";
+import { remember, returnHero } from "./homecoming";
 
 /**
  * Night falls on day `t.day`: the dungeon breeds and pushes up, and whatever
