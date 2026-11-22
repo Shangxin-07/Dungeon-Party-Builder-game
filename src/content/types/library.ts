@@ -18,6 +18,8 @@ import type {
   TransformDef,
   InjuryDef,
   WearRules,
+  LeadershipRules,
+  TraitDef,
 } from "./heroes";
 import type {
   EventDef,
@@ -65,6 +67,10 @@ export interface Library {
   transforms: readonly TransformDef[];
   posts: readonly PostDef[];
   opening: OpeningRules;
+  /** Leaders and command (M7.05). */
+  leadership: LeadershipRules;
+  /** Leader traits (M7.05, content/traits/). */
+  traits: readonly TraitDef[];
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -134,3 +140,7 @@ export const defineRescueRules = (def: RescueRules): RescueRules => def;
 export const defineFallenRules = (def: FallenRules): FallenRules => def;
 
 export const defineTransform = (def: TransformDef): TransformDef => def;
+
+export const defineLeadershipRules = (def: LeadershipRules): LeadershipRules => def;
+
+export const defineTrait = (def: TraitDef): TraitDef => def;

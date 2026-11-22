@@ -136,6 +136,10 @@ export interface Outing {
   /** Hero and porter ids: away until the town hears of them. */
   heroes: string[];
   porters: string[];
+  /** Who led it (M7.05). */
+  leader?: string;
+  /** Deserters who have made it home (M7.05): no longer away with it. */
+  deserted?: string[];
   seed: number;
   /** The heroes and porters as they left town. */
   party: Hero[];
@@ -159,6 +163,16 @@ export interface Outing {
 export interface TripReport {
   /** Day the party set off. */
   day: number;
+  /**
+   * A deserter's account (M7.05, DESIGN.md §17.5): all the guild knows of
+   * the trip until the party is heard of. `result` stops where they left.
+   */
+  account?: { by: string; floor: number; room: number; blame?: string };
+  /** Who led the party, and leader traits they picked up on the trip (M7.05). */
+  leader?: string;
+  traits?: string[];
+  /** Heroes who slipped away from the party, and whether each made it home (M7.05). */
+  deserters?: { name: string; home: boolean; floor: number }[];
   /** The party's name (M7.02), and the day the town heard how it went. */
   name?: string;
   back?: number;
@@ -221,6 +235,11 @@ export interface TownState {
   stash: string[];
   /** Ids of the heroes picked for the next trip, in order. */
   party: string[];
+  /**
+   * The next party's leader (M7.05), picked by the player. Missing, or not
+   * in the party: the hero with the best Leadership leads.
+   */
+  leader?: string;
   orders: StandingOrders;
   records: Record<string, HeroRecord>;
   memorial: Memorial[];
@@ -311,6 +330,8 @@ export interface SavedParty {
   name: string;
   heroes: string[];
   porters: string[];
+  /** Its leader (M7.05), if the player picked one. */
+  leader?: string;
   /** Orders for this party, without any rescue (that belongs to the moment). */
   orders: StandingOrders;
 }

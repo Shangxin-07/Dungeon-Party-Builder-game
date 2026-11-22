@@ -50,6 +50,17 @@ export const MORALE_FACTS = [
   "abandoned",
   /** 1 if they were given the perk they wanted at a level-up. */
   "wantedPerk",
+  /**
+   * Deserters (M7.05): 1 for each deserter a hero holds a grudge against
+   * when they learn what happened, and for each one in the party they're
+   * sent down with.
+   */
+  "grudge",
+  "withDeserter",
+  /** 1 for a hero who ran out on their party and made it home. */
+  "deserted",
+  /** 1 for the leader of a party that came home. */
+  "ledParty",
   /** 1 if they levelled up. */
   "levelUp",
   /** 1 if the guild couldn't pay their wages today. */

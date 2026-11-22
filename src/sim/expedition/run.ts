@@ -224,6 +224,16 @@ export class Expedition extends TripRescue {
             );
             continue;
           }
+          // Over command (M7.05): someone won't take the leader's word for it.
+          const unruly = this.unruly();
+          if (unruly) {
+            this.disobeyed++;
+            this.emit(
+              "disobey",
+              `${reason}, but ${unruly.name} won't take orders from ${this.leaderName()}. The party presses on.`,
+            );
+            continue;
+          }
           this.emit("retreat", `${reason}. Following orders, the party turns back.`);
           return this.goHome("retreated");
         }
@@ -270,6 +280,16 @@ export class Expedition extends TripRescue {
       if (reason) {
         this.emit("retreat", `${reason}. Following orders, the party stops hunting.`);
         return this.goHome("retreated");
+      }
+      // Over command (M7.05): someone has had enough of hunting and the rest follow.
+      const unruly = this.unruly();
+      if (unruly) {
+        this.disobeyed++;
+        this.emit(
+          "disobey",
+          `${unruly.name} has had enough of hunting and won't listen to ${this.leaderName()}. The party heads for home.`,
+        );
+        break;
       }
       this.campIfTired();
       this.hunts++;
@@ -412,6 +432,9 @@ export class Expedition extends TripRescue {
       risenMet: this.risenMet,
       risenSlain: this.risenSlain,
       disobeyed: this.disobeyed,
+      deserters: this.deserters,
+      bigWins: this.bigWins,
+      leaderFell: this.leaderFell || undefined,
       secrets: this.secrets,
       huntRooms: this.hunts,
       deeds: this.deeds,
@@ -483,7 +506,39 @@ export class Expedition extends TripRescue {
   // Standing orders
   // -------------------------------------------------------------------------
 
+  /**
+   * An unruly hero (M7.05) who ignores the leader at this order check, if one
+   * does: each at most once a floor.
+   */
+  protected unruly(): Hero | undefined {
+    const lead = this.extras.leader;
+    if (!lead) return undefined;
+    for (const h of this.conscious()) {
+      const chance = lead.disobey[h.id] ?? 0;
+      if (chance <= 0 || h.id === lead.id || this.refused.get(h.id) === this.depth) continue;
+      if (this.rng.chance(chance)) {
+        this.refused.set(h.id, this.depth);
+        return h;
+      }
+    }
+    return undefined;
+  }
+
+  protected leaderName(): string {
+    const id = this.extras.leader?.id;
+    return this.party.find((h) => h.id === id)?.name ?? "the leader";
+  }
+
   protected retreatReason(): string | undefined {
+    // The leader just went down (M7.05): the party may lose heart, whatever the orders.
+    if (this.leaderShaken) {
+      this.leaderShaken = false;
+      const up = this.conscious();
+      const morale = up.reduce((s, h) => s + h.morale, 0) / Math.max(1, up.length);
+      const chance = Math.min(0.9, this.ix.lib.leadership.leaderFalls * (1 + (50 - morale) / 50));
+      if (up.length && this.rng.chance(chance))
+        return `With ${this.leaderName()} fallen, the party loses heart`;
+    }
     const rule = this.orders.retreat;
     const fallen = this.party.find((h) => h.condition !== "ok");
     const why = fallen && `${fallen.name} ${fallen.condition === "dead" ? "is dead" : "is down"}`;
@@ -494,7 +549,8 @@ export class Expedition extends TripRescue {
         return why;
       case "hero-hp-below": {
         if (why) return why;
-        const hurt = this.conscious().find((h) => h.hp < (this.maxHp(h) * rule.percent) / 100);
+        const percent = rule.percent + (this.extras.leader?.retreatEarly ?? 0);
+        const hurt = this.conscious().find((h) => h.hp < (this.maxHp(h) * percent) / 100);
         return hurt ? `${hurt.name} is badly hurt` : undefined;
       }
       case "out-of-potions": {

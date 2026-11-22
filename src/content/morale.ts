@@ -60,5 +60,10 @@ export default defineMoraleRules({
     { fact: "resurrected", amount: -10, reason: "came back from the dead, shaken" },
     { fact: "wantedPerk", amount: 8, reason: "got the training they wanted" },
     { fact: "levelUp", amount: 2, reason: "levelled up" },
+    // Leaders and deserters (M7.05).
+    { fact: "ledParty", amount: 2, below: 70, reason: "led the party" },
+    { fact: "grudge", amount: -4, cap: 8, reason: "can't forgive a deserter" },
+    { fact: "withDeserter", amount: -3, cap: 6, reason: "was sent down with a deserter" },
+    { fact: "deserted", amount: -4, reason: "ran out on the party" },
   ],
 });

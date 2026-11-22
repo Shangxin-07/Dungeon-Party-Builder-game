@@ -153,7 +153,7 @@ describe("bodies brought home", () => {
     expect(h.condition).toBe("ok");
     expect(h.hp).toBeGreaterThan(0);
     expect(after.gold).toBe(5000 - q.terms!.gold);
-    expect(after.bodies).toEqual([]);
+    expect(after.bodies.map((x) => x.id)).not.toContain(b.id);
     expect(after.memorial.some((m) => m.heroId === h.id)).toBe(false);
     expect(h.moraleLog.some((n) => /back from the dead/.test(n.reason))).toBe(true);
   });
@@ -166,7 +166,7 @@ describe("bodies brought home", () => {
     const low = t.roster.map((h) => ({ ...h, morale: 40 }));
     t = { ...t, roster: low };
     const after = bury(ix, t, b.id);
-    expect(after.bodies).toEqual([]);
+    expect(after.bodies.map((x) => x.id)).not.toContain(b.id);
     expect(after.memorial.find((m) => m.heroId === b.hero.id)?.buried).toBe(t.day);
     for (const h of after.roster) expect(h.morale).toBeGreaterThan(40);
   });

@@ -44,6 +44,9 @@ export type {
   InjuryDef,
   FatigueTier,
   WearRules,
+  LeadershipRules,
+  LeaderEvent,
+  TraitDef,
 } from "./heroes";
 export type {
   EncounterDef,
@@ -104,5 +107,7 @@ export {
   defineRescueRules,
   defineFallenRules,
   defineTransform,
+  defineLeadershipRules,
+  defineTrait,
 } from "./library";
 export type { Library } from "./library";

@@ -28,6 +28,11 @@ export interface EncounterOptions {
   power?: number;
   /** Most monsters in the group (e.g. only a few left alive on the floor). */
   max?: number;
+  /**
+   * Bigger parties meet bigger groups (M7.05): the target power is
+   * multiplied by this, and the group can hold more monsters.
+   */
+  scale?: number;
 }
 
 /** Target power for a floor at a (possibly fractional) monster level. */
@@ -47,15 +52,19 @@ export function rollEncounter(
   const to = Math.max(floor, Math.round(level));
   const options = ix.lib.encounters.filter((e) => e.floors[0] <= to && e.floors[1] >= from);
   if (!options.length) throw new Error(`No encounters defined for floor ${floor}`);
-  const target = opts.power ?? (opts.level === undefined ? floorPower(floor) : levelPower(level));
-  const cap = Math.min(MAX_MONSTERS, opts.max ?? MAX_MONSTERS);
+  const scale = Math.max(1, opts.scale ?? 1);
+  const target =
+    (opts.power ?? (opts.level === undefined ? floorPower(floor) : levelPower(level))) * scale;
+  const most = Math.round(MAX_MONSTERS * Math.min(1.75, scale));
+  const cap = Math.min(most, opts.max ?? most);
   const weight = (e: EncounterDef) => encounterWeight(e, floor);
   const total = options.reduce((s, e) => s + weight(e), 0);
   const monsters: string[] = [];
   let power = 0;
   if (cap <= 0) return monsters;
 
-  for (let picks = 0; picks < 4 && power < target * 0.85; picks++) {
+  const groups = Math.ceil(4 * scale);
+  for (let picks = 0; picks < groups && power < target * 0.85; picks++) {
     let roll = rng.next() * total;
     const enc = options.find((e) => (roll -= weight(e)) < 0) ?? options[options.length - 1]!;
     for (const g of enc.groups) {

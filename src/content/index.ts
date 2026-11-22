@@ -25,6 +25,7 @@ import type {
   SkillDef,
   StatusDef,
   TransformDef,
+  TraitDef,
 } from "./types";
 import fighterClass from "./classes/fighter";
 import holySymbolItem from "./items/holy-symbol";
@@ -131,6 +132,15 @@ import slimeMonster from "./monsters/slime";
 import appraisalSkill from "./skills/appraisal";
 import medicineSkill from "./skills/medicine";
 import scoutingSkill from "./skills/scouting";
+import leadershipSkill from "./skills/leadership";
+import leadershipRules from "./leadership";
+import hauntedTrait from "./traits/haunted";
+import overcautiousTrait from "./traits/overcautious";
+import hardenedTrait from "./traits/hardened";
+import inspiringTrait from "./traits/inspiring";
+import steadyTrait from "./traits/steady";
+import trustedTrait from "./traits/trusted";
+import doubtedTrait from "./traits/doubted";
 import boneBreakerPerk from "./perks/bone-breaker";
 import keenEyePerk from "./perks/keen-eye";
 import toughPerk from "./perks/tough";
@@ -398,7 +408,23 @@ export const monsters: readonly MonsterDef[] = [
   lostDelverMonster,
   foremansShadeMonster,
 ];
-export const skills: readonly SkillDef[] = [appraisalSkill, medicineSkill, scoutingSkill];
+export const skills: readonly SkillDef[] = [
+  appraisalSkill,
+  medicineSkill,
+  scoutingSkill,
+  leadershipSkill,
+];
+
+/** Leader traits (M7.05, DESIGN.md §17.5), earned on a leader's watch. */
+export const traits: readonly TraitDef[] = [
+  hauntedTrait,
+  overcautiousTrait,
+  hardenedTrait,
+  inspiringTrait,
+  steadyTrait,
+  trustedTrait,
+  doubtedTrait,
+];
 export const perks: readonly PerkDef[] = [
   boneBreakerPerk,
   heavyHitterPerk,
@@ -564,6 +590,8 @@ export const library: Library = {
   transforms,
   posts,
   opening: openingRules,
+  leadership: leadershipRules,
+  traits,
 };
 
 export { heroNames } from "./names";

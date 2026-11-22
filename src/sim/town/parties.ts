@@ -23,12 +23,22 @@ export function toggleParty(ix: Index, town: TownState, heroId: string): TownSta
   }
   if (t.party.includes(heroId)) {
     t.party = t.party.filter((id) => id !== heroId);
+    if (t.leader === heroId) delete t.leader;
   } else {
     if (t.party.length >= partySlots(ix, t))
       throw new TownError(`The party is full (${partySlots(ix, t)} slots).`);
     t.party.push(heroId);
   }
   return t;
+}
+
+/**
+ * Make a hero in the party its leader (M7.05, DESIGN.md §17.5). Without a
+ * pick, the hero with the best Leadership leads.
+ */
+export function setLeader(_ix: Index, town: TownState, heroId: string): TownState {
+  if (!town.party.includes(heroId)) throw new TownError("Only someone in the party can lead it.");
+  return { ...town, leader: heroId };
 }
 
 export function setOrders(_ix: Index, town: TownState, orders: StandingOrders): TownState {
@@ -56,6 +66,7 @@ export function saveParty(ix: Index, town: TownState, slot: number, name?: strin
     name: name?.trim() || old?.name || partyLetter(slot),
     heroes: [...t.party],
     porters: [...(t.porters ?? [])],
+    ...(t.leader && t.party.includes(t.leader) ? { leader: t.leader } : {}),
     orders,
   };
   return t;
@@ -99,6 +110,8 @@ export function pickParty(ix: Index, town: TownState, slot: number): TownState {
     .slice(0, partySlots(ix, t))
     .map((h) => h.id);
   t.porters = porters.slice(0, ix.lib.town.porters.slots).map((h) => h.id);
+  if (p.leader && t.party.includes(p.leader)) t.leader = p.leader;
+  else delete t.leader;
   const { rescue, mission } = t.orders;
   t.orders = { ...p.orders, ...(rescue ? { rescue, mission } : {}) };
   const floor = searchFloor(t);

@@ -25,8 +25,12 @@ export type ExpeditionEventKind =
   | "wipe"
   /** A fight room with nothing left alive in it. */
   | "quiet"
-  /** A low-morale hero ignores the standing orders (DESIGN.md §6). */
+  /** A low-morale hero ignores the standing orders (DESIGN.md §6), or an unruly one the leader (M7.05). */
   | "disobey"
+  /** An unruly hero slips away before a bad fight and heads home alone (M7.05). */
+  | "desert"
+  /** The party's leader falls (M7.05). */
+  | "leader"
   /** A porter's run for home after a wipe (M6). */
   | "porter"
   /** A hidden cache found by the party's best scout (M6). */
@@ -137,6 +141,12 @@ export interface ExpeditionResult {
   risenSlain: string[];
   /** Times a hero ignored orders. */
   disobeyed: number;
+  /** Heroes who slipped away from the party (M7.05). Not in `party`. */
+  deserters?: Deserter[];
+  /** Fights won against monster power well above the floor's usual, or a boss (M7.05). */
+  bigWins?: number;
+  /** The leader went down at some point (M7.05). */
+  leaderFell?: boolean;
   /** Extra rooms spent hunting under a "clear the floor" order. */
   huntRooms: number;
   /** Porters who went along, and whether they got home. */
@@ -193,4 +203,36 @@ export interface ExpeditionExtras {
   risen?: readonly Risen[];
   /** Floors the Mine Cage carries the party past, down and back up (M6.21). */
   lift?: number;
+  /** The party's leader and how unruly the party is (M7.05, see sim/leadership.ts). */
+  leader?: TripLeader;
+}
+
+/** What the trip needs to know about its leader (M7.05). */
+export interface TripLeader {
+  id: string;
+  /** Each hero's chance to ignore an order at each order check, by id. */
+  disobey: Readonly<Record<string, number>>;
+  /** Each hero's chance to slip away before a fight that looks bad, by id. */
+  desert: Readonly<Record<string, number>>;
+  /** Turn back this many HP percent sooner than the orders say. */
+  retreatEarly?: number;
+}
+
+/** Someone who slipped away from the party (M7.05). */
+export interface Deserter {
+  id: string;
+  name: string;
+  /** The hero as they left the party. */
+  hero: Hero;
+  /** Made it back to town alone. */
+  home: boolean;
+  /** Hours into the trip they left, and got home (or died trying). */
+  left: number;
+  back: number;
+  floor: number;
+  room: number;
+  /** Log entries up to and including their leaving: all they saw. */
+  saw: number;
+  /** The monsters they ran from, in words. */
+  from: string;
 }

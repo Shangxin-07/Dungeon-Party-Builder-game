@@ -33,6 +33,7 @@ export function runCombat(
     opts.carrying,
     opts.level ?? 1,
     opts.risen ?? [],
+    opts.leader,
   ).run(opts.maxRounds ?? MAX_ROUNDS);
 }
 
@@ -219,10 +220,16 @@ export class Battle extends BattleEffects {
 
   /**
    * Monsters that hunt by tag (MonsterDef.hunts, DESIGN.md §7: the undead go
-   * for Good heroes) pick from those first, if any are in reach.
+   * for Good heroes) pick from those first, if any are in reach. Cunning
+   * monsters (M7.05) go for the party's leader before anything else.
    */
   protected hunted(self: Fighter, targets: Fighter[]): Fighter[] {
-    const hunts = self.monsterId ? this.ix.monster(self.monsterId).hunts : undefined;
+    const def = self.monsterId ? this.ix.monster(self.monsterId) : undefined;
+    if (def?.tags.includes("cunning")) {
+      const leader = targets.filter((f) => f.tags.includes("leader"));
+      if (leader.length) return leader;
+    }
+    const hunts = def?.hunts;
     if (!hunts?.length) return targets;
     const prey = targets.filter((f) => f.tags.some((t) => hunts.includes(t)));
     return prey.length ? prey : targets;

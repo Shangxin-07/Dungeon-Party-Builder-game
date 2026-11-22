@@ -1,1 +1,2665 @@
-{"game":"dungeon-party-builder","version":1,"savedAt":"2026-11-21T00:00:00.000Z","town":{"version":1,"day":17,"gold":765,"seed":1469046831,"buildings":{"guild-hall":1,"market":1},"roster":[{"id":"h1","name":"Bram","classId":"fighter","level":1,"stats":{"STR":12,"DEX":12,"END":14,"PER":9,"INT":7,"WIL":9,"CHA":8},"perks":[],"equipment":{"weapon":"sword","armor":"chainmail","offhand":"wooden-shield"},"pack":["healing-potion"],"row":"front","hp":64,"mana":23,"condition":"ok"},{"id":"h2","name":"Hollis","classId":"scout","level":1,"stats":{"STR":11,"DEX":12,"END":12,"PER":14,"INT":10,"WIL":8,"CHA":9},"perks":[],"equipment":{"weapon":"short-bow","armor":"leather-armor"},"pack":["bandages","healing-potion"],"row":"back","hp":57,"mana":28,"condition":"ok"},{"id":"h3","name":"Pell","classId":"mage","level":1,"stats":{"STR":8,"DEX":10,"END":8,"PER":11,"INT":15,"WIL":15,"CHA":10},"perks":[],"equipment":{"weapon":"staff"},"pack":["healing-potion","bandages"],"row":"back","hp":42,"mana":45,"condition":"ok"},{"id":"h4","name":"Rook","classId":"fighter","level":1,"stats":{"STR":12,"DEX":11,"END":11,"PER":11,"INT":9,"WIL":7,"CHA":8},"perks":[],"equipment":{"weapon":"sword","armor":"chainmail","offhand":"wooden-shield"},"pack":["healing-potion"],"row":"front","hp":55,"mana":25,"condition":"ok"},{"id":"h5","name":"Torv","classId":"mage","level":1,"stats":{"STR":9,"DEX":12,"END":11,"PER":9,"INT":12,"WIL":14,"CHA":8},"perks":[],"equipment":{"weapon":"staff"},"pack":["healing-potion"],"row":"back","hp":52,"mana":38,"condition":"ok"}],"recruits":[{"id":"h53","name":"Maren","classId":"scout","level":1,"stats":{"STR":10,"DEX":14,"END":8,"PER":12,"INT":9,"WIL":9,"CHA":9},"perks":[],"equipment":{"weapon":"short-bow","armor":"leather-armor"},"pack":["bandages"],"row":"back","hp":44,"mana":27,"condition":"ok"},{"id":"h54","name":"Juno","classId":"fighter","level":1,"stats":{"STR":15,"DEX":12,"END":11,"PER":7,"INT":6,"WIL":10,"CHA":7},"perks":[],"equipment":{"weapon":"sword","armor":"chainmail","offhand":"wooden-shield"},"pack":["healing-potion"],"row":"front","hp":58,"mana":22,"condition":"ok"},{"id":"h55","name":"Ilsa","classId":"fighter","level":1,"stats":{"STR":13,"DEX":12,"END":12,"PER":10,"INT":7,"WIL":10,"CHA":7},"perks":[],"equipment":{"weapon":"sword","armor":"chainmail","offhand":"wooden-shield"},"pack":["healing-potion"],"row":"front","hp":59,"mana":24,"condition":"ok"}],"stash":["bandages","bandages"],"party":["h1","h2","h3"],"orders":{"targetFloor":1,"retreat":{"kind":"hero-hp-below","percent":30},"loot":"everything"},"records":{"h1":{"trips":4,"kills":8,"joined":1},"h2":{"trips":4,"kills":11,"joined":1},"h3":{"trips":4,"kills":12,"joined":1},"h4":{"trips":0,"kills":0,"joined":1},"h5":{"trips":0,"kills":0,"joined":1}},"memorial":[],"nextHeroId":56,"lastTrip":{"day":16,"seed":1649501514,"party":[{"id":"h1","name":"Bram","classId":"fighter","level":1,"stats":{"STR":12,"DEX":12,"END":14,"PER":9,"INT":7,"WIL":9,"CHA":8},"perks":[],"equipment":{"weapon":"sword","armor":"chainmail","offhand":"wooden-shield"},"pack":["healing-potion","bandages"],"row":"front","hp":64,"mana":23,"condition":"ok"},{"id":"h2","name":"Hollis","classId":"scout","level":1,"stats":{"STR":11,"DEX":12,"END":12,"PER":14,"INT":10,"WIL":8,"CHA":9},"perks":[],"equipment":{"weapon":"short-bow","armor":"leather-armor"},"pack":["bandages","healing-potion"],"row":"back","hp":57,"mana":28,"condition":"ok"},{"id":"h3","name":"Pell","classId":"mage","level":1,"stats":{"STR":8,"DEX":10,"END":8,"PER":11,"INT":15,"WIL":15,"CHA":10},"perks":[],"equipment":{"weapon":"staff"},"pack":["healing-potion","bandages"],"row":"back","hp":42,"mana":45,"condition":"ok"}],"result":{"outcome":"returned","orders":{"targetFloor":1,"retreat":{"kind":"hero-hp-below","percent":30},"loot":"everything"},"deepestFloor":1,"days":1,"roomsVisited":6,"party":[{"id":"h1","name":"Bram","classId":"fighter","level":1,"stats":{"STR":12,"DEX":12,"END":14,"PER":9,"INT":7,"WIL":9,"CHA":8},"perks":[],"equipment":{"weapon":"sword","armor":"chainmail","offhand":"wooden-shield"},"pack":["healing-potion"],"row":"front","hp":39,"mana":23,"condition":"ok"},{"id":"h2","name":"Hollis","classId":"scout","level":1,"stats":{"STR":11,"DEX":12,"END":12,"PER":14,"INT":10,"WIL":8,"CHA":9},"perks":[],"equipment":{"weapon":"short-bow","armor":"leather-armor"},"pack":["bandages","healing-potion"],"row":"back","hp":54,"mana":28,"condition":"ok"},{"id":"h3","name":"Pell","classId":"mage","level":1,"stats":{"STR":8,"DEX":10,"END":8,"PER":11,"INT":15,"WIL":15,"CHA":10},"perks":[],"equipment":{"weapon":"staff"},"pack":["healing-potion","bandages"],"row":"back","hp":38,"mana":22,"condition":"ok"}],"haul":[{"item":"gem","value":115,"estimate":101},{"item":"rusty-helmet","value":4,"estimate":4},{"item":"coins","value":6,"estimate":7},{"item":"gem","value":11,"estimate":12},{"item":"rusty-helmet","value":3,"estimate":3},{"item":"coins","value":9,"estimate":11},{"item":"rusty-helmet","value":6,"estimate":5}],"leftBehind":[],"kills":["giant-rat","giant-rat","slime","giant-rat","slime","little-slime","goblin-archer","goblin","goblin","giant-rat","goblin","giant-rat","giant-rat","giant-rat"],"log":[{"kind":"depart","text":"Bram, Hollis and Pell set off for floor 1. Orders: turn back if anyone drops below 30% HP; carry everything.","floor":0,"room":0,"party":[{"uid":"h1","name":"Bram","hp":64,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":45,"maxMana":45,"condition":"ok"}]},{"kind":"floor","text":"Floor 1: The Diggings.","floor":1,"room":0,"party":[{"uid":"h1","name":"Bram","hp":64,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":45,"maxMana":45,"condition":"ok"}]},{"kind":"room","text":"Occupied chamber. A foul smell, and the sound of something feeding.","floor":1,"room":1,"party":[{"uid":"h1","name":"Bram","hp":64,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":45,"maxMana":45,"condition":"ok"}]},{"kind":"fight","text":"Bram, Hollis and Pell face Slime A, Slime B, Giant Rat A, Giant Rat B and Giant Rat C.","floor":1,"room":1,"party":[{"uid":"h1","name":"Bram","hp":64,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":45,"maxMana":45,"condition":"ok"}],"monsters":[{"uid":"m1","name":"Slime A","hp":26,"max":26},{"uid":"m2","name":"Slime B","hp":26,"max":26},{"uid":"m3","name":"Giant Rat A","hp":10,"max":10},{"uid":"m4","name":"Giant Rat B","hp":10,"max":10},{"uid":"m5","name":"Giant Rat C","hp":10,"max":10}]},{"kind":"combat","text":"Round 1","floor":1,"room":1,"combat":{"round":1,"kind":"round","text":"Round 1"}},{"kind":"combat","text":"Giant Rat C swings at Bram with teeth and misses.","floor":1,"room":1,"combat":{"round":1,"kind":"miss","actor":"m5","target":"h1","text":"Giant Rat C swings at Bram with teeth and misses."}},{"kind":"combat","text":"Pell casts Flame Wave.","floor":1,"room":1,"combat":{"round":1,"kind":"action","actor":"h3","target":"m1","text":"Pell casts Flame Wave."}},{"kind":"combat","text":"Slime A takes 7 fire damage.","floor":1,"room":1,"combat":{"round":1,"kind":"damage","target":"m1","amount":7,"text":"Slime A takes 7 fire damage.","hp":{"uid":"m1","hp":19,"max":26}}},{"kind":"combat","text":"Slime B takes 7 fire damage.","floor":1,"room":1,"combat":{"round":1,"kind":"damage","target":"m2","amount":7,"text":"Slime B takes 7 fire damage.","hp":{"uid":"m2","hp":19,"max":26}}},{"kind":"combat","text":"Giant Rat A takes 7 fire damage.","floor":1,"room":1,"combat":{"round":1,"kind":"damage","target":"m3","amount":7,"text":"Giant Rat A takes 7 fire damage.","hp":{"uid":"m3","hp":3,"max":10}}},{"kind":"combat","text":"Giant Rat B takes 7 fire damage.","floor":1,"room":1,"combat":{"round":1,"kind":"damage","target":"m4","amount":7,"text":"Giant Rat B takes 7 fire damage.","hp":{"uid":"m4","hp":3,"max":10}}},{"kind":"combat","text":"Giant Rat C takes 7 fire damage.","floor":1,"room":1,"combat":{"round":1,"kind":"damage","target":"m5","amount":7,"text":"Giant Rat C takes 7 fire damage.","hp":{"uid":"m5","hp":3,"max":10}}},{"kind":"combat","text":"Hollis hits Giant Rat A with short bow.","floor":1,"room":1,"combat":{"round":1,"kind":"hit","actor":"h2","target":"m3","text":"Hollis hits Giant Rat A with short bow."}},{"kind":"combat","text":"Giant Rat A takes 8 piercing damage.","floor":1,"room":1,"combat":{"round":1,"kind":"damage","target":"m3","amount":8,"text":"Giant Rat A takes 8 piercing damage.","hp":{"uid":"m3","hp":0,"max":10}}},{"kind":"combat","text":"Giant Rat A is slain.","floor":1,"room":1,"combat":{"round":1,"kind":"killed","actor":"h2","target":"m3","text":"Giant Rat A is slain."}},{"kind":"combat","text":"Giant Rat B hits Bram with teeth.","floor":1,"room":1,"combat":{"round":1,"kind":"hit","actor":"m4","target":"h1","text":"Giant Rat B hits Bram with teeth."}},{"kind":"combat","text":"Bram takes 1 piercing damage.","floor":1,"room":1,"combat":{"round":1,"kind":"damage","target":"h1","amount":1,"text":"Bram takes 1 piercing damage.","hp":{"uid":"h1","hp":63,"max":64}}},{"kind":"combat","text":"Bram hits Slime A with sword.","floor":1,"room":1,"combat":{"round":1,"kind":"hit","actor":"h1","target":"m1","text":"Bram hits Slime A with sword."}},{"kind":"combat","text":"Slime A takes 12 slashing damage.","floor":1,"room":1,"combat":{"round":1,"kind":"damage","target":"m1","amount":12,"text":"Slime A takes 12 slashing damage.","hp":{"uid":"m1","hp":7,"max":26}}},{"kind":"combat","text":"Slime A splits in two!","floor":1,"room":1,"combat":{"round":1,"kind":"action","actor":"m1","text":"Slime A splits in two!"}},{"kind":"combat","text":"Little Slime A joins the fight.","floor":1,"room":1,"combat":{"round":1,"kind":"summon","actor":"m1","target":"m6","text":"Little Slime A joins the fight.","hp":{"uid":"m6","hp":10,"max":10},"name":"Little Slime A"}},{"kind":"combat","text":"Slime B swings at Bram with pseudopod and misses.","floor":1,"room":1,"combat":{"round":1,"kind":"miss","actor":"m2","target":"h1","text":"Slime B swings at Bram with pseudopod and misses."}},{"kind":"combat","text":"Slime A hits Bram with pseudopod.","floor":1,"room":1,"combat":{"round":1,"kind":"hit","actor":"m1","target":"h1","text":"Slime A hits Bram with pseudopod."}},{"kind":"combat","text":"Bram takes 3 crushing damage.","floor":1,"room":1,"combat":{"round":1,"kind":"damage","target":"h1","amount":3,"text":"Bram takes 3 crushing damage.","hp":{"uid":"h1","hp":60,"max":64}}},{"kind":"combat","text":"Round 2","floor":1,"room":1,"combat":{"round":2,"kind":"round","text":"Round 2"}},{"kind":"combat","text":"Hollis hits Giant Rat B with short bow.","floor":1,"room":1,"combat":{"round":2,"kind":"hit","actor":"h2","target":"m4","text":"Hollis hits Giant Rat B with short bow."}},{"kind":"combat","text":"Giant Rat B takes 11 piercing damage.","floor":1,"room":1,"combat":{"round":2,"kind":"damage","target":"m4","amount":11,"text":"Giant Rat B takes 11 piercing damage.","hp":{"uid":"m4","hp":0,"max":10}}},{"kind":"combat","text":"Giant Rat B is slain.","floor":1,"room":1,"combat":{"round":2,"kind":"killed","actor":"h2","target":"m4","text":"Giant Rat B is slain."}},{"kind":"combat","text":"Bram hits Slime A with sword.","floor":1,"room":1,"combat":{"round":2,"kind":"hit","actor":"h1","target":"m1","text":"Bram hits Slime A with sword."}},{"kind":"combat","text":"Slime A takes 10 slashing damage.","floor":1,"room":1,"combat":{"round":2,"kind":"damage","target":"m1","amount":10,"text":"Slime A takes 10 slashing damage.","hp":{"uid":"m1","hp":0,"max":26}}},{"kind":"combat","text":"Slime A is slain.","floor":1,"room":1,"combat":{"round":2,"kind":"killed","actor":"h1","target":"m1","text":"Slime A is slain."}},{"kind":"combat","text":"Pell casts Flame Wave.","floor":1,"room":1,"combat":{"round":2,"kind":"action","actor":"h3","target":"m2","text":"Pell casts Flame Wave."}},{"kind":"combat","text":"Slime B takes 7 fire damage.","floor":1,"room":1,"combat":{"round":2,"kind":"damage","target":"m2","amount":7,"text":"Slime B takes 7 fire damage.","hp":{"uid":"m2","hp":12,"max":26}}},{"kind":"combat","text":"Giant Rat C takes 7 fire damage.","floor":1,"room":1,"combat":{"round":2,"kind":"damage","target":"m5","amount":7,"text":"Giant Rat C takes 7 fire damage.","hp":{"uid":"m5","hp":0,"max":10}}},{"kind":"combat","text":"Giant Rat C is slain.","floor":1,"room":1,"combat":{"round":2,"kind":"killed","actor":"h3","target":"m5","text":"Giant Rat C is slain."}},{"kind":"combat","text":"Little Slime A takes 7 fire damage.","floor":1,"room":1,"combat":{"round":2,"kind":"damage","target":"m6","amount":7,"text":"Little Slime A takes 7 fire damage.","hp":{"uid":"m6","hp":3,"max":10}}},{"kind":"combat","text":"Slime B swings at Bram with pseudopod and misses.","floor":1,"room":1,"combat":{"round":2,"kind":"miss","actor":"m2","target":"h1","text":"Slime B swings at Bram with pseudopod and misses."}},{"kind":"combat","text":"Little Slime A swings at Bram with pseudopod and misses.","floor":1,"room":1,"combat":{"round":2,"kind":"miss","actor":"m6","target":"h1","text":"Little Slime A swings at Bram with pseudopod and misses."}},{"kind":"combat","text":"Round 3","floor":1,"room":1,"combat":{"round":3,"kind":"round","text":"Round 3"}},{"kind":"combat","text":"Bram hits Slime B with sword.","floor":1,"room":1,"combat":{"round":3,"kind":"hit","actor":"h1","target":"m2","text":"Bram hits Slime B with sword."}},{"kind":"combat","text":"Slime B takes 13 slashing damage.","floor":1,"room":1,"combat":{"round":3,"kind":"damage","target":"m2","amount":13,"text":"Slime B takes 13 slashing damage.","hp":{"uid":"m2","hp":0,"max":26}}},{"kind":"combat","text":"Slime B is slain.","floor":1,"room":1,"combat":{"round":3,"kind":"killed","actor":"h1","target":"m2","text":"Slime B is slain."}},{"kind":"combat","text":"Pell hurls a Firebolt on Little Slime A.","floor":1,"room":1,"combat":{"round":3,"kind":"action","actor":"h3","target":"m6","text":"Pell hurls a Firebolt on Little Slime A."}},{"kind":"combat","text":"Little Slime A takes 12 fire damage.","floor":1,"room":1,"combat":{"round":3,"kind":"damage","target":"m6","amount":12,"text":"Little Slime A takes 12 fire damage.","hp":{"uid":"m6","hp":0,"max":10}}},{"kind":"combat","text":"Little Slime A is slain.","floor":1,"room":1,"combat":{"round":3,"kind":"killed","actor":"h3","target":"m6","text":"Little Slime A is slain."}},{"kind":"combat","text":"The party is victorious.","floor":1,"room":1,"combat":{"round":3,"kind":"end","text":"The party is victorious."}},{"kind":"loot","text":"Found a Gem on the Slime (worth about 101).","floor":1,"room":1,"party":[{"uid":"h1","name":"Bram","hp":60,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":20,"maxMana":45,"condition":"ok"}]},{"kind":"room","text":"Safe nook. A dry alcove with one way in. A good place to rest.","floor":1,"room":2,"party":[{"uid":"h1","name":"Bram","hp":60,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":24,"maxMana":45,"condition":"ok"}]},{"kind":"rest","text":"The party rests, Pell tending the wounds.","floor":1,"room":2,"party":[{"uid":"h1","name":"Bram","hp":60,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":24,"maxMana":45,"condition":"ok"}]},{"kind":"rest","text":"Bram: +4 HP.","floor":1,"room":2,"party":[{"uid":"h1","name":"Bram","hp":64,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":24,"maxMana":45,"condition":"ok"}]},{"kind":"rest","text":"Pell: +21 mana.","floor":1,"room":2,"party":[{"uid":"h1","name":"Bram","hp":64,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":45,"maxMana":45,"condition":"ok"}]},{"kind":"room","text":"Storeroom. A chest, half buried in rubble.","floor":1,"room":3,"party":[{"uid":"h1","name":"Bram","hp":64,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":45,"maxMana":45,"condition":"ok"}]},{"kind":"loot","text":"Found a Rusty Helmet in the chest (worth about 4).","floor":1,"room":3,"party":[{"uid":"h1","name":"Bram","hp":64,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":45,"maxMana":45,"condition":"ok"}]},{"kind":"loot","text":"Found a Handful of Coins in the chest (worth about 7).","floor":1,"room":3,"party":[{"uid":"h1","name":"Bram","hp":64,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":45,"maxMana":45,"condition":"ok"}]},{"kind":"loot","text":"Found a Gem in the chest (worth about 12).","floor":1,"room":3,"party":[{"uid":"h1","name":"Bram","hp":64,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":45,"maxMana":45,"condition":"ok"}]},{"kind":"room","text":"Occupied chamber. A foul smell, and the sound of something feeding.","floor":1,"room":4,"party":[{"uid":"h1","name":"Bram","hp":64,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":45,"maxMana":45,"condition":"ok"}]},{"kind":"fight","text":"Bram, Hollis and Pell face Goblin A, Goblin B and Goblin Archer.","floor":1,"room":4,"party":[{"uid":"h1","name":"Bram","hp":64,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":45,"maxMana":45,"condition":"ok"}],"monsters":[{"uid":"m1","name":"Goblin A","hp":22,"max":22},{"uid":"m2","name":"Goblin B","hp":22,"max":22},{"uid":"m3","name":"Goblin Archer","hp":16,"max":16}]},{"kind":"combat","text":"Round 1","floor":1,"room":4,"combat":{"round":1,"kind":"round","text":"Round 1"}},{"kind":"combat","text":"Goblin Archer swings at Pell with crude bow and misses.","floor":1,"room":4,"combat":{"round":1,"kind":"miss","actor":"m3","target":"h3","text":"Goblin Archer swings at Pell with crude bow and misses."}},{"kind":"combat","text":"Pell casts Flame Wave.","floor":1,"room":4,"combat":{"round":1,"kind":"action","actor":"h3","target":"m1","text":"Pell casts Flame Wave."}},{"kind":"combat","text":"Goblin A takes 7 fire damage.","floor":1,"room":4,"combat":{"round":1,"kind":"damage","target":"m1","amount":7,"text":"Goblin A takes 7 fire damage.","hp":{"uid":"m1","hp":15,"max":22}}},{"kind":"combat","text":"Goblin B takes 7 fire damage.","floor":1,"room":4,"combat":{"round":1,"kind":"damage","target":"m2","amount":7,"text":"Goblin B takes 7 fire damage.","hp":{"uid":"m2","hp":15,"max":22}}},{"kind":"combat","text":"Goblin Archer takes 7 fire damage.","floor":1,"room":4,"combat":{"round":1,"kind":"damage","target":"m3","amount":7,"text":"Goblin Archer takes 7 fire damage.","hp":{"uid":"m3","hp":9,"max":16}}},{"kind":"combat","text":"Goblin A hits Bram with rusty blade.","floor":1,"room":4,"combat":{"round":1,"kind":"hit","actor":"m1","target":"h1","text":"Goblin A hits Bram with rusty blade."}},{"kind":"combat","text":"Bram takes 7 slashing damage.","floor":1,"room":4,"combat":{"round":1,"kind":"damage","target":"h1","amount":7,"text":"Bram takes 7 slashing damage.","hp":{"uid":"h1","hp":57,"max":64}}},{"kind":"combat","text":"Hollis hits Goblin Archer with short bow.","floor":1,"room":4,"combat":{"round":1,"kind":"hit","actor":"h2","target":"m3","text":"Hollis hits Goblin Archer with short bow."}},{"kind":"combat","text":"Goblin Archer takes 14 piercing damage.","floor":1,"room":4,"combat":{"round":1,"kind":"damage","target":"m3","amount":14,"text":"Goblin Archer takes 14 piercing damage.","hp":{"uid":"m3","hp":0,"max":16}}},{"kind":"combat","text":"Goblin Archer is slain.","floor":1,"room":4,"combat":{"round":1,"kind":"killed","actor":"h2","target":"m3","text":"Goblin Archer is slain."}},{"kind":"combat","text":"Bram hits Goblin A with sword.","floor":1,"room":4,"combat":{"round":1,"kind":"hit","actor":"h1","target":"m1","text":"Bram hits Goblin A with sword."}},{"kind":"combat","text":"Goblin A takes 10 slashing damage.","floor":1,"room":4,"combat":{"round":1,"kind":"damage","target":"m1","amount":10,"text":"Goblin A takes 10 slashing damage.","hp":{"uid":"m1","hp":5,"max":22}}},{"kind":"combat","text":"Goblin B hits Bram with rusty blade.","floor":1,"room":4,"combat":{"round":1,"kind":"hit","actor":"m2","target":"h1","text":"Goblin B hits Bram with rusty blade."}},{"kind":"combat","text":"Bram takes 4 slashing damage.","floor":1,"room":4,"combat":{"round":1,"kind":"damage","target":"h1","amount":4,"text":"Bram takes 4 slashing damage.","hp":{"uid":"h1","hp":53,"max":64}}},{"kind":"combat","text":"Round 2","floor":1,"room":4,"combat":{"round":2,"kind":"round","text":"Round 2"}},{"kind":"combat","text":"Goblin A hits Bram with rusty blade.","floor":1,"room":4,"combat":{"round":2,"kind":"hit","actor":"m1","target":"h1","text":"Goblin A hits Bram with rusty blade."}},{"kind":"combat","text":"Bram takes 6 slashing damage.","floor":1,"room":4,"combat":{"round":2,"kind":"damage","target":"h1","amount":6,"text":"Bram takes 6 slashing damage.","hp":{"uid":"h1","hp":47,"max":64}}},{"kind":"combat","text":"Hollis hits Goblin A with short bow.","floor":1,"room":4,"combat":{"round":2,"kind":"hit","actor":"h2","target":"m1","text":"Hollis hits Goblin A with short bow."}},{"kind":"combat","text":"Goblin A takes 7 piercing damage.","floor":1,"room":4,"combat":{"round":2,"kind":"damage","target":"m1","amount":7,"text":"Goblin A takes 7 piercing damage.","hp":{"uid":"m1","hp":0,"max":22}}},{"kind":"combat","text":"Goblin A is slain.","floor":1,"room":4,"combat":{"round":2,"kind":"killed","actor":"h2","target":"m1","text":"Goblin A is slain."}},{"kind":"combat","text":"Goblin B hits Bram with rusty blade.","floor":1,"room":4,"combat":{"round":2,"kind":"hit","actor":"m2","target":"h1","text":"Goblin B hits Bram with rusty blade."}},{"kind":"combat","text":"Bram takes 7 slashing damage.","floor":1,"room":4,"combat":{"round":2,"kind":"damage","target":"h1","amount":7,"text":"Bram takes 7 slashing damage.","hp":{"uid":"h1","hp":40,"max":64}}},{"kind":"combat","text":"Pell hurls a Firebolt on Goblin B.","floor":1,"room":4,"combat":{"round":2,"kind":"action","actor":"h3","target":"m2","text":"Pell hurls a Firebolt on Goblin B."}},{"kind":"combat","text":"Goblin B takes 12 fire damage.","floor":1,"room":4,"combat":{"round":2,"kind":"damage","target":"m2","amount":12,"text":"Goblin B takes 12 fire damage.","hp":{"uid":"m2","hp":3,"max":22}}},{"kind":"combat","text":"Bram hits Goblin B with sword.","floor":1,"room":4,"combat":{"round":2,"kind":"hit","actor":"h1","target":"m2","text":"Bram hits Goblin B with sword."}},{"kind":"combat","text":"Goblin B takes 13 slashing damage.","floor":1,"room":4,"combat":{"round":2,"kind":"damage","target":"m2","amount":13,"text":"Goblin B takes 13 slashing damage.","hp":{"uid":"m2","hp":0,"max":22}}},{"kind":"combat","text":"Goblin B is slain.","floor":1,"room":4,"combat":{"round":2,"kind":"killed","actor":"h1","target":"m2","text":"Goblin B is slain."}},{"kind":"combat","text":"The party is victorious.","floor":1,"room":4,"combat":{"round":2,"kind":"end","text":"The party is victorious."}},{"kind":"loot","text":"Found a Rusty Helmet on the Goblin Archer (worth about 3).","floor":1,"room":4,"party":[{"uid":"h1","name":"Bram","hp":40,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":30,"maxMana":45,"condition":"ok"}]},{"kind":"loot","text":"Found a Handful of Coins on the Goblin (worth about 11).","floor":1,"room":4,"party":[{"uid":"h1","name":"Bram","hp":40,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":30,"maxMana":45,"condition":"ok"}]},{"kind":"room","text":"Occupied chamber. Bones crunch underfoot. This room is lived in.","floor":1,"room":5,"party":[{"uid":"h1","name":"Bram","hp":40,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":34,"maxMana":45,"condition":"ok"}]},{"kind":"fight","text":"Bram, Hollis and Pell face Giant Rat A, Giant Rat B, Giant Rat C, Giant Rat D and Goblin.","floor":1,"room":5,"party":[{"uid":"h1","name":"Bram","hp":40,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":34,"maxMana":45,"condition":"ok"}],"monsters":[{"uid":"m1","name":"Giant Rat A","hp":10,"max":10},{"uid":"m2","name":"Giant Rat B","hp":10,"max":10},{"uid":"m3","name":"Giant Rat C","hp":10,"max":10},{"uid":"m4","name":"Giant Rat D","hp":10,"max":10},{"uid":"m5","name":"Goblin","hp":22,"max":22}]},{"kind":"combat","text":"Round 1","floor":1,"room":5,"combat":{"round":1,"kind":"round","text":"Round 1"}},{"kind":"combat","text":"Hollis hits Giant Rat A with short bow.","floor":1,"room":5,"combat":{"round":1,"kind":"hit","actor":"h2","target":"m1","text":"Hollis hits Giant Rat A with short bow."}},{"kind":"combat","text":"Giant Rat A takes 13 piercing damage.","floor":1,"room":5,"combat":{"round":1,"kind":"damage","target":"m1","amount":13,"text":"Giant Rat A takes 13 piercing damage.","hp":{"uid":"m1","hp":0,"max":10}}},{"kind":"combat","text":"Giant Rat A is slain.","floor":1,"room":5,"combat":{"round":1,"kind":"killed","actor":"h2","target":"m1","text":"Giant Rat A is slain."}},{"kind":"combat","text":"Bram hits Goblin with sword.","floor":1,"room":5,"combat":{"round":1,"kind":"hit","actor":"h1","target":"m5","text":"Bram hits Goblin with sword."}},{"kind":"combat","text":"Goblin takes 7 slashing damage.","floor":1,"room":5,"combat":{"round":1,"kind":"damage","target":"m5","amount":7,"text":"Goblin takes 7 slashing damage.","hp":{"uid":"m5","hp":15,"max":22}}},{"kind":"combat","text":"Giant Rat B hits Bram with teeth.","floor":1,"room":5,"combat":{"round":1,"kind":"hit","actor":"m2","target":"h1","text":"Giant Rat B hits Bram with teeth."}},{"kind":"combat","text":"Bram takes 1 piercing damage.","floor":1,"room":5,"combat":{"round":1,"kind":"damage","target":"h1","amount":1,"text":"Bram takes 1 piercing damage.","hp":{"uid":"h1","hp":39,"max":64}}},{"kind":"combat","text":"Goblin hits Bram with rusty blade.","floor":1,"room":5,"combat":{"round":1,"kind":"hit","actor":"m5","target":"h1","text":"Goblin hits Bram with rusty blade."}},{"kind":"combat","text":"Bram takes 3 slashing damage.","floor":1,"room":5,"combat":{"round":1,"kind":"damage","target":"h1","amount":3,"text":"Bram takes 3 slashing damage.","hp":{"uid":"h1","hp":36,"max":64}}},{"kind":"combat","text":"Giant Rat D hits Bram with teeth.","floor":1,"room":5,"combat":{"round":1,"kind":"hit","actor":"m4","target":"h1","text":"Giant Rat D hits Bram with teeth."}},{"kind":"combat","text":"Bram takes 1 piercing damage.","floor":1,"room":5,"combat":{"round":1,"kind":"damage","target":"h1","amount":1,"text":"Bram takes 1 piercing damage.","hp":{"uid":"h1","hp":35,"max":64}}},{"kind":"combat","text":"Giant Rat C hits Bram with teeth.","floor":1,"room":5,"combat":{"round":1,"kind":"hit","actor":"m3","target":"h1","text":"Giant Rat C hits Bram with teeth."}},{"kind":"combat","text":"Bram takes 1 piercing damage.","floor":1,"room":5,"combat":{"round":1,"kind":"damage","target":"h1","amount":1,"text":"Bram takes 1 piercing damage.","hp":{"uid":"h1","hp":34,"max":64}}},{"kind":"combat","text":"Pell casts Flame Wave.","floor":1,"room":5,"combat":{"round":1,"kind":"action","actor":"h3","target":"m2","text":"Pell casts Flame Wave."}},{"kind":"combat","text":"Giant Rat B takes 7 fire damage.","floor":1,"room":5,"combat":{"round":1,"kind":"damage","target":"m2","amount":7,"text":"Giant Rat B takes 7 fire damage.","hp":{"uid":"m2","hp":3,"max":10}}},{"kind":"combat","text":"Giant Rat C takes 7 fire damage.","floor":1,"room":5,"combat":{"round":1,"kind":"damage","target":"m3","amount":7,"text":"Giant Rat C takes 7 fire damage.","hp":{"uid":"m3","hp":3,"max":10}}},{"kind":"combat","text":"Giant Rat D takes 7 fire damage.","floor":1,"room":5,"combat":{"round":1,"kind":"damage","target":"m4","amount":7,"text":"Giant Rat D takes 7 fire damage.","hp":{"uid":"m4","hp":3,"max":10}}},{"kind":"combat","text":"Goblin takes 7 fire damage.","floor":1,"room":5,"combat":{"round":1,"kind":"damage","target":"m5","amount":7,"text":"Goblin takes 7 fire damage.","hp":{"uid":"m5","hp":8,"max":22}}},{"kind":"combat","text":"Round 2","floor":1,"room":5,"combat":{"round":2,"kind":"round","text":"Round 2"}},{"kind":"combat","text":"Giant Rat C hits Bram with teeth.","floor":1,"room":5,"combat":{"round":2,"kind":"hit","actor":"m3","target":"h1","text":"Giant Rat C hits Bram with teeth."}},{"kind":"combat","text":"Bram takes 3 piercing damage.","floor":1,"room":5,"combat":{"round":2,"kind":"damage","target":"h1","amount":3,"text":"Bram takes 3 piercing damage.","hp":{"uid":"h1","hp":31,"max":64}}},{"kind":"combat","text":"Giant Rat D swings at Bram with teeth and misses.","floor":1,"room":5,"combat":{"round":2,"kind":"miss","actor":"m4","target":"h1","text":"Giant Rat D swings at Bram with teeth and misses."}},{"kind":"combat","text":"Giant Rat B hits Bram with teeth.","floor":1,"room":5,"combat":{"round":2,"kind":"hit","actor":"m2","target":"h1","text":"Giant Rat B hits Bram with teeth."}},{"kind":"combat","text":"Bram takes 2 piercing damage.","floor":1,"room":5,"combat":{"round":2,"kind":"damage","target":"h1","amount":2,"text":"Bram takes 2 piercing damage.","hp":{"uid":"h1","hp":29,"max":64}}},{"kind":"combat","text":"Hollis swings at Giant Rat B with short bow and misses.","floor":1,"room":5,"combat":{"round":2,"kind":"miss","actor":"h2","target":"m2","text":"Hollis swings at Giant Rat B with short bow and misses."}},{"kind":"combat","text":"Bram hits Goblin with sword.","floor":1,"room":5,"combat":{"round":2,"kind":"hit","actor":"h1","target":"m5","text":"Bram hits Goblin with sword."}},{"kind":"combat","text":"Goblin takes 14 slashing damage.","floor":1,"room":5,"combat":{"round":2,"kind":"damage","target":"m5","amount":14,"text":"Goblin takes 14 slashing damage.","hp":{"uid":"m5","hp":0,"max":22}}},{"kind":"combat","text":"Goblin is slain.","floor":1,"room":5,"combat":{"round":2,"kind":"killed","actor":"h1","target":"m5","text":"Goblin is slain."}},{"kind":"combat","text":"Pell casts Flame Wave.","floor":1,"room":5,"combat":{"round":2,"kind":"action","actor":"h3","target":"m2","text":"Pell casts Flame Wave."}},{"kind":"combat","text":"Giant Rat B takes 7 fire damage.","floor":1,"room":5,"combat":{"round":2,"kind":"damage","target":"m2","amount":7,"text":"Giant Rat B takes 7 fire damage.","hp":{"uid":"m2","hp":0,"max":10}}},{"kind":"combat","text":"Giant Rat B is slain.","floor":1,"room":5,"combat":{"round":2,"kind":"killed","actor":"h3","target":"m2","text":"Giant Rat B is slain."}},{"kind":"combat","text":"Giant Rat C takes 7 fire damage.","floor":1,"room":5,"combat":{"round":2,"kind":"damage","target":"m3","amount":7,"text":"Giant Rat C takes 7 fire damage.","hp":{"uid":"m3","hp":0,"max":10}}},{"kind":"combat","text":"Giant Rat C is slain.","floor":1,"room":5,"combat":{"round":2,"kind":"killed","actor":"h3","target":"m3","text":"Giant Rat C is slain."}},{"kind":"combat","text":"Giant Rat D takes 7 fire damage.","floor":1,"room":5,"combat":{"round":2,"kind":"damage","target":"m4","amount":7,"text":"Giant Rat D takes 7 fire damage.","hp":{"uid":"m4","hp":0,"max":10}}},{"kind":"combat","text":"Giant Rat D is slain.","floor":1,"room":5,"combat":{"round":2,"kind":"killed","actor":"h3","target":"m4","text":"Giant Rat D is slain."}},{"kind":"combat","text":"The party is victorious.","floor":1,"room":5,"combat":{"round":2,"kind":"end","text":"The party is victorious."}},{"kind":"loot","text":"Found a Rusty Helmet on the Goblin (worth about 5).","floor":1,"room":5,"party":[{"uid":"h1","name":"Bram","hp":29,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":14,"maxMana":45,"condition":"ok"}]},{"kind":"medicine","text":"Pell uses roll of bandages on Bram (+14 HP).","floor":1,"room":5,"party":[{"uid":"h1","name":"Bram","hp":43,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":18,"maxMana":45,"condition":"ok"}]},{"kind":"room","text":"Cracked gallery. An old mine gallery. The roof props are rotten through.","floor":1,"room":6,"party":[{"uid":"h1","name":"Bram","hp":43,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":18,"maxMana":45,"condition":"ok"}]},{"kind":"trap","text":"A prop gives way and the roof comes down on the party!","floor":1,"room":6,"party":[{"uid":"h1","name":"Bram","hp":43,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":18,"maxMana":45,"condition":"ok"}]},{"kind":"trap","text":"Bram takes 4 crushing damage.","floor":1,"room":6,"party":[{"uid":"h1","name":"Bram","hp":39,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":57,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":18,"maxMana":45,"condition":"ok"}]},{"kind":"trap","text":"Hollis takes 3 crushing damage.","floor":1,"room":6,"party":[{"uid":"h1","name":"Bram","hp":39,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":54,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":42,"maxHp":42,"mana":18,"maxMana":45,"condition":"ok"}]},{"kind":"trap","text":"Pell takes 4 crushing damage.","floor":1,"room":6,"party":[{"uid":"h1","name":"Bram","hp":39,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":54,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":38,"maxHp":42,"mana":18,"maxMana":45,"condition":"ok"}]},{"kind":"retreat","text":"Floor 1 is done. The party heads for home.","floor":1,"room":0,"party":[{"uid":"h1","name":"Bram","hp":39,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":54,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":38,"maxHp":42,"mana":22,"maxMana":45,"condition":"ok"}]},{"kind":"home","text":"Bram, Hollis and Pell climb out of the pit.","floor":0,"room":0,"party":[{"uid":"h1","name":"Bram","hp":39,"maxHp":64,"mana":23,"maxMana":23,"condition":"ok"},{"uid":"h2","name":"Hollis","hp":54,"maxHp":57,"mana":28,"maxMana":28,"condition":"ok"},{"uid":"h3","name":"Pell","hp":38,"maxHp":42,"mana":22,"maxMana":45,"condition":"ok"}]}]},"goldEarned":154,"kills":{"h2":5,"h1":4,"h3":5}}}}
+{
+  "game": "dungeon-party-builder",
+  "version": 1,
+  "savedAt": "2026-11-21T00:00:00.000Z",
+  "town": {
+    "version": 1,
+    "day": 17,
+    "gold": 765,
+    "seed": 1469046831,
+    "buildings": { "guild-hall": 1, "market": 1 },
+    "roster": [
+      {
+        "id": "h1",
+        "name": "Bram",
+        "classId": "fighter",
+        "level": 1,
+        "stats": { "STR": 12, "DEX": 12, "END": 14, "PER": 9, "INT": 7, "WIL": 9, "CHA": 8 },
+        "perks": [],
+        "equipment": { "weapon": "sword", "armor": "chainmail", "offhand": "wooden-shield" },
+        "pack": ["healing-potion"],
+        "row": "front",
+        "hp": 64,
+        "mana": 23,
+        "condition": "ok"
+      },
+      {
+        "id": "h2",
+        "name": "Hollis",
+        "classId": "scout",
+        "level": 1,
+        "stats": { "STR": 11, "DEX": 12, "END": 12, "PER": 14, "INT": 10, "WIL": 8, "CHA": 9 },
+        "perks": [],
+        "equipment": { "weapon": "short-bow", "armor": "leather-armor" },
+        "pack": ["bandages", "healing-potion"],
+        "row": "back",
+        "hp": 57,
+        "mana": 28,
+        "condition": "ok"
+      },
+      {
+        "id": "h3",
+        "name": "Pell",
+        "classId": "mage",
+        "level": 1,
+        "stats": { "STR": 8, "DEX": 10, "END": 8, "PER": 11, "INT": 15, "WIL": 15, "CHA": 10 },
+        "perks": [],
+        "equipment": { "weapon": "staff" },
+        "pack": ["healing-potion", "bandages"],
+        "row": "back",
+        "hp": 42,
+        "mana": 45,
+        "condition": "ok"
+      },
+      {
+        "id": "h4",
+        "name": "Rook",
+        "classId": "fighter",
+        "level": 1,
+        "stats": { "STR": 12, "DEX": 11, "END": 11, "PER": 11, "INT": 9, "WIL": 7, "CHA": 8 },
+        "perks": [],
+        "equipment": { "weapon": "sword", "armor": "chainmail", "offhand": "wooden-shield" },
+        "pack": ["healing-potion"],
+        "row": "front",
+        "hp": 55,
+        "mana": 25,
+        "condition": "ok"
+      },
+      {
+        "id": "h5",
+        "name": "Torv",
+        "classId": "mage",
+        "level": 1,
+        "stats": { "STR": 9, "DEX": 12, "END": 11, "PER": 9, "INT": 12, "WIL": 14, "CHA": 8 },
+        "perks": [],
+        "equipment": { "weapon": "staff" },
+        "pack": ["healing-potion"],
+        "row": "back",
+        "hp": 52,
+        "mana": 38,
+        "condition": "ok"
+      }
+    ],
+    "recruits": [
+      {
+        "id": "h53",
+        "name": "Maren",
+        "classId": "scout",
+        "level": 1,
+        "stats": { "STR": 10, "DEX": 14, "END": 8, "PER": 12, "INT": 9, "WIL": 9, "CHA": 9 },
+        "perks": [],
+        "equipment": { "weapon": "short-bow", "armor": "leather-armor" },
+        "pack": ["bandages"],
+        "row": "back",
+        "hp": 44,
+        "mana": 27,
+        "condition": "ok"
+      },
+      {
+        "id": "h54",
+        "name": "Juno",
+        "classId": "fighter",
+        "level": 1,
+        "stats": { "STR": 15, "DEX": 12, "END": 11, "PER": 7, "INT": 6, "WIL": 10, "CHA": 7 },
+        "perks": [],
+        "equipment": { "weapon": "sword", "armor": "chainmail", "offhand": "wooden-shield" },
+        "pack": ["healing-potion"],
+        "row": "front",
+        "hp": 58,
+        "mana": 22,
+        "condition": "ok"
+      },
+      {
+        "id": "h55",
+        "name": "Ilsa",
+        "classId": "fighter",
+        "level": 1,
+        "stats": { "STR": 13, "DEX": 12, "END": 12, "PER": 10, "INT": 7, "WIL": 10, "CHA": 7 },
+        "perks": [],
+        "equipment": { "weapon": "sword", "armor": "chainmail", "offhand": "wooden-shield" },
+        "pack": ["healing-potion"],
+        "row": "front",
+        "hp": 59,
+        "mana": 24,
+        "condition": "ok"
+      }
+    ],
+    "stash": ["bandages", "bandages"],
+    "party": ["h1", "h2", "h3"],
+    "orders": {
+      "targetFloor": 1,
+      "retreat": { "kind": "hero-hp-below", "percent": 30 },
+      "loot": "everything"
+    },
+    "records": {
+      "h1": { "trips": 4, "kills": 8, "joined": 1 },
+      "h2": { "trips": 4, "kills": 11, "joined": 1 },
+      "h3": { "trips": 4, "kills": 12, "joined": 1 },
+      "h4": { "trips": 0, "kills": 0, "joined": 1 },
+      "h5": { "trips": 0, "kills": 0, "joined": 1 }
+    },
+    "memorial": [],
+    "nextHeroId": 56,
+    "lastTrip": {
+      "day": 16,
+      "seed": 1649501514,
+      "party": [
+        {
+          "id": "h1",
+          "name": "Bram",
+          "classId": "fighter",
+          "level": 1,
+          "stats": { "STR": 12, "DEX": 12, "END": 14, "PER": 9, "INT": 7, "WIL": 9, "CHA": 8 },
+          "perks": [],
+          "equipment": { "weapon": "sword", "armor": "chainmail", "offhand": "wooden-shield" },
+          "pack": ["healing-potion", "bandages"],
+          "row": "front",
+          "hp": 64,
+          "mana": 23,
+          "condition": "ok"
+        },
+        {
+          "id": "h2",
+          "name": "Hollis",
+          "classId": "scout",
+          "level": 1,
+          "stats": { "STR": 11, "DEX": 12, "END": 12, "PER": 14, "INT": 10, "WIL": 8, "CHA": 9 },
+          "perks": [],
+          "equipment": { "weapon": "short-bow", "armor": "leather-armor" },
+          "pack": ["bandages", "healing-potion"],
+          "row": "back",
+          "hp": 57,
+          "mana": 28,
+          "condition": "ok"
+        },
+        {
+          "id": "h3",
+          "name": "Pell",
+          "classId": "mage",
+          "level": 1,
+          "stats": { "STR": 8, "DEX": 10, "END": 8, "PER": 11, "INT": 15, "WIL": 15, "CHA": 10 },
+          "perks": [],
+          "equipment": { "weapon": "staff" },
+          "pack": ["healing-potion", "bandages"],
+          "row": "back",
+          "hp": 42,
+          "mana": 45,
+          "condition": "ok"
+        }
+      ],
+      "result": {
+        "outcome": "returned",
+        "orders": {
+          "targetFloor": 1,
+          "retreat": { "kind": "hero-hp-below", "percent": 30 },
+          "loot": "everything"
+        },
+        "deepestFloor": 1,
+        "days": 1,
+        "roomsVisited": 6,
+        "party": [
+          {
+            "id": "h1",
+            "name": "Bram",
+            "classId": "fighter",
+            "level": 1,
+            "stats": { "STR": 12, "DEX": 12, "END": 14, "PER": 9, "INT": 7, "WIL": 9, "CHA": 8 },
+            "perks": [],
+            "equipment": { "weapon": "sword", "armor": "chainmail", "offhand": "wooden-shield" },
+            "pack": ["healing-potion"],
+            "row": "front",
+            "hp": 39,
+            "mana": 23,
+            "condition": "ok"
+          },
+          {
+            "id": "h2",
+            "name": "Hollis",
+            "classId": "scout",
+            "level": 1,
+            "stats": { "STR": 11, "DEX": 12, "END": 12, "PER": 14, "INT": 10, "WIL": 8, "CHA": 9 },
+            "perks": [],
+            "equipment": { "weapon": "short-bow", "armor": "leather-armor" },
+            "pack": ["bandages", "healing-potion"],
+            "row": "back",
+            "hp": 54,
+            "mana": 28,
+            "condition": "ok"
+          },
+          {
+            "id": "h3",
+            "name": "Pell",
+            "classId": "mage",
+            "level": 1,
+            "stats": { "STR": 8, "DEX": 10, "END": 8, "PER": 11, "INT": 15, "WIL": 15, "CHA": 10 },
+            "perks": [],
+            "equipment": { "weapon": "staff" },
+            "pack": ["healing-potion", "bandages"],
+            "row": "back",
+            "hp": 38,
+            "mana": 22,
+            "condition": "ok"
+          }
+        ],
+        "haul": [
+          { "item": "gem", "value": 115, "estimate": 101 },
+          { "item": "rusty-helmet", "value": 4, "estimate": 4 },
+          { "item": "coins", "value": 6, "estimate": 7 },
+          { "item": "gem", "value": 11, "estimate": 12 },
+          { "item": "rusty-helmet", "value": 3, "estimate": 3 },
+          { "item": "coins", "value": 9, "estimate": 11 },
+          { "item": "rusty-helmet", "value": 6, "estimate": 5 }
+        ],
+        "leftBehind": [],
+        "kills": [
+          "giant-rat",
+          "giant-rat",
+          "slime",
+          "giant-rat",
+          "slime",
+          "little-slime",
+          "goblin-archer",
+          "goblin",
+          "goblin",
+          "giant-rat",
+          "goblin",
+          "giant-rat",
+          "giant-rat",
+          "giant-rat"
+        ],
+        "log": [
+          {
+            "kind": "depart",
+            "text": "Bram, Hollis and Pell set off for floor 1. Orders: turn back if anyone drops below 30% HP; carry everything.",
+            "floor": 0,
+            "room": 0,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 64,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 45,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "floor",
+            "text": "Floor 1: The Diggings.",
+            "floor": 1,
+            "room": 0,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 64,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 45,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "room",
+            "text": "Occupied chamber. A foul smell, and the sound of something feeding.",
+            "floor": 1,
+            "room": 1,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 64,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 45,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "fight",
+            "text": "Bram, Hollis and Pell face Slime A, Slime B, Giant Rat A, Giant Rat B and Giant Rat C.",
+            "floor": 1,
+            "room": 1,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 64,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 45,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ],
+            "monsters": [
+              { "uid": "m1", "name": "Slime A", "hp": 26, "max": 26 },
+              { "uid": "m2", "name": "Slime B", "hp": 26, "max": 26 },
+              { "uid": "m3", "name": "Giant Rat A", "hp": 10, "max": 10 },
+              { "uid": "m4", "name": "Giant Rat B", "hp": 10, "max": 10 },
+              { "uid": "m5", "name": "Giant Rat C", "hp": 10, "max": 10 }
+            ]
+          },
+          {
+            "kind": "combat",
+            "text": "Round 1",
+            "floor": 1,
+            "room": 1,
+            "combat": { "round": 1, "kind": "round", "text": "Round 1" }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat C swings at Bram with teeth and misses.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "miss",
+              "actor": "m5",
+              "target": "h1",
+              "text": "Giant Rat C swings at Bram with teeth and misses."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Pell casts Flame Wave.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "action",
+              "actor": "h3",
+              "target": "m1",
+              "text": "Pell casts Flame Wave."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Slime A takes 7 fire damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m1",
+              "amount": 7,
+              "text": "Slime A takes 7 fire damage.",
+              "hp": { "uid": "m1", "hp": 19, "max": 26 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Slime B takes 7 fire damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m2",
+              "amount": 7,
+              "text": "Slime B takes 7 fire damage.",
+              "hp": { "uid": "m2", "hp": 19, "max": 26 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat A takes 7 fire damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m3",
+              "amount": 7,
+              "text": "Giant Rat A takes 7 fire damage.",
+              "hp": { "uid": "m3", "hp": 3, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat B takes 7 fire damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m4",
+              "amount": 7,
+              "text": "Giant Rat B takes 7 fire damage.",
+              "hp": { "uid": "m4", "hp": 3, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat C takes 7 fire damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m5",
+              "amount": 7,
+              "text": "Giant Rat C takes 7 fire damage.",
+              "hp": { "uid": "m5", "hp": 3, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Hollis hits Giant Rat A with short bow.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "h2",
+              "target": "m3",
+              "text": "Hollis hits Giant Rat A with short bow."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat A takes 8 piercing damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m3",
+              "amount": 8,
+              "text": "Giant Rat A takes 8 piercing damage.",
+              "hp": { "uid": "m3", "hp": 0, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat A is slain.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "killed",
+              "actor": "h2",
+              "target": "m3",
+              "text": "Giant Rat A is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat B hits Bram with teeth.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "m4",
+              "target": "h1",
+              "text": "Giant Rat B hits Bram with teeth."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram takes 1 piercing damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "h1",
+              "amount": 1,
+              "text": "Bram takes 1 piercing damage.",
+              "hp": { "uid": "h1", "hp": 63, "max": 64 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram hits Slime A with sword.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "h1",
+              "target": "m1",
+              "text": "Bram hits Slime A with sword."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Slime A takes 12 slashing damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m1",
+              "amount": 12,
+              "text": "Slime A takes 12 slashing damage.",
+              "hp": { "uid": "m1", "hp": 7, "max": 26 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Slime A splits in two!",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "action",
+              "actor": "m1",
+              "text": "Slime A splits in two!"
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Little Slime A joins the fight.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "summon",
+              "actor": "m1",
+              "target": "m6",
+              "text": "Little Slime A joins the fight.",
+              "hp": { "uid": "m6", "hp": 10, "max": 10 },
+              "name": "Little Slime A"
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Slime B swings at Bram with pseudopod and misses.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "miss",
+              "actor": "m2",
+              "target": "h1",
+              "text": "Slime B swings at Bram with pseudopod and misses."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Slime A hits Bram with pseudopod.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "m1",
+              "target": "h1",
+              "text": "Slime A hits Bram with pseudopod."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram takes 3 crushing damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "h1",
+              "amount": 3,
+              "text": "Bram takes 3 crushing damage.",
+              "hp": { "uid": "h1", "hp": 60, "max": 64 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Round 2",
+            "floor": 1,
+            "room": 1,
+            "combat": { "round": 2, "kind": "round", "text": "Round 2" }
+          },
+          {
+            "kind": "combat",
+            "text": "Hollis hits Giant Rat B with short bow.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "hit",
+              "actor": "h2",
+              "target": "m4",
+              "text": "Hollis hits Giant Rat B with short bow."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat B takes 11 piercing damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "m4",
+              "amount": 11,
+              "text": "Giant Rat B takes 11 piercing damage.",
+              "hp": { "uid": "m4", "hp": 0, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat B is slain.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "killed",
+              "actor": "h2",
+              "target": "m4",
+              "text": "Giant Rat B is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram hits Slime A with sword.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "hit",
+              "actor": "h1",
+              "target": "m1",
+              "text": "Bram hits Slime A with sword."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Slime A takes 10 slashing damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "m1",
+              "amount": 10,
+              "text": "Slime A takes 10 slashing damage.",
+              "hp": { "uid": "m1", "hp": 0, "max": 26 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Slime A is slain.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "killed",
+              "actor": "h1",
+              "target": "m1",
+              "text": "Slime A is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Pell casts Flame Wave.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "action",
+              "actor": "h3",
+              "target": "m2",
+              "text": "Pell casts Flame Wave."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Slime B takes 7 fire damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "m2",
+              "amount": 7,
+              "text": "Slime B takes 7 fire damage.",
+              "hp": { "uid": "m2", "hp": 12, "max": 26 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat C takes 7 fire damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "m5",
+              "amount": 7,
+              "text": "Giant Rat C takes 7 fire damage.",
+              "hp": { "uid": "m5", "hp": 0, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat C is slain.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "killed",
+              "actor": "h3",
+              "target": "m5",
+              "text": "Giant Rat C is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Little Slime A takes 7 fire damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "m6",
+              "amount": 7,
+              "text": "Little Slime A takes 7 fire damage.",
+              "hp": { "uid": "m6", "hp": 3, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Slime B swings at Bram with pseudopod and misses.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "miss",
+              "actor": "m2",
+              "target": "h1",
+              "text": "Slime B swings at Bram with pseudopod and misses."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Little Slime A swings at Bram with pseudopod and misses.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 2,
+              "kind": "miss",
+              "actor": "m6",
+              "target": "h1",
+              "text": "Little Slime A swings at Bram with pseudopod and misses."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Round 3",
+            "floor": 1,
+            "room": 1,
+            "combat": { "round": 3, "kind": "round", "text": "Round 3" }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram hits Slime B with sword.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 3,
+              "kind": "hit",
+              "actor": "h1",
+              "target": "m2",
+              "text": "Bram hits Slime B with sword."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Slime B takes 13 slashing damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 3,
+              "kind": "damage",
+              "target": "m2",
+              "amount": 13,
+              "text": "Slime B takes 13 slashing damage.",
+              "hp": { "uid": "m2", "hp": 0, "max": 26 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Slime B is slain.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 3,
+              "kind": "killed",
+              "actor": "h1",
+              "target": "m2",
+              "text": "Slime B is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Pell hurls a Firebolt on Little Slime A.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 3,
+              "kind": "action",
+              "actor": "h3",
+              "target": "m6",
+              "text": "Pell hurls a Firebolt on Little Slime A."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Little Slime A takes 12 fire damage.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 3,
+              "kind": "damage",
+              "target": "m6",
+              "amount": 12,
+              "text": "Little Slime A takes 12 fire damage.",
+              "hp": { "uid": "m6", "hp": 0, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Little Slime A is slain.",
+            "floor": 1,
+            "room": 1,
+            "combat": {
+              "round": 3,
+              "kind": "killed",
+              "actor": "h3",
+              "target": "m6",
+              "text": "Little Slime A is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "The party is victorious.",
+            "floor": 1,
+            "room": 1,
+            "combat": { "round": 3, "kind": "end", "text": "The party is victorious." }
+          },
+          {
+            "kind": "loot",
+            "text": "Found a Gem on the Slime (worth about 101).",
+            "floor": 1,
+            "room": 1,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 60,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 20,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "room",
+            "text": "Safe nook. A dry alcove with one way in. A good place to rest.",
+            "floor": 1,
+            "room": 2,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 60,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 24,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "rest",
+            "text": "The party rests, Pell tending the wounds.",
+            "floor": 1,
+            "room": 2,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 60,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 24,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "rest",
+            "text": "Bram: +4 HP.",
+            "floor": 1,
+            "room": 2,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 64,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 24,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "rest",
+            "text": "Pell: +21 mana.",
+            "floor": 1,
+            "room": 2,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 64,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 45,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "room",
+            "text": "Storeroom. A chest, half buried in rubble.",
+            "floor": 1,
+            "room": 3,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 64,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 45,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "loot",
+            "text": "Found a Rusty Helmet in the chest (worth about 4).",
+            "floor": 1,
+            "room": 3,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 64,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 45,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "loot",
+            "text": "Found a Handful of Coins in the chest (worth about 7).",
+            "floor": 1,
+            "room": 3,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 64,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 45,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "loot",
+            "text": "Found a Gem in the chest (worth about 12).",
+            "floor": 1,
+            "room": 3,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 64,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 45,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "room",
+            "text": "Occupied chamber. A foul smell, and the sound of something feeding.",
+            "floor": 1,
+            "room": 4,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 64,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 45,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "fight",
+            "text": "Bram, Hollis and Pell face Goblin A, Goblin B and Goblin Archer.",
+            "floor": 1,
+            "room": 4,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 64,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 45,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ],
+            "monsters": [
+              { "uid": "m1", "name": "Goblin A", "hp": 22, "max": 22 },
+              { "uid": "m2", "name": "Goblin B", "hp": 22, "max": 22 },
+              { "uid": "m3", "name": "Goblin Archer", "hp": 16, "max": 16 }
+            ]
+          },
+          {
+            "kind": "combat",
+            "text": "Round 1",
+            "floor": 1,
+            "room": 4,
+            "combat": { "round": 1, "kind": "round", "text": "Round 1" }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin Archer swings at Pell with crude bow and misses.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "miss",
+              "actor": "m3",
+              "target": "h3",
+              "text": "Goblin Archer swings at Pell with crude bow and misses."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Pell casts Flame Wave.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "action",
+              "actor": "h3",
+              "target": "m1",
+              "text": "Pell casts Flame Wave."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin A takes 7 fire damage.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m1",
+              "amount": 7,
+              "text": "Goblin A takes 7 fire damage.",
+              "hp": { "uid": "m1", "hp": 15, "max": 22 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin B takes 7 fire damage.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m2",
+              "amount": 7,
+              "text": "Goblin B takes 7 fire damage.",
+              "hp": { "uid": "m2", "hp": 15, "max": 22 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin Archer takes 7 fire damage.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m3",
+              "amount": 7,
+              "text": "Goblin Archer takes 7 fire damage.",
+              "hp": { "uid": "m3", "hp": 9, "max": 16 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin A hits Bram with rusty blade.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "m1",
+              "target": "h1",
+              "text": "Goblin A hits Bram with rusty blade."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram takes 7 slashing damage.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "h1",
+              "amount": 7,
+              "text": "Bram takes 7 slashing damage.",
+              "hp": { "uid": "h1", "hp": 57, "max": 64 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Hollis hits Goblin Archer with short bow.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "h2",
+              "target": "m3",
+              "text": "Hollis hits Goblin Archer with short bow."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin Archer takes 14 piercing damage.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m3",
+              "amount": 14,
+              "text": "Goblin Archer takes 14 piercing damage.",
+              "hp": { "uid": "m3", "hp": 0, "max": 16 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin Archer is slain.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "killed",
+              "actor": "h2",
+              "target": "m3",
+              "text": "Goblin Archer is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram hits Goblin A with sword.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "h1",
+              "target": "m1",
+              "text": "Bram hits Goblin A with sword."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin A takes 10 slashing damage.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m1",
+              "amount": 10,
+              "text": "Goblin A takes 10 slashing damage.",
+              "hp": { "uid": "m1", "hp": 5, "max": 22 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin B hits Bram with rusty blade.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "m2",
+              "target": "h1",
+              "text": "Goblin B hits Bram with rusty blade."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram takes 4 slashing damage.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "h1",
+              "amount": 4,
+              "text": "Bram takes 4 slashing damage.",
+              "hp": { "uid": "h1", "hp": 53, "max": 64 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Round 2",
+            "floor": 1,
+            "room": 4,
+            "combat": { "round": 2, "kind": "round", "text": "Round 2" }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin A hits Bram with rusty blade.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 2,
+              "kind": "hit",
+              "actor": "m1",
+              "target": "h1",
+              "text": "Goblin A hits Bram with rusty blade."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram takes 6 slashing damage.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "h1",
+              "amount": 6,
+              "text": "Bram takes 6 slashing damage.",
+              "hp": { "uid": "h1", "hp": 47, "max": 64 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Hollis hits Goblin A with short bow.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 2,
+              "kind": "hit",
+              "actor": "h2",
+              "target": "m1",
+              "text": "Hollis hits Goblin A with short bow."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin A takes 7 piercing damage.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "m1",
+              "amount": 7,
+              "text": "Goblin A takes 7 piercing damage.",
+              "hp": { "uid": "m1", "hp": 0, "max": 22 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin A is slain.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 2,
+              "kind": "killed",
+              "actor": "h2",
+              "target": "m1",
+              "text": "Goblin A is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin B hits Bram with rusty blade.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 2,
+              "kind": "hit",
+              "actor": "m2",
+              "target": "h1",
+              "text": "Goblin B hits Bram with rusty blade."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram takes 7 slashing damage.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "h1",
+              "amount": 7,
+              "text": "Bram takes 7 slashing damage.",
+              "hp": { "uid": "h1", "hp": 40, "max": 64 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Pell hurls a Firebolt on Goblin B.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 2,
+              "kind": "action",
+              "actor": "h3",
+              "target": "m2",
+              "text": "Pell hurls a Firebolt on Goblin B."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin B takes 12 fire damage.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "m2",
+              "amount": 12,
+              "text": "Goblin B takes 12 fire damage.",
+              "hp": { "uid": "m2", "hp": 3, "max": 22 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram hits Goblin B with sword.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 2,
+              "kind": "hit",
+              "actor": "h1",
+              "target": "m2",
+              "text": "Bram hits Goblin B with sword."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin B takes 13 slashing damage.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "m2",
+              "amount": 13,
+              "text": "Goblin B takes 13 slashing damage.",
+              "hp": { "uid": "m2", "hp": 0, "max": 22 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin B is slain.",
+            "floor": 1,
+            "room": 4,
+            "combat": {
+              "round": 2,
+              "kind": "killed",
+              "actor": "h1",
+              "target": "m2",
+              "text": "Goblin B is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "The party is victorious.",
+            "floor": 1,
+            "room": 4,
+            "combat": { "round": 2, "kind": "end", "text": "The party is victorious." }
+          },
+          {
+            "kind": "loot",
+            "text": "Found a Rusty Helmet on the Goblin Archer (worth about 3).",
+            "floor": 1,
+            "room": 4,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 40,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 30,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "loot",
+            "text": "Found a Handful of Coins on the Goblin (worth about 11).",
+            "floor": 1,
+            "room": 4,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 40,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 30,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "room",
+            "text": "Occupied chamber. Bones crunch underfoot. This room is lived in.",
+            "floor": 1,
+            "room": 5,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 40,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 34,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "fight",
+            "text": "Bram, Hollis and Pell face Giant Rat A, Giant Rat B, Giant Rat C, Giant Rat D and Goblin.",
+            "floor": 1,
+            "room": 5,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 40,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 34,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ],
+            "monsters": [
+              { "uid": "m1", "name": "Giant Rat A", "hp": 10, "max": 10 },
+              { "uid": "m2", "name": "Giant Rat B", "hp": 10, "max": 10 },
+              { "uid": "m3", "name": "Giant Rat C", "hp": 10, "max": 10 },
+              { "uid": "m4", "name": "Giant Rat D", "hp": 10, "max": 10 },
+              { "uid": "m5", "name": "Goblin", "hp": 22, "max": 22 }
+            ]
+          },
+          {
+            "kind": "combat",
+            "text": "Round 1",
+            "floor": 1,
+            "room": 5,
+            "combat": { "round": 1, "kind": "round", "text": "Round 1" }
+          },
+          {
+            "kind": "combat",
+            "text": "Hollis hits Giant Rat A with short bow.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "h2",
+              "target": "m1",
+              "text": "Hollis hits Giant Rat A with short bow."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat A takes 13 piercing damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m1",
+              "amount": 13,
+              "text": "Giant Rat A takes 13 piercing damage.",
+              "hp": { "uid": "m1", "hp": 0, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat A is slain.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "killed",
+              "actor": "h2",
+              "target": "m1",
+              "text": "Giant Rat A is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram hits Goblin with sword.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "h1",
+              "target": "m5",
+              "text": "Bram hits Goblin with sword."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin takes 7 slashing damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m5",
+              "amount": 7,
+              "text": "Goblin takes 7 slashing damage.",
+              "hp": { "uid": "m5", "hp": 15, "max": 22 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat B hits Bram with teeth.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "m2",
+              "target": "h1",
+              "text": "Giant Rat B hits Bram with teeth."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram takes 1 piercing damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "h1",
+              "amount": 1,
+              "text": "Bram takes 1 piercing damage.",
+              "hp": { "uid": "h1", "hp": 39, "max": 64 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin hits Bram with rusty blade.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "m5",
+              "target": "h1",
+              "text": "Goblin hits Bram with rusty blade."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram takes 3 slashing damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "h1",
+              "amount": 3,
+              "text": "Bram takes 3 slashing damage.",
+              "hp": { "uid": "h1", "hp": 36, "max": 64 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat D hits Bram with teeth.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "m4",
+              "target": "h1",
+              "text": "Giant Rat D hits Bram with teeth."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram takes 1 piercing damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "h1",
+              "amount": 1,
+              "text": "Bram takes 1 piercing damage.",
+              "hp": { "uid": "h1", "hp": 35, "max": 64 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat C hits Bram with teeth.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "hit",
+              "actor": "m3",
+              "target": "h1",
+              "text": "Giant Rat C hits Bram with teeth."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram takes 1 piercing damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "h1",
+              "amount": 1,
+              "text": "Bram takes 1 piercing damage.",
+              "hp": { "uid": "h1", "hp": 34, "max": 64 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Pell casts Flame Wave.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "action",
+              "actor": "h3",
+              "target": "m2",
+              "text": "Pell casts Flame Wave."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat B takes 7 fire damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m2",
+              "amount": 7,
+              "text": "Giant Rat B takes 7 fire damage.",
+              "hp": { "uid": "m2", "hp": 3, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat C takes 7 fire damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m3",
+              "amount": 7,
+              "text": "Giant Rat C takes 7 fire damage.",
+              "hp": { "uid": "m3", "hp": 3, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat D takes 7 fire damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m4",
+              "amount": 7,
+              "text": "Giant Rat D takes 7 fire damage.",
+              "hp": { "uid": "m4", "hp": 3, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin takes 7 fire damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 1,
+              "kind": "damage",
+              "target": "m5",
+              "amount": 7,
+              "text": "Goblin takes 7 fire damage.",
+              "hp": { "uid": "m5", "hp": 8, "max": 22 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Round 2",
+            "floor": 1,
+            "room": 5,
+            "combat": { "round": 2, "kind": "round", "text": "Round 2" }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat C hits Bram with teeth.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "hit",
+              "actor": "m3",
+              "target": "h1",
+              "text": "Giant Rat C hits Bram with teeth."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram takes 3 piercing damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "h1",
+              "amount": 3,
+              "text": "Bram takes 3 piercing damage.",
+              "hp": { "uid": "h1", "hp": 31, "max": 64 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat D swings at Bram with teeth and misses.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "miss",
+              "actor": "m4",
+              "target": "h1",
+              "text": "Giant Rat D swings at Bram with teeth and misses."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat B hits Bram with teeth.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "hit",
+              "actor": "m2",
+              "target": "h1",
+              "text": "Giant Rat B hits Bram with teeth."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram takes 2 piercing damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "h1",
+              "amount": 2,
+              "text": "Bram takes 2 piercing damage.",
+              "hp": { "uid": "h1", "hp": 29, "max": 64 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Hollis swings at Giant Rat B with short bow and misses.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "miss",
+              "actor": "h2",
+              "target": "m2",
+              "text": "Hollis swings at Giant Rat B with short bow and misses."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Bram hits Goblin with sword.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "hit",
+              "actor": "h1",
+              "target": "m5",
+              "text": "Bram hits Goblin with sword."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin takes 14 slashing damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "m5",
+              "amount": 14,
+              "text": "Goblin takes 14 slashing damage.",
+              "hp": { "uid": "m5", "hp": 0, "max": 22 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Goblin is slain.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "killed",
+              "actor": "h1",
+              "target": "m5",
+              "text": "Goblin is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Pell casts Flame Wave.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "action",
+              "actor": "h3",
+              "target": "m2",
+              "text": "Pell casts Flame Wave."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat B takes 7 fire damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "m2",
+              "amount": 7,
+              "text": "Giant Rat B takes 7 fire damage.",
+              "hp": { "uid": "m2", "hp": 0, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat B is slain.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "killed",
+              "actor": "h3",
+              "target": "m2",
+              "text": "Giant Rat B is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat C takes 7 fire damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "m3",
+              "amount": 7,
+              "text": "Giant Rat C takes 7 fire damage.",
+              "hp": { "uid": "m3", "hp": 0, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat C is slain.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "killed",
+              "actor": "h3",
+              "target": "m3",
+              "text": "Giant Rat C is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat D takes 7 fire damage.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "damage",
+              "target": "m4",
+              "amount": 7,
+              "text": "Giant Rat D takes 7 fire damage.",
+              "hp": { "uid": "m4", "hp": 0, "max": 10 }
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "Giant Rat D is slain.",
+            "floor": 1,
+            "room": 5,
+            "combat": {
+              "round": 2,
+              "kind": "killed",
+              "actor": "h3",
+              "target": "m4",
+              "text": "Giant Rat D is slain."
+            }
+          },
+          {
+            "kind": "combat",
+            "text": "The party is victorious.",
+            "floor": 1,
+            "room": 5,
+            "combat": { "round": 2, "kind": "end", "text": "The party is victorious." }
+          },
+          {
+            "kind": "loot",
+            "text": "Found a Rusty Helmet on the Goblin (worth about 5).",
+            "floor": 1,
+            "room": 5,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 29,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 14,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "medicine",
+            "text": "Pell uses roll of bandages on Bram (+14 HP).",
+            "floor": 1,
+            "room": 5,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 43,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 18,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "room",
+            "text": "Cracked gallery. An old mine gallery. The roof props are rotten through.",
+            "floor": 1,
+            "room": 6,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 43,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 18,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "trap",
+            "text": "A prop gives way and the roof comes down on the party!",
+            "floor": 1,
+            "room": 6,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 43,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 18,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "trap",
+            "text": "Bram takes 4 crushing damage.",
+            "floor": 1,
+            "room": 6,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 39,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 57,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 18,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "trap",
+            "text": "Hollis takes 3 crushing damage.",
+            "floor": 1,
+            "room": 6,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 39,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 54,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 42,
+                "maxHp": 42,
+                "mana": 18,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "trap",
+            "text": "Pell takes 4 crushing damage.",
+            "floor": 1,
+            "room": 6,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 39,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 54,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 38,
+                "maxHp": 42,
+                "mana": 18,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "retreat",
+            "text": "Floor 1 is done. The party heads for home.",
+            "floor": 1,
+            "room": 0,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 39,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 54,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 38,
+                "maxHp": 42,
+                "mana": 22,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          },
+          {
+            "kind": "home",
+            "text": "Bram, Hollis and Pell climb out of the pit.",
+            "floor": 0,
+            "room": 0,
+            "party": [
+              {
+                "uid": "h1",
+                "name": "Bram",
+                "hp": 39,
+                "maxHp": 64,
+                "mana": 23,
+                "maxMana": 23,
+                "condition": "ok"
+              },
+              {
+                "uid": "h2",
+                "name": "Hollis",
+                "hp": 54,
+                "maxHp": 57,
+                "mana": 28,
+                "maxMana": 28,
+                "condition": "ok"
+              },
+              {
+                "uid": "h3",
+                "name": "Pell",
+                "hp": 38,
+                "maxHp": 42,
+                "mana": 22,
+                "maxMana": 45,
+                "condition": "ok"
+              }
+            ]
+          }
+        ]
+      },
+      "goldEarned": 154,
+      "kills": { "h2": 5, "h1": 4, "h3": 5 }
+    }
+  }
+}

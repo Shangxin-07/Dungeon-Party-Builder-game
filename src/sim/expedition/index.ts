@@ -25,6 +25,8 @@ export type {
   SiteVisit,
   CarriedGear,
   ExpeditionExtras,
+  TripLeader,
+  Deserter,
 } from "./report";
 export { DOWNED_LOAD } from "./tuning";
 export { runExpedition, planFloor, holedNight, breakOut } from "./run";

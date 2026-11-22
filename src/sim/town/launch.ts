@@ -12,7 +12,8 @@
  *   it, it fights its way home, or the guild gives it up for lost
  *   (hearOfLoss).
  */
-import { runExpedition, type ExpeditionResult, type SiteVisit } from "../expedition";
+import { runExpedition, type Deserter, type ExpeditionResult, type SiteVisit } from "../expedition";
+import { afterLeading, partyCommand } from "../leadership";
 import { applyKills } from "../dungeon";
 import { partyAlignment } from "../alignment";
 import { fatigueTier, heroSheet, type Hero } from "../hero";
@@ -96,12 +97,20 @@ export function launch(
 
   const orders = { ...t.orders };
   if (target) orders.targetFloor = Math.max(orders.targetFloor, site?.floor ?? 0);
+  // Who leads, and how unruly the party is (M7.05, DESIGN.md §17.5).
+  const cmd = partyCommand(ix, party, t.leader);
   const result = runExpedition(ix, party, orders, seed, t.dungeon.floors, {
     site: visit,
     gear,
     porters,
     risen: t.risen ?? [],
     lift: liftFloors(ix, t),
+    leader: cmd.leader && {
+      id: cmd.leader.id,
+      disobey: cmd.disobey,
+      desert: cmd.desert,
+      ...(cmd.retreatEarly ? { retreatEarly: cmd.retreatEarly } : {}),
+    },
   });
   // The site waits for this party: nothing changes there until it's back.
   if (site && result.siteVisited === site.id) site.visitor = id;
@@ -117,7 +126,7 @@ export function launch(
   const onFile = (t.parties ?? []).find(
     (p) => p.heroes.length === t.party.length && p.heroes.every((x) => t.party.includes(x)),
   );
-  const called = name?.trim() || onFile?.name || `${party[0]!.name}'s party`;
+  const called = name?.trim() || onFile?.name || `${(cmd.leader ?? party[0]!).name}'s party`;
   const expected = startDay + usualDays(ix, orders, liftFloors(ix, t));
   t.outings.push({
     id,
@@ -126,6 +135,7 @@ export function launch(
     expected,
     heroes: [...t.party],
     porters: [...(t.porters ?? [])],
+    ...(cmd.leader ? { leader: cmd.leader.id } : {}),
     seed,
     party,
     porterParty: porters,
@@ -138,6 +148,7 @@ export function launch(
   news(t, `${called} set off ${goal}. Expected back on day ${expected}.`);
   t.party = [];
   t.porters = [];
+  delete t.leader;
   t.orders = cancelRescue(ix, t).orders;
   return t;
 }
@@ -179,6 +190,9 @@ function landAllKills(t: TownState, o: Outing): void {
 export function arrivals(ix: Index, t: TownState): void {
   for (const o of [...(t.outings ?? [])]) {
     const r = o.result;
+    // Deserters who slipped away (M7.05) walk in alone, ahead of the party.
+    for (const d of r.deserters ?? [])
+      if (d.home && t.day >= deserterDay(ix, o, d)) deserterHome(ix, t, o, d);
     const end = o.left + r.days;
     if (o.fell === undefined && t.day >= end) {
       if (r.outcome === "wiped" || r.outcome === "holed") partyFalls(ix, t, o);
@@ -255,8 +269,10 @@ function tidySearch(ix: Index, t: TownState): void {
 
 /** A party climbs out of the pit: everything about the trip lands in town. */
 function homecoming(ix: Index, t: TownState, o: Outing): void {
+  deserterReturns(ix, t, o);
   const result = o.result;
-  const party = o.party;
+  // Deserters (M7.05) aren't with the party: they came home on their own, or never did.
+  const party = o.party.filter((h) => !(result.deserters ?? []).some((d) => d.id === h.id));
   const startDay = o.left;
   const before = structuredClone(t.records);
   const risenBefore = new Map((t.risen ?? []).map((r) => [r.id, r]));
@@ -379,9 +395,34 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
     fatigue[p.id] = p.fatigue;
   }
 
-  // How everyone feels about it (DESIGN.md §6).
+  // Deserters who never made it home are lost (M7.05).
+  const strays = (result.deserters ?? []).filter((d) => !d.home);
+  for (const d of strays) {
+    t.roster = t.roster.filter((h) => h.id !== d.id);
+    remember(t, {
+      heroId: d.id,
+      name: d.name,
+      classId: d.hero.classId,
+      day: o.left,
+      floor: d.floor,
+      fate: "lost",
+      record: t.records[d.id] ?? newRecord(startDay),
+    });
+    news(
+      t,
+      `${d.name} slipped away from ${o.name} on floor ${d.floor} and never made it home.`,
+      "bad",
+    );
+  }
+
+  // How everyone feels about it (DESIGN.md §6). The leader's CHA keeps spirits
+  // up (M7.05: the party's leader, not just its most charming hero).
   const morale: Record<string, { amount: number; reason: string }[]> = {};
-  const leaderCha = Math.max(10, ...party.map((h) => heroSheet(ix, h).stats.CHA));
+  const cmd = partyCommand(ix, o.party, o.leader);
+  const leaderCha = cmd.leader
+    ? Math.max(10, heroSheet(ix, cmd.leader).stats.CHA)
+    : Math.max(10, ...party.map((h) => heroSheet(ix, h).stats.CHA));
+  const leaderLoss = cmd.moraleLoss;
   const share = goldEarned / party.length;
   const tripDays = Math.max(1, result.days);
   const aligned = partyAlignment(ix, party);
@@ -426,9 +467,45 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
       goodDeeds: result.deeds?.goodDeeds ?? 0,
       evilDeeds: result.deeds?.evilDeeds ?? 0,
       unholyGear: tags.has("unholy") ? 1 : 0,
+      ledParty: h.id === o.leader ? 1 : 0,
+      withDeserter: (h.grudges ?? []).filter((id) => o.party.some((x) => x.id === id)).length,
     };
-    morale[h.id] = moraleChanges(ix, h, facts, { leaderCha });
-    applyMorale(ix, h, facts, t.day, { leaderCha });
+    morale[h.id] = moraleChanges(ix, h, facts, { leaderCha, leaderLoss });
+    applyMorale(ix, h, facts, t.day, { leaderCha, leaderLoss });
+  }
+
+  // The leader (M7.05): better for having led, and maybe changed by what happened.
+  const leader = o.leader ? findHero(t, o.leader) : undefined;
+  const deserted = result.deserters ?? [];
+  let traits: string[] = [];
+  if (leader && result.party.some((h) => h.id === leader.id && h.condition !== "dead")) {
+    const gained = roll(t, (rng) =>
+      afterLeading(
+        ix,
+        leader,
+        {
+          lostSomeone: fallen + strays.length > 0,
+          bigWin: (result.bigWins ?? 0) > 0,
+          deserted: deserted.length > 0,
+        },
+        t.day,
+        o.name,
+        rng,
+      ),
+    );
+    traits = gained.map((d) => d.name);
+    for (const d of gained)
+      news(
+        t,
+        `${leader.name} has come back ${d.name.toLowerCase()} from leading ${o.name}.`,
+        d.tone,
+      );
+  }
+  // Deserters: the party made it home without them, and resents it; the dead's friends too.
+  if (deserted.length) {
+    const holders = new Set(result.party.filter((h) => h.condition !== "dead").map((h) => h.id));
+    if (fallen) for (const h of grudgeHolders(ix, t)) holders.add(h.id);
+    holdGrudges(ix, t, deserted, holders);
   }
   for (const h of rescued) {
     const r = findHero(t, h.id)!;
@@ -456,6 +533,7 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
     const ready = (id: string) => !!findHero(t, id);
     t.party = o.heroes.filter(ready);
     t.porters = o.porters.filter(ready);
+    if (o.leader && t.party.includes(o.leader)) t.leader = o.leader;
   }
   tidySearch(ix, t);
 
@@ -478,6 +556,11 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
     seed: o.seed,
     party,
     result,
+    ...(cmd.leader ? { leader: cmd.leader.name } : {}),
+    ...(traits.length ? { traits } : {}),
+    ...(deserted.length
+      ? { deserters: deserted.map((d) => ({ name: d.name, home: d.home, floor: d.floor })) }
+      : {}),
     goldEarned,
     coins: brought.coins,
     held: brought.held,
@@ -624,6 +707,7 @@ export function hearOfLoss(
   back: ReadonlySet<string> = new Set(),
 ): void {
   if (!t.outings.includes(o)) return;
+  deserterReturns(ix, t, o);
   t.outings = t.outings.filter((x) => x !== o);
   landAllKills(t, o);
   const result = o.result;
@@ -695,6 +779,10 @@ export function hearOfLoss(
   const fallen = dead + missing.length;
   const already = o.givenUp !== undefined;
   if (fallen && !already) guildFeels(ix, t, { fallenComrades: fallen }, new Set());
+  // Deserters who made it home (M7.05): the dead's friends won't forgive them.
+  const ran = (result.deserters ?? []).filter((d) => d.home && findHero(t, d.id));
+  if (fallen && ran.length && !already)
+    holdGrudges(ix, t, ran, new Set(grudgeHolders(ix, t).map((h) => h.id)));
 
   if (how === "porters") {
     const ran = result.porters.filter((r) => r.home).map((r) => r.name);
@@ -800,3 +888,116 @@ export const outingView = (ix: Index, t: TownState, o: Outing) => ({
   status: outingStatus(ix, t, o),
   floor: o.result.orders.targetFloor,
 });
+
+// ---------------------------------------------------------------------------
+// Deserters (M7.05, DESIGN.md §17.5)
+// ---------------------------------------------------------------------------
+
+/** The day a deserter walks into town. */
+function deserterDay(ix: Index, o: Outing, d: Deserter): number {
+  return o.left + Math.floor((ix.lib.time.startHour + d.back) / 24);
+}
+
+/** Deserters who made it home and haven't been seen yet come in now (the party's back, or lost). */
+function deserterReturns(ix: Index, t: TownState, o: Outing): void {
+  for (const d of o.result.deserters ?? []) if (d.home) deserterHome(ix, t, o, d);
+}
+
+/**
+ * A deserter walks back into town alone. They're back on the roster, and
+ * their account is all the guild knows of the trip so far: it stops where
+ * they ran, and they tell it their way.
+ */
+function deserterHome(ix: Index, t: TownState, o: Outing, d: Deserter): void {
+  if ((o.deserted ?? []).includes(d.id)) return;
+  o.deserted = [...(o.deserted ?? []), d.id];
+  o.heroes = o.heroes.filter((id) => id !== d.id);
+  const day = Math.min(t.day, deserterDay(ix, o, d));
+  const h = structuredClone(d.hero);
+  returnHero(t, h);
+  const back = findHero(t, d.id)!;
+  const rec = t.records[d.id] ?? newRecord(o.left);
+  rec.trips += 1;
+  rec.deepest = Math.max(rec.deepest, d.floor);
+  t.records[d.id] = rec;
+  back.fatigue = Math.min(
+    100,
+    (back.fatigue ?? 0) + ix.lib.wear.fatiguePerTripDay * Math.max(1, day - o.left),
+  );
+  applyMorale(ix, back, { deserted: 1 }, t.day);
+
+  // Their account: what they saw, up to the moment they ran.
+  const leader = o.party.find((x) => x.id === o.leader && x.id !== d.id);
+  const blame = roll(t, (rng) => {
+    const evil = d.hero.alignment === "evil";
+    if (leader && rng.chance(evil ? 0.7 : 0.4))
+      return `"${leader.name} led us straight into it," ${d.name} says.`;
+    return rng.pick([
+      `"Someone had to get word back," ${d.name} says.`,
+      `"There was nothing I could have done," ${d.name} says.`,
+      `"I got separated in the dark," ${d.name} says.`,
+    ]);
+  });
+  news(
+    t,
+    `${d.name} came back alone, saying they lost ${o.name} on floor ${d.floor} as the ${d.from} came at them. ${blame}`,
+    "bad",
+  );
+  const saw = o.result.log.slice(0, d.saw);
+  const result: ExpeditionResult = {
+    ...o.result,
+    outcome: "retreated",
+    deepestFloor: d.floor,
+    hours: d.left,
+    days: Math.max(1, day - o.left),
+    roomsVisited: saw.filter((e) => e.kind === "room").length,
+    haul: [],
+    leftBehind: [],
+    porterHaul: [],
+    kills: [],
+    floorKills: {},
+    dayKills: {},
+    log: saw,
+    secrets: { found: saw.filter((e) => e.kind === "secret").length, missed: 0 },
+    gifts: [],
+  };
+  keepTrip(t, {
+    day: o.left,
+    name: o.name,
+    back: day,
+    seed: o.seed,
+    party: o.party,
+    result,
+    account: { by: d.name, floor: d.floor, room: d.room, blame },
+    ...(leader ? { leader: leader.name } : {}),
+    goldEarned: 0,
+    kills: heroKills(o.party, result),
+    raids: t.raids.filter((r) => r.day >= o.left && r.day < day),
+  });
+}
+
+/** Who holds a grudge against a deserter when someone died (content/leadership.ts `grudge`). */
+function grudgeHolders(ix: Index, t: TownState): Hero[] {
+  const g = ix.lib.leadership.grudge;
+  return t.roster.filter(
+    (h) =>
+      !h.porter && (g.motivations.includes(h.motivation) || g.alignments.includes(h.alignment)),
+  );
+}
+
+/** These heroes won't forgive these deserters (M7.05). */
+function holdGrudges(
+  ix: Index,
+  t: TownState,
+  deserters: readonly Deserter[],
+  holders: ReadonlySet<string>,
+): void {
+  for (const id of holders) {
+    const h = findHero(t, id);
+    if (!h) continue;
+    const fresh = deserters.filter((d) => d.id !== id && !(h.grudges ?? []).includes(d.id));
+    if (!fresh.length) continue;
+    h.grudges = [...(h.grudges ?? []), ...fresh.map((d) => d.id)];
+    applyMorale(ix, h, { grudge: fresh.length }, t.day);
+  }
+}

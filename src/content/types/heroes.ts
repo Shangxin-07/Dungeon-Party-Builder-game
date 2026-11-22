@@ -165,3 +165,90 @@ export interface WearRules {
   /** Taken off the chance per point of END above 10 (added below). */
   injuryPerEnd: number;
 }
+
+/**
+ * Leaders and command (M7.05, DESIGN.md §17.5). Leadership is a skill (CHA +
+ * WIL); the leader's Leadership sets their command, and each hero they take
+ * down costs command by their alignment step from the leader.
+ */
+export interface LeadershipRules {
+  /** Command by Leadership: the highest `from` at or below the leader's Leadership wins. */
+  command: readonly { from: number; command: number }[];
+  /** Command each hero costs, by alignment steps from the leader (0, 1, 2). The leader is free. */
+  alignCost: readonly number[];
+  /** Leadership points a leader earns per trip, and the share they earn at or above `slowAbove`. */
+  perTrip: number;
+  slowAbove: number;
+  slowShare: number;
+  /**
+   * Disobedience over command: at each order check, each hero's chance to
+   * ignore the leader is `perOver` × command over, × `stepFactor` by
+   * alignment steps from the leader, × the morale factor, at most `maxChance`.
+   */
+  disobey: { perOver: number; stepFactor: readonly number[]; maxChance: number };
+  /**
+   * Low morale makes it likelier: the factor is 1 + (moraleAt − morale) ÷
+   * moraleAt, between moraleMin and moraleMax.
+   */
+  morale: { at: number; min: number; max: number };
+  /**
+   * Deserters: before a fight that looks bad (monster power at least
+   * `badFight` × a usual fight's, or a boss variant), each unruly hero may
+   * slip away: `perOver` × over × stepFactor × morale factor × their
+   * alignment's `desert` weight, at most `maxChance`.
+   */
+  desert: { perOver: number; badFight: number; maxChance: number; align: Record<string, number> };
+  /**
+   * A fight counts as a big win (for leader traits) when the party beats
+   * monster power at least this many times a usual fight's, or a boss variant.
+   */
+  bigWin: number;
+  /** When the leader goes down, the party may lose heart and turn back: this chance at morale 50. */
+  leaderFalls: number;
+  /** Monster groups grow by `perFighter` of a usual fight's power for each fighter over `over`. */
+  scaling: { over: number; perFighter: number };
+  /** Most traits a leader carries; a new one pushes out the oldest. */
+  maxTraits: number;
+  /** Trips in a row bringing everyone home that can earn a trait (the "longStreak" event). */
+  streak: number;
+  /** Chance each kind of event gives the leader a trait. */
+  traitChance: Record<LeaderEvent, number>;
+  /** Morale facts for deserters: who holds a grudge (motivations, alignments). */
+  grudge: { motivations: readonly string[]; alignments: readonly string[] };
+}
+
+/** What can happen on a leader's watch that may give them a trait. */
+export type LeaderEvent = "lostSomeone" | "bigWin" | "longStreak" | "deserted";
+
+/**
+ * A leader trait (M7.05, content/traits/): earned from what happens on their
+ * watch, a small effect on command, morale or how unruly the party is.
+ */
+export interface TraitDef {
+  id: string;
+  name: string;
+  description: string;
+  /** The event that can give it. */
+  from: LeaderEvent;
+  /** Odds against the other traits from the same event. */
+  weight: number;
+  /** Odds multiplied by these for leaders of an alignment or motivation (0: never). */
+  alignments?: Record<string, number>;
+  motivations?: Record<string, number>;
+  /** "good" or "bad", for the hero card. */
+  tone: "good" | "bad";
+  /** Trips it lasts; missing: until a newer trait pushes it out. */
+  trips?: number;
+  /** Command added (or taken). */
+  command?: number;
+  /** Extra share of morale losses the party feels on a trip, in percent. */
+  moraleLoss?: number;
+  /** Unruliness: counts as this much command over, even within command. */
+  unruly?: number;
+  /** Desertion chance multiplied by this. */
+  desert?: number;
+  /** Command cost of a hero two steps from the leader, instead of the usual. */
+  farCost?: number;
+  /** Turns back this many HP percent sooner than "below N% HP" orders say. */
+  retreatEarly?: number;
+}
