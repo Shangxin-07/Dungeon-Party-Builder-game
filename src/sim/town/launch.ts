@@ -168,6 +168,9 @@ export function launch(
   // Scout and sneak missions (M7.08) are one-offs: the next party delves, unless it's on file.
   if (t.orders.mission === "scout" || t.orders.mission === "sneak") delete t.orders.mission;
   delete t.orders.lair;
+  // So is a hunt (M7.10): one party clearing a floor mustn't send the next
+  // party, fresh recruits perhaps, off to clear it too. Parties on file keep theirs.
+  delete t.orders.clearPercent;
   return t;
 }
 
