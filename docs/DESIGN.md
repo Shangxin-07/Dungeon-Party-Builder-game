@@ -1,6 +1,6 @@
 # Dungeon Party Builder: Design & Build Plan
 
-> **Status:** agreed design, 2026-11-20. Built so far: M0 (project setup), M1 (simulation core), M2 (expeditions), M3 (the town), M4 (time, raids and saves) and M5 (morale, levels and rescue runs).
+> **Status:** agreed design, 2026-11-20. Built so far: M0 (project setup), M1 (simulation core), M2 (expeditions), M3 (the town), M4 (time, raids and saves), M5 (morale, levels and rescue runs) and M6 (balance and content). **Next: M7, the choices come back to town (§17).**
 > Items marked **✅ DECIDED** were open questions; Mike accepted the recommended option for each.
 > A summary of every decision is at the end.
 
@@ -36,6 +36,8 @@ The dungeon is getting worse. The deepest level keeps breeding, and the overflow
 - Loot rule: "grab everything" vs "only what the appraiser rates highly".
 
 Heroes don't always obey. Low morale or a cowardly/greedy motivation can override orders (see §6). That gives the watching phase some tension.
+
+> **Changing in M7 (§17):** after playing M6, Mike found watching gets skipped once the novelty wears off, because there's nothing to decide. In M7 trips run in the background while town days tick, the decisions move to a debrief when the party gets home, and watching becomes an optional replay.
 
 ## 3. Difficulty: depth and time
 
@@ -233,6 +235,8 @@ How many heroes you can send at once is set by the size of your **Guild Hall**. 
 | 4 | 6 | 12 | Good and Evil can now share a Neutral party (§7) |
 
 Six is the planned cap for now. More levels are just more rows of data.
+
+> **Changing in M7 (§17.5):** party size will come from a leader's Leadership, stretched or shrunk by alignment, with the Guild Hall as the hard cap (raised to 4 / 5 / 6 / 8 / 10).
 
 ### Buildings
 
@@ -837,6 +841,8 @@ Each milestone ends with something you can run.
 | M4 | Time, town and saves: dungeon days, population push-up, pressure map, Guild Hall upgrades and first buildings (Tavern, Blacksmith), pit overflow, raids and the first defences (palisade, gate), save/load (built, see §11 "As built in M4") | Feel the dungeon getting worse over time |
 | M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs (built, see §11 "As built in M5") | Play the full design in miniature |
 | M6 | Balance pass (wages, the Market's cut, morale that settles), monster stats in the watch view, the Cleric (built, see §11 "As built in M6") | Feel gold get tight and see what you're up against |
+| M7 | The choices come back to town (§17): trip clock, background trips, debrief with sell / salvage / research, leadership and bigger parties, losses that sting, research, scout and stealth missions | Spend your time deciding in town, not watching |
+| M8 | Gloss: portraits, room scenes, a styled debrief | See who you're sending |
 | M6+ | Grow content: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), materials and the "holding the pit" opening (§8, built in M6.15 and M6.16), more buildings, more monsters/floors (floors 4-5 built in M6.21), 2D watch view, multiple parties | Keep growing |
 
 ## 16. Decisions (agreed 2026-11-20)
@@ -860,3 +866,226 @@ Each milestone ends with something you can run.
 | 15 | Game opening (built M6.16) | Start at an undefended mining site, assign heroes to makeshift defences, gather materials, build up, then unlock delving. New games start here; it can be skipped |
 | 16 | Classes and levels (later) | Freeform: hero level up to ~50; each level-up goes into a known class of your choice; class levels uncapped. Advanced and combo classes unlock at class-level and stat thresholds (optionally buildings, alignment). Depth rewarded through class-level scaling and milestone perks. Forward only, never swap. Class names are examples only |
 | 17 | The fallen (later) | Bodies can be recovered. In town: resurrect (Temple; costs gold, materials and a level or a % of levels, regained as XP is re-earned) or bury (Graveyard). Left in the dungeon, a body rises as an undead version of the hero that later parties can meet |
+| 18 | Where the choices are (agreed 2026-11-21) | In town. Trips run in the background, hidden until someone comes back or finds them; a debrief on return holds the choices (sell, salvage, research); watching is an optional replay afterwards. No runners. Parties can be overfilled past their leader's command, at the risk of disobedience |
+
+## 17. M7: the choices come back to town
+
+> Added 2026-11-21 from Mike's notes after playing M6. Design only; nothing here is built yet. Mike answered every open question on 2026-11-21; they're marked **✅ DECIDED** below.
+
+### Why
+
+Mike, after a few hours of play:
+
+- **Watching gets old.** After a couple of trips you reach for the skip button straight away. There are no choices while the party is down, which is the point of the game, so even a fully animated 3D view would end up skipped. It gets worse with more parties, because more of your time goes on watching and less on the town.
+- **Time below isn't signposted.** It's hard to tell how long a party has been down there.
+- **Gloss and pictures** would help, but that's partly a symptom of the first point. With more interesting decisions it wouldn't stand out as much.
+
+The simulation itself is good and stays. What changes is **where the decisions are**: they move to town, before and after each trip, and watching becomes optional. No runners: a party in trouble comes home, and a party trapped in a room can't send anyone up.
+
+### The new loop
+
+```
+ ┌─────────────────── TOWN (time moves a day at a time) ──────────────────┐
+ │ plan: scout reports, research, pick a leader and a party, set a mission │
+ │ launch ──► the party is "away": its trip runs while town days tick      │
+ │ meanwhile: build, hire, research, train, launch another party           │
+ │ a party comes home ──► DEBRIEF: tally, then sell / salvage / research   │
+ │ a party is overdue ──► "possibly lost" ──► the next party gets a        │
+ │                         recovery order                                  │
+ └──────────────────────────────────────────────────────────────────────────┘
+        any trip can be watched afterwards from its debrief (a replay)
+```
+
+### 1. Trips run in the background
+
+Today `launch()` simulates the whole trip at once and then fast-forwards every town day it took (§11 "As built in M3/M4"). In M7 a launched party becomes an **outing** that stays out while town days tick.
+
+- **Town time is still turn-based.** Nothing runs in real time. The town gets a **Next day** button and a **Wait until someone's back** button (stops early for a raid warning, a finished building or news). Resting a day (`rest`) becomes just Next day.
+- **An outing** (`town.outings[]`) holds the party, its orders, its seed, the day it left and the trip result. The trip is still simulated in one go at launch, so it stays deterministic and testable, but the town only *learns* what happened as the days pass:
+  - Each night, the kills the party made that day come off the dungeon population, so a party thinning floor 2 makes tonight's push-up smaller, as it should.
+  - On the day the party gets back, the outcome lands in town: heroes, haul, XP, morale, injuries and bodies.
+- **Two parties out at once.** Parties A and B (M6.06) can both be down. A hero, porter or item can only be in one outing. Raids are fought by whoever is home, as now, so sending both parties leaves the town thin.
+- **Rescue runs work while the main party is busy**, which was the original reason for multiple parties (decision 8).
+- **Both parties on one floor:** each trip is simulated against the floor as it was at launch. Close enough; if it ever matters, a floor's population can't go below zero when the kills land.
+
+### 2. The trip clock
+
+Every trip gets a clock in hours, so you always know how long a party has been down.
+
+- **Hours are data.** Each room behaviour has a time cost: walking a room ~1 hour, a fight 1 hour (plus a little for long fights), a trap ½ hour, searching a cache 1 hour, a rest spot 8 hours, stairs 1 hour, hunting side tunnels 1 hour each. The party camps after about 16 waking hours, and that's what makes a day.
+- **Tuned to match today.** The numbers are set so a floor still takes about a day on average, so balance and raids don't move. `npm run balance` reports average hours per floor.
+- **Where it shows:**
+  - The watch view (now a replay) shows **Day 2, 14:00 · floor 3** above the log, ticking as it plays, with a marker at each camp.
+  - The town header shows each party that's out: **Party A · away 2 days · expected back day 14**.
+  - The debrief says how long the trip took ("3 days, 7 hours below").
+- **Expected back** is worked out at launch from the orders alone (floors × the usual hours there and back, plus hunting), never from the real result, so it can't give the outcome away.
+
+### 3. Overdue and possibly lost
+
+The town doesn't know a party has wiped until they fail to come home.
+
+- **Overdue:** the day after a party's expected return, the header and news say so. Parties do come home late (hunting, long fights), so this is worry, not news.
+- **Possibly lost:** two days past due (tunable), the party is marked **possibly lost**. The *Lost in the dungeon* panel (M5) shows the floor they were heading for, and the next party can be sent to find them (rescue or recovery, below).
+- **Hidden until found (✅ DECIDED by Mike, 2026-11-21).** What happened to a party stays hidden until someone comes back or a later party finds them. No peeking at a trip in progress: the clock and "expected back" are all the town has. The replay unlocks in the debrief.
+- **The rescue clock starts at the wipe, not at the news.** Trapped heroes have the 5-day window (§10) from the moment they went down, so the days spent waiting to hear eat into it. Sending a recovery party as soon as a party is overdue is a gamble that can pay off.
+- If a porter runs home after a wipe (M6 part 4), or a deserter makes it back (section 5), the news arrives the day they do, but only what they saw.
+- A search with no confirmed site combs the target floor; the searchers find the party after the room it's in, as now.
+
+**Holed up: a party in trouble that hasn't wiped.** Mike wants rescue missions for the living, not just recovery of the dead. So a trip gets a new bad outcome between "came home" and "wiped":
+
+- When a party can't get home (too many downed to carry, cut off by a fight it can't win, out of potions on a deep floor), it can **hole up** instead of fighting to the end: it barricades the nearest cleared room or rest spot and waits. The best Survival or Medicine sets how long its supplies last (about 3-6 days, tunable); each day there costs morale and a little HP, and each night there's a chance monsters find them (a fight with no retreat).
+- A holed-up party is just overdue as far as the town knows. Nothing says it's alive until someone gets there.
+- **Rescue mission** (for the living): travels light and fast to the party's last known floor, avoids fights where its scout can, carries spare potions and bandages, and brings the holed-up heroes home with it. It can also reach heroes trapped after a wipe (§10), as today's rescue order does.
+- **Recovery mission** (for the dead): today's `orders.rescue` for bodies and gear after a wipe; slower, picks up the site and everything it can carry.
+- If the searchers find a holed-up party, it rejoins them: the rescuers' haul and the stranded party's haul come home together, and both get the "rescued" and "rescue" morale facts (Comrades and Good heroes most).
+- Too late, and the holed-up party has wiped since: the searchers find a site instead, exactly like a recovery.
+
+### 4. The debrief
+
+When a party comes home, the town opens a **debrief** before anything else. This is where the trip's decisions are. Watching is optional: the debrief has a **Watch the trip** button.
+
+**The tally** (top of the debrief, always visible):
+
+| Line | Opens to |
+|---|---|
+| Time below: 3 days, 7 hours; deepest floor 3 | The trip's timeline: floor by floor, rooms, camps |
+| Rooms visited: 19 (2 caches found) | Rooms by floor and what was in them |
+| Monsters slain: 27 | Each monster type and count, who killed what, the biggest kill |
+| Haul: 14 items, 86 gold in coin | The haul list below |
+| The party | Each hero: HP, injuries, XP and level-ups, morale change with reasons |
+| The fallen | Who died, where, and whether the body came home |
+
+**The choices.** The haul is no longer sold automatically on the way in. It waits in the debrief (and in the store room, if you leave it), and each item can be:
+
+- **Sold** at the Market, at the haggled rate (as now).
+- **Salvaged** into materials for building and crafting (below).
+- **Researched**, if it's something the guild doesn't understand yet (section 7).
+- **Kept** in the store room.
+
+There are one-click buttons for **Sell all**, **Salvage all** and **Research what's new**, plus per item choices. Coins always go straight to the purse. Materials go straight to the store, as now. The debrief also shows the other town choices a return brings: level-ups to spend, who's hurt and benched, raises asked for, and what the scouts learned (section 6).
+
+**Salvage.**
+
+- Items list what they break down into (`ItemDef.salvage`: e.g. iron sword → 2 iron ore, leather armour → 1 hide, silk-lined cloak → 2 spider silk). Items without a list give a little scrap by their tags (`metal`, `cloth`, `bone`, `wood`).
+- Salvaging needs the **Blacksmith**; its level raises the yield (60% / 80% / 100% of the list, rounded down, at least 1).
+- Salvaging pays off when a building is short of a material, and selling pays off when gold is short, so it's a real choice.
+- **Crafting** (later in M7 or M8): recipes at the Blacksmith (and later the Apothecary) turn materials into gear. Researching an item can unlock its recipe. Until then salvage feeds buildings only.
+
+**Defaults.** A standing **haul rule** in town (sell everything / salvage metal, sell the rest / keep everything) pre-fills the debrief so a busy player can just confirm.
+
+### 5. Leadership and party size
+
+Parties still start at 3 to 4. How big they can grow depends on a **leader**, and the Guild Hall sets the ceiling.
+
+- **A new skill, Leadership** (CHA + WIL, 0-100, like the other skills in §5). Perks and milestone perks can raise it.
+- **You pick each party's leader in town** (✅ DECIDED by Mike, 2026-11-21), in the party panel. At first the choice rests on raw stats: Leadership comes from CHA + WIL, and the panel shows each hero's Leadership and the command it gives.
+- **Leaders grow with the job.** Every trip as leader adds leadership experience, which raises Leadership a little (about +2 per trip, slowing down past 70; tunable), so a long-serving leader becomes a better one.
+- **Leader traits** (`content/traits/`, data like perks): leaders pick up positive and negative traits from what happens on their watch. Each trait is a small effect on command, on the party's morale, or on how unruly heroes behave. Examples:
+  - *Lost someone* (a party member died under them): **Haunted** (−1 command; the party's morale losses hurt a little more) or, for a Good leader, **Overcautious** (turns back sooner than the orders say).
+  - *Pulled off a big fight* (beat a boss, a warded beast or a fight well above the floor's power): **Inspiring** (+1 command) or **Steady** (deserters less likely).
+  - *Brought everyone home many trips in a row:* **Trusted** (heroes two steps away cost 1.5 instead of 2).
+  - *A deserter left on their watch:* **Doubted** (the next few trips are more unruly).
+  Traits are rolled from the event with odds shaped by the leader's alignment and motivation, can fade or be overwritten by later ones (tunable), and are shown on the hero card with the trip that earned them.
+- **Clever monsters go for the leader.** Intelligent monsters (a new `cunning` tag: goblin archers and bosses, the Foreman's Shade, sporecallers) target the leader first when they can reach them, using the same `hunts` mechanism as undead hunting Good heroes (the leader carries a `leader` tag in fights). A leader who falls makes the party check morale, as below.
+- The leader's **command** is how many heroes they can lead well: 3 at Leadership 0-39, 4 at 40, 5 at 55, 6 at 70, 7 at 82, 8 at 92 (tunable).
+- **Alignment changes how far command stretches.** Each hero in the party costs command by their alignment step from the **leader**: same alignment 1, one step away 1.5, two steps away 2. The leader costs nothing. So a Good leader with command 6 can take 6 Good heroes, or 4 Good and 2 Neutral, but only 3 heroes if two of them are Evil. Porters don't cost command.
+- **Over command is allowed, but they may disobey (✅ DECIDED by Mike, 2026-11-21).** You can fill a party past its command (alignment never bans, §7), but every hero over the line makes the party unruly: at each order check (retreat, loot, hunting) there's a chance someone ignores it, highest for the heroes furthest from the leader's alignment and with the lowest morale. The party panel shows command used / command available, and the launch warnings say who's likely to go their own way.
+- **Deserters (Mike's idea).** The worst form of disobedience: before a fight that looks bad (a big group, a known killer, a warded beast), an unruly hero may slip away and head home alone. The chance is highest for heroes over command, two steps from the leader's alignment, with low morale; Evil heroes are the likeliest, Good heroes almost never. A deserter walks home on their own (a porter-style escape roll per floor, using their own stats), and the party fights a hero short.
+  - **The deserter may be the only survivor.** If the party then wipes, the deserter is the guild's only look at what happened.
+  - **Their account becomes the debrief.** It covers only what they saw, and cuts off when they left: the tally stops at their last room, the replay ends there ("Vex slipped away as the troll came round the corner"), and the floor and room of the fight are as close as they can say. Nothing after that is known until a rescue or recovery party gets there.
+  - **It's slanted.** A deserter tells it their way: the debrief marks their account as theirs, and they may play down their own part or blame the leader ("Aldric led us straight into it"). The replay up to the cut-off is still the real one, so you can check.
+  - **Back in town** the deserter is a survivor, but the guild knows what they did: the dead's Comrades and Good friends lose morale toward them (a grudge fact), and if the party made it home without them, the whole party resents it. You decide whether to keep them.
+ the party's morale losses are softened by the leader's CHA (today it's the best CHA), and if the leader falls, the party checks morale at once and is more likely to turn back.
+- **Party alignment** keeps the two-thirds rule (§7). Leadership is a second, separate pressure: a well-matched party is both happier and bigger.
+- **The Guild Hall sets the hard cap**, and the cap goes up:
+
+| Guild Hall level | Party cap | Roster size |
+|---|---|---|
+| 1 | 4 | 8 |
+| 2 | 5 | 10 |
+| 3 | 6 | 12 |
+| 4 | 8 | 16 |
+| 5 (new) | 10 | 20 |
+
+  Level 5 wants deep-floor materials (deep silver and glowcap). Old saves keep their hall level and get the new numbers.
+- **Fights grow with the party.** Today a floor's fight power doesn't depend on party size, so a big party just walks through. In M7 monster groups scale with the number of fighters (about +18% fight power per hero over 4), so a bigger party isn't safer, just more able to absorb a bad day.
+
+### 6. Losses that sting
+
+With bigger parties, the usual bad outcome should be **losing someone**, not losing everyone. That makes the hero you didn't gear properly the one who doesn't come home.
+
+- **Targets** (checked with `npm run balance`, then the days bot):
+  - A party geared and levelled for its floor: under 3% of heroes die per trip; wipes under 2%.
+  - One floor too deep, or with gear a floor behind: 10-20% of heroes die per trip; wipes under 10%.
+  - Two floors too deep: deaths common, wipes about a third.
+- **Levers** (all tuning, no new systems): monsters pick on the weakest-armoured hero more often (an `ai` preference by armour); bleeding out is a little faster when the party is still fighting; heroes downed in the last fight of the day are harder to bring round; retreat orders weigh the whole party's HP, so one hero going down doesn't always send everyone home, and a party that loses one member keeps going if the rest are fine.
+- **A gear check** joins the launch warnings and the scouting report: each hero's attack and armour against what the floor usually throws at them ("Tamsin's leather won't stop much on floor 3").
+- **The memorial and morale** already make a death hurt (§6, §10). Comrades and Good heroes take it hardest.
+
+### 7. Research
+
+High-INT heroes study in town instead of delving. This is a real roster choice: your best mage can go down, or stay home and make everyone better.
+
+- **The Library** (built in M5) becomes the research building. Level 1 gives 2 research desks, level 2 gives 4 (and keeps the trip XP bonus).
+- **Researchers** are heroes assigned to a desk, like the camp's posts (M6.16). A researcher isn't on a party, earns a little XP each day (like the Training Yard), and adds research points every day: INT − 8, plus a share of a new skill, **Lore** (INT + PER, finally added from §5), with a bonus for Knowledge-motivated heroes (who also get morale from it).
+- **What can be researched** (`content/research/`, one topic per monster, item or material):
+  - **Monsters** the guild has met. Each monster has research tiers, with points per tier on the monster definition (`MonsterDef.research`). Kills and **specimens** (a new material-like drop: a goblin's ear, a troll's tooth, collected on kills when the party has room) speed it up.
+    1. **Known:** full stat card in the scouting report (today any meeting gives this).
+    2. **Studied:** its weaknesses and tricks are known. The guild deals +15% damage to it, the AIs use the right damage type against it, and the report names its tricks ("its wounds close unless burnt").
+    3. **Mastered:** +25% damage, and its special defence can be broken (below).
+  - **Items** from the haul: unidentified trinkets are identified (some turn out magic), unfamiliar gear gives up its **recipe** for crafting, and an unknown material shows where it's used.
+- **Some monsters can't be killed until they're researched.** A monster can have a `ward` (e.g. "stone hide": immune to all damage) that only drops once the guild reaches its research tier, or for a hero carrying its **bane** (an item crafted from what research unlocks). A party that meets one unprepared can't hurt it; the retreat check sees that and the party flees, usually losing someone. The scouting report warns about it.
+- **In town:** a *Research* panel (in a Fold) lists topics, progress, who's at the desks, and what each tier will unlock. Finished research appears in the news and the next debrief.
+
+### 8. Scouting and stealth missions
+
+Standing orders gain a **mission**: *Delve* (today's trips), *Scout*, *Sneak*, *Rescue* (the living, section 3) or *Recover* (the dead and their gear).
+
+**Scout missions** map a floor before you commit a real party.
+
+- A scout party avoids fights where it can: the best Scouting gets a chance to slip past each fight room (Scouting − 20, up to 80%); if it fails, it fights as normal. It never hunts, and it counts and studies what it sees.
+- It brings back **floor intel** (`town.intel[floor]`, dated): the monster mix and roughly how many, the floor's level, its special rooms (ore seams, lairs, shrines), and known hazards. This expands the scouting report (§11 "As built in M6 part 2") from "what the guild has ever met" to "what's on this floor now". Intel goes stale: after 10 days the report says it may be out of date.
+- Scouting reports also feed research: everything seen counts as a meeting.
+
+**Stealth missions** fetch something from a place the party can't fight through.
+
+- **A new skill, Stealth** (DEX + PER). Unlike the other party skills, stealth uses the party's **worst** hero, since one clanking fighter gives everyone away. Heavy armour and some weapons carry a `noisy` tag that lowers it. Small parties sneak best.
+- A sneak mission names a **target room** (from floor intel) and goes there and back. Each fight room is a stealth check against the monsters' hearing (their PER, and a new `hearing` value). Caught means a fight, and against the wrong monster that's a disaster.
+- **The first huge beast** (example, to show the idea): the **Mire Behemoth** on floor 4, the Flooded Shafts. 400 HP, hits like a landslide, a `ward` of stone-hard hide, and nearly deaf (`hearing` low) because it lives half under water. A Delve party that meets it can't hurt it and runs. A sneak party can reach its **wallow** and bring back **shed scales**. Researching the scales gives the Behemoth's weak spot (tier 2) and a Blacksmith recipe for a **scale-piercer** spear (its bane), so a well-prepared Delve party can then kill it, for a big prize: a hoard in its wallow, and floor 4 is much safer.
+- Later beasts follow the same pattern as content: a ward, a hearing value, a lair room with something to fetch, and a research topic.
+
+### 9. Gloss (after the loop)
+
+Pictures and polish come after the loop change, as Mike said, and the debrief is where they'll pay off most.
+
+- **Portraits** for heroes (built from layered parts: class, alignment, a few faces and hair, so every hero is distinct without one image each) and monsters (one per monster and variant).
+- **Room scenes** for the debrief timeline and the replay header: one image per room type.
+- A styled debrief: the tally as cards with portraits, the fallen with their portrait greyed.
+- The 2D watch view (decision 7) waits until the replay is something people want to watch again.
+
+### Order of PRs
+
+Each one is playable on its own. Version numbers go up by one per PR, starting at M7.01.
+
+| PR | What | Why this order |
+|---|---|---|
+| M7.01 | **Trip clock**: hours as room data, the clock in the watch view, time below in the trip results, hours per floor in `npm run balance` | Small, answers Mike's point 2 at once, and the background trips need hours |
+| M7.02 | **Background trips**: outings, Next day / Wait, kills landing by day, two parties out at once, expected back, overdue and possibly lost, rescue clock from the wipe, holed-up parties and rescue vs recovery missions. Saves version up | The core of the change. Watching becomes a replay |
+| M7.03 | **The debrief**: tally with detail, haul held for sell / salvage / keep, salvage lists and the Blacksmith yield, haul rule. Saves version up | Puts the first new choices where Mike wants them |
+| M7.04 | **Leadership and party size**: Leadership skill, leaders, command and alignment cost, disobedience and deserters (with their partial debrief), leader traits and leadership experience, clever monsters targeting leaders, Guild Hall caps and level 5, fights scaling with party size | Makes the bigger parties that losses need |
+| M7.05 | **Losses that sting**: the tuning pass against the targets in section 6, and the gear check | Needs bigger parties first |
+| M7.06 | **Research**: Library desks, researchers, Lore, monster tiers, specimens, item research and recipes, wards | Needs the debrief (research choice) and gives stealth its payoff |
+| M7.07 | **Scout missions and floor intel**: the mission order, slipping past fights, dated intel in the report | Needed to find lairs |
+| M7.08 | **Stealth and the Mire Behemoth**: Stealth skill, `noisy` gear, sneak missions, the first warded beast, its wallow and bane | Brings research, intel and missions together |
+| M8 | **Gloss**: portraits, room scenes, styled debrief | After the loop, as agreed |
+
+Crafting beyond the bane recipe can slot in after M7.06 or wait for M8.
+
+### Questions Mike answered
+
+- ✅ **DECIDED A: over command.** Mike: overfilling is allowed. A party can go over its leader's command (up to the Guild Hall cap) and the extras may disobey.
+- ✅ **DECIDED B: who leads.** Mike: you pick the leader in town, from raw stats at first. Leaders gain positive and negative traits from what happens (a lost member, a big win), get better the longer they lead, and intelligent monsters target them first (section 5).
+- ✅ **DECIDED C: Guild Hall caps.** 4 / 5 / 6 / 8 / 10 by level, with a new level 5. Mike: good for now, tweak if needed.
+- ✅ **DECIDED D: watching a party that's still out.** Mike: no. A trip stays hidden until someone comes back or finds them. This also gives us rescue missions for the living (holed-up parties), not just recovery missions.
+- ✅ **DECIDED E: the first beast.** The Mire Behemoth on floor 4, as described. Mike: fine for now, tweak later; the first one matters less than the ones after it.
+- ✅ **DECIDED F: research strength.** +15% damage at Studied, +25% at Mastered, plus wards that need research. Mike: fine for now; it's tuning, and the damage bonus may be dropped later.
