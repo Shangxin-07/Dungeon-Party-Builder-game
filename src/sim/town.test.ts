@@ -181,11 +181,17 @@ describe("town actions", () => {
     expect(() => packItem(ix, t, scout.id, "sword")).toThrow(/supplies/);
   });
 
-  it("limit the party to the Guild Hall's slots, and upgrading adds one", () => {
+  it("fill the party up to the Guild Hall's planned size, but never cap it", () => {
     let t = { ...rest(ix, fresh(), heroNames), gold: 1000 };
     t = hire(ix, t, t.recruits[0]!.id, "fighter");
     const fifth = t.roster[4]!;
-    expect(() => toggleParty(ix, t, fifth.id)).toThrow(/full/);
+    // Hired past the planned size, so not added on their own...
+    expect(t.party).toHaveLength(4);
+    expect(t.party).not.toContain(fifth.id);
+    // ...but they can still go (M7.10): command, not the hall, sets the limit.
+    const five = toggleParty(ix, t, fifth.id);
+    expect(five.party).toHaveLength(5);
+    expect(cantLaunch(ix, five)).toBeUndefined();
     t = build(t, "guild-hall");
     expect(t.gold).toBe(1000 - rules.hireCost - 300);
     expect(partySlots(ix, t)).toBe(5);

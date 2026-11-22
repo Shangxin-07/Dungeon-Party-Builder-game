@@ -14,6 +14,7 @@ import {
   launch,
   launchAndWait,
   newTown,
+  partySlots,
   rest,
   setOrders,
   toggleParty,
@@ -156,6 +157,10 @@ describe("porters", () => {
     expect(h.xp).toBe(500);
     expect(h.level).toBeGreaterThan(1);
     expect(after.porters).not.toContain(p.id);
+    // Going with a full party as a porter, they join it as a hero: no cap (M7.10).
+    expect(ready.party.length).toBeGreaterThanOrEqual(partySlots(ix, ready));
+    expect(after.party).toContain(p.id);
+    expect(after.party).toHaveLength(ready.party.length + 1);
   });
 
   it("stay out of raids", () => {

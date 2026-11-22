@@ -16,7 +16,6 @@ import {
   setLeader,
   launchWarnings,
   partyOnFile,
-  partySlots,
   pickParty,
   renameParty,
   saveParty,
@@ -44,7 +43,6 @@ export function PartyPanel({
   onLaunch: (prep?: (t: TownState) => TownState) => void;
 }) {
   const party = town.party.map((id) => town.roster.find((h) => h.id === id)!).filter(Boolean);
-  const slots = partySlots(ix, town);
   const why = cantLaunch(ix, town);
   const warnings = launchWarnings(ix, town);
   const retreatId =
@@ -89,7 +87,7 @@ export function PartyPanel({
         <>
           The party{" "}
           <span className="muted">
-            ({party.length}/{slots})
+            ({party.length} {party.length === 1 ? "hero" : "heroes"})
           </span>
         </>
       }
@@ -139,12 +137,12 @@ export function PartyPanel({
           {describeParty(ix, party)}
         </p>
       ) : null}
-      {slots > party.length ? (
+      {party.length ? null : (
         <p className="muted small">
-          {slots - party.length} empty {slots - party.length === 1 ? "slot" : "slots"}. Add heroes
-          from the roster below.
+          Add heroes from the roster below. There's no limit: the leader's command says how many go
+          well together.
         </p>
-      ) : null}
+      )}
 
       <div className="controls">
         {target ? null : (
