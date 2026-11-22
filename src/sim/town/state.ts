@@ -1,7 +1,7 @@
 /**
  * The shape of a town: everything a save holds (TownState and its parts).
  */
-import type { CarriedGear, ExpeditionResult, StandingOrders } from "../expedition";
+import type { CarriedGear, ExpeditionResult, FloorIntel, StandingOrders } from "../expedition";
 import type { DungeonState } from "../dungeon";
 import type { Hero } from "../hero";
 import type { Body, Risen } from "../fallen";
@@ -303,8 +303,19 @@ export interface TownState {
   haulRule: HaulRule;
   /** Research at the Library (M7.07, DESIGN.md §17.7). */
   research: ResearchState;
+  /**
+   * What scouts last brought home about each floor (M7.08, DESIGN.md §17.8),
+   * by floor depth. Missing in older saves: nothing scouted yet.
+   */
+  intel?: Record<number, TownIntel>;
   /** What the posts brought in yesterday: materials by id, and gold. */
   gathered?: { day: number; materials: Record<string, number>; gold: number };
+}
+
+/** Floor intel as the town keeps it (M7.08): the day the scouts saw it, and who. */
+export interface TownIntel extends FloorIntel {
+  day: number;
+  by: string;
 }
 
 /**

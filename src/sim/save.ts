@@ -312,6 +312,11 @@ export function missingContent(ix: Index, town: TownState): string[] {
   Object.keys(town.research?.monsters ?? {}).forEach(monster);
   for (const s of town.research?.shelf ?? []) item(s.item);
   for (const g of town.scavenged) item(g.item);
+  // Floor intel (M7.08): the monsters and rooms the scouts wrote up.
+  for (const i of Object.values(town.intel ?? {})) {
+    Object.keys(i.monsters).forEach(monster);
+    for (const id of [...i.features, ...i.hazards]) check("room", ix.room, id);
+  }
   Object.keys(town.buildings).forEach(building);
   town.damaged.forEach(building);
   for (const c of town.construction) building(c.building);

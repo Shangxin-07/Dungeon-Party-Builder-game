@@ -39,11 +39,35 @@ export interface ReportMonster {
   tricks?: string;
   /** A ward nothing gets through yet (M7.07): the guild hasn't researched it far enough. */
   ward?: string;
+  /** How many the scouts counted on this floor last time (M7.08). Missing: no intel. */
+  counted?: number;
+}
+
+/** What scouts last brought home about the floor (M7.08, DESIGN.md §17.8). */
+export interface ReportIntel {
+  /** The day they saw it, how long ago that was, and whether it may be out of date. */
+  day: number;
+  daysAgo: number;
+  stale: boolean;
+  /** The party that brought it home. */
+  by: string;
+  level: number;
+  /** Roughly how many monsters live there. */
+  population: number;
+  groups: number;
+  slipped: number;
+  /** Room names, in words. */
+  features: string[];
+  hazards: string[];
+  rooms: number;
+  of: number;
 }
 
 export interface ScoutingReport {
   floor: number;
   monsters: ReportMonster[];
+  /** The scouts' last look at this floor, if anyone has scouted it (M7.08). */
+  intel?: ReportIntel;
   /** Plain-words worries about this party on this floor. */
   warnings: string[];
 }
@@ -162,9 +186,53 @@ export function scoutingReport(
       };
     });
 
+  // Floor intel (M7.08): what the scouts counted, including anything the content odds don't list.
+  const seen = town.intel?.[floor];
+  let intel: ReportIntel | undefined;
+  if (seen) {
+    for (const m of monsters) m.counted = seen.monsters[m.monster] ?? 0;
+    for (const [id, n] of Object.entries(seen.monsters)) {
+      if (monsters.some((m) => m.monster === id) || !n) continue;
+      const def = ix.monster(id);
+      monsters.push({
+        monster: id,
+        share: 0,
+        known: true,
+        tier: monsterTier(ix, town, id, known),
+        weakTo: [],
+        shrugsOff: [],
+        ambusher: def.tags.includes("ambusher"),
+        counted: n,
+      });
+    }
+    const daysAgo = Math.max(0, town.day - seen.day);
+    intel = {
+      day: seen.day,
+      daysAgo,
+      stale: daysAgo > ix.lib.scouting.staleDays,
+      by: seen.by,
+      level: seen.level,
+      population: seen.population,
+      groups: seen.groups,
+      slipped: seen.slipped,
+      features: seen.features.map((id) => ix.room(id).name),
+      hazards: seen.hazards.map((id) => ix.room(id).name),
+      rooms: seen.rooms,
+      of: seen.of,
+    };
+  }
+
   const warnings: string[] = [];
-  if (!party.length) return { floor, monsters, warnings };
+  if (intel?.stale)
+    warnings.push(
+      `The scouts' look at floor ${floor} is ${intel.daysAgo} days old and may be out of date.`,
+    );
+  if (!party.length) return { floor, monsters, warnings, ...(intel ? { intel } : {}) };
   const bestScout = Math.max(...party.map((h) => heroSheet(ix, h).skills.scouting ?? 0));
+  if (intel?.hazards.length && bestScout < SCOUTING_FAIR)
+    warnings.push(
+      `Scouts found traps here (${intel.hazards.join(", ").toLowerCase()}), and nobody in this party scouts well (best ${bestScout}) to spot them.`,
+    );
   const types = new Set<DamageType>();
   for (const h of party) for (const t of damageTypes(ix, h)) types.add(t);
 
@@ -202,5 +270,5 @@ export function scoutingReport(
   if (monsters.some((m) => !m.known && m.share >= 0.1))
     warnings.push("Something the guild has never met lurks on this floor.");
   warnings.push(...gearCheck(ix, floor, party).map((g) => g.text));
-  return { floor, monsters, warnings };
+  return { floor, monsters, warnings, ...(intel ? { intel } : {}) };
 }

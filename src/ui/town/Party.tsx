@@ -5,7 +5,7 @@ import { Fold } from "../Fold";
 import { library } from "../../content";
 import type { Row } from "../../content/types";
 import { describeParty, partyAlignment } from "../../sim/alignment";
-import { describeRetreat, type LootRule } from "../../sim/expedition";
+import { describeRetreat, isScouting, type LootRule } from "../../sim/expedition";
 import { heroSheet, heroTitle } from "../../sim/hero";
 import { commandOf, leadershipOf, traitsOf } from "../../sim/leadership";
 import {
@@ -52,6 +52,15 @@ export function PartyPanel({
   const row = (r: Row) => party.filter((h) => h.row === r);
   const target = rescueTarget(town);
   const cmd = nextCommand(ix, town);
+  const scouting = isScouting(town.orders);
+  const bestScout = party
+    .map((h) => ({ name: h.name, value: heroSheet(ix, h).skills.scouting ?? 0 }))
+    .sort((a, b) => b.value - a.value)[0];
+  const sr = ix.lib.scouting;
+  const slipChance = Math.min(
+    sr.slipMax,
+    Math.max(0, ((bestScout?.value ?? 0) + sr.slipBase) / 100),
+  );
 
   return (
     <Fold
@@ -130,8 +139,29 @@ export function PartyPanel({
       ) : null}
 
       <div className="controls">
+        {target ? null : (
+          <label title="A scout party slips past fights where its best scout can, never hunts, and brings home what it saw on each floor for the scouting report.">
+            Mission{" "}
+            <select
+              value={scouting ? "scout" : "delve"}
+              onChange={(e) =>
+                act((t) => {
+                  const { mission: _, ...rest } = t.orders;
+                  return setOrders(
+                    ix,
+                    t,
+                    e.target.value === "scout" ? { ...rest, mission: "scout" } : rest,
+                  );
+                })
+              }
+            >
+              <option value="delve">delve</option>
+              <option value="scout">scout</option>
+            </select>
+          </label>
+        )}
         <label>
-          Go to floor{" "}
+          {scouting ? "Scout down to floor" : "Go to floor"}{" "}
           <select
             value={town.orders.targetFloor}
             onChange={(e) =>
@@ -173,30 +203,40 @@ export function PartyPanel({
             <option value="valuable">leave the junk</option>
           </select>
         </label>
-        <label
-          title={`After walking floor ${town.orders.targetFloor}, stay and hunt until this share of its monsters are dead. Each extra room takes about ${ix.lib.time.hunt} hours plus any fight; retreat orders still apply.`}
-        >
-          Hunting{" "}
-          <select
-            value={town.orders.clearPercent ?? 0}
-            onChange={(e) =>
-              act((t) =>
-                setOrders(ix, t, {
-                  ...t.orders,
-                  clearPercent: Number(e.target.value) || undefined,
-                }),
-              )
-            }
+        {scouting ? null : (
+          <label
+            title={`After walking floor ${town.orders.targetFloor}, stay and hunt until this share of its monsters are dead. Each extra room takes about ${ix.lib.time.hunt} hours plus any fight; retreat orders still apply.`}
           >
-            <option value={0}>just walk the floor</option>
-            {[25, 50, 75, 100].map((p) => (
-              <option key={p} value={p}>
-                thin floor {town.orders.targetFloor} out by {p}%
-              </option>
-            ))}
-          </select>
-        </label>
+            Hunting{" "}
+            <select
+              value={town.orders.clearPercent ?? 0}
+              onChange={(e) =>
+                act((t) =>
+                  setOrders(ix, t, {
+                    ...t.orders,
+                    clearPercent: Number(e.target.value) || undefined,
+                  }),
+                )
+              }
+            >
+              <option value={0}>just walk the floor</option>
+              {[25, 50, 75, 100].map((p) => (
+                <option key={p} value={p}>
+                  thin floor {town.orders.targetFloor} out by {p}%
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
+      {scouting ? (
+        <p className="mission small">
+          Scout party: down to floor {town.orders.targetFloor}, slipping past fights where{" "}
+          {bestScout ? `${bestScout.name} (Scouting ${bestScout.value})` : "the best scout"} can
+          (about {Math.round(slipChance * 100)}% of them), and back with what they saw. It won't
+          hunt, and it won't bring home much loot.
+        </p>
+      ) : null}
 
       <p className="small">
         Porters{" "}
@@ -351,7 +391,8 @@ export function PartiesOnFile({
                       : ""}
                   </p>
                   <p className="small muted">
-                    Floor {p.orders.targetFloor}, {describeRetreat(p.orders.retreat)}
+                    {isScouting(p.orders) ? "Scouting down to floor" : "Floor"}{" "}
+                    {p.orders.targetFloor}, {describeRetreat(p.orders.retreat)}
                     {p.orders.clearPercent ? `, thinning it out by ${p.orders.clearPercent}%` : ""}.
                   </p>
                   {why ? (

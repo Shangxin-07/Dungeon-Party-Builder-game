@@ -164,6 +164,38 @@ export interface ExpeditionResult {
   gifts?: { gold: number; news: string }[];
   /** Fights monsters talked their way out of (DESIGN.md §7). */
   parleys?: number;
+  /**
+   * What a scout mission saw, floor by floor (M7.08). It only reaches the
+   * town if the scouts get home.
+   */
+  intel?: FloorIntel[];
+  /** Fights a scout party slipped past (M7.08). */
+  slipped?: number;
+}
+
+/**
+ * What scouts saw on one floor (M7.08, DESIGN.md §17.8). In town it's kept
+ * in `town.intel`, dated, and feeds the scouting report.
+ */
+export interface FloorIntel {
+  floor: number;
+  /** Hours into the trip the scouts were last on this floor. */
+  hour: number;
+  /** The floor's monster level as they found it. */
+  level: number;
+  /** Roughly how many monsters live there (rounded, see ScoutRules.roundTo). */
+  population: number;
+  /** Monsters the scouts counted, fought or slipped past, by monster id. */
+  monsters: Record<string, number>;
+  /** Groups of monsters they met, and how many of those they slipped past. */
+  groups: number;
+  slipped: number;
+  /** Rooms worth knowing about (room ids, RoomDef.intel), and traps. */
+  features: string[];
+  hazards: string[];
+  /** Rooms they walked here, out of the rooms the floor had this time. */
+  rooms: number;
+  of: number;
 }
 
 /** Where a lost party fell, as a rescue party will find it (DESIGN.md §10). */

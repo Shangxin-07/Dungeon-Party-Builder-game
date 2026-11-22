@@ -10,6 +10,7 @@ import { type HaulItem } from "../loot";
 import { createRng, type Rng } from "../rng";
 import { getRoom } from "../rooms";
 import { DEFAULT_ORDERS, type StandingOrders, describeRetreat } from "./orders";
+import type { FloorIntel } from "./report";
 import type { ExpeditionResult, ExpeditionExtras } from "./report";
 import { PARTY_HURT_BELOW, WANDER_CHANCE } from "./tuning";
 import { list } from "./trip";
@@ -158,7 +159,9 @@ export class Expedition extends TripRescue {
       ? `floor ${site.floor} to find ${site.trapped.length ? list(site.trapped.map((h) => h.name)) : "the lost party"}`
       : this.orders.rescue
         ? `floor ${targetFloor} to look for the missing`
-        : `floor ${targetFloor}`;
+        : this.scouting()
+          ? `floor ${targetFloor} to scout ${targetFloor === 1 ? "it" : `the floors down to it`}`
+          : `floor ${targetFloor}`;
     this.emit(
       "depart",
       `${names} set off for ${mission}. Orders: ${describeRetreat(retreat)}; ` +
@@ -190,6 +193,8 @@ export class Expedition extends TripRescue {
       this.deepest = depth;
       this.roomNo = 0;
       this.emit("floor", `Floor ${depth}: ${floor.name}.`);
+      const notes = this.notes();
+      if (notes) notes.of = rooms.length;
 
       for (let i = 0; i < rooms.length; i++) {
         const room = this.ix.room(rooms[i]!);
@@ -198,6 +203,7 @@ export class Expedition extends TripRescue {
         this.roomsVisited++;
         this.emit("room", `${room.name}. ${this.rng.pick(room.descriptions)}`);
         getRoom(room.behaviour)(this.context(room.id));
+        this.noteRoom(room.id);
         // A rescue mission (M7.02) hurries through the rooms.
         const pace = this.onRescue() ? this.ix.lib.rescue.rescuePace : 1;
         this.pass(
@@ -251,10 +257,41 @@ export class Expedition extends TripRescue {
     return this.goHome("returned");
   }
 
+  /** A scout writes up a room they walked (M7.08): a feature, a hazard, or nothing much. */
+  protected noteRoom(id: string): void {
+    const n = this.notes();
+    if (!n) return;
+    n.rooms++;
+    const room = this.ix.room(id);
+    const kind =
+      room.intel ??
+      (room.trap ? "hazard" : ["fight", "quiet"].includes(room.behaviour) ? "plain" : "feature");
+    if (kind === "feature" && !n.features.includes(id)) n.features.push(id);
+    if (kind === "hazard" && !n.hazards.includes(id)) n.hazards.push(id);
+  }
+
+  /** The scouts' notes as they bring them home (M7.08): numbers as the floors stand now. */
+  protected intelNow(): FloorIntel[] {
+    const round = Math.max(1, this.ix.lib.scouting.roundTo);
+    return [...this.intel.values()].map((n) => {
+      const f = this.floors?.[n.floor - 1];
+      const pop = f?.population ?? 0;
+      return {
+        ...n,
+        monsters: { ...n.monsters },
+        features: [...n.features],
+        hazards: [...n.hazards],
+        level: f?.level ?? n.level,
+        population: pop > 0 ? Math.max(1, Math.round(pop / round) * round) : 0,
+      };
+    });
+  }
+
   /** Kills on the target floor a "clear the floor" order asks for (0: no such order). */
   protected huntGoal(): number {
     const pct = this.orders.clearPercent ?? 0;
-    if (pct <= 0 || this.orders.rescue || !this.floors) return 0;
+    // Scouts (M7.08) never hunt.
+    if (pct <= 0 || this.orders.rescue || this.scouting() || !this.floors) return 0;
     const pop =
       this.depth === this.orders.targetFloor
         ? this.huntStart
@@ -445,6 +482,7 @@ export class Expedition extends TripRescue {
       deeds: this.deeds,
       gifts: wiped || holed ? [] : this.gifts,
       parleys: this.parleys,
+      ...(this.scouting() ? { intel: wiped ? [] : this.intelNow(), slipped: this.slipped } : {}),
     };
   }
 

@@ -9,7 +9,7 @@ import type { Index } from "../library";
 import { isLow } from "../morale";
 import { partyCommand, type Command } from "../leadership";
 import { gearCheck } from "../report";
-import type { StandingOrders } from "../expedition";
+import { isScouting, type StandingOrders } from "../expedition";
 import { tripDays } from "../expedition/clock";
 import type { LostSite, Outing, TownState } from "./state";
 
@@ -440,7 +440,7 @@ export function usualHours(ix: Index, orders: StandingOrders, lift = 0): number 
   }
   // Hunting: about one side tunnel and fight for every couple of monsters to kill.
   const pct = orders.clearPercent ?? 0;
-  if (pct > 0 && !orders.rescue) {
+  if (pct > 0 && !orders.rescue && !isScouting(orders)) {
     const floor = ix.floor(target);
     const tunnels = Math.min(
       ix.lib.dungeon.hunting.maxRooms,
