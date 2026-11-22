@@ -69,8 +69,12 @@ export interface Hero {
   fatigue: number;
   /** Lasting wounds and the days in town left until each heals. */
   injuries: { id: string; days: number }[];
-  /** Extra gold a day on top of the usual wage, from raises. */
+  /** Extra gold a day on top of the usual retainer, from raises. */
   pay: number;
+  /** Extra shares of every haul, from raises (M7.12: Gold heroes ask for a bigger cut). */
+  cut?: number;
+  /** Gold the guild owes them: a share the purse couldn't cover yet (M7.12). */
+  owed?: number;
   /** Level at their last raise talk; they ask again a few levels on. */
   payLevel: number;
   /**
@@ -78,7 +82,7 @@ export interface Hero {
    * the days they've spent in town since (days away don't count); missing on
    * saves from before M6.20, which read as 0.
    */
-  raiseAsk?: { amount: number; day: number; waited?: number };
+  raiseAsk?: { amount: number; day: number; waited?: number; kind?: "share" };
   /**
    * A recruit who hasn't picked a class yet (M6): `stats` are their own,
    * before training, and `classId` is only the best fit. Hiring trains them.

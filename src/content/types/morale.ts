@@ -16,7 +16,7 @@ export const MORALE_FACTS = [
   "favouriteMissing",
   /** A rest day: the town's restMorale building effects added up (the Tavern). */
   "restMorale",
-  /** Gold the Market paid for the haul, per hero who went. */
+  /** Gold this hero took as their share of the haul (M7.12; before, the haul per head). */
   "goldShare",
   /** 1 if the haul was worth nothing. */
   "emptyHanded",
@@ -65,7 +65,7 @@ export const MORALE_FACTS = [
   "levelUp",
   /** 1 for a day spent at a research desk (M7.07). */
   "studied",
-  /** 1 if the guild couldn't pay their wages today. */
+  /** 1 if the guild couldn't pay their retainer or share today. */
   "unpaid",
   /** 1 if they were sent down tired (at the first fatigue tier or worse). */
   "sentTired",

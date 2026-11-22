@@ -42,8 +42,8 @@ export function CampPanel({ town, act }: { town: TownState; act: Act }) {
       <p>
         The miners dug too deep. Something is climbing out of the pit every night, and there are no
         walls, no Guild Hall, and nobody trained to go down. Put your people on the posts round the
-        pit, gather what you can, and build. Everyone works for their keep here: wages start once
-        the camp is held.
+        pit, gather what you can, and build. Everyone works for their keep here: pay starts once the
+        camp is held.
       </p>
       <p>
         Nobody goes down until the camp is held. Still to build:{" "}

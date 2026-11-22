@@ -1,5 +1,5 @@
 /**
- * M6 balance pass: wages, the Market's cut of the haul, morale that settles
+ * M6 balance pass: pay (M7.12: retainers), the Market's cut of the haul, morale that settles
  * instead of climbing forever, the guild's books, and the Cleric.
  */
 import { describe, expect, it } from "vitest";
@@ -19,25 +19,25 @@ import {
   rest,
   sell,
   TOWN_VERSION,
-  wage,
-  wageBill,
+  retainer,
+  retainerBill,
   type TownState,
 } from "./town";
 import { validateLibrary } from "./validate";
 
 const ix = indexLibrary(library);
 const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
-const w = library.town.wages;
+const w = library.town.retainer;
 
-describe("wages", () => {
-  it("are paid every day, more for higher levels", () => {
+describe("retainers", () => {
+  it("are paid every day to heroes at home, a little more for higher levels", () => {
     const t = fresh();
     const h = t.roster[0]!;
-    expect(wage(ix, h)).toBe(w.base + w.perLevel * h.level);
-    expect(wage(ix, { ...h, level: h.level + 3 })).toBe(wage(ix, h) + 3 * w.perLevel);
+    expect(retainer(ix, h)).toBe(w.base + Math.floor(h.level / w.levelsPerGold));
+    expect(retainer(ix, { ...h, level: h.level + w.levelsPerGold })).toBe(retainer(ix, h) + 1);
     const after = rest(ix, t, heroNames);
-    expect(after.gold).toBe(t.gold - wageBill(ix, t));
-    expect(after.ledger).toEqual([{ day: t.day, kind: "wages", amount: -wageBill(ix, t) }]);
+    expect(after.gold).toBe(t.gold - retainerBill(ix, t));
+    expect(after.ledger).toEqual([{ day: t.day, kind: "wages", amount: -retainerBill(ix, t) }]);
   });
 
   it("go unpaid when the gold runs out, and the heroes take it badly", () => {
@@ -66,8 +66,9 @@ describe("the Market", () => {
     t = sell(ix, t, "bandages");
     t = launchAndWait(ix, t, heroNames);
     const kinds = new Set(t.ledger.map((l) => l.kind));
+    // The whole roster went down, so nobody drew a retainer (M7.12); they took shares.
     expect(kinds).toEqual(
-      new Set(["bought", "sold", "wages", ...(t.lastTrip!.goldEarned ? ["haul"] : [])]),
+      new Set(["bought", "sold", ...(t.lastTrip!.goldEarned ? ["haul", "shares"] : [])]),
     );
     const start = fresh().gold;
     expect(t.ledger.reduce((s, l) => s + l.amount, 0)).toBe(t.gold - start);

@@ -12,7 +12,7 @@ import {
   rosterSize,
   TownError,
   waitUntilBack,
-  wageBill,
+  retainerBill,
   type TownState,
   type TripReport,
 } from "../../sim/town";
@@ -310,10 +310,10 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
         <strong>{town.gold}</strong> gold
       </span>
       {town.camp ? (
-        <span title="Wages start once the camp is held">No wages at the camp</span>
+        <span title="Pay starts once the camp is held">No pay at the camp</span>
       ) : (
-        <span title="What the roster is paid each day">
-          Wages <strong>{wageBill(ix, town)}</strong>/day
+        <span title="Retainers for the heroes at home each day. Parties are paid by their share of the haul.">
+          Retainers <strong>{retainerBill(ix, town)}</strong>/day
         </span>
       )}
       <span>

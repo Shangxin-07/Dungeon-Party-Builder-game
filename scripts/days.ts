@@ -75,7 +75,7 @@ import {
   trade,
   buy,
   equip,
-  wageBill,
+  retainerBill,
   settleByRule,
   nextCommand,
   type HaulRule,
@@ -191,7 +191,7 @@ function properKit(t: TownState): TownState {
       if (now && !ix.item(now).tags.includes("makeshift")) continue;
       if (now === id) continue;
       if (!t.stash.includes(id)) {
-        if (t.gold < item.value + 40 + 3 * wageBill(ix, t)) continue;
+        if (t.gold < item.value + 40 + 3 * retainerBill(ix, t)) continue;
         try {
           t = buy(ix, t, id);
         } catch {
@@ -242,7 +242,7 @@ function step(t: TownState): TownState {
     // Once the walls are up, build and upgrade everything else, cheapest
     // first, keeping a few days' wages in hand: a guild that spends it all.
     const defended = DEFENCES.every((id) => (t.buildings[id] ?? 0) > 0);
-    const reserve = 60 + 3 * wageBill(ix, t);
+    const reserve = 60 + 3 * retainerBill(ix, t);
     // The Temple and Graveyard only once there's a body waiting for them.
     const waiting = (t.bodies ?? []).length > 0;
     const more = library.buildings
@@ -280,7 +280,7 @@ function step(t: TownState): TownState {
   // wages in hand), otherwise bury.
   for (const b of [...(t.bodies ?? [])]) {
     const q = resurrectQuote(ix, t, b.id);
-    if (!q.why && q.terms && t.gold >= q.terms.gold + 7 * wageBill(ix, t)) {
+    if (!q.why && q.terms && t.gold >= q.terms.gold + 7 * retainerBill(ix, t)) {
       t = resurrect(ix, t, b.id);
       t = kitOut(ix, t, b.hero.id);
       tally.resurrected++;
@@ -321,10 +321,10 @@ function step(t: TownState): TownState {
   // Agree to raises while the gold holds out (a month of the new wage bill).
   for (const h of t.roster)
     if (h.raiseAsk && !outingOf(t, h.id))
-      t = answerRaise(ix, t, h.id, t.gold > 30 * (wageBill(ix, t) + h.raiseAsk.amount));
+      t = answerRaise(ix, t, h.id, t.gold > 30 * (retainerBill(ix, t) + h.raiseAsk.amount));
   // Put back what the last trip used up, as far as the gold goes.
   const plan = restockPlan(ix, t);
-  let budget = t.gold - 2 * wageBill(ix, t);
+  let budget = t.gold - 2 * retainerBill(ix, t);
   const okd = plan.filter((l) => (budget -= l.cost) >= 0);
   if (okd.length) t = restock(ix, t, okd);
   // Porters (--porters N): keep N, and train one when the party is short.
@@ -451,7 +451,13 @@ const tally = {
   materials: {} as Record<string, number>,
   /** Materials the Blacksmith got out of the haul (--haul salvage). */
   salvaged: {} as Record<string, number>,
+  /** Gold in and out by ledger kind (M7.12: what pay costs against what comes in). */
+  ledger: {} as Record<string, number>,
+  /** The same for the first EARLY days only (the early squeeze, DESIGN.md §18.2). */
+  early: {} as Record<string, number>,
 };
+/** Days counted as the early game in the pay line. */
+const EARLY = 20;
 /** Gold in the coffers at these days, for the summary. */
 const CHECKPOINTS = [10, 20, 40, 60, 90];
 const goldAt: Record<number, number[]> = {};
@@ -463,6 +469,8 @@ function play(seed: number, print: boolean) {
   const launched = new Set<string>();
   const unpaidDays = new Set<number>();
   const roseNews = new Set<string>();
+  // Ledger lines by day and kind; a day's line grows until the day is over.
+  const books = new Map<string, { day: number; kind: string; amount: number }>();
   if (print) {
     console.log(
       `Policy: ${policy === "idle" ? "never go down" : policy === "climb" ? "go deeper as the party levels up" : `trips to floor ${policy}`}` +
@@ -487,6 +495,7 @@ function play(seed: number, print: boolean) {
       tally.campRaids += t.pit.filter((n) => n.outcome !== "held").length;
     }
     if (t.camp) tally.campDeaths = t.memorial.length;
+    for (const l of t.ledger) books.set(`${l.day}:${l.kind}`, l);
     // Count days the wages went unpaid (from the news, which says so).
     for (const n of t.news) if (n.text.startsWith("The guild couldn't pay")) unpaidDays.add(n.day);
     for (const n of t.news)
@@ -529,6 +538,10 @@ function play(seed: number, print: boolean) {
   }
   tally.unpaid += unpaidDays.size;
   tally.rose += roseNews.size;
+  for (const l of books.values()) {
+    tally.ledger[l.kind] = (tally.ledger[l.kind] ?? 0) + l.amount;
+    if (l.day <= EARLY) tally.early[l.kind] = (tally.early[l.kind] ?? 0) + l.amount;
+  }
   return t;
 }
 
@@ -630,7 +643,7 @@ if (runs === 1) {
         .map((f) => `${f}: ${deepest.filter((d) => d === f).length}`)
         .join(", ")} towns\n` +
       `  buildings: ${(built / runs).toFixed(1)} of ${levels} levels built; ` +
-      `${(unpaid / runs).toFixed(1)} days with unpaid wages\n` +
+      `${(unpaid / runs).toFixed(1)} days with unpaid pay\n` +
       `  hidden caches per town: ${(secrets.found / runs).toFixed(1)} found, ` +
       `${(secrets.missed / runs).toFixed(1)} walked past, worth ${(secrets.gold / runs).toFixed(0)} gold\n` +
       `  the fallen per town: ${(tally.resurrected / runs).toFixed(1)} resurrected, ` +
@@ -649,6 +662,22 @@ if (runs === 1) {
       `  gold from trips per town: ${earned.toFixed(0)}; gold in hand (median) ` +
       Object.entries(goldAt)
         .map(([d, g]) => `day ${d}: ${[...g].sort((a, b) => a - b)[Math.floor(g.length / 2)]}`)
-        .join(", "),
+        .join(", ") +
+      `\n  pay per town: ${payLine(tally.ledger)}` +
+      `\n  pay per town, first ${EARLY} days: ${payLine(tally.early)}`,
+  );
+}
+
+/** Retainers and shares against everything that came in (M7.12). */
+function payLine(l: Record<string, number>): string {
+  const income = Object.values(l)
+    .filter((n) => n > 0)
+    .reduce((s, n) => s + n, 0);
+  const wages = -(l.wages ?? 0);
+  const shares = -(l.shares ?? 0);
+  const pct = (n: number) => (income ? `${Math.round((n / income) * 100)}%` : "all");
+  return (
+    `retainers/wages ${(wages / runs).toFixed(0)}, shares ${(shares / runs).toFixed(0)}, ` +
+    `together ${pct(wages + shares)} of the ${(income / runs).toFixed(0)} gold that came in`
   );
 }

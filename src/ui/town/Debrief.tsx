@@ -302,6 +302,7 @@ function Debrief({
                 : "")
             : `The Market paid ${trip.goldEarned} gold for it on the way in.`}
         </p>
+        <SharesLine town={town} trip={trip} />
       </details>
       <details>
         <summary>
@@ -517,5 +518,26 @@ function summary(trip: TripReport): string {
     `${coin ? ` +${coin} gold${trip.coins !== undefined ? " in coin" : ""}.` : ""}` +
     `${trip.held ? ` ${trip.held} ${trip.held === 1 ? "piece" : "pieces"} of haul.` : ""}` +
     `${trip.materials && Object.keys(trip.materials).length ? ` +${materialWords(ix, trip.materials)}.` : ""}`
+  );
+}
+
+/** Who took what share of the haul (M7.12). */
+function SharesLine({ town, trip }: { town: TownState; trip: TripReport }) {
+  const shares = Object.entries(trip.shares ?? {});
+  if (!shares.length) return null;
+  const total = shares.reduce((s, [, n]) => s + n, 0);
+  const name = (id: string) =>
+    trip.party.find((h) => h.id === id)?.name ?? town.roster.find((h) => h.id === id)?.name ?? "?";
+  return (
+    <p className="small">
+      {total ? (
+        <>
+          The party took its {ix.lib.town.shares.percent}% share, <strong>{total}</strong> gold:{" "}
+          {shares.map(([id, n]) => `${name(id)} ${n}`).join(", ")}.
+        </>
+      ) : (
+        <>Nothing to share out, so the trip cost the guild no pay.</>
+      )}
+    </p>
   );
 }

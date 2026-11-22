@@ -143,7 +143,7 @@ export function RecruitCard({
         >
           or sign as a porter (
           {porterPrice(ix, town) ? `${porterPrice(ix, town)} gold, ` : "free, "}
-          {ix.lib.town.porters.wage} a day)
+          {ix.lib.town.porters.wage} a day at home, half a share below)
         </button>
       ) : null}
     </li>

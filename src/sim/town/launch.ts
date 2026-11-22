@@ -61,6 +61,7 @@ import { news, book, roll, edit, listWords, gearOf, addMaterials } from "./inter
 import type { HaulItem } from "../loot";
 import { cancelRescue } from "./parties";
 import { bringHome } from "./haul";
+import { payShares } from "./pay";
 import { restHero, lowestHp, wasDowned, maybeInjure } from "./wounds";
 import { dayInTown, quitters, guildFeels } from "./days";
 import { newBody } from "./bodies";
@@ -420,6 +421,15 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
     fatigue[p.id] = p.fatigue;
   }
 
+  // Pay (M7.12): everyone who went and came back takes a share of the haul.
+  const takers = [
+    ...party.filter((h) => result.party.some((p) => p.id === h.id && p.condition !== "dead")),
+    ...result.porters,
+  ]
+    .map((h) => findHero(t, h.id))
+    .filter((h): h is Hero => !!h);
+  const shares = payShares(ix, t, takers, goldEarned);
+
   // Deserters who never made it home are lost (M7.05).
   const strays = (result.deserters ?? []).filter((d) => !d.home);
   for (const d of strays) {
@@ -448,7 +458,6 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
     ? Math.max(10, heroSheet(ix, cmd.leader).stats.CHA)
     : Math.max(10, ...party.map((h) => heroSheet(ix, h).stats.CHA));
   const leaderLoss = cmd.moraleLoss;
-  const share = goldEarned / party.length;
   const tripDays = Math.max(1, result.days);
   const aligned = partyAlignment(ix, party);
   const knewRisen = (h: Hero) =>
@@ -463,7 +472,7 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
     const prevSeen = before[h.id]?.seen ?? [];
     const tags = gearTags(ix, left);
     const facts: Facts = {
-      goldShare: share,
+      goldShare: shares[h.id] ?? 0,
       // Scouts (M7.08) went to look, not to loot.
       emptyHanded:
         !result.intel && goldEarned + recovered.length + Object.keys(materials).length === 0
@@ -593,6 +602,7 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
     goldEarned,
     coins: brought.coins,
     held: brought.held,
+    shares,
     kills,
     raids: t.raids.filter((r) => r.day >= startDay && r.day < t.day),
     xp,
@@ -889,6 +899,13 @@ export function hearOfLoss(
       fence(ix, t),
     );
     const goldEarned = brought.worth;
+    // The porters who got out take their cut of what they carried (M7.12).
+    const shares = payShares(
+      ix,
+      t,
+      result.porters.filter((r) => r.home).flatMap((r) => findHero(t, r.id) ?? []),
+      goldEarned,
+    );
     const materials: Record<string, number> = {};
     for (const h of result.porterHaul)
       if (ix.item(h.item).slot === "material") materials[h.item] = (materials[h.item] ?? 0) + 1;
@@ -911,6 +928,7 @@ export function hearOfLoss(
       goldEarned,
       coins: brought.coins,
       held: brought.held,
+      shares,
       kills,
       raids: t.raids.filter((r) => r.day >= o.left && r.day < t.day),
       trapped,

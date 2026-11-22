@@ -185,7 +185,7 @@ describe("levelling up", () => {
 describe("morale", () => {
   it("turns facts into morale using everyone's rules plus the hero's motivation", () => {
     const h = { ...fighter(), motivation: "gold", alignment: "neutral", morale: 50 };
-    const changes = moraleChanges(ix, h, { goldShare: 60, emptyHanded: 0, likedGear: 1 });
+    const changes = moraleChanges(ix, h, { goldShare: 8, emptyHanded: 0, likedGear: 1 });
     expect(changes.map((c) => c.reason)).toEqual([
       "liked their gear",
       "liked their share of the haul",

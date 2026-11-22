@@ -1,10 +1,11 @@
 /**
  * The guild's books (M6): what the gold came from and went on over the last
- * week, and the daily wage bill. Wages are content (content/town.ts).
+ * week, and what the guild pays (M7.12: retainers at home, shares of the haul;
+ * content/town.ts).
  */
 import { Fold } from "./Fold";
 import type { LedgerKind, TownState } from "../sim/town";
-import { wage, wageBill } from "../sim/town";
+import { awaySet, owedTotal, retainer, retainerBill, shareUnits } from "../sim/town";
 import { ix } from "./game";
 
 const KINDS: Record<LedgerKind, string> = {
@@ -12,7 +13,8 @@ const KINDS: Record<LedgerKind, string> = {
   sold: "Sold at the Market",
   bought: "Bought at the Market",
   hired: "Hiring",
-  wages: "Wages",
+  wages: "Retainers",
+  shares: "Shares of the haul",
   built: "Building",
   repairs: "Repairs",
   stolen: "Stolen by raiders",
@@ -33,33 +35,55 @@ export function Accounts({ town }: { town: TownState }) {
   for (const l of lines) byKind.set(l.kind, (byKind.get(l.kind) ?? 0) + l.amount);
   const rows = (Object.keys(KINDS) as LedgerKind[]).filter((k) => byKind.get(k));
   const net = lines.reduce((s, l) => s + l.amount, 0);
-  const bill = wageBill(ix, town);
-  const w = ix.lib.town.wages;
+  const bill = retainerBill(ix, town);
+  const away = awaySet(town);
+  const owed = owedTotal(town);
+  const r = ix.lib.town.retainer;
+  const sh = ix.lib.town.shares;
   return (
     <Fold id="accounts" title="The books" summary={`Last 7 days ${net >= 0 ? "+" : ""}${net} gold`}>
       {town.camp ? (
         <p className="muted">
-          Nobody is paid at the mining camp: the miners work for their keep. Wages of {w.base} gold
-          a day plus {w.perLevel} per level start once the camp is held.
+          Nobody is paid at the mining camp: the miners work for their keep. Pay starts once the
+          camp is held.
         </p>
       ) : (
-        <p className="muted">
-          Every hero is paid {w.base} gold a day plus {w.perLevel} per level. The roster costs{" "}
-          <strong>{bill}</strong> gold a day
-          {bill ? (
-            <>
-              , so {town.gold} gold lasts about <strong>{Math.floor(town.gold / bill)}</strong> days
-              without a haul
-            </>
+        <>
+          <p className="muted">
+            Heroes are paid like adventurers. At home each draws a retainer of {r.base} gold a day
+            plus 1 for every {r.levelsPerGold} levels; the heroes at home cost{" "}
+            <strong>{bill}</strong> gold a day
+            {bill ? (
+              <>
+                , so {town.gold} gold lasts about <strong>{Math.floor(town.gold / bill)}</strong>{" "}
+                days without a haul
+              </>
+            ) : null}
+            . A party takes {sh.percent}% of what its haul is worth when it comes home, split
+            between the heroes who went (porters take {sh.porter === 0.5 ? "half" : sh.porter} a
+            share), and draws no retainer while it's away. Anyone who goes unpaid takes it badly.
+          </p>
+          {owed ? (
+            <p className="warn">
+              The guild owes <strong>{owed}</strong> gold in shares it couldn't pay yet. It comes
+              out of the purse first thing each day.
+            </p>
           ) : null}
-          . Anyone who goes unpaid takes it badly.
-        </p>
+        </>
       )}
-      {town.roster.length ? (
+      {town.roster.length && !town.camp ? (
         <p className="skills">
           {town.roster.map((h) => (
             <span key={h.id}>
-              {h.name} <strong>{wage(ix, h)}</strong>
+              {h.name}{" "}
+              {away.has(h.id) ? (
+                <span className="muted">below</span>
+              ) : (
+                <strong>{retainer(ix, h)}</strong>
+              )}
+              {shareUnits(ix, h) !== 1 ? (
+                <span className="muted"> ({shareUnits(ix, h)} shares)</span>
+              ) : null}
             </span>
           ))}
         </p>

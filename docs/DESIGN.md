@@ -1205,6 +1205,7 @@ Today wages are 2 + 1 per level per day, for everyone on the roster, home or awa
 - **The pressure stays:** an idle guild still pays retainers every day and still goes broke, just more slowly (Mike's rule). A big bench of resting heroes still costs gold.
 - **Raises** (M6.06) ask for a bigger share or a bigger retainer.
 - Rough estimate (not simulated yet): on the bot's two-party floor-1 game, wages fall from about 55% of income to about 30-35%, and the gap grows the less the guild delves.
+- **Built in M7.12.** Retainer 1 gold + 1 per 3 levels for heroes at home; parties take **15%** of the haul's Market value (porters half a share), paid when they're back; what the purse can't cover is owed and paid first each day. Gold heroes' raises ask for half a share more of every haul; everyone else asks for +1 gold a day on the retainer. The bot (camp start, floor 1, two parties, 60 days) measured pay at 25% of income before and 17% after (first 20 days: 21% to 16%); at 20% shares it barely moved (22%), so the share was set to 15%. An idle guild still goes broke, more slowly (gold gone around day 30 instead of day 10).
 
 **Option 2b: Town income (comes with 1b).** Settlers' taxes and market days give a floor of income that doesn't depend on the haul. Starts small (a handful of gold a day) and grows with the town, so early on it softens the squeeze without making delving optional.
 

@@ -31,7 +31,7 @@ import {
   unequip,
   unpackItem,
   upgrade,
-  wageBill,
+  retainer,
   type TownState,
 } from "./town";
 import { stocked } from "./stocked";
@@ -236,11 +236,21 @@ describe("launching a party", () => {
       if (isMaterial(h.item)) found[h.item] = (found[h.item] ?? 0) + 1;
     expect(trip.materials).toEqual(found);
     expect(after.materials).toEqual(found);
-    // The Market takes its cut of the loot, and everyone gets paid each day.
+    // The Market takes its cut of the loot. Heroes at home draw a retainer each
+    // day; the party draws none, and takes its share of the haul instead (M7.12).
     expect(trip.goldEarned).toBeLessThanOrEqual(trip.result.haul.reduce((s, h) => s + h.value, 0));
-    const wages = after.ledger.filter((l) => l.kind === "wages").reduce((s, l) => s + l.amount, 0);
-    expect(wages).toBe(-wageBill(ix, t) * trip.result.days);
-    expect(after.gold).toBe(t.gold + trip.goldEarned + wages);
+    const paid = (kind: string) =>
+      after.ledger.filter((l) => l.kind === kind).reduce((s, l) => s + l.amount, 0) || 0;
+    const went = new Set([...t.party, ...t.porters]);
+    const home = t.roster.filter((h) => !went.has(h.id));
+    expect(0 - paid("wages")).toBe(
+      home.reduce((s, h) => s + retainer(ix, h), 0) * trip.result.days,
+    );
+    const shares = Object.values(trip.shares ?? {}).reduce((s, n) => s + n, 0);
+    expect(Object.keys(trip.shares ?? {}).sort()).toEqual([...went].sort());
+    expect(shares).toBe(Math.round((trip.goldEarned * library.town.shares.percent) / 100));
+    expect(0 - paid("shares")).toBe(shares);
+    expect(after.gold).toBe(t.gold + trip.goldEarned + paid("wages") - shares);
     for (const id of t.party) expect(after.records[id]!.trips).toBe(1);
     const kills = Object.values(trip.kills).reduce((a, b) => a + b, 0);
     expect(kills).toBeGreaterThan(0);

@@ -140,15 +140,27 @@ export const vaultShare = (ix: Index, town: TownState) =>
     effects(ix, town).reduce((m, e) => (e.type === "vault" ? Math.max(m, e.amount) : m), 0),
   );
 
-/** A hero's daily wage (content/town.ts). */
-export const wage = (ix: Index, h: Hero) =>
+/** A hero's daily retainer while at home (content/town.ts, M7.12). */
+export const retainer = (ix: Index, h: Hero) =>
   h.porter
     ? ix.lib.town.porters.wage + (h.pay ?? 0)
-    : ix.lib.town.wages.base + ix.lib.town.wages.perLevel * h.level + (h.pay ?? 0);
+    : ix.lib.town.retainer.base +
+      Math.floor(h.level / ix.lib.town.retainer.levelsPerGold) +
+      (h.pay ?? 0);
 
-/** What the whole roster costs a day. */
-export const wageBill = (ix: Index, town: TownState) =>
-  town.camp ? 0 : town.roster.reduce((s, h) => s + wage(ix, h), 0);
+/** How many shares of a haul a hero takes (porters take less; raises add more). */
+export const shareUnits = (ix: Index, h: Hero) =>
+  h.porter ? ix.lib.town.shares.porter : 1 + (h.cut ?? 0);
+
+/** What the roster at home costs a day (those away below draw nothing). */
+export const retainerBill = (ix: Index, town: TownState) => {
+  if (town.camp) return 0;
+  const away = awaySet(town);
+  return town.roster.reduce((s, h) => s + (away.has(h.id) ? 0 : retainer(ix, h)), 0);
+};
+
+/** Gold the guild owes its heroes for shares it couldn't pay yet. */
+export const owedTotal = (town: TownState) => town.roster.reduce((s, h) => s + (h.owed ?? 0), 0);
 
 /** Whether a building is up and working (built and not damaged). */
 export const standing = (town: TownState, id: string) =>
