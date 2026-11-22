@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { heroNames, library } from "../content";
 import type { Library } from "../content/types";
-import { runExpedition, DEFAULT_ORDERS } from "./expedition";
+import { runExpedition, DEFAULT_ORDERS, tripDays } from "./expedition";
 import { bestClass, createHero, heroSheet, trainRecruit } from "./hero";
 import { indexLibrary } from "./library";
 import { createRng } from "./rng";
@@ -178,7 +178,9 @@ describe("clear the floor", () => {
           hunt.huntRooms >= library.dungeon.hunting.maxRooms ||
           hunt.log.some((e) => /hunted as long/.test(e.text)),
       ).toBe(true);
-      expect(hunt.days).toBe(1 + Math.ceil(hunt.huntRooms / library.dungeon.hunting.roomsPerDay));
+      // Each side tunnel takes time, and the days come from the clock.
+      expect(hunt.hours!).toBeGreaterThanOrEqual(hunt.huntRooms * library.time.hunt);
+      expect(hunt.days).toBe(tripDays(library.time.startHour, hunt.hours!));
       if ((hunt.floorKills[1] ?? 0) > (plain.floorKills[1] ?? 0)) more++;
     }
     expect(more).toBeGreaterThan(5);

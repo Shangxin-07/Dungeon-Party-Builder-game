@@ -26,6 +26,7 @@ import type {
   RoomDef,
   SecretDef,
   SearchRules,
+  TimeRules,
   FloorDef,
   DungeonRules,
 } from "./dungeon";
@@ -58,6 +59,8 @@ export interface Library {
   injuries: readonly InjuryDef[];
   secrets: readonly SecretDef[];
   searching: SearchRules;
+  /** The trip clock (M7.01): hours below. */
+  time: TimeRules;
   fallen: FallenRules;
   transforms: readonly TransformDef[];
   posts: readonly PostDef[];
@@ -121,6 +124,8 @@ export const defineWearRules = (def: WearRules): WearRules => def;
 export const defineSecret = (def: SecretDef): SecretDef => def;
 
 export const defineSearchRules = (def: SearchRules): SearchRules => def;
+
+export const defineTimeRules = (def: TimeRules): TimeRules => def;
 
 export const defineInjury = (def: InjuryDef): InjuryDef => def;
 

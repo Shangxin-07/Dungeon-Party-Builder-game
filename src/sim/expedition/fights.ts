@@ -149,6 +149,8 @@ export class TripFights extends TripCare {
       if (e.kind === "start") continue;
       this.emit("combat", e.text, { combat: e });
     }
+    const clock = this.ix.lib.time.fight;
+    this.pass(clock.hours + Math.max(0, result.rounds - clock.freeRounds) * clock.perRound);
     this.party = result.party;
     this.kills.push(...result.kills);
     const real = result.kills.filter((id) => !this.ix.monster(id).summonOnly).length;

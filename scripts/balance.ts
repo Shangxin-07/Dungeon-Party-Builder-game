@@ -5,6 +5,9 @@
  *   npm run balance               # 500 runs each, floors 1-3
  *   npm run balance -- 2000
  *   npm run balance -- 500 fighter,cleric,mage    # a different party
+ *
+ * Hours/floor and Days (M7.01, content/time.ts) count trips that did what they
+ * were told: a floor should take about a day, there and back.
  */
 import { heroNames, library } from "../src/content";
 import { balanceReport, expeditionReport } from "../src/sim/balance";
@@ -42,7 +45,9 @@ const rules: [string, RetreatRule][] = [
 ];
 for (const [label, retreat] of rules) {
   console.log(`\nFull expeditions, retreat rule: ${label}`);
-  console.log("Target  Returned  Retreated  Wiped  Deaths  Fights  Haul  Dropped");
+  console.log(
+    "Target  Returned  Retreated  Wiped  Deaths  Fights  Haul  Dropped  Hours/floor  Days",
+  );
   for (const targetFloor of [1, 2, 3]) {
     const orders = { targetFloor, retreat, loot: "everything" } as const;
     const r = expeditionReport(library, heroNames, orders, runs, party);
@@ -55,7 +60,9 @@ for (const [label, retreat] of rules) {
         r.deaths.toFixed(2).padEnd(7),
         r.fights.toFixed(1).padEnd(7),
         r.haul.toFixed(0).padEnd(5),
-        r.dropped.toFixed(1),
+        r.dropped.toFixed(1).padEnd(8),
+        (r.hours / targetFloor).toFixed(1).padEnd(12),
+        r.days.toFixed(2),
       ].join(" "),
     );
   }

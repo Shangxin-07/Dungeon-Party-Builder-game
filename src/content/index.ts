@@ -197,6 +197,7 @@ import levelRules from "./levels";
 import rescueRules from "./rescue";
 import wearRules from "./wear";
 import searchRules from "./searching";
+import timeRules from "./time";
 import minersCacheSecret from "./secrets/miners-cache";
 import falseFloorSecret from "./secrets/false-floor";
 import sealedNicheSecret from "./secrets/sealed-niche";
@@ -558,6 +559,7 @@ export const library: Library = {
   injuries,
   secrets,
   searching: searchRules,
+  time: timeRules,
   fallen: fallenRules,
   transforms,
   posts,

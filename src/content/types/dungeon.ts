@@ -66,6 +66,11 @@ export interface RoomDef {
   /** Loot table id, for treasure rooms. */
   loot?: string;
   rest?: RestSpec;
+  /**
+   * Hours to walk through this room, if not the usual `TimeRules.room` (M7.01).
+   * A room with `rest` settings is where the party sleeps.
+   */
+  hours?: number;
 }
 
 /**
@@ -172,6 +177,36 @@ export interface SearchRules {
   maxChance: number;
 }
 
+/**
+ * The trip clock (M7.01, DESIGN.md §17.2): how many hours each thing takes
+ * below (content/time.ts). Tuned so a floor still takes about a day, there
+ * and back, as before the clock.
+ */
+export interface TimeRules {
+  /** Hour of the day the party sets off (8 = 08:00). */
+  startHour: number;
+  /** Down the stairs to the next floor. */
+  stairs: number;
+  /** Riding the Mine Cage past one floor, each way. */
+  cagePerFloor: number;
+  /** Walking into and through a room, unless the room has its own `hours`. */
+  room: number;
+  /** Extra hours by room behaviour id, on top of walking (a rest spot's sleep, a trap...). */
+  behaviours: Readonly<Record<string, number>>;
+  /** A fight: `hours`, plus `perRound` for each round after `freeRounds`. */
+  fight: { hours: number; freeRounds: number; perRound: number };
+  /** Getting a hidden cache open once it's spotted. */
+  cache: number;
+  /** Each side tunnel searched under a "clear the floor" order, before any fight. */
+  hunt: number;
+  /** Climbing back up through one floor on the way home. */
+  climbPerFloor: number;
+  /** After this many hours awake the party makes camp (a rest spot counts as sleep). */
+  awakeHours: number;
+  /** How long a camp lasts. It's a guarded doze in a tunnel: nobody heals. */
+  campHours: number;
+}
+
 /** The shape of one dungeon floor. */
 export interface FloorDef {
   id: string;
@@ -217,8 +252,6 @@ export interface DungeonRules {
 }
 
 export interface HuntRules {
-  /** Extra rooms the party can search for monsters in one day. */
-  roomsPerDay: number;
   /** Most extra rooms one trip spends hunting, whatever the order says. */
   maxRooms: number;
 }

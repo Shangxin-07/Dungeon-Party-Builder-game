@@ -58,6 +58,9 @@ export class TripBase {
   protected deeds = { goodDeeds: 0, evilDeeds: 0 };
   protected gifts: { gold: number; news: string }[] = [];
   protected parleys = 0;
+  /** The trip clock (M7.01): hours since setting off, and hours since the party last slept. */
+  protected hours = 0;
+  protected awake = 0;
 
   constructor(
     protected ix: Index,
@@ -116,6 +119,25 @@ export class TripBase {
     }));
   }
 
+  // -------------------------------------------------------------------------
+  // The clock (M7.01, content/time.ts)
+  // -------------------------------------------------------------------------
+
+  /** Time passes. `sleep`: the party slept through it. */
+  protected pass(hours: number, sleep = false): void {
+    if (!(hours > 0)) return;
+    this.hours = Math.round((this.hours + hours) * 100) / 100;
+    this.awake = sleep ? 0 : this.awake + hours;
+  }
+
+  /** Make camp if the party has been awake too long. */
+  protected campIfTired(): void {
+    const t = this.ix.lib.time;
+    if (this.awake < t.awakeHours || this.wiped || !this.conscious().length) return;
+    this.emit("camp", "Worn out, the party makes camp in a side tunnel and takes turns on watch.");
+    this.pass(t.campHours, true);
+  }
+
   protected emit(
     kind: ExpeditionEventKind,
     text: string,
@@ -127,6 +149,7 @@ export class TripBase {
       text,
       floor: this.depth,
       room: this.roomNo,
+      hour: this.hours,
       party,
       ...extra,
     });

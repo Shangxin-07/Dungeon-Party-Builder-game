@@ -912,13 +912,17 @@ Today `launch()` simulates the whole trip at once and then fast-forwards every t
 
 Every trip gets a clock in hours, so you always know how long a party has been down.
 
-- **Hours are data.** Each room behaviour has a time cost: walking a room ~1 hour, a fight 1 hour (plus a little for long fights), a trap ½ hour, searching a cache 1 hour, a rest spot 8 hours, stairs 1 hour, hunting side tunnels 1 hour each. The party camps after about 16 waking hours, and that's what makes a day.
+- **Hours are data.** Each room behaviour has a time cost: walking a room ~1 hour, a fight 1 hour (plus a little for long fights), a trap ½ hour, searching a cache 1 hour, a rest spot 8 hours, stairs 1 hour, hunting side tunnels 1 hour each (built as 4: see below). The party camps after about 16 waking hours, and that's what makes a day.
 - **Tuned to match today.** The numbers are set so a floor still takes about a day on average, so balance and raids don't move. `npm run balance` reports average hours per floor.
 - **Where it shows:**
   - The watch view (now a replay) shows **Day 2, 14:00 · floor 3** above the log, ticking as it plays, with a marker at each camp.
   - The town header shows each party that's out: **Party A · away 2 days · expected back day 14**.
   - The debrief says how long the trip took ("3 days, 7 hours below").
 - **Expected back** is worked out at launch from the orders alone (floors × the usual hours there and back, plus hunting), never from the real result, so it can't give the outcome away.
+
+> **Built in M7.01.** The numbers live in `content/time.ts`: stairs 1 hour, walking a room 1 (a room can set its own `hours`), plus a trap, treasure or event ½ and a rest spot 8 (the night's sleep); a fight 1 hour plus 0.1 per round after the 8th; opening a hidden cache 1; each hunting side tunnel 4 (so about 4 a day, as before) plus its fight; climbing back through a floor 2½; the cage ½ per floor each way. After 16 hours awake the party camps for 8 in a tunnel (no healing: it's a guarded doze, not a rest spot). Parties set off at 08:00, and a trip's days in town are the midnights it crosses, at least one. Every log line carries the hour, and the result carries `hours`; trips saved before the clock show days only.
+>
+> **Balance:** trip outcomes are identical (the clock never touches the dice). A floor takes 21-24 hours there and back, and trips last as many days as before on average (floor 1: 1.00, floor 3: 2.95, floor 5: 4.94 against 1, 3 and 5), so the bot's raids, trips and gold don't move. One change: a short hunt now costs hours, not a whole extra day, so `--clear 50` on floor 1 gets about 50 trips in 60 days instead of 33 (57 without hunting).
 
 ### 3. Overdue and possibly lost
 

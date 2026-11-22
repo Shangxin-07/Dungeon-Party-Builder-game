@@ -232,8 +232,19 @@ export function validateLibrary(lib: Library): string[] {
     err("town: porter costs and slots can't be negative");
   if (porters.xpShare < 0 || porters.xpShare > 1) err("town: porters.xpShare must be 0-1");
   const hunting = lib.dungeon.hunting;
-  if (hunting.roomsPerDay < 1 || hunting.maxRooms < 0)
-    err("dungeon: hunting needs at least 1 room a day, and maxRooms can't be negative");
+  if (hunting.maxRooms < 0) err("dungeon: hunting maxRooms can't be negative");
+  const time = lib.time;
+  for (const k of ["stairs", "cagePerFloor", "room", "cache", "hunt", "climbPerFloor"] as const)
+    if (!(time[k] >= 0)) err(`time: ${k} can't be negative`);
+  if (time.startHour < 0 || time.startHour >= 24) err("time: startHour must be 0-23");
+  if (!(time.awakeHours > 0) || !(time.campHours > 0))
+    err("time: awakeHours and campHours must be positive");
+  if (time.fight.hours < 0 || time.fight.freeRounds < 0 || time.fight.perRound < 0)
+    err("time: fight hours can't be negative");
+  for (const [id, h] of Object.entries(time.behaviours))
+    if (!(h >= 0)) err(`time: behaviour "${id}" can't take negative hours`);
+  for (const r of lib.rooms)
+    if (r.hours !== undefined && !(r.hours >= 0)) err(`room "${r.id}": hours can't be negative`);
   ids("secret", lib.secrets);
   for (const x of lib.secrets) {
     const w = `secret "${x.id}"`;
