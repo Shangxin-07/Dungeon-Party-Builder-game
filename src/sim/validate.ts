@@ -453,6 +453,25 @@ export function validateLibrary(lib: Library): string[] {
   for (const b of lib.buildings)
     for (const a of b.dealsWith ?? [])
       if (!alignIds.has(a)) err(`building "${b.id}": deals with unknown alignment "${a}"`);
+  // Leaders (M7.05): traits and the command table.
+  ids("trait", lib.traits ?? []);
+  const motivationIds = new Set(lib.motivations.map((m) => m.id));
+  for (const t of lib.traits ?? []) {
+    const w = `trait "${t.id}"`;
+    if (t.weight <= 0) err(`${w}: weight must be positive`);
+    for (const a of Object.keys(t.alignments ?? {}))
+      if (!alignIds.has(a)) err(`${w}: unknown alignment "${a}"`);
+    for (const m of Object.keys(t.motivations ?? {}))
+      if (!motivationIds.has(m)) err(`${w}: unknown motivation "${m}"`);
+  }
+  if (lib.leadership) {
+    const rows = lib.leadership.command;
+    if (!rows.length || rows[0]!.from !== 0) err("leadership: command must start from 0");
+    for (let i = 1; i < rows.length; i++)
+      if (rows[i]!.from <= rows[i - 1]!.from) err("leadership: command rows must go up");
+    for (const a of Object.keys(lib.leadership.desert.align))
+      if (!alignIds.has(a)) err(`leadership: desert weight for unknown alignment "${a}"`);
+  }
   ids("event", lib.events ?? []);
   for (const e of lib.events ?? []) {
     const w = `event "${e.id}"`;

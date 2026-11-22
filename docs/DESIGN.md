@@ -236,7 +236,7 @@ How many heroes you can send at once is set by the size of your **Guild Hall**. 
 
 Six is the planned cap for now. More levels are just more rows of data.
 
-> **Changing in M7 (§17.5):** party size will come from a leader's Leadership, stretched or shrunk by alignment, with the Guild Hall as the hard cap (raised to 4 / 5 / 6 / 8 / 10).
+> **Changed in M7.05 (§17.5):** how many heroes go well together comes from the party's leader (Leadership, stretched or shrunk by alignment); the Guild Hall is the hard cap, now 4 / 5 / 6 / 8 / 10 per party and 8 / 10 / 12 / 16 / 20 on the roster.
 
 ### Buildings
 
@@ -859,7 +859,7 @@ Each milestone ends with something you can run.
 | 8 | Parties at once | One in the first slice, several later |
 | 9 | Stack and hosting | TypeScript + React + Vite on GitHub Pages |
 | 10 | Alignment | Good / Neutral / Evil; two-thirds sets party alignment, others within one step; mismatches cost morale rather than being banned. Added after the first slice |
-| 11 | Party size | Set by the Guild Hall level: 3 slots at the start, up to 6. Good + Evil mixing unlocks at 6 |
+| 11 | Party size | Set by the Guild Hall level: 3 slots at the start, up to 6. Good + Evil mixing unlocks at 6. **M7.05:** a leader's command, with the hall as the cap (4 up to 10) |
 | 12 | Town buildings | One-off cost (gold, deep-floor materials, renown); permanent, survive wipes; raids damage but never destroy |
 | 13 | Favourite buildings | Each hero has one; built = morale boost, missing = morale drain |
 | 14 | Dungeon entrance and defences | An open pit dug by the original mining camp. Defences around it (walls, gate, watchtowers) soak up overflow; what gets past becomes a raid |
@@ -1031,6 +1031,17 @@ Parties still start at 3 to 4. How big they can grow depends on a **leader**, an
   Level 5 wants deep-floor materials (deep silver and glowcap). Old saves keep their hall level and get the new numbers.
 - **Fights grow with the party.** Today a floor's fight power doesn't depend on party size, so a big party just walks through. In M7 monster groups scale with the number of fighters (about +18% fight power per hero over 4), so a bigger party isn't safer, just more able to absorb a bad day.
 
+> **Built in M7.05** (leadership, fourth in the order below; the label is M7.05 for the same reason as the debrief's). Rules in `content/leadership.ts`, traits in `content/traits/`, the sums in `src/sim/leadership.ts`.
+>
+> - **Leadership** is a fourth skill (CHA + WIL, ×2.5 like the others), so most heroes start between 40 and 65: command 4 or 5. Rallying Voice adds 10. Every trip led adds 2 points (1 past 70), kept on the hero (`Hero.lead`).
+> - **Picking the leader**: the party panel's _Led by_ list (or _Make leader_ on a hero card); without a pick the best Leadership leads. Parties on file remember their leader. The panel shows command used / command, what each hero costs, and the leader's traits; over command, the launch warnings name who is likeliest to go their own way.
+> - **Unruly parties**: each hero's chance to ignore an order is 8% per point of command over, ×1 / ×1.5 / ×2.5 by alignment step from the leader, ×0.5 to ×2 by morale (at most 50%). They ignore retreat orders (the party presses on) and hunting orders (the party heads home), each hero at most once a floor. The loot orders are still only ignored for low morale.
+> - **Deserters**: before a fight of at least 1.3× a usual fight's power (or with a boss variant), each unruly hero may slip away: 5% per point over, the same step and morale factors, ×0.1 Good / ×1 Neutral / ×2 Evil, at most 35%; one per fight, never the leader or the last one standing. They get home on a porter's odds from that floor. Their account lands in the debrief the day they walk in (a log cut where they ran, their blame or excuse in the news); a deserter who never makes it home is lost. When the guild hears the rest, the party that made it home holds a grudge, and if anyone died so do Comrades and Good heroes in the guild (`Hero.grudges`, morale −4, and −3 each trip with them).
+> - **Traits** (at most 3, newest wins): _lost someone_ (60%): Haunted (−1 command, +15% morale losses, 6 trips), Overcautious (Good only: turns back 15% HP sooner, 6 trips), Hardened (mostly Evil: −10% morale losses); _big win_ (a fight of 1.4× usual or a boss, 40%): Inspiring (+1 command), Steady (half the desertion); _5 trips in a row all home_ (50%): Trusted (two steps away cost 1.5); _a deserter_ (always): Doubted (unruly as if half a hero over, 3 trips). Shown on the hero card with the party and day.
+> - **The leader in the fight**: goblin archers and bosses, sporecallers and the Foreman's Shade are `cunning` and go for the hero with the `leader` tag first. When the leader goes down, the next order check may turn the party back (40% at morale 50, more when unhappy). The leader's CHA (not the best CHA) softens the party's morale losses, and the leader gets +2 morale for leading (below 70).
+> - **The Guild Hall** is 4 / 5 / 6 / 8 / 10 per party and 8 / 10 / 12 / 16 / 20 on the roster; level 5 costs 2000 gold, 12 iron ore, 4 deep silver and 6 glowcap. Old saves keep their level and get the new numbers. No save version change: the new fields are optional.
+> - **Fights grow with the party**: +18% power per fighter **over 3**, not 4 as planned. With the hall's first level now holding 4, scaling from 4 made every floor easier at once (floor 3 over 60 days: heroes lost per town 2.6 → 0.9, raids 21.5 → 6.6). From 3 it's milder: floor 2 lost 0.4 → 0.2, raids 4.8 → 1.7; floor 3 lost 2.6 → 1.8, raids 21.5 → 13, trips 7.1 → 8.7. Bigger groups also hold up to 1.75× as many monsters. The rest is for the losses pass (section 6).
+
 ### 6. Losses that sting
 
 With bigger parties, the usual bad outcome should be **losing someone**, not losing everyone. That makes the hero you didn't gear properly the one who doesn't come home.
@@ -1093,7 +1104,7 @@ Each one is playable on its own. Version numbers go up by one per PR, starting a
 | M7.01 | **Trip clock**: hours as room data, the clock in the watch view, time below in the trip results, hours per floor in `npm run balance` | Small, answers Mike's point 2 at once, and the background trips need hours |
 | M7.02 | **Background trips**: outings, Next day / Wait, kills landing by day, two parties out at once, expected back, overdue and possibly lost, rescue clock from the wipe, holed-up parties and rescue vs recovery missions. Saves version up | The core of the change. Watching becomes a replay |
 | M7.03 | **The debrief**: tally with detail, haul held for sell / salvage / keep, salvage lists and the Blacksmith yield, haul rule. Saves version up | Puts the first new choices where Mike wants them |
-| M7.04 | **Leadership and party size**: Leadership skill, leaders, command and alignment cost, disobedience and deserters (with their partial debrief), leader traits and leadership experience, clever monsters targeting leaders, Guild Hall caps and level 5, fights scaling with party size | Makes the bigger parties that losses need |
+| M7.04 → built as M7.05 | **Leadership and party size**: Leadership skill, leaders, command and alignment cost, disobedience and deserters (with their partial debrief), leader traits and leadership experience, clever monsters targeting leaders, Guild Hall caps and level 5, fights scaling with party size | Makes the bigger parties that losses need |
 | M7.05 | **Losses that sting**: the tuning pass against the targets in section 6, and the gear check | Needs bigger parties first |
 | M7.06 | **Research**: Library desks, researchers, Lore, monster tiers, specimens, item research and recipes, wards | Needs the debrief (research choice) and gives stealth its payoff |
 | M7.07 | **Scout missions and floor intel**: the mission order, slipping past fights, dated intel in the report | Needed to find lairs |

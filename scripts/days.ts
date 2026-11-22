@@ -77,8 +77,10 @@ import {
   equip,
   wageBill,
   settleByRule,
+  nextCommand,
   type HaulRule,
   type TownState,
+  type TripReport,
 } from "../src/sim/town";
 import { validateLibrary } from "../src/sim/validate";
 
@@ -419,6 +421,7 @@ function step(t: TownState): TownState {
     targetFloor: Math.max(targetFloor(t), site2?.floor ?? 0),
     clearPercent: clear || undefined,
   });
+  if (nextCommand(ix, t).over > 0) tally.overCommand++;
   return launch(ix, t, heroNames);
 }
 
@@ -430,6 +433,11 @@ const tally = {
   unpaid: 0,
   trips: 0,
   injuries: 0,
+  /** Leaders (M7.05): heroes who deserted, orders ignored, traits leaders picked up, launches over command. */
+  deserted: 0,
+  disobeyed: 0,
+  leaderTraits: 0,
+  overCommand: 0,
   resurrected: 0,
   buried: 0,
   rose: 0,
@@ -465,7 +473,8 @@ function play(seed: number, print: boolean) {
     );
   }
   while (t.day <= days) {
-    const heard = new Set((t.trips ?? []).map((x) => x.seed));
+    const key = (x: TripReport) => `${x.seed}:${x.account?.by ?? ""}`;
+    const heard = new Set((t.trips ?? []).map(key));
     const wasCamp = t.camp;
     t = step(t);
     const store = { ...t.materials };
@@ -482,8 +491,13 @@ function play(seed: number, print: boolean) {
     for (const n of t.news) if (n.text.startsWith("The guild couldn't pay")) unpaidDays.add(n.day);
     for (const n of t.news)
       if (/never brought home/.test(n.text)) roseNews.add(`${n.day}${n.text}`);
-    for (const trip of t.trips.filter((x) => !heard.has(x.seed))) {
+    for (const trip of t.trips.filter((x) => !heard.has(key(x)))) {
+      // A deserter's account (M7.05): the trip itself is counted when it's heard of.
+      if (trip.account) continue;
       tally.trapped += trip.trapped?.length ?? 0;
+      tally.deserted += trip.result.deserters?.length ?? 0;
+      tally.disobeyed += trip.result.disobeyed;
+      tally.leaderTraits += trip.traits?.length ?? 0;
       tally.rescued += trip.rescued?.length ?? 0;
       tally.earned += trip.goldEarned;
       for (const [id, n] of Object.entries(trip.materials ?? {}))
@@ -609,6 +623,8 @@ if (runs === 1) {
       `morale ${(moraleSum / Math.max(1, heroes)).toFixed(0)}, ${((unhappy / Math.max(1, heroes)) * 100).toFixed(0)}% unhappy\n` +
       `  overflow strength on the last night: ${(strength / runs).toFixed(1)}\n` +
       `  trips per town: ${trips.toFixed(1)}, injuries on trips: ${injuries.toFixed(1)}; ` +
+      `over command: ${(tally.overCommand / runs).toFixed(1)}, orders ignored ${(tally.disobeyed / runs).toFixed(1)}, ` +
+      `deserters ${(tally.deserted / runs).toFixed(1)}, leader traits ${(tally.leaderTraits / runs).toFixed(1)}; ` +
       `deepest floor reached: ${library.floors
         .map((f) => f.depth)
         .map((f) => `${f}: ${deepest.filter((d) => d === f).length}`)

@@ -26,8 +26,9 @@ export default defineLeadershipRules({
   },
   bigWin: 1.4,
   leaderFalls: 0.4,
-  // About +18% fight power per hero over 4 (DESIGN.md §17.5).
-  scaling: { over: 4, perFighter: 0.18 },
+  // +18% fight power per fighter over 3 (DESIGN.md §17.5 planned "over 4"; 3 keeps the
+  // floors about as hard as before now that the first hall level holds 4).
+  scaling: { over: 3, perFighter: 0.18 },
   maxTraits: 3,
   streak: 5,
   traitChance: { lostSomeone: 0.6, bigWin: 0.4, longStreak: 0.5, deserted: 1 },

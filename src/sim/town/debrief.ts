@@ -115,6 +115,13 @@ export function tripTally(ix: Index, trip: TripReport): Tally {
         break;
       case "combat": {
         const c = e.combat;
+        // Summoned monsters join mid-fight: know them by name.
+        if (c?.kind === "summon" && c.target && c.name) {
+          const name = c.name;
+          const def = ix.lib.monsters.find((m) => m.name === name.replace(/ [A-Z]$/, ""));
+          foes.set(c.target, { id: def?.id, name });
+          break;
+        }
         if (c?.kind !== "killed" || !c.target || names.has(c.target)) break;
         const foe = foes.get(c.target);
         const def = foe?.id ? ix.lib.monsters.find((m) => m.id === foe.id) : undefined;

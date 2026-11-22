@@ -947,6 +947,11 @@ function deserterHome(ix: Index, t: TownState, o: Outing, d: Deserter): void {
   const result: ExpeditionResult = {
     ...o.result,
     outcome: "retreated",
+    // As far as they know, everyone was standing when they left.
+    party: structuredClone(o.party),
+    deserters: [d],
+    rescued: [],
+    bodies: [],
     deepestFloor: d.floor,
     hours: d.left,
     days: Math.max(1, day - o.left),
