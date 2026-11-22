@@ -60,11 +60,6 @@ export function inspectSlot(slot: number): SlotState {
   }
 }
 
-export function readSlot(slot: number): SlotInfo | undefined {
-  const s = inspectSlot(slot);
-  return s.state === "ok" ? s : undefined;
-}
-
 export function writeSlot(slot: number, town: TownState): boolean {
   return set(slotKey(slot), exportSave(town, new Date()));
 }

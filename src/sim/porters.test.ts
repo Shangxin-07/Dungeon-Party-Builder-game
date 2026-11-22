@@ -196,4 +196,18 @@ describe("porters", () => {
     expect(after.porters).not.toContain("h999");
     expect(cantLaunch(ix, after)).toBeUndefined();
   });
+
+  it("don't drill in the Training Yard: they have no class to level up in", () => {
+    // The bug: a porter at home levelled up there with no class, and the
+    // level-up could never be spent.
+    const start = withPorter();
+    let t: TownState = { ...start, buildings: { ...start.buildings, "training-yard": 2 } };
+    const p = t.roster.at(-1)!;
+    for (let day = 0; day < 40; day++) t = rest(ix, t, heroNames);
+    const after = t.roster.find((h) => h.id === p.id)!;
+    expect(after.xp).toBe(p.xp);
+    expect(after.levelUps).toEqual([]);
+    // Trained heroes at home still drill.
+    expect(t.roster.find((h) => !h.porter)!.xp).toBeGreaterThan(0);
+  });
 });

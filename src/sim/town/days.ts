@@ -172,7 +172,8 @@ export function dayInTown(ix: Index, t: TownState, h: Hero): void {
     },
     t.day,
   );
-  const xp = trainingXp(ix, t);
+  // Porters (M6) don't drill: they have no class to level up in yet.
+  const xp = h.porter || h.untrained ? 0 : trainingXp(ix, t);
   if (xp) {
     const levels = roll(t, (rng) => gainXp(ix, h, xp, rng, built(t)));
     if (levels) {

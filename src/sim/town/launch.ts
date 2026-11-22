@@ -302,7 +302,7 @@ function tidySearch(ix: Index, t: TownState): void {
 /** A party climbs out of the pit: everything about the trip lands in town. */
 function homecoming(ix: Index, t: TownState, o: Outing): void {
   deserterReturns(ix, t, o);
-  const result = o.result;
+  const result = ownResult(o);
   // Deserters (M7.05) aren't with the party: they came home on their own, or never did.
   const party = o.party.filter((h) => !(result.deserters ?? []).some((d) => d.id === h.id));
   const startDay = o.left;
@@ -692,6 +692,14 @@ function lairNews(ix: Index, t: TownState, o: Outing): void {
   }
 }
 
+/**
+ * The outing's result, safe to change: edit() shares it with the town before
+ * the action (it's big), so the first change takes a copy of its own.
+ */
+function ownResult(o: Outing): ExpeditionResult {
+  return (o.result = structuredClone(o.result));
+}
+
 /** Experience: kills shared by everyone still alive, plus a little per floor. */
 function tripXp(ix: Index, t: TownState, result: ExpeditionResult) {
   const killPower = result.kills.reduce((s, id) => s + ix.monster(id).power, 0);
@@ -744,7 +752,7 @@ function wear(ix: Index, t: TownState, party: readonly Hero[], result: Expeditio
  * §17.3). If a porter got away, the town hears at once.
  */
 function partyFalls(ix: Index, t: TownState, o: Outing): void {
-  const result = o.result;
+  const result = ownResult(o);
   const holed = result.outcome === "holed";
   landAllKills(t, o);
   // The living earned their XP, trapped or not.
