@@ -11,6 +11,7 @@ export default defineMonster({
   row: "front",
   tags: ["beast", "ambusher"],
   ai: "brute",
+  research: { tricks: "Calls her brood to her once the fight starts: kill her first." },
   loot: "spider-loot",
   variant: { of: "cave-spider", chance: 0.15, minLevel: 2 },
   abilities: { "venom-bite": 1, web: 1, "call-the-brood": 1 },

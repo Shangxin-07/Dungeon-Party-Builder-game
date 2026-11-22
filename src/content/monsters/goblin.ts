@@ -16,6 +16,7 @@ export default defineMonster({
     { reaction: "tribute", to: ["evil"], chance: 0.25 },
   ],
   ai: "brute",
+  research: { tricks: "Goes for your weapon arm: disarmed heroes fight with their fists." },
   abilities: { disarm: 2 },
   loot: "goblin-loot",
   passives: [{ type: "modifyStat", stat: "armor", amount: 1 }],

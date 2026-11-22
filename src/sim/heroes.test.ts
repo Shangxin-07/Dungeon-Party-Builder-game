@@ -374,8 +374,8 @@ describe("wipes and rescue runs", () => {
       t = planRescue(ix, t, o.id, "rescue");
       expect(t.orders.targetFloor).toBe(3);
       const after = launchAndWait(ix, t, heroNames);
-      const back = after.trips.at(-1)!;
-      if (!back.rescued?.length) continue;
+      const back = after.trips.at(-1);
+      if (!back?.rescued?.length) continue;
       for (const n of back.rescued) expect(after.roster.map((h) => h.name)).toContain(n);
       const rescued = after.roster.find((h) => h.name === back.rescued![0])!;
       expect(rescued.moraleLog.some((n) => /trapped/.test(n.reason))).toBe(true);

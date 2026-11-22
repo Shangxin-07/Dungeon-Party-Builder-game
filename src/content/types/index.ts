@@ -30,6 +30,8 @@ export type {
   StatusDef,
   MonsterDef,
   MonsterReaction,
+  MonsterResearch,
+  ItemResearch,
   SkillDef,
   PerkDef,
 } from "./defs";
@@ -75,6 +77,7 @@ export type {
   PostEffect,
   PostDef,
   OpeningRules,
+  ResearchRules,
 } from "./town";
 export {
   defineClass,
@@ -94,6 +97,7 @@ export {
   defineTownRules,
   definePost,
   defineOpening,
+  defineResearchRules,
   defineDungeonRules,
   defineMotivation,
   defineAlignment,

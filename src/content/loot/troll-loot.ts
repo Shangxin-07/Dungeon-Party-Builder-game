@@ -5,7 +5,8 @@ export default defineLootTable({
   id: "troll-loot",
   rolls: [1, 2],
   entries: [
-    { item: null, weight: 2 },
+    { item: null, weight: 1.5 },
+    { item: "troll-tooth", weight: 0.5 },
     { item: "coins", weight: 3 },
     { item: "gem", weight: 2 },
     { item: "iron-ore", weight: 1 },

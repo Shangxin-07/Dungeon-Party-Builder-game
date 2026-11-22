@@ -41,6 +41,10 @@ export class BattleBase {
   protected nextUid = 1;
   /** Whether the party's back row is currently open to melee (so we warn once). */
   protected exposed = false;
+  /** How far the guild has researched each monster (M7.07): monster id -> tier. */
+  protected research: Readonly<Record<string, number>> = {};
+  /** The monster the party ran from, if it ran (M7.07). */
+  protected fledFrom?: string;
 
   constructor(
     protected ix: Index,
@@ -194,6 +198,27 @@ export class BattleBase {
     if (!up("monsters")) return "party";
     if (!up("party")) return "monsters";
     return "none";
+  }
+
+  // -------------------------------------------------------------------------
+  // Research (M7.07, DESIGN.md §17.7)
+  // -------------------------------------------------------------------------
+
+  /** Use what the guild has learnt about the monsters (see CombatOptions.research). */
+  useResearch(research: Readonly<Record<string, number>> | undefined): this {
+    this.research = research ?? {};
+    return this;
+  }
+
+  /** The guild's research tier on this fighter's kind of monster (0 for anyone else). */
+  protected tierOf(f: Fighter): number {
+    return f.monsterId ? (this.research[f.monsterId] ?? 0) : 0;
+  }
+
+  /** The ward that keeps this fighter from being hurt at all, unless research has broken it. */
+  protected wardOf(f: Fighter): string | undefined {
+    const ward = f.monsterId ? this.ix.monster(f.monsterId).ward : undefined;
+    return ward && this.tierOf(f) < ward.tier ? ward.name : undefined;
   }
 
   // -------------------------------------------------------------------------

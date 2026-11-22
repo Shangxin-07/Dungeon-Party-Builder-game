@@ -7,7 +7,9 @@
  * - sell it at the Market, at the haul rate, haggled by whoever's in town;
  * - salvage it at the Blacksmith into materials for building (its level sets
  *   the yield: content/buildings/blacksmith.ts);
- * - keep it in the store room.
+ * - keep it in the store room;
+ * - send it to the Library to be researched (M7.07): specimens feed research
+ *   on their monsters, unidentified finds go on the shelf (research.ts).
  *
  * The guild's haul rule (`town.haulRule`) proposes a choice for every piece,
  * so a busy player can just confirm.
@@ -18,6 +20,7 @@ import type { HaulItem } from "../loot";
 import { type HaulChoice, type HaulRule, type HeldItem, type TownState, TownError } from "./state";
 import { awaySet, fence, haggler, haulPrice, materialWords, total } from "./read";
 import { addMaterials, book, edit, listWords, news, takeFromStash } from "./internal";
+import { researchable, sendToLibrary } from "./research";
 
 export const HAUL_RULES: readonly HaulRule[] = ["sell", "salvage", "keep"];
 
@@ -96,6 +99,7 @@ export function settleHaul(
   const kept: string[] = [];
   const got: Record<string, number> = {};
   let broken = 0;
+  const studied: string[] = [];
   for (const [id, choice] of Object.entries(choices)) {
     const i = t.haul.findIndex((x) => x.id === id);
     if (i < 0) throw new TownError("That isn't in the haul any more.");
@@ -116,7 +120,9 @@ export function settleHaul(
     } else if (choice === "keep") {
       t.stash.push(it.item);
       kept.push(ix.item(it.item).name.toLowerCase());
-    } else throw new TownError("Sell, salvage or keep?");
+    } else if (choice === "research") {
+      studied.push(sendToLibrary(ix, t, it.item));
+    } else throw new TownError("Sell, salvage, keep or research?");
     t.haul.splice(i, 1);
   }
   book(t, "haul", gold);
@@ -125,11 +131,19 @@ export function settleHaul(
   if (sold) said.push(`sold ${pieces(sold)} for ${gold} gold`);
   if (broken) said.push(`broke ${pieces(broken)} down into ${materialWords(ix, got)}`);
   if (kept.length) said.push(`put ${listWords(kept)} in the store room`);
+  if (studied.length) said.push(`sent ${listWords(studied)} to the Library`);
   if (said.length) {
     const line = listWords(said);
     news(t, `From the haul, the guild ${line}.`);
   }
   return t;
+}
+
+/** "Research what's new": every piece the Library can learn from goes there, the rest as the rule says. */
+export function researchPlan(ix: Index, town: TownState): Record<string, HaulChoice> {
+  const plan = haulPlan(ix, town);
+  for (const it of town.haul ?? []) if (researchable(ix, town, it.item)) plan[it.id] = "research";
+  return plan;
 }
 
 const pieces = (n: number) => (n === 1 ? "one piece" : `${n} pieces`);

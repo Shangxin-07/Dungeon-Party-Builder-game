@@ -256,6 +256,8 @@ describe("launching a party", () => {
       });
       const out = launch(ix, t, heroNames).outings[0]!;
       if (out.result.outcome !== "wiped") continue;
+      // A deserter who made it home (M7.05) brings the news: not this case.
+      if (out.result.deserters?.length) continue;
       wipe = launchAndWait(ix, t, heroNames);
       sent = out.heroes;
       // Nobody came home to say, so it took until the guild gave up waiting.

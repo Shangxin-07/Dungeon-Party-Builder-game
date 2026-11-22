@@ -13,7 +13,7 @@
  * changes), start.ts, roster.ts, gear.ts, market.ts, parties.ts, buildings.ts,
  * wounds.ts, days.ts (a day passing), bodies.ts (the fallen), posts.ts (posts
  * round the pit and the opening), launch.ts, haul.ts and debrief.ts (what
- * comes home, M7.03).
+ * comes home, M7.03), research.ts (the Library, M7.07).
  * internal.ts holds shared helpers and isn't re-exported here.
  */
 export { TOWN_VERSION, LEDGER_DAYS, TRIP_HISTORY, TownError, newRecord } from "./state";
@@ -36,6 +36,9 @@ export type {
   HeldItem,
   HaulRule,
   HaulChoice,
+  ResearchState,
+  ShelfItem,
+  Desk,
 } from "./state";
 export {
   buildingEffects,
@@ -135,6 +138,22 @@ export {
   settleHaul,
   settleByRule,
   salvageStash,
+  researchPlan,
 } from "./haul";
+export {
+  TIER_NAMES,
+  researchDesks,
+  monsterNeeds,
+  monsterTier,
+  researchTiers,
+  studyRate,
+  researchTopics,
+  canStudy,
+  assignDesk,
+  deskOf,
+  deskTopic,
+  researchable,
+} from "./research";
+export type { Topic } from "./research";
 export { tripTally } from "./debrief";
 export type { Tally, FloorTally, SlainLine } from "./debrief";

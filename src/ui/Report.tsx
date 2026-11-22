@@ -4,6 +4,7 @@
  */
 import type { Hero } from "../sim/hero";
 import { scoutingReport } from "../sim/report";
+import { TIER_NAMES } from "../sim/research";
 import type { TownState } from "../sim/town";
 import { ix } from "./game";
 import { Fold } from "./Fold";
@@ -34,9 +35,12 @@ export function ScoutingReport({ town, party }: { town: TownState; party: readon
             <span className="muted">{Math.round(m.share * 100)}% of groups</span>
             {m.known ? (
               <span className="muted">
+                {m.tier >= 2 ? ` · ${TIER_NAMES[m.tier]!.toLowerCase()}` : ""}
                 {m.ambusher ? " · ambusher" : ""}
                 {m.weakTo.length ? ` · weak to ${m.weakTo.join(", ")}` : ""}
                 {m.shrugsOff.length ? ` · shrugs off ${m.shrugsOff.join(", ")}` : ""}
+                {m.ward ? <span className="warn">{` · can't be hurt yet (${m.ward})`}</span> : ""}
+                {m.tricks ? <span className="report-tricks">{` · ${m.tricks}`}</span> : ""}
               </span>
             ) : (
               <span className="muted"> · nobody here has met one</span>

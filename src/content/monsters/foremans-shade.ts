@@ -1,6 +1,7 @@
 import { defineMonster } from "../types";
 
 // Variant: the foreman who kept the shift digging. Still rings the bell, and the crew still comes.
+// Nothing can hurt it until the Library has Studied it (M7.07): the first party to meet it runs.
 export default defineMonster({
   id: "foremans-shade",
   name: "The Foreman's Shade",
@@ -16,6 +17,12 @@ export default defineMonster({
   loot: "delver-loot",
   variant: { of: "lost-delver", chance: 0.2, minLevel: 5 },
   abilities: { "war-cry": 1, "call-the-crew": 1 },
+  // M7.07: nothing touches it until the guild knows what keeps it down there.
+  ward: { name: "bound to the last shift", tier: 2 },
+  research: {
+    tricks:
+      "It's held by the shift it never finished: name the dead crew to it and blows land. It calls the crew back to the bell.",
+  },
   passives: [
     { type: "resist", damageType: "slashing", percent: 40 },
     { type: "resist", damageType: "piercing", percent: 40 },

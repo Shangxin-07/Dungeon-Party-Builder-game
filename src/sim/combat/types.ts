@@ -97,6 +97,11 @@ export interface CombatResult {
   fighters: Fighter[];
   /** Ids of risen heroes put down in this fight. */
   risenSlain: string[];
+  /**
+   * The party ran (M7.07): nothing left standing could be hurt (a monster's
+   * ward the guild hasn't broken). Heroes nobody could carry were left behind.
+   */
+  fled?: string;
 }
 
 export interface CombatOptions {
@@ -122,6 +127,12 @@ export interface CombatOptions {
   risen?: readonly Hero[];
   /** Hero id of the party's leader (M7.05): fights with a "leader" tag, which cunning monsters hunt. */
   leader?: string;
+  /**
+   * How far the guild has researched each monster (M7.07, DESIGN.md §17.7):
+   * monster id -> tier (2 Studied, 3 Mastered). The party hits harder, and
+   * wards break at their tier.
+   */
+  research?: Readonly<Record<string, number>>;
 }
 
 /** The basic weapon attack every fighter has. Not a content file, so "attack" is a reserved id. */

@@ -11,6 +11,7 @@ export default defineMonster({
   row: "front",
   tags: ["goblinoid", "humanoid", "cunning"],
   ai: "brute",
+  research: { tricks: "Its war cry steadies the band. Drop it and the rest lose heart." },
   loot: "goblin-loot",
   variant: { of: "goblin", chance: 0.15, minLevel: 2 },
   abilities: { "war-cry": 1, disarm: 1 },

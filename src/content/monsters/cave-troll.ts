@@ -14,6 +14,7 @@ export default defineMonster({
   ai: "brute",
   abilities: { crush: 4.5 },
   loot: "troll-loot",
+  research: { tricks: "Its wounds close once it's hurt: finish it fast, or bring fire." },
   passives: [
     { type: "modifyStat", stat: "armor", amount: 2 },
     { type: "resist", damageType: "fire", percent: -50 },

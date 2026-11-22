@@ -10,8 +10,11 @@ import { floorOdds } from "./encounter";
 import { heroSheet, type Hero } from "./hero";
 import { mainClass } from "./levels";
 import type { Index } from "./library";
+import { knownMonsters, monsterTier, theName } from "./research";
 import { computeDerived } from "./stats";
 import type { TownState } from "./town";
+
+export { knownMonsters } from "./research";
 
 /** Below this best Scouting, ambushers will usually strike first. */
 export const SCOUTING_FAIR = 55;
@@ -22,10 +25,20 @@ export interface ReportMonster {
   share: number;
   /** Has anyone in the guild met one? Unknown monsters are shown as "???". */
   known: boolean;
-  /** Damage types it takes extra from, and ones it shrugs off (≥ 50%). */
+  /** How far the Library has got with it (M7.07): 0 unknown, 1 met, 2 Studied, 3 Mastered. */
+  tier: number;
+  /**
+   * Damage types it takes extra from (only once Studied, M7.07: meeting one
+   * shows what it shrugs off, study finds the weak spots), and ones it
+   * shrugs off (≥ 50%).
+   */
   weakTo: DamageType[];
   shrugsOff: DamageType[];
   ambusher: boolean;
+  /** Its tricks in words, once Studied (M7.07). */
+  tricks?: string;
+  /** A ward nothing gets through yet (M7.07): the guild hasn't researched it far enough. */
+  ward?: string;
 }
 
 export interface ScoutingReport {
@@ -33,14 +46,6 @@ export interface ScoutingReport {
   monsters: ReportMonster[];
   /** Plain-words worries about this party on this floor. */
   warnings: string[];
-}
-
-/** Every monster anyone in the guild (living, departed or dead) has met. */
-export function knownMonsters(town: TownState): Set<string> {
-  const out = new Set<string>();
-  for (const r of Object.values(town.records)) for (const m of r.seen) out.add(m);
-  for (const m of town.memorial) for (const s of m.record.seen) out.add(s);
-  return out;
 }
 
 /** The damage types a hero can deal: their weapon, and their spells. */
@@ -142,13 +147,18 @@ export function scoutingReport(
       for (const p of def.passives ?? [])
         if (p.type === "resist")
           resist.set(p.damageType, (resist.get(p.damageType) ?? 0) + p.percent);
+      const tier = monsterTier(ix, town, monster, known);
+      const ward = def.ward && tier < def.ward.tier ? def.ward.name : undefined;
       return {
         monster,
         share,
-        known: known.has(monster),
-        weakTo: [...resist].filter(([, v]) => v < 0).map(([t]) => t),
+        known: tier > 0,
+        tier,
+        weakTo: tier >= 2 ? [...resist].filter(([, v]) => v < 0).map(([t]) => t) : [],
         shrugsOff: [...resist].filter(([, v]) => v >= 50).map(([t]) => t),
         ambusher: def.tags.includes("ambusher"),
+        ...(tier >= 2 && def.research?.tricks ? { tricks: def.research.tricks } : {}),
+        ...(ward ? { ward } : {}),
       };
     });
 
@@ -158,6 +168,19 @@ export function scoutingReport(
   const types = new Set<DamageType>();
   for (const h of party) for (const t of damageTypes(ix, h)) types.add(t);
 
+  // A ward (M7.07): however rare (variants included), meeting one unprepared means running.
+  const warded = monsters.flatMap((m) => [
+    m.monster,
+    ...ix.lib.monsters.filter((v) => v.variant?.of === m.monster).map((v) => v.id),
+  ]);
+  for (const id of new Set(warded)) {
+    const def = ix.monster(id);
+    const tier = monsterTier(ix, town, id, known);
+    if (!def.ward || !tier || tier >= def.ward.tier) continue;
+    warnings.push(
+      `Nothing the guild has can hurt ${theName(def.name)} (${def.ward.name}) until the Library has studied it. A party that meets one will have to run.`,
+    );
+  }
   for (const m of monsters) {
     if (!m.known || m.share < 0.1) continue;
     const name = ix.monster(m.monster).name;

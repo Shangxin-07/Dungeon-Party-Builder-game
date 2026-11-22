@@ -13,6 +13,9 @@ import {
   haulSale,
   materialWords,
   salvageOf,
+  researchDesks,
+  researchPlan,
+  researchable,
   salvageYield,
   setHaulRule,
   settleHaul,
@@ -314,10 +317,14 @@ function HaulChoices({ town, act }: { town: TownState; act: Act }) {
       for (const [m, n] of Object.entries(salvageOf(ix, town, h.item) ?? {}))
         got[m] = (got[m] ?? 0) + n;
   const kept = held.filter((h) => choice(h) === "keep").length;
+  const studied = held.filter((h) => choice(h) === "research").length;
+  const library = researchDesks(ix, town) > 0;
+  const canStudy = held.some((h) => researchable(ix, town, h.item));
   const outcome = [
     gold ? `${gold} gold` : "",
     Object.keys(got).length ? materialWords(ix, got) : "",
     kept ? `${kept} kept` : "",
+    studied ? `${studied} to the Library` : "",
   ].filter(Boolean);
   return (
     <div className="haul-choices">
@@ -325,7 +332,9 @@ function HaulChoices({ town, act }: { town: TownState; act: Act }) {
       <p className="small muted">
         Sell at the Market (coins already went in the purse), salvage at the Blacksmith into
         materials for building
-        {smith ? ` (${smith}% yield)` : ", once there is one"}, or keep it in the store room.
+        {smith ? ` (${smith}% yield)` : ", once there is one"}, keep it in the store room, or send
+        it to the Library to be researched{library ? "" : ", once there is one"}: specimens teach
+        the guild about the monsters they came from, and strange finds turn out to be something.
       </p>
       <div className="row-buttons">
         <button type="button" className="btn" onClick={() => all("sell")}>
@@ -343,6 +352,21 @@ function HaulChoices({ town, act }: { town: TownState; act: Act }) {
         <button type="button" className="btn" onClick={() => all("keep")}>
           Keep all
         </button>
+        <button
+          type="button"
+          className="btn"
+          disabled={!canStudy}
+          title={
+            canStudy
+              ? "Everything the Library can learn from goes there; the rest as the haul rule says"
+              : library
+                ? "Nothing here for the Library"
+                : "Research needs a Library"
+          }
+          onClick={() => setPicked(researchPlan(ix, town))}
+        >
+          Research what's new
+        </button>
       </div>
       <table className="haul">
         <thead>
@@ -352,6 +376,7 @@ function HaulChoices({ town, act }: { town: TownState; act: Act }) {
             <th>Sell</th>
             <th>Salvage</th>
             <th>Keep</th>
+            <th>Research</th>
           </tr>
         </thead>
         <tbody>
@@ -387,6 +412,11 @@ function HaulChoices({ town, act }: { town: TownState; act: Act }) {
                   )}
                 </td>
                 <td>{radio("keep", "store room")}</td>
+                <td>
+                  {ix.item(h.item).research
+                    ? radio("research", library ? researchWords(h.item) : "no Library", !library)
+                    : null}
+                </td>
               </tr>
             );
           })}
@@ -422,6 +452,14 @@ function HaulChoices({ town, act }: { town: TownState; act: Act }) {
       </p>
     </div>
   );
+}
+
+/** What sending a piece to the Library does, in a few words. */
+function researchWords(itemId: string): string {
+  const r = ix.item(itemId).research!;
+  if (r.monsters?.length)
+    return `+${r.points} on ${r.monsters.map((m) => ix.monster(m).name).join(", ")}`;
+  return `identify (${r.points} pts)`;
 }
 
 function summary(trip: TripReport): string {

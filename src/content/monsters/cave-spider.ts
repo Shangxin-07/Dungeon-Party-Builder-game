@@ -11,6 +11,10 @@ export default defineMonster({
   row: "front",
   tags: ["beast", "ambusher"],
   ai: "brute",
+  research: {
+    tricks:
+      "Waits in the dark to drop on whoever leads; a sharp-eyed scout spoils it. Its bite poisons, and deeper down it webs.",
+  },
   loot: "spider-loot",
   abilities: { "venom-bite": 1, web: 3 },
   passives: [{ type: "resist", damageType: "poison", percent: 100 }],

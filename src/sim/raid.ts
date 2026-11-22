@@ -62,6 +62,8 @@ export interface RaidInput {
   gold: number;
   /** Building ids that raiders could damage (built, not raid-proof, not already damaged). */
   targets: readonly string[];
+  /** What the Library knows about the raiders (M7.07): monster id -> tier. */
+  research?: Readonly<Record<string, number>>;
 }
 
 /** Heroes fit to fight off a raid, strongest first. */
@@ -113,6 +115,7 @@ export function resolveRaid(ix: Index, input: RaidInput, rng: Rng): RaidReport {
       seed: rng.int(0, 2 ** 31 - 1),
       noBleeding: true,
       level: input.level,
+      ...(input.research ? { research: input.research } : {}),
     });
     report.after = fight.party;
     report.kills = fight.kills.length;

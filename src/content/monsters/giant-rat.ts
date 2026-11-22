@@ -11,5 +11,6 @@ export default defineMonster({
   row: "front",
   tags: ["beast", "vermin"],
   ai: "brute",
+  research: { tricks: "Comes in swarms. Sweeping blows clear them." },
   abilities: { gnaw: 2 },
 });

@@ -64,9 +64,14 @@ describe("the scouting report", () => {
     expect(scoutingReport(ix, t, 2, withScout).warnings.join(" ")).not.toMatch(/lie in wait/);
   });
 
-  it("warns a party with no crushing or holy damage about the Bone Halls' skeletons", () => {
-    const t = veteran();
+  it("warns a party with no crushing or holy damage about the Bone Halls' skeletons, once studied", () => {
+    const met = veteran();
     const blades = [hero("fighter"), hero("scout"), hero("scout", { id: "s2" })];
+    // Meeting them isn't enough to know their weak spots (M7.07): the Library has to study them.
+    const before = scoutingReport(ix, met, 3, blades);
+    expect(before.monsters.find((m) => m.monster === "skeleton")!.weakTo).toEqual([]);
+    expect(before.warnings.join(" ")).not.toMatch(/Skeletons .* nobody brings/);
+    const t = { ...met, research: { monsters: { skeleton: 999 }, shelf: [], desks: [] } };
     const r = scoutingReport(ix, t, 3, blades);
     expect(r.monsters.find((m) => m.monster === "skeleton")!.weakTo).toEqual(
       expect.arrayContaining(["crushing", "holy"]),

@@ -5,7 +5,8 @@ export default defineLootTable({
   id: "delver-loot",
   rolls: [1, 1],
   entries: [
-    { item: null, weight: 4 },
+    { item: null, weight: 3 },
+    { item: "foremans-tally", weight: 1 },
     { item: "deep-silver", weight: 2 },
     { item: "coins", weight: 2 },
     { item: "gem", weight: 1 },

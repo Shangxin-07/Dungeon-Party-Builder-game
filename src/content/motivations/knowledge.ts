@@ -9,6 +9,7 @@ export default defineMotivation({
     { fact: "newFloors", amount: 5, cap: 10, reason: "saw a new floor" },
     { fact: "newMonsters", amount: 2, cap: 6, reason: "met new kinds of monster" },
     { fact: "sameOldFloor", amount: -4, reason: "has seen it all before" },
+    { fact: "studied", amount: 1, reason: "a day in the books" },
   ],
   favourites: [
     { building: "library", weight: 3 },

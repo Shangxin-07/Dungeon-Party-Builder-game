@@ -1652,3 +1652,34 @@ sup.down {
   display: block;
   overflow-x: auto;
 }
+
+/* Research at the Library (M7.07) */
+.research {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  margin-top: 8px;
+}
+
+.research th,
+.research td {
+  padding: 2px 16px 2px 0;
+  text-align: left;
+  vertical-align: top;
+}
+
+.research th {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.research progress {
+  width: 80px;
+  vertical-align: middle;
+}
+
+.report-tricks {
+  font-style: italic;
+}

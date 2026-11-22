@@ -11,6 +11,7 @@ export default defineMonster({
   row: "front",
   tags: ["ooze"],
   ai: "brute",
+  research: { tricks: "Splits when it's hit hard. Kill the little ones before they spread." },
   abilities: { "acid-spit": 2 },
   loot: "slime-loot",
   passives: [{ type: "resist", damageType: "piercing", percent: 25 }],

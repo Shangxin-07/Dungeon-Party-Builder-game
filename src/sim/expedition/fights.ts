@@ -215,6 +215,7 @@ export class TripFights extends TripCare {
       carrying: carried && { index: carried.index, item: carried.gear.item },
       risen: risen.map((r) => risenHero(this.ix, r)),
       ...(lead ? { leader: lead } : {}),
+      ...(this.extras.research ? { research: this.extras.research } : {}),
     });
     const summoned = new Set(result.log.filter((e) => e.kind === "summon").map((e) => e.target));
     const foes = result.fighters.filter((f) => f.side === "monsters" && !summoned.has(f.uid));
@@ -250,6 +251,7 @@ export class TripFights extends TripCare {
     }
 
     if (result.winner === "monsters") this.wiped = true;
+    else if (result.fled) this.fledFrom = this.ix.monster(result.fled).name;
     else if (result.winner === "none") this.emit("fight", "The monsters slink off into the dark.");
     else {
       if (lead && this.looksBad(monsters, this.ix.lib.leadership.bigWin)) this.bigWins++;

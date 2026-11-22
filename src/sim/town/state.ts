@@ -9,7 +9,7 @@ import type { HaulItem } from "../loot";
 import type { RaidReport } from "../raid";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 16;
+export const TOWN_VERSION = 17;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 export const PIT_HISTORY = 60;
@@ -301,6 +301,8 @@ export interface TownState {
   haul: HeldItem[];
   /** What the debrief proposes for each new haul (M7.03). */
   haulRule: HaulRule;
+  /** Research at the Library (M7.07, DESIGN.md §17.7). */
+  research: ResearchState;
   /** What the posts brought in yesterday: materials by id, and gold. */
   gathered?: { day: number; materials: Record<string, number>; gold: number };
 }
@@ -322,8 +324,37 @@ export interface HeldItem extends HaulItem {
  */
 export type HaulRule = "sell" | "salvage" | "keep";
 
-/** What happens to one piece of held haul. */
-export type HaulChoice = "sell" | "salvage" | "keep";
+/** What happens to one piece of held haul. Research needs the Library (M7.07). */
+export type HaulChoice = "sell" | "salvage" | "keep" | "research";
+
+/**
+ * Research at the Library (M7.07, DESIGN.md §17.7): see src/sim/town/research.ts.
+ * Topics are "monster:<id>" for a monster the guild has met, and
+ * "shelf:<id>" for a find waiting on the shelf.
+ */
+export interface ResearchState {
+  /** Research points put into each monster so far, by monster id. */
+  monsters: Record<string, number>;
+  /** Finds from the haul waiting on the Library shelf to be studied, oldest first. */
+  shelf: ShelfItem[];
+  /** Heroes at the research desks, and what each is studying. */
+  desks: Desk[];
+}
+
+/** A find on the Library shelf: points put into it so far. */
+export interface ShelfItem {
+  id: string;
+  item: string;
+  points: number;
+  /** The day it went on the shelf. */
+  day: number;
+}
+
+/** A hero at a research desk. No topic: they study whatever is nearest done. */
+export interface Desk {
+  hero: string;
+  topic?: string;
+}
 
 /** A party on file: who goes, who carries, and their orders. Gear stays on the heroes. */
 export interface SavedParty {

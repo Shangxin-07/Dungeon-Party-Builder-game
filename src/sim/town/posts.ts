@@ -31,6 +31,8 @@ export function assignPost(
     t.posts[id] = t.posts[id]!.filter((x) => x !== heroId);
     if (!t.posts[id]!.length) delete t.posts[id];
   }
+  // One job at a time: a hero on a post isn't at a research desk (M7.07).
+  if (t.research) t.research.desks = t.research.desks.filter((d) => d.hero !== heroId);
   if (!postId) return t;
   const post = ix.post(postId);
   if (post.campOnly && !t.camp) throw new TownError(`${post.name} closed with the camp.`);
