@@ -7,6 +7,7 @@ export default defineItem({
   slot: "weapon",
   value: 30,
   tags: ["mace", "melee", "holy"],
+  salvage: { "iron-ore": 2 },
   damageType: "crushing",
   abilities: ["crush"],
   passives: [

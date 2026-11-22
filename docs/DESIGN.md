@@ -986,6 +986,14 @@ There are one-click buttons for **Sell all**, **Salvage all** and **Research wha
 
 **Defaults.** A standing **haul rule** in town (sell everything / salvage metal, sell the rest / keep everything) pre-fills the debrief so a busy player can just confirm.
 
+> **Built in M7.04** (the debrief, third in the order below; the version label is M7.04 because a bug fix took M7.03). When a party is back, the *Debrief* panel opens at the top of the town with the tally (`tripTally`, `src/sim/town/debrief.ts`): time below with each floor's hours, rooms, fights, rests and camps; the rooms by floor and what happened in each; monsters slain by kind and by who killed them, with the biggest kill; the haul; the party (HP, XP, morale with reasons, injuries, the fallen); and what's waiting on the player (level-ups, the hurt, raises). Each line opens to the detail, and earlier trips keep their own debrief and replay.
+>
+> - **The haul is held** (`town.haul`, `src/sim/town/haul.ts`). Coins go straight to the purse and materials to the store, as before; everything else waits until the player sells it (the haul rate, haggled by whoever is at home), salvages it or keeps it. Sell all / Salvage all / Keep all, or per piece, then **Done**. Research joins in M7.06.
+> - **Salvage** needs a working Blacksmith: 60% / 80% / 100% of the item's `ItemDef.salvage` list by level, rounded down, at least 1 of each. Items without a list give scrap by tag (`town.salvage.byTag`: metal, silver, bone, wood, cloth), so a rusty helmet gives 1 iron ore. Gems, trinkets, coins and potions give nothing. Gear in the store room can be salvaged from the Market panel too.
+> - **The haul rule** (`town.haulRule`: sell everything / salvage what breaks down and sell the rest / keep everything) pre-fills the choices. Old saves start on "sell".
+> - Morale and the news still go by what the haul was worth the day it came home (`TripReport.goldEarned`); `coins` and `held` say what was paid and what waits. Saves version 16.
+> - **Balance** (`npm run days`, 30 towns, the bot settling by the rule the day a party is back): floor 2 and floor 3 unchanged within noise (floor 2: 13.2 trips, 2.8 raids, 0.5 heroes lost; floor 3 over 60 days: 7.1 trips, 2.6 lost). `--haul salvage` on floor 2 gets about 1 iron ore and half a deep silver a town, since rusty helmets and silver rings are most of what salvages.
+
 ### 5. Leadership and party size
 
 Parties still start at 3 to 4. How big they can grow depends on a **leader**, and the Guild Hall sets the ceiling.

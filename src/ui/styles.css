@@ -1587,3 +1587,44 @@ sup.down {
   gap: 8px;
   min-width: 0;
 }
+
+/* The debrief (M7.03): the tally, each line opening to the detail, and the haul. */
+.debrief .fold-head h2 {
+  margin: 0;
+}
+
+.tally details {
+  margin: 4px 0;
+}
+
+.tally summary {
+  cursor: pointer;
+}
+
+.tally details > ul,
+.tally details > table,
+.tally details > p,
+.tally details > .trip-town {
+  margin: 6px 0 10px 18px;
+}
+
+.haul-choices {
+  margin-top: 16px;
+}
+
+.haul-choices label {
+  white-space: nowrap;
+}
+
+.haul-choices .row-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.haul-choices .haul {
+  display: block;
+  overflow-x: auto;
+}

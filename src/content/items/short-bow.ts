@@ -6,6 +6,7 @@ export default defineItem({
   slot: "weapon",
   value: 25,
   tags: ["bow", "ranged"],
+  salvage: { timber: 1 },
   damageType: "piercing",
   ranged: true,
   abilities: ["aimed-shot"],

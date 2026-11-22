@@ -62,7 +62,12 @@ export type BuildingEffect =
    * Percentage points added to the share of value paid for a trip's haul
    * (the Black Market's fence, DESIGN.md §7). Still never above haggle.max.
    */
-  | { type: "fence"; amount: number };
+  | { type: "fence"; amount: number }
+  /**
+   * The share (percent) of an item's salvage list the Blacksmith gets out of
+   * it (M7.03, DESIGN.md §17.4): rounded down, at least 1 of each.
+   */
+  | { type: "salvage"; amount: number };
 
 export interface BuildingLevel {
   /** Gold to build or upgrade to this level. */
@@ -131,6 +136,11 @@ export interface TownRules {
    * "coins" are always worth their face value.
    */
   haulRate: number;
+  /**
+   * Salvage (M7.03, DESIGN.md §17.4): scrap for items with no salvage list of
+   * their own, by tag (the first tag that matches), as material id -> amount.
+   */
+  salvage: { byTag: Readonly<Record<string, Readonly<Record<string, number>>>> };
   /** Share of max HP a hero gets back for each day spent in town. */
   restPercent: number;
   /** Repairing a raid-damaged building costs this share of what it cost to build. */

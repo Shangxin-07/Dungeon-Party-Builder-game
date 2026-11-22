@@ -193,6 +193,8 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
     outings: [],
     trips: old.lastTrip ? [old.lastTrip] : [],
   }),
+  // The debrief (M7.03): hauls already sold, nothing waiting, and the old way as the rule.
+  15: (_ix, old) => ({ ...old, version: 16, haul: [], haulRule: "sell" }),
 };
 
 /**
@@ -291,6 +293,8 @@ export function missingContent(ix: Index, town: TownState): string[] {
     for (const it of s.items) item(it.item);
     for (const b of s.bodies) hero(b.hero);
   }
+  // The haul waiting in the debrief (M7.03).
+  for (const it of town.haul ?? []) item(it.item);
   // The fallen (DESIGN.md §10).
   for (const b of town.bodies) {
     hero(b.hero);

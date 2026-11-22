@@ -120,6 +120,12 @@ export interface ItemDef {
   size?: number;
   /** Materials only: one line for the town's store, e.g. where it turns up. */
   blurb?: string;
+  /**
+   * What it breaks down into at the Blacksmith (M7.03, DESIGN.md §17.4), by
+   * material id, before the smith's yield. Items without a list give scrap by
+   * their tags (town.salvage.byTag), or nothing.
+   */
+  salvage?: Readonly<Record<string, number>>;
 }
 
 export interface AbilityDef {

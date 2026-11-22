@@ -7,6 +7,7 @@ export default defineItem({
   slot: "weapon",
   value: 12,
   tags: ["axe", "heavy", "melee", "makeshift"],
+  salvage: { "iron-ore": 1, timber: 1 },
   damageType: "piercing",
   passives: [{ type: "modifyStat", stat: "attack", amount: 3 }],
 });

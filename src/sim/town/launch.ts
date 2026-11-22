@@ -50,6 +50,7 @@ import {
 import { news, book, roll, edit, listWords, gearOf, addMaterials } from "./internal";
 import type { HaulItem } from "../loot";
 import { cancelRescue } from "./parties";
+import { bringHome } from "./haul";
 import { restHero, lowestHp, wasDowned, maybeInjure } from "./wounds";
 import { dayInTown, quitters, guildFeels } from "./days";
 import { newBody } from "./bodies";
@@ -281,10 +282,17 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
   for (const h of result.haul)
     if (!h.keep && isMaterial(h)) materials[h.item] = (materials[h.item] ?? 0) + 1;
   addMaterials(t, materials);
-  const goldEarned = result.haul
-    .filter((h) => !h.keep && !isMaterial(h))
-    .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggle.bonus, fenced), 0);
-  book(t, "haul", goldEarned);
+  // Coins into the purse; the rest waits in the debrief (M7.03). Morale and
+  // the news go by what it's all worth at the Market, as before.
+  const brought = bringHome(
+    ix,
+    t,
+    result.haul.filter((h) => !h.keep && !isMaterial(h)),
+    o.name,
+    haggle.bonus,
+    fenced,
+  );
+  const goldEarned = brought.worth;
   for (const g of result.gifts ?? []) {
     book(t, "gifts", g.gold);
     news(t, g.news, "good");
@@ -460,7 +468,7 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
   news(
     t,
     `${o.name} ${what} after ${t.day - startDay} ${t.day - startDay === 1 ? "day" : "days"}, from floor ${result.deepestFloor}` +
-      `${goldEarned ? `, with ${goldEarned} gold of loot` : ""}.`,
+      `${goldEarned ? `, with loot worth about ${goldEarned} gold` : ""}.`,
     fallen ? "bad" : "good",
   );
   keepTrip(t, {
@@ -471,6 +479,8 @@ function homecoming(ix: Index, t: TownState, o: Outing): void {
     party,
     result,
     goldEarned,
+    coins: brought.coins,
+    held: brought.held,
     kills,
     raids: t.raids.filter((r) => r.day >= startDay && r.day < t.day),
     xp,
@@ -694,14 +704,19 @@ export function hearOfLoss(
         `${result.porterHaul.length ? " and what loot they could carry" : ""}.`,
       "bad",
     );
-    const goldEarned = result.porterHaul
-      .filter((h) => !h.keep && ix.item(h.item).slot !== "material")
-      .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggle.bonus, fence(ix, t)), 0);
+    const brought = bringHome(
+      ix,
+      t,
+      result.porterHaul.filter((h) => !h.keep && ix.item(h.item).slot !== "material"),
+      o.name,
+      haggle.bonus,
+      fence(ix, t),
+    );
+    const goldEarned = brought.worth;
     const materials: Record<string, number> = {};
     for (const h of result.porterHaul)
       if (ix.item(h.item).slot === "material") materials[h.item] = (materials[h.item] ?? 0) + 1;
     addMaterials(t, materials);
-    book(t, "haul", goldEarned);
     const trapped = site?.trapped.map((x) => x.hero.name) ?? [];
     for (const n of trapped)
       news(
@@ -718,6 +733,8 @@ export function hearOfLoss(
       party: o.party,
       result,
       goldEarned,
+      coins: brought.coins,
+      held: brought.held,
       kills,
       raids: t.raids.filter((r) => r.day >= o.left && r.day < t.day),
       trapped,

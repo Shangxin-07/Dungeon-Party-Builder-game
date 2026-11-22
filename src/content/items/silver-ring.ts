@@ -7,4 +7,5 @@ export default defineItem({
   value: 35,
   valueRange: [20, 60],
   tags: ["jewellery", "valuable"],
+  salvage: { "deep-silver": 1 },
 });

@@ -1,5 +1,6 @@
 /**
- * The Market: buy, sell and haggle.
+ * The Market: buy, sell and haggle. The store room is here too, and with a
+ * Blacksmith its gear can be broken down into materials (M7.03).
  */
 import { Fold } from "../Fold";
 import { heroSheet } from "../../sim/hero";
@@ -9,6 +10,9 @@ import {
   fence,
   haggler,
   marketRate,
+  materialWords,
+  salvageOf,
+  salvageStash,
   sell,
   sellPrice,
   shopStock,
@@ -83,6 +87,7 @@ export function Market({ town, act }: { town: TownState; act: Act }) {
               <tbody>
                 {stash.map(([id, n]) => {
                   const item = ix.item(id);
+                  const salvage = salvageOf(ix, town, id);
                   return (
                     <tr key={id}>
                       <td>
@@ -98,6 +103,19 @@ export function Market({ town, act }: { town: TownState; act: Act }) {
                         >
                           Sell for {sellPrice(ix, item, haggle.bonus)}
                         </button>
+                        {salvage ? (
+                          <>
+                            {" "}
+                            <button
+                              type="button"
+                              className="btn"
+                              title="Break it down at the Blacksmith"
+                              onClick={() => act((t) => salvageStash(ix, t, id))}
+                            >
+                              Salvage: {materialWords(ix, salvage)}
+                            </button>
+                          </>
+                        ) : null}
                       </td>
                     </tr>
                   );
