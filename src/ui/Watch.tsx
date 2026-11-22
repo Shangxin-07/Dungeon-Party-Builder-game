@@ -6,7 +6,12 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DERIVED, STATS, type Derived } from "../content/types";
 import { knownAbilities } from "../sim/abilities";
 import type { FoeSheet } from "../sim/combat";
-import type { ExpeditionEvent, ExpeditionResult } from "../sim/expedition";
+import {
+  timeBelow,
+  tripClock,
+  type ExpeditionEvent,
+  type ExpeditionResult,
+} from "../sim/expedition";
 import { fatigueTier, heroSheet, heroTitle, type Hero } from "../sim/hero";
 import { ix } from "./game";
 
@@ -43,7 +48,9 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
   const party = new Map<string, Bar>();
   let monsters: Map<string, Bar> | null = null;
   let where = "In town";
+  let hour: number | undefined;
   for (const e of log.slice(0, shown)) {
+    if (e.hour !== undefined) hour = e.hour;
     if (e.party) {
       for (const p of e.party) {
         party.set(p.uid, {
@@ -61,6 +68,7 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
     if (e.kind === "room") where = `Floor ${e.floor}, room ${e.room}`;
     if (e.kind === "wander") where = `Climbing back up through floor ${e.floor}`;
     if (e.kind === "home") where = "Back in town";
+    if (e.kind === "camp") where = `Camped on floor ${e.floor}`;
     if (e.kind === "raid") where = "At the edge of the pit";
     if (e.kind === "fight" && e.monsters) {
       monsters = new Map(
@@ -93,8 +101,22 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
       if (c.kind === "revived") target.state = "up";
     }
   }
-  return { party: [...party.values()], monsters: monsters ? [...monsters.values()] : null, where };
+  return {
+    party: [...party.values()],
+    monsters: monsters ? [...monsters.values()] : null,
+    where,
+    hour,
+  };
 }
+
+/** "Day 2, 14:00": the trip clock `hours` after setting off (M7.01). */
+export function clockText(hours: number): string {
+  const c = tripClock(ix.lib.time.startHour, hours);
+  return `Day ${c.day}, ${c.time}`;
+}
+
+/** Just the time of day, for log lines. */
+const timeOfDay = (hours: number) => tripClock(ix.lib.time.startHour, hours).time;
 
 function HpBar({ bar }: { bar: Bar }) {
   const pct = Math.round((bar.hp / bar.max) * 100);
@@ -337,7 +359,20 @@ function Line({ e }: { e: ExpeditionEvent }) {
   if (e.kind === "room")
     return (
       <li className="log-room">
-        <span className="log-where">Room {e.room}</span> {e.text}
+        <span className="log-where">
+          Room {e.room}
+          {e.hour !== undefined ? <span className="log-time"> · {timeOfDay(e.hour)}</span> : null}
+        </span>{" "}
+        {e.text}
+      </li>
+    );
+  if (e.kind === "camp")
+    return (
+      <li className="log-x-camp">
+        <span className="log-where">
+          Camp{e.hour !== undefined ? ` · ${clockText(e.hour)}` : ""}
+        </span>{" "}
+        {e.text}
       </li>
     );
   if (e.kind === "combat") {
@@ -372,8 +407,10 @@ export function Results({ result, children }: { result: ExpeditionResult; childr
     <div className={`results results-${r.outcome}`}>
       <h3>{OUTCOMES[r.outcome]}</h3>
       <p>
-        Reached floor {r.deepestFloor} in {r.days} {r.days === 1 ? "day" : "days"}, {r.roomsVisited}{" "}
-        rooms, {r.kills.length} monsters killed.
+        Reached floor {r.deepestFloor}, {r.roomsVisited} rooms, {r.kills.length} monsters killed.{" "}
+        {r.hours !== undefined
+          ? `${r.outcome === "wiped" ? "They lasted" : "Time below:"} ${timeBelow(r.hours)}.`
+          : `${r.days} ${r.days === 1 ? "day" : "days"} away.`}
         {dead.length ? ` Lost: ${dead.join(", ")}.` : " Nobody died."}
         {r.wipeSite
           ? ` They lie on floor ${r.wipeSite.floor}, ${r.wipeSite.room ? `room ${r.wipeSite.room}` : "on the way back up"}.`
@@ -497,7 +534,14 @@ export function TripPlayer({
         </button>
       </div>
 
-      <p className="where">{state.where}</p>
+      <p className="where">
+        {state.hour !== undefined ? (
+          <>
+            <span className="clock">{clockText(state.hour)}</span> ·{" "}
+          </>
+        ) : null}
+        {state.where}
+      </p>
       <div className="sides">
         <section className="side" aria-labelledby="side-party">
           <h3 id="side-party">Party</h3>

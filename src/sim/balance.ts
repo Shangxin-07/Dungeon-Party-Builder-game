@@ -91,6 +91,13 @@ export interface ExpeditionReport {
   haul: number;
   /** Average items left behind because packs were full. */
   dropped: number;
+  /**
+   * The trip clock (M7.01): average hours below, and days away, for trips
+   * that did what they were told (0 if none did). Divide by the target floor
+   * for hours per floor.
+   */
+  hours: number;
+  days: number;
   /** Average fights per trip. */
   fights: number;
 }
@@ -114,12 +121,18 @@ export function expeditionReport(
     haul: 0,
     dropped: 0,
     fights: 0,
+    hours: 0,
+    days: 0,
   };
   for (let trip = 1; trip <= trips; trip++) {
     const seed = trip * 7919 + orders.targetFloor;
     const party = createStarterParty(ix, names, createRng(seed), classIds);
     const result = runExpedition(ix, party, orders, seed);
     r[result.outcome]++;
+    if (result.outcome === "returned") {
+      r.hours += result.hours ?? 0;
+      r.days += result.days;
+    }
     r.deaths += result.party.filter((h) => h.condition === "dead").length;
     r.haul += result.haul.reduce((s, h) => s + h.value, 0);
     r.dropped += result.log.filter((e) => e.kind === "drop" && e.text.startsWith("Packs")).length;
@@ -135,5 +148,7 @@ export function expeditionReport(
     haul: avg(r.haul),
     dropped: avg(r.dropped),
     fights: avg(r.fights),
+    hours: r.returned ? r.hours / r.returned : 0,
+    days: r.returned ? r.days / r.returned : 0,
   };
 }

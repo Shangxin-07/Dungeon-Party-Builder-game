@@ -236,6 +236,24 @@ footer {
   font-weight: 600;
 }
 
+/* The trip clock (M7.01) */
+.where .clock {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.log-time {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.log-x-camp {
+  margin: 6px 0;
+  padding-left: 8px;
+  border-left: 3px solid var(--accent);
+  font-style: italic;
+}
+
 .heroes {
   gap: 14px;
 }

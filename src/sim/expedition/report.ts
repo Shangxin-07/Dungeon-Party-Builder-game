@@ -37,6 +37,8 @@ export type ExpeditionEventKind =
   | "event"
   /** Monsters talked to the party instead of fighting it (DESIGN.md §7). */
   | "parley"
+  /** The party camps in a tunnel after a long day awake (M7.01). */
+  | "camp"
   /** Raids on the town reuse the trip log format. */
   | "raid";
 
@@ -58,6 +60,11 @@ export interface ExpeditionEvent {
   floor: number;
   /** Room number on this floor, from 1 (0 = between rooms). */
   room: number;
+  /**
+   * Hours since the party set off (M7.01): see tripClock. Missing on raids
+   * and on trips saved before the clock.
+   */
+  hour?: number;
   /** "combat" events: the line from the battle report. */
   combat?: CombatEvent;
   /** "fight" events: the monsters at the start of the fight, with their stats. */
@@ -74,8 +81,13 @@ export interface ExpeditionResult {
   outcome: "returned" | "retreated" | "wiped";
   orders: StandingOrders;
   deepestFloor: number;
-  /** In-game days the trip took (DESIGN.md decision 2). */
+  /**
+   * In-game days the trip took (DESIGN.md decision 2): the days the town
+   * lives through before the party is back, worked out from `hours`.
+   */
   days: number;
+  /** Hours from setting off to climbing out (or falling), M7.01. Missing on older saves. */
+  hours?: number;
   roomsVisited: number;
   /** The heroes as they came home (or where they fell). */
   party: Hero[];

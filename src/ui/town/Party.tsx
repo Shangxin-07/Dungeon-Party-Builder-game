@@ -164,7 +164,7 @@ export function PartyPanel({
           </select>
         </label>
         <label
-          title={`After walking floor ${town.orders.targetFloor}, stay and hunt until this share of its monsters are dead. Each ${ix.lib.dungeon.hunting.roomsPerDay} extra rooms take a day; retreat orders still apply.`}
+          title={`After walking floor ${town.orders.targetFloor}, stay and hunt until this share of its monsters are dead. Each extra room takes about ${ix.lib.time.hunt} hours plus any fight; retreat orders still apply.`}
         >
           Hunting{" "}
           <select

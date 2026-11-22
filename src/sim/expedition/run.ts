@@ -12,6 +12,7 @@ import { type StandingOrders, describeRetreat } from "./orders";
 import type { ExpeditionResult, ExpeditionExtras } from "./report";
 import { WANDER_CHANCE } from "./tuning";
 import { list } from "./trip";
+import { tripDays } from "./clock";
 import { TripRescue } from "./rescue";
 
 /**
@@ -79,15 +80,19 @@ export class Expedition extends TripRescue {
       1,
       Math.min(1 + Math.floor(this.extras.lift ?? 0), targetFloor, site?.floor ?? targetFloor),
     );
-    if (this.first > 1)
+    const time = this.ix.lib.time;
+    if (this.first > 1) {
       this.emit(
         "depart",
         `The party rides the cage down past ${this.first === 2 ? "floor 1" : `floors 1 to ${this.first - 1}`}.`,
       );
+      this.pass(time.cagePerFloor * (this.first - 1));
+    }
 
     for (let depth = this.first; depth <= targetFloor; depth++) {
       const floor = this.ix.floor(depth);
       const rooms = planFloor(this.ix, depth, this.rng);
+      this.pass(time.stairs);
       this.depth = depth;
       if (depth === targetFloor) this.huntStart = this.floors?.[depth - 1]?.population ?? 0;
       this.deepest = depth;
@@ -96,10 +101,15 @@ export class Expedition extends TripRescue {
 
       for (let i = 0; i < rooms.length; i++) {
         const room = this.ix.room(rooms[i]!);
+        this.campIfTired();
         this.roomNo = i + 1;
         this.roomsVisited++;
         this.emit("room", `${room.name}. ${this.rng.pick(room.descriptions)}`);
         getRoom(room.behaviour)(this.context(room.id));
+        this.pass(
+          (room.hours ?? time.room) + (time.behaviours[room.behaviour] ?? 0),
+          !!room.rest && !this.wiped,
+        );
         if (!this.wiped) this.search();
         if (!this.wiped) this.betweenRooms();
         if (this.wiped) return this.finish("wiped");
@@ -168,6 +178,7 @@ export class Expedition extends TripRescue {
         this.emit("retreat", `${reason}. Following orders, the party stops hunting.`);
         return this.goHome("retreated");
       }
+      this.campIfTired();
       this.hunts++;
       this.roomNo = ++rooms;
       this.roomsVisited++;
@@ -175,6 +186,7 @@ export class Expedition extends TripRescue {
         "room",
         `Hunting: ${killed()} of ${goal} killed. The party searches the side tunnels.`,
       );
+      this.pass(this.ix.lib.time.hunt);
       if (lair) getRoom(lair.behaviour)(this.context(lair.id));
       else {
         const monsters = this.rollMonsters();
@@ -198,8 +210,11 @@ export class Expedition extends TripRescue {
   /** Climb back up. Cleared floors are quieter, but something may have wandered in. */
   protected goHome(outcome: "returned" | "retreated"): ExpeditionResult {
     this.roomNo = 0;
+    const time = this.ix.lib.time;
     for (let d = this.depth; d >= this.first; d--) {
       this.depth = d;
+      this.campIfTired();
+      this.pass(time.climbPerFloor);
       if (!this.rng.chance(WANDER_CHANCE)) continue;
       const monsters = this.rollMonsters();
       if (!monsters.length) continue;
@@ -209,11 +224,13 @@ export class Expedition extends TripRescue {
       if (this.wiped) return this.finish("wiped");
     }
     this.depth = 0;
-    if (this.first > 1)
+    if (this.first > 1) {
+      this.pass(time.cagePerFloor * (this.first - 1));
       this.emit(
         "home",
         `The cage hauls them up the last ${this.first - 1 === 1 ? "floor" : `${this.first - 1} floors`}.`,
       );
+    }
     const back = list([...this.alive(), ...this.followers].map((h) => h.name));
     this.emit("home", `${back} climb out of the pit.`);
     return this.finish(outcome);
@@ -234,9 +251,8 @@ export class Expedition extends TripRescue {
       outcome,
       orders: this.orders,
       deepestFloor: this.deepest,
-      days:
-        Math.max(1, this.deepest - (this.first - 1)) +
-        Math.ceil(this.hunts / Math.max(1, this.ix.lib.dungeon.hunting.roomsPerDay)),
+      days: tripDays(this.ix.lib.time.startHour, this.hours),
+      hours: this.hours,
       roomsVisited: this.roomsVisited,
       party: this.party,
       haul: wiped ? [] : this.haul,
@@ -290,6 +306,7 @@ export class Expedition extends TripRescue {
     }
     this.secrets.found++;
     this.emit("secret", `${scout.hero.name} notices ${secret.spotted}.`);
+    this.pass(this.ix.lib.time.cache);
     const main = this.rng;
     this.rng = rng;
     this.searching = true;
