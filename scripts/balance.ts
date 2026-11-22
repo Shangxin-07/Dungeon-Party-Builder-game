@@ -5,6 +5,10 @@
  *   npm run balance               # 500 runs each, floors 1-3
  *   npm run balance -- 2000
  *   npm run balance -- 500 fighter,cleric,mage    # a different party
+ *   npm run balance -- 400 fighter,fighter,scout,mage  # a party of four (the first Guild Hall)
+ *
+ * Dead/hero is the share of heroes sent who died; Some lost counts trips where
+ * someone died but the party wasn't wiped (M7.06: the loss that stings).
  *
  * Hours/floor and Days (M7.01, content/time.ts) count trips that did what they
  * were told: a floor should take about a day, there and back.
@@ -46,7 +50,7 @@ const rules: [string, RetreatRule][] = [
 for (const [label, retreat] of rules) {
   console.log(`\nFull expeditions, retreat rule: ${label}`);
   console.log(
-    "Target  Returned  Retreated  Wiped  Holed  Deaths  Fights  Haul  Dropped  Hours/floor  Days",
+    "Target  Returned  Retreated  Wiped  Holed  Deaths  Dead/hero  Some lost  Fights  Haul  Dropped  Hours/floor  Days",
   );
   for (const targetFloor of [1, 2, 3]) {
     const orders = { targetFloor, retreat, loot: "everything" } as const;
@@ -59,6 +63,8 @@ for (const [label, retreat] of rules) {
         pct(r.wiped).padEnd(6),
         pct(r.holed).padEnd(6),
         r.deaths.toFixed(2).padEnd(7),
+        pct(r.heroDeaths).padEnd(10),
+        pct(r.someLost).padEnd(10),
         r.fights.toFixed(1).padEnd(7),
         r.haul.toFixed(0).padEnd(5),
         r.dropped.toFixed(1).padEnd(8),

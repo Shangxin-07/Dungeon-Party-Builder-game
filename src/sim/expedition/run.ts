@@ -10,7 +10,7 @@ import { createRng, type Rng } from "../rng";
 import { getRoom } from "../rooms";
 import { DEFAULT_ORDERS, type StandingOrders, describeRetreat } from "./orders";
 import type { ExpeditionResult, ExpeditionExtras } from "./report";
-import { WANDER_CHANCE } from "./tuning";
+import { PARTY_HURT_BELOW, WANDER_CHANCE } from "./tuning";
 import { list } from "./trip";
 import { tripDays } from "./clock";
 import { TripRescue } from "./rescue";
@@ -529,6 +529,24 @@ export class Expedition extends TripRescue {
     return this.party.find((h) => h.id === id)?.name ?? "the leader";
   }
 
+  /**
+   * The whole party's state, for the "badly hurt" order (M7.06, DESIGN.md
+   * §17.6): one hero down or dead doesn't send everyone home while the rest
+   * are fine. Turn back once half the party is down or dead, or the party's
+   * HP (the downed count as nothing) is below half.
+   */
+  protected partyInTrouble(): string | undefined {
+    const fallen = this.party.filter((h) => h.condition !== "ok");
+    if (!fallen.length) return undefined;
+    if (fallen.length * 2 >= this.party.length)
+      return `${fallen.map((h) => h.name).join(" and ")} ${fallen.length === 1 ? "is" : "are"} down`;
+    const living = this.alive();
+    const hp = living.reduce((s, h) => s + (h.condition === "ok" ? h.hp : 0), 0);
+    const max = living.reduce((s, h) => s + this.maxHp(h), 0);
+    if (hp * 100 < max * PARTY_HURT_BELOW) return "The party is badly hurt";
+    return undefined;
+  }
+
   protected retreatReason(): string | undefined {
     // The leader just went down (M7.05): the party may lose heart, whatever the orders.
     if (this.leaderShaken) {
@@ -548,7 +566,9 @@ export class Expedition extends TripRescue {
       case "hero-downed":
         return why;
       case "hero-hp-below": {
-        if (why) return why;
+        // The whole party's state (M7.06), not just whoever went down.
+        const trouble = this.partyInTrouble();
+        if (trouble) return trouble;
         const percent = rule.percent + (this.extras.leader?.retreatEarly ?? 0);
         const hurt = this.conscious().find((h) => h.hp < (this.maxHp(h) * percent) / 100);
         return hurt ? `${hurt.name} is badly hurt` : undefined;

@@ -988,7 +988,7 @@ There are one-click buttons for **Sell all**, **Salvage all** and **Research wha
 
 > **Built in M7.04** (the debrief, third in the order below; the version label is M7.04 because a bug fix took M7.03). When a party is back, the *Debrief* panel opens at the top of the town with the tally (`tripTally`, `src/sim/town/debrief.ts`): time below with each floor's hours, rooms, fights, rests and camps; the rooms by floor and what happened in each; monsters slain by kind and by who killed them, with the biggest kill; the haul; the party (HP, XP, morale with reasons, injuries, the fallen); and what's waiting on the player (level-ups, the hurt, raises). Each line opens to the detail, and earlier trips keep their own debrief and replay.
 >
-> - **The haul is held** (`town.haul`, `src/sim/town/haul.ts`). Coins go straight to the purse and materials to the store, as before; everything else waits until the player sells it (the haul rate, haggled by whoever is at home), salvages it or keeps it. Sell all / Salvage all / Keep all, or per piece, then **Done**. Research joins in M7.06.
+> - **The haul is held** (`town.haul`, `src/sim/town/haul.ts`). Coins go straight to the purse and materials to the store, as before; everything else waits until the player sells it (the haul rate, haggled by whoever is at home), salvages it or keeps it. Sell all / Salvage all / Keep all, or per piece, then **Done**. Research joins in M7.07.
 > - **Salvage** needs a working Blacksmith: 60% / 80% / 100% of the item's `ItemDef.salvage` list by level, rounded down, at least 1 of each. Items without a list give scrap by tag (`town.salvage.byTag`: metal, silver, bone, wood, cloth), so a rusty helmet gives 1 iron ore. Gems, trinkets, coins and potions give nothing. Gear in the store room can be salvaged from the Market panel too.
 > - **The haul rule** (`town.haulRule`: sell everything / salvage what breaks down and sell the rest / keep everything) pre-fills the choices. Old saves start on "sell".
 > - Morale and the news still go by what the haul was worth the day it came home (`TripReport.goldEarned`); `coins` and `held` say what was paid and what waits. Saves version 16.
@@ -1054,6 +1054,23 @@ With bigger parties, the usual bad outcome should be **losing someone**, not los
 - **A gear check** joins the launch warnings and the scouting report: each hero's attack and armour against what the floor usually throws at them ("Tamsin's leather won't stop much on floor 3").
 - **The memorial and morale** already make a death hurt (§6, §10). Comrades and Good heroes take it hardest.
 
+> **As built in M7.06:**
+> - **Monsters pick on thin armour**: brutes (most monsters) go for the hero with the least armour in reach 80% of the time, the most hurt on a tie (`PREY_ON_WEAKEST` in `src/sim/ai.ts`). Cunning monsters still go for the leader, and the undead still hunt the Good.
+> - **Bleeding out takes 2 rounds, not 3** (`BLEED_ROUNDS`): a hero who goes down mid-fight needs a healer quickly.
+> - **The "badly hurt" order weighs the whole party** (`partyInTrouble` in `expedition/run.ts`): the party turns back when anyone still standing is below the percent, when half the party is down or dead, or when its HP (the downed count as nothing) is under half (`PARTY_HURT_BELOW`). One hero down or dead no longer sends everyone home; the downed are carried into the next fight, where they bleed out unless someone heals them. "Turn back if anyone goes down" is unchanged.
+> - **Late in the day the downed are harder to bring round**: the Medicine revive chance drops by up to half as the party nears its camp time (`REVIVE_LATE`). Small on its own.
+> - **The gear check** (`gearCheck` in `src/sim/report.ts`): a front-row hero whose armour stops under a third of the floor's usual hit, or a weapon fighter needing more than 4 hits to fell its usual foe, gets a line in the scouting report ("Corin's leather armour won't stop much on floor 3: a usual hit there is about 10, and it stops 3"); the launch warnings name who is under-geared. Starter kit passes on floors 1-2; a cleric's leather fails from floor 3.
+> - **Fight scaling stays +18% per fighter over 3.** +30% or +45% got floor 2 closer to the 10-20% target but made floor 3 collapse (45%: raids per town 12 → 29). Kept as Mike approved.
+> - **Results** (`npm run balance -- 400 fighter,fighter,scout,mage`, now with *Dead/hero* and *Some lost*: trips where someone died but not everyone). Fresh party of four, retreat below 30%:
+>   | Floor | Before: dead per hero / wiped / lost someone | After |
+>   |---|---|---|
+>   | 1 (ready for it) | 0% / 0% / 0% | 0% / 0% / 0% |
+>   | 2 (one too deep) | 1.6% / 0.5% / 3.8% | 2.1% / 0.3% / 6.8% |
+>   | 3 (two too deep) | 16% / 16% / 21% | 24% / 20% / 27% |
+>
+>   Floor 1 and the two-floors-deep targets are met. Floor 2 for a fresh party is still under the 10-20% target: a fresh party of four rarely goes down there at all (about one hero downed per ten trips), so only harder fights would get there.
+> - **Days bot** (100 towns, `--build`, 60 days; climb 120): floor 1 lost 0.0 → 0.0; floor 2 0.1 → 0.4; floor 3 1.8 → 3.3 (raids 12 → 18, trips 8.9 → 7.7); climbing as the party levels 0.1 → 0.2. Parties geared for their floor barely notice; parties sent too deep lose people.
+
 ### 7. Research
 
 High-INT heroes study in town instead of delving. This is a real roster choice: your best mage can go down, or stay home and make everyone better.
@@ -1105,8 +1122,8 @@ Each one is playable on its own. Version numbers go up by one per PR, starting a
 | M7.02 | **Background trips**: outings, Next day / Wait, kills landing by day, two parties out at once, expected back, overdue and possibly lost, rescue clock from the wipe, holed-up parties and rescue vs recovery missions. Saves version up | The core of the change. Watching becomes a replay |
 | M7.03 | **The debrief**: tally with detail, haul held for sell / salvage / keep, salvage lists and the Blacksmith yield, haul rule. Saves version up | Puts the first new choices where Mike wants them |
 | M7.04 → built as M7.05 | **Leadership and party size**: Leadership skill, leaders, command and alignment cost, disobedience and deserters (with their partial debrief), leader traits and leadership experience, clever monsters targeting leaders, Guild Hall caps and level 5, fights scaling with party size | Makes the bigger parties that losses need |
-| M7.05 | **Losses that sting**: the tuning pass against the targets in section 6, and the gear check | Needs bigger parties first |
-| M7.06 | **Research**: Library desks, researchers, Lore, monster tiers, specimens, item research and recipes, wards | Needs the debrief (research choice) and gives stealth its payoff |
+| M7.05 → built as M7.06 | **Losses that sting**: the tuning pass against the targets in section 6, and the gear check | Needs bigger parties first |
+| M7.06 → M7.07 | **Research**: Library desks, researchers, Lore, monster tiers, specimens, item research and recipes, wards | Needs the debrief (research choice) and gives stealth its payoff |
 | M7.07 | **Scout missions and floor intel**: the mission order, slipping past fights, dated intel in the report | Needed to find lairs |
 | M7.08 | **Stealth and the Mire Behemoth**: Stealth skill, `noisy` gear, sneak missions, the first warded beast, its wallow and bane | Brings research, intel and missions together |
 | M8 | **Gloss**: portraits, room scenes, styled debrief | After the loop, as agreed |

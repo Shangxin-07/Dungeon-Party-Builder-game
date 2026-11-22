@@ -11,6 +11,7 @@ import {
   DOWNED_LOAD,
   MANA_REGEN_DIVISOR,
   REVIVE_BASE,
+  REVIVE_LATE,
   REVIVE_SCALE,
   VALUABLE_PER_SLOT,
 } from "./tuning";
@@ -72,9 +73,12 @@ export class TripCare extends TripBase {
     const medic = this.best("medicine");
     if (!medic) return;
     const skill = medic.value / 100;
+    // Late in a long day, the downed are harder to bring round (M7.06).
+    const late = Math.min(1, this.awake / this.ix.lib.time.awakeHours);
+    const chance = (REVIVE_BASE + REVIVE_SCALE * skill) * (1 - REVIVE_LATE * late);
 
     for (const h of this.party.filter((x) => x.condition === "downed")) {
-      if (this.rng.chance(REVIVE_BASE + REVIVE_SCALE * skill)) {
+      if (this.rng.chance(chance)) {
         this.emit("medicine", `${medic.hero.name} tends to ${h.name}.`);
         this.heal(h, 1 + Math.floor(medic.value / 10));
       } else if (!this.carried.has(h.id)) {

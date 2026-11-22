@@ -120,6 +120,20 @@ function technique(
   return target ? { kind: "ability", ability: move.id, target: target.uid } : undefined;
 }
 
+/**
+ * Monsters pick on the softest target in reach more often than not (M7.06,
+ * DESIGN.md §17.6): the hero in the thinnest armour, so the one you didn't
+ * gear properly is the one who goes down (ties: the most hurt). Otherwise
+ * anyone in reach.
+ */
+export const PREY_ON_WEAKEST = 0.8;
+function preyOn(view: BattleView, targets: Fighter[]): Fighter | undefined {
+  if (!targets.length) return undefined;
+  if (targets.length > 1 && view.rng.chance(PREY_ON_WEAKEST))
+    return lowest(targets, (f) => f.derived.armor + f.hp / 1000);
+  return view.rng.pick(targets);
+}
+
 // ---------------------------------------------------------------------------
 // Built-in AIs
 // ---------------------------------------------------------------------------
@@ -148,7 +162,7 @@ registerAi("brute", (view) => {
     if (targets.length)
       return { kind: "ability", ability: ability.id, target: view.rng.pick(targets).uid };
   }
-  return attack(view, (t) => (t.length ? view.rng.pick(t) : undefined));
+  return attack(view, (t) => preyOn(view, t));
 });
 
 /**

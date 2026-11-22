@@ -8,6 +8,7 @@ import { fatigueTier, heroSheet, inCampClass, type Hero } from "../hero";
 import type { Index } from "../library";
 import { isLow } from "../morale";
 import { partyCommand, type Command } from "../leadership";
+import { gearCheck } from "../report";
 import type { StandingOrders } from "../expedition";
 import { tripDays } from "../expedition/clock";
 import type { LostSite, Outing, TownState } from "./state";
@@ -277,6 +278,14 @@ export function launchWarnings(ix: Index, town: TownState): string[] {
   }
   if (party.length && !party.some((h) => h.row === "front"))
     out.push("Nobody is in the front row. Monsters will go straight for the back.");
+  // The gear check (M7.06): the details are in the scouting report.
+  const gear = gearCheck(ix, town.orders.targetFloor, party);
+  if (gear.length) {
+    const names = [...new Set(gear.map((g) => g.hero))].map((id) => findHero(town, id)!.name);
+    out.push(
+      `Gear check: ${listAnd(names)} ${names.length === 1 ? "is" : "are"} under-geared for floor ${town.orders.targetFloor}. The scouting report says why.`,
+    );
+  }
   // Command (M7.05): over it, the party is unruly.
   const cmd = nextCommand(ix, town);
   if (cmd.leader && cmd.over > 0) {

@@ -8,7 +8,9 @@ import type { DamageType } from "../content/types";
 import { knownAbilities } from "./abilities";
 import { floorOdds } from "./encounter";
 import { heroSheet, type Hero } from "./hero";
+import { mainClass } from "./levels";
 import type { Index } from "./library";
+import { computeDerived } from "./stats";
 import type { TownState } from "./town";
 
 /** Below this best Scouting, ambushers will usually strike first. */
@@ -52,6 +54,78 @@ export function damageTypes(ix: Index, hero: Hero): Set<DamageType> {
 }
 
 const pct = (n: number) => `${Math.round(n * 100)}%`;
+
+/** A front-row hero whose armour stops less than this share of a usual hit gets a warning. */
+export const ARMOUR_STOPS_FAIR = 1 / 3;
+/** A weapon fighter who needs more than this many hits to fell a usual foe gets a warning. */
+export const BLOWS_FAIR = 4;
+
+/**
+ * What a floor usually throws at a party (M7.06): the size of a usual hit
+ * (the average weapon hit is ¾ of attack), and a usual monster's armour and
+ * HP, weighted by how often each monster turns up there.
+ */
+export function floorThreat(ix: Index, floor: number): { hit: number; armor: number; hp: number } {
+  const odds = floorOdds(ix, floor).filter((o) => !ix.monster(o.monster).summonOnly);
+  let total = 0;
+  let attack = 0;
+  let armor = 0;
+  let hp = 0;
+  for (const { monster, share } of odds) {
+    const def = ix.monster(monster);
+    const d = computeDerived(def.stats, def.passives ?? [], {
+      ranged: !!def.weapon.ranged,
+      overrides: def.overrides,
+    });
+    total += share;
+    attack += (d.attack + def.weapon.attack) * share;
+    armor += d.armor * share;
+    hp += d.maxHp * share;
+  }
+  if (!total) return { hit: 0, armor: 0, hp: 0 };
+  return { hit: (attack / total) * 0.75, armor: armor / total, hp: hp / total };
+}
+
+/**
+ * The gear check (M7.06, DESIGN.md §17.6): each hero's armour and weapon
+ * against what this floor usually throws at them. Monsters pick on the
+ * thinnest armour in reach, so the front row's armour matters most; the
+ * back row is only reached by archers, or once the front falls.
+ */
+export function gearCheck(
+  ix: Index,
+  floor: number,
+  party: readonly Hero[],
+): { hero: string; text: string }[] {
+  const threat = floorThreat(ix, floor);
+  if (!threat.hit) return [];
+  const out: { hero: string; text: string }[] = [];
+  const usual = Math.round(threat.hit);
+  for (const h of party) {
+    const sheet = heroSheet(ix, h);
+    const armor = sheet.derived.armor;
+    if (h.row === "front" && armor < threat.hit * ARMOUR_STOPS_FAIR) {
+      const worn = h.equipment.armor ? ix.item(h.equipment.armor).name.toLowerCase() : undefined;
+      const what = worn ? `${h.name}'s ${worn}` : `${h.name}, with no armour,`;
+      out.push({
+        hero: h.id,
+        text: `${what} won't stop much on floor ${floor}: a usual hit there is about ${usual}, and ${worn ? "it" : "they"} stop${worn ? "s" : ""} ${armor}. Monsters tend to go for the thinnest armour they can reach.`,
+      });
+    }
+    const ai = ix.cls(mainClass(h)).ai;
+    if (ai === "caster" || ai === "healer") continue;
+    const perHit = sheet.derived.attack * 0.75 - threat.armor;
+    const blows = perHit > 0 ? threat.hp / perHit : Infinity;
+    if (blows > BLOWS_FAIR) {
+      const weapon = h.equipment.weapon ? ix.item(h.equipment.weapon).name.toLowerCase() : "fists";
+      out.push({
+        hero: h.id,
+        text: `${h.name}'s ${weapon} will take about ${Number.isFinite(blows) ? Math.round(blows) : "too many"} hits to fell a usual foe on floor ${floor}.`,
+      });
+    }
+  }
+  return out;
+}
 
 export function scoutingReport(
   ix: Index,
@@ -104,5 +178,6 @@ export function scoutingReport(
   }
   if (monsters.some((m) => !m.known && m.share >= 0.1))
     warnings.push("Something the guild has never met lurks on this floor.");
+  warnings.push(...gearCheck(ix, floor, party).map((g) => g.text));
   return { floor, monsters, warnings };
 }
