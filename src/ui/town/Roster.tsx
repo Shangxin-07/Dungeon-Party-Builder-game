@@ -30,7 +30,9 @@ import {
   outingOf,
   unequip,
   unpackItem,
-  wage,
+  retainer,
+  raiseWords,
+  shareUnits,
   type TownState,
 } from "../../sim/town";
 import { ix } from "../game";
@@ -200,7 +202,8 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
         <h3>{h.name}</h3>
         <span className="muted small">
           {h.porter ? "Porter" : heroTitle(ix, h)}
-          {town.camp ? "" : `, ${wage(ix, h)}g/day`}
+          {town.camp ? "" : `, ${retainer(ix, h)}g/day at home`}
+          {h.owed ? `, owed ${h.owed}g` : ""}
         </span>
         {h.levelUps.length ? <span className="badge">Level up!</span> : null}
         {h.raiseAsk ? <span className="badge">Wants a raise</span> : null}
@@ -227,8 +230,14 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
       {h.raiseAsk ? (
         <div className="raise">
           <p>
-            <strong>{h.name} wants a raise</strong> of {h.raiseAsk.amount} gold a day (now paid{" "}
-            {wage(ix, h)}). They'll take silence as a no after{" "}
+            <strong>
+              {h.name} wants {raiseWords(h.raiseAsk)}
+            </strong>{" "}
+            (now{" "}
+            {h.raiseAsk.kind === "share"
+              ? `${shareUnits(ix, h)} ${shareUnits(ix, h) === 1 ? "share" : "shares"}`
+              : `${retainer(ix, h)} gold a day at home`}
+            ). They'll take silence as a no after{" "}
             {Math.max(1, ix.lib.town.raises.patienceDays - (h.raiseAsk.waited ?? 0))} more days in
             town.
           </p>

@@ -55,8 +55,10 @@ export {
   healingBonus,
   liftFloors,
   vaultShare,
-  wage,
-  wageBill,
+  retainer,
+  retainerBill,
+  shareUnits,
+  owedTotal,
   standing,
   built,
   forecast,
@@ -123,7 +125,8 @@ export {
   cancelRescue,
 } from "./parties";
 export { nextLevel, underConstruction, upgrade, builderHands, repair } from "./buildings";
-export { answerRaise, rest, waitUntilBack, launchAndWait } from "./days";
+export { answerRaise, raiseWords, rest, waitUntilBack, launchAndWait } from "./days";
+export { payDay, payShares, splitShares } from "./pay";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
 export { launch, giveUp, outingView } from "./launch";
 export { assignPost, postOf, trade } from "./posts";

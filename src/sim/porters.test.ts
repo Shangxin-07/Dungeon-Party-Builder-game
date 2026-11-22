@@ -20,7 +20,7 @@ import {
   toggleParty,
   TOWN_VERSION,
   trainPorter,
-  wage,
+  retainer,
   type TownState,
 } from "./town";
 
@@ -60,7 +60,7 @@ describe("porters", () => {
     const p = t.roster.at(-1)!;
     expect(p.porter).toEqual({ watched: 0, xp: 0 });
     expect(p.untrained).toBe(true);
-    expect(wage(ix, p)).toBe(rules.wage);
+    expect(retainer(ix, p)).toBe(rules.wage);
     expect(t.porters).toEqual([p.id]);
     expect(t.party).not.toContain(p.id);
     expect(cantLaunch(ix, t)).toBeUndefined();

@@ -17,7 +17,7 @@ import {
   newTown,
   rest,
   toggleParty,
-  wage,
+  retainer,
   type TownState,
 } from "./town";
 
@@ -100,10 +100,10 @@ describe("raises", () => {
     const t = rest(ix, at(fresh(), 1 + r.everyLevels), heroNames);
     const h = t.roster[0]!;
     const yes = answerRaise(ix, t, h.id, true);
-    expect(wage(ix, yes.roster[0]!)).toBe(wage(ix, h) + r.amount);
+    expect(retainer(ix, yes.roster[0]!)).toBe(retainer(ix, h) + r.amount);
     expect(yes.roster[0]!.morale).toBeGreaterThan(h.morale);
     const no = answerRaise(ix, t, h.id, false);
-    expect(wage(ix, no.roster[0]!)).toBe(wage(ix, h));
+    expect(retainer(ix, no.roster[0]!)).toBe(retainer(ix, h));
     expect(no.roster[0]!.morale).toBeLessThan(h.morale);
     // Settled until they've gained more levels.
     expect(rest(ix, no, heroNames).roster[0]!.raiseAsk).toBeUndefined();

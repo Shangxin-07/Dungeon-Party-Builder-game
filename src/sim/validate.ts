@@ -619,7 +619,11 @@ export function validateLibrary(lib: Library): string[] {
   for (const id of t.startingStash) if (!itemIds.has(id)) err(`town: unknown item "${id}"`);
   if (t.sellRate < 0 || t.sellRate > 1) err("town: sellRate must be between 0 and 1");
   if (t.haulRate < 0 || t.haulRate > 1) err("town: haulRate must be between 0 and 1");
-  if (t.wages.base < 0 || t.wages.perLevel < 0) err("town: wages can't be negative");
+  if (t.retainer.base < 0 || t.retainer.levelsPerGold < 1)
+    err("town: retainer.base can't be negative and levelsPerGold must be at least 1");
+  if (t.shares.percent < 0 || t.shares.percent > 100) err("town: shares.percent must be 0-100");
+  if (t.shares.porter < 0) err("town: shares.porter can't be negative");
+  if (t.raises.amount < 0 || t.raises.share < 0) err("town: raises can't be negative");
   if (t.restPercent <= 0) err("town: restPercent must be above 0");
   if (t.hireCost < 0 || t.startingGold < 0) err("town: costs can't be negative");
   if (t.repairRate < 0) err("town: repairRate can't be negative");

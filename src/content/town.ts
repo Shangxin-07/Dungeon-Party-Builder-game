@@ -56,11 +56,16 @@ export default defineTownRules({
   restPercent: 40,
   // A raid-damaged building costs a quarter of its build price to fix.
   repairRate: 0.25,
-  // M6 balance pass: a level-4 hero costs 6 gold a day, so a full roster eats
-  // about a third of what floor-1 trips bring in.
-  wages: { base: 2, perLevel: 1 },
-  // Every 3 levels a hero asks for 2 more gold a day (Gold heroes ask for 4).
-  raises: { everyLevels: 3, amount: 2, patienceDays: 3 },
+  // M7.12 (DESIGN.md §18.2): adventurers are paid like adventurers. At home a
+  // hero draws a retainer (a level-4 hero 2 gold a day, where the old wage was
+  // 6); on a trip the party takes a share of the haul instead, so a failed
+  // trip costs nothing and an idle guild still slowly goes broke. Days bot
+  // (camp, floor 1, two parties): pay was 25% of income on wages, now 17%.
+  retainer: { base: 1, levelsPerGold: 3 },
+  shares: { percent: 15, porter: 0.5 },
+  // Every 3 levels a hero asks for 1 more gold a day on their retainer; Gold
+  // heroes ask for half a share more of every haul instead.
+  raises: { everyLevels: 3, amount: 1, share: 0.5, patienceDays: 3 },
   // Two parties on file, so one can rest while the other goes down.
   savedParties: 2,
   // Five average heroes resting in town double the builders' pace; never more.

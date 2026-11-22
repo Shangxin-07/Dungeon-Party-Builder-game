@@ -156,7 +156,7 @@ export interface SecretDef {
 
 /** Porters (M6): untrained hands who carry loot and watch the fighting. */
 export interface PorterRules {
-  /** Gold to sign a recruit as a porter, and their daily wage. */
+  /** Gold to sign a recruit as a porter, and their daily retainer while at home (M7.12). */
   hireCost: number;
   wage: number;
   /** Porters who can go down with one party. */

@@ -25,7 +25,7 @@ import {
   trade,
   trainMiner,
   upgrade,
-  wageBill,
+  retainerBill,
   warningDays,
   type TownState,
 } from "./town";
@@ -116,10 +116,10 @@ describe("miners", () => {
     expect(t.ledger.some((l) => l.kind === "bought")).toBe(false);
   });
 
-  it("wages read nothing at the camp", () => {
+  it("retainers read nothing at the camp", () => {
     const t = camp();
-    expect(wageBill(ix, t)).toBe(0);
-    expect(wageBill(ix, { ...t, camp: undefined })).toBeGreaterThan(0);
+    expect(retainerBill(ix, t)).toBe(0);
+    expect(retainerBill(ix, { ...t, camp: undefined })).toBeGreaterThan(0);
   });
 
   it("a miner can't train until the camp is held, then keeps their levels and earned stats", () => {

@@ -4,7 +4,7 @@
 import { heroSheet } from "../hero";
 import type { Index } from "../library";
 import { type TownState, TownError } from "./state";
-import { shopStock, buyPrice, haggler, sellPrice, findHero } from "./read";
+import { shopStock, buyPrice, haggler, sellPrice, findHero, awaySet } from "./read";
 import { book, edit, hero, takeFromStash } from "./internal";
 
 export function buy(ix: Index, town: TownState, itemId: string): TownState {
@@ -44,9 +44,11 @@ export function restockPlan(ix: Index, town: TownState): RestockLine[] {
   const stash = [...town.stash];
   const stock = shopStock(ix, town);
   const out: RestockLine[] = [];
+  // Anyone who has gone down again since can't be restocked until they're back.
+  const away = awaySet(town);
   for (const before of trip.party) {
     const h = findHero(town, before.id);
-    if (!h) continue;
+    if (!h || away.has(h.id)) continue;
     const now = [...h.pack];
     let room = heroSheet(ix, h).derived.carrySlots - h.pack.length;
     for (const id of before.pack) {

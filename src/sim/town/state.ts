@@ -190,6 +190,8 @@ export interface TripReport {
   coins?: number;
   /** Pieces of haul held for the debrief: sell, salvage or keep (M7.03). */
   held?: number;
+  /** Each hero's share of the haul in gold, by hero id (M7.12). Missing on older trips. */
+  shares?: Record<string, number>;
   /** Who haggled with the Market, and the share of loot value it paid (M6). */
   haggledBy?: string;
   lootRate?: number;
@@ -386,7 +388,10 @@ export type LedgerKind =
   | "sold"
   | "bought"
   | "hired"
+  /** Retainers for heroes at home (M7.12; daily wages before). */
   | "wages"
+  /** Heroes' shares of the haul (M7.12). */
+  | "shares"
   | "built"
   | "repairs"
   | "stolen"

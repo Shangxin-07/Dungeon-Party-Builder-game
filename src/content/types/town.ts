@@ -148,16 +148,26 @@ export interface TownRules {
   /** Repairing a raid-damaged building costs this share of what it cost to build. */
   repairRate: number;
   /**
-   * Gold each hero on the roster is paid at the end of every day: base plus
-   * perLevel for each level. Heroes who can't be paid lose morale ("unpaid").
+   * Pay (M7.12, DESIGN.md §18.2). A hero at home draws a daily retainer:
+   * `base` gold plus 1 for every `levelsPerGold` levels. Heroes away on a trip
+   * draw nothing; they're paid by their share. Anyone who can't be paid loses
+   * morale ("unpaid").
    */
-  wages: { base: number; perLevel: number };
+  retainer: { base: number; levelsPerGold: number };
+  /**
+   * A party takes `percent` of what its haul is worth at the Market when it
+   * comes home, split between the heroes who went (one share each, more after
+   * a raise) and porters (`porter` shares each). What the purse can't cover
+   * is owed and paid first thing each day.
+   */
+  shares: { percent: number; porter: number };
   /**
    * Veterans ask for raises (M6): every `everyLevels` levels since their last
-   * raise talk, a hero asks for `amount` more gold a day (Gold-motivated
-   * heroes ask for double). Unanswered after `patienceDays`, it counts as a no.
+   * raise talk, a hero asks for `amount` more gold a day on their retainer.
+   * Gold-motivated heroes ask for a bigger cut instead: `share` more shares of
+   * every haul. Unanswered after `patienceDays`, it counts as a no.
    */
-  raises: { everyLevels: number; amount: number; patienceDays: number };
+  raises: { everyLevels: number; amount: number; share: number; patienceDays: number };
   /** How many parties the guild can keep on file (name, heroes, porters, orders). */
   savedParties: number;
   /**

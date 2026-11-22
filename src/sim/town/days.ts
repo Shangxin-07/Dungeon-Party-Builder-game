@@ -1,5 +1,5 @@
 /**
- * A day passing in town: the pit at night, morale, quitting, wages and raises.
+ * A day passing in town: the pit at night, morale, quitting, pay (pay.ts) and raises.
  */
 import { applyKills, dungeonDay } from "../dungeon";
 import { breakOut, holedNight } from "../expedition";
@@ -23,7 +23,6 @@ import {
   healingBonus,
   trainingXp,
   vaultShare,
-  wage,
   standing,
   built,
   findHero,
@@ -38,6 +37,7 @@ import { restHero, healInjuries, wasDowned, maybeInjure } from "./wounds";
 import { newBody, rise, risenClimb } from "./bodies";
 import { checkCamp, raidSpoils, tidyPosts, workPosts } from "./posts";
 import { researchTiers, studyDay, tidyDesks } from "./research";
+import { payDay } from "./pay";
 import { arrivals, hearOfLoss, landKills, launch, remember, returnHero } from "./launch";
 
 /**
@@ -359,27 +359,6 @@ function holdingOut(ix: Index, t: TownState, site: LostSite): void {
 }
 
 /**
- * Pay the day's wages, in roster order, while the gold lasts. Anyone who
- * can't be paid takes it badly (the "unpaid" morale fact).
- */
-export function payWages(ix: Index, t: TownState): void {
-  // At the mining camp (DESIGN.md §8) everyone works for their keep: pay
-  // starts when the camp is held and the guild proper opens its books.
-  if (t.camp) return;
-  const unpaid: Hero[] = [];
-  const away = awaySet(t);
-  for (const h of t.roster) {
-    const w = wage(ix, h);
-    if (t.gold >= w) book(t, "wages", -w);
-    // Those out below hear about it when they're back: they're paid what's owed.
-    else if (!away.has(h.id)) unpaid.push(h);
-  }
-  if (!unpaid.length) return;
-  for (const h of unpaid) applyMorale(ix, h, { unpaid: 1 }, t.day);
-  news(t, `The guild couldn't pay ${listWords(unpaid.map((h) => h.name))} today.`, "bad");
-}
-
-/**
  * Veterans ask for raises (M6, content/town.ts `raises`). A hero who has
  * gained enough levels since their last raise talk asks; one who's been kept
  * waiting too long takes it as a no. Only days in town count: a hero away in
@@ -402,10 +381,22 @@ export function raiseTalk(ix: Index, t: TownState, away: ReadonlySet<string> = n
       continue;
     }
     if (h.level < (h.payLevel ?? 1) + r.everyLevels) continue;
-    const amount = r.amount * (h.motivation === "gold" ? 2 : 1);
-    h.raiseAsk = { amount, day: t.day, waited: 0 };
-    news(t, `${h.name} (level ${h.level}) asks for a raise of ${amount} gold a day.`);
+    // Gold heroes want a bigger cut of the haul (M7.12); the rest a bigger retainer.
+    if (h.motivation === "gold" && !h.porter) {
+      h.raiseAsk = { amount: r.share, day: t.day, waited: 0, kind: "share" };
+      news(t, `${h.name} (level ${h.level}) asks for ${raiseWords(h.raiseAsk)}.`);
+      continue;
+    }
+    h.raiseAsk = { amount: r.amount, day: t.day, waited: 0 };
+    news(t, `${h.name} (level ${h.level}) asks for ${raiseWords(h.raiseAsk)}.`);
   }
+}
+
+/** "a raise of 1 gold a day", "half a share more of every haul". */
+export function raiseWords(ask: NonNullable<Hero["raiseAsk"]>): string {
+  if (ask.kind !== "share") return `a raise of ${ask.amount} gold a day`;
+  const n = ask.amount === 0.5 ? "half a share" : `${ask.amount} shares`;
+  return `${n} more of every haul`;
 }
 
 /** Say yes or no to a hero's request for a raise. */
@@ -413,18 +404,19 @@ export function answerRaise(ix: Index, town: TownState, heroId: string, agree: b
   const t = edit(town);
   const h = hero(t, heroId);
   if (!h.raiseAsk) throw new TownError(`${h.name} hasn't asked for a raise.`);
-  if (agree) h.pay = (h.pay ?? 0) + h.raiseAsk.amount;
+  if (agree && h.raiseAsk.kind === "share") h.cut = (h.cut ?? 0) + h.raiseAsk.amount;
+  else if (agree) h.pay = (h.pay ?? 0) + h.raiseAsk.amount;
   h.raiseAsk = undefined;
   h.payLevel = h.level;
   applyMorale(ix, h, agree ? { raiseGiven: 1 } : { raiseRefused: 1 }, t.day);
   return t;
 }
 
-/** The end of a day in town: wages, builders, rest, morale, the lost, and anyone who's had enough. */
+/** The end of a day in town: pay, builders, rest, morale, the lost, and anyone who's had enough. */
 export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): void {
   // Anyone already at the end of their tether goes before the day starts.
   quitters(ix, t);
-  payWages(ix, t);
+  payDay(ix, t);
   raiseTalk(ix, t, away);
   t.day += 1;
   buildersWork(ix, t, away);
