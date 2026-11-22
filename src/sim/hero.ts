@@ -152,7 +152,7 @@ export interface LostLevel {
 /** The fatigue tier a hero is in ("tired", "exhausted"), if any. */
 export function fatigueTier(ix: Index, hero: Hero) {
   let tier: (typeof ix.lib.wear.tiers)[number] | undefined;
-  for (const t of ix.lib.wear.tiers) if ((hero.fatigue ?? 0) >= t.at) tier = t;
+  for (const t of ix.lib.wear.tiers) if (hero.fatigue >= t.at) tier = t;
   return tier;
 }
 
@@ -201,7 +201,7 @@ export function heroPassives(ix: Index, hero: Hero): PassiveEffect[] {
   }
   for (const id of hero.perks) out.push(...ix.perk(id).passives);
   out.push(...depthPassives(ix, hero));
-  for (const inj of hero.injuries ?? []) out.push(...ix.injury(inj.id).passives);
+  for (const inj of hero.injuries) out.push(...ix.injury(inj.id).passives);
   out.push(...(fatigueTier(ix, hero)?.passives ?? []));
   // Leading makes a better leader (M7.05).
   const led = Math.floor(hero.lead?.points ?? 0);
@@ -218,8 +218,7 @@ export function depthPassives(ix: Index, hero: Hero): PassiveEffect[] {
   const out: PassiveEffect[] = [];
   const hp = Math.floor((hero.level - 1) * ix.lib.levels.hpPerLevel);
   if (hp > 0) out.push({ type: "modifyStat", stat: "maxHp", amount: hp });
-  for (const [id, level] of Object.entries(hero.classes ?? {}))
-    out.push(...classDepth(ix, id, level));
+  for (const [id, level] of Object.entries(hero.classes)) out.push(...classDepth(ix, id, level));
   return out;
 }
 
@@ -241,7 +240,7 @@ export function classDepth(ix: Index, classId: string, level: number): PassiveEf
 /** "Fighter 6 / Mage 3", deepest first; "Fighter" for a level-1 hero. */
 export function classLine(ix: Index, hero: Hero): string {
   if (hero.untrained || hero.porter) return hero.porter ? "Porter" : "untrained";
-  const entries = Object.entries(hero.classes ?? {}).sort((a, b) => b[1] - a[1]);
+  const entries = Object.entries(hero.classes).sort((a, b) => b[1] - a[1]);
   if (!entries.length) return ix.cls(hero.classId).name;
   return entries.map(([id, l]) => `${ix.cls(id).name} ${l}`).join(" / ");
 }
@@ -253,7 +252,7 @@ export function classLine(ix: Index, hero: Hero): string {
 export function heroTitle(ix: Index, hero: Hero, short = false): string {
   if (hero.porter) return "Porter";
   if (hero.untrained) return "untrained";
-  const classes = Object.entries(hero.classes ?? {});
+  const classes = Object.entries(hero.classes);
   const placed = classes.reduce((s, [, l]) => s + l, 0);
   if (classes.length <= 1 && placed === hero.level)
     return short
@@ -279,7 +278,7 @@ export function heroSheet(ix: Index, hero: Hero): HeroSheet {
     // "align:good" and the like (DESIGN.md §7): monsters that hunt by alignment look for it.
     tags: [
       "hero",
-      ...new Set([ix.cls(hero.classId).id, ...Object.keys(hero.classes ?? {})]),
+      ...new Set([ix.cls(hero.classId).id, ...Object.keys(hero.classes)]),
       ...(hero.alignment ? [`align:${hero.alignment}`] : []),
     ],
   };

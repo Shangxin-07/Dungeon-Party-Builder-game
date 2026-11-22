@@ -189,7 +189,7 @@ export function scoutingReport(
     });
 
   // Floor intel (M7.08): what the scouts counted, including anything the content odds don't list.
-  const seen = town.intel?.[floor];
+  const seen = town.intel[floor];
   let intel: ReportIntel | undefined;
   if (seen) {
     for (const m of monsters) m.counted = seen.monsters[m.monster] ?? 0;
@@ -221,7 +221,7 @@ export function scoutingReport(
       hazards: seen.hazards.map((id) => ix.room(id).name),
       lairs: (seen.lairs ?? []).map((id) => {
         const l = ix.lair(id);
-        return town.lairs?.[id]?.slain ? `${l.name} (the beast is dead)` : l.name;
+        return town.lairs[id]?.slain ? `${l.name} (the beast is dead)` : l.name;
       }),
       rooms: seen.rooms,
       of: seen.of,

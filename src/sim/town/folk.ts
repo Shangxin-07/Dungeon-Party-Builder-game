@@ -21,8 +21,6 @@ import { openPosts, total } from "./read";
 import { book, edit, news, roll } from "./internal";
 import { benches } from "./workshops";
 
-export const folkOf = (town: TownState): Folk => town.folk ?? { count: 0, food: 0, jobs: {} };
-
 /** Room for settlers (Cottages). */
 export const housing = (ix: Index, town: TownState) => total(ix, town, "housing");
 
@@ -31,11 +29,11 @@ export const foodGrown = (ix: Index, town: TownState) => total(ix, town, "food")
 
 /** Settlers with a job, and with none. */
 export const folkWorking = (town: TownState) =>
-  Object.values(folkOf(town).jobs).reduce((s, n) => s + n, 0);
-export const folkIdle = (town: TownState) => folkOf(town).count - folkWorking(town);
+  Object.values(town.folk.jobs).reduce((s, n) => s + n, 0);
+export const folkIdle = (town: TownState) => town.folk.count - folkWorking(town);
 
 /** Settlers on a job ("post:<id>" or "workshop:<building id>"). */
-export const folkAt = (town: TownState, job: string) => folkOf(town).jobs[job] ?? 0;
+export const folkAt = (town: TownState, job: string) => town.folk.jobs[job] ?? 0;
 
 /** Room left for settlers on a job today, after the heroes. 0 if they can't work it. */
 export function folkRoom(ix: Index, town: TownState, job: string): number {
@@ -43,11 +41,11 @@ export function folkRoom(ix: Index, town: TownState, job: string): number {
   if (kind === "post") {
     const post = openPosts(ix, town).find((p) => p.id === id);
     if (!post?.settlers) return 0;
-    return Math.max(0, post.slots - (town.posts?.[id]?.length ?? 0));
+    return Math.max(0, post.slots - (town.posts[id]?.length ?? 0));
   }
   if (kind === "workshop") {
     const seats = benches(ix, town, id);
-    return Math.max(0, seats - (town.workshops?.[id]?.workers.length ?? 0));
+    return Math.max(0, seats - (town.workshops[id]?.workers.length ?? 0));
   }
   return 0;
 }
@@ -73,7 +71,7 @@ export function jobName(ix: Index, job: string): string {
 export function setFolkJob(ix: Index, town: TownState, job: string, n: number): TownState {
   if (!Number.isInteger(n) || n < 0) throw new TownError("That isn't a number of people.");
   const t = edit(town);
-  const folk = folkOf(t);
+  const folk = t.folk;
   const now = folk.jobs[job] ?? 0;
   if (n > now) {
     if (!folkJobs(ix, t).includes(job)) throw new TownError("Townsfolk can't do that.");
@@ -105,7 +103,7 @@ const lastBreach = (t: TownState) =>
 /** Why no settlers are coming, or undefined if they may. */
 export function whyNoSettlers(ix: Index, town: TownState): string | undefined {
   if (town.camp) return "Nobody settles at a mining camp.";
-  const folk = folkOf(town);
+  const folk = town.folk;
   const rules = ix.lib.townsfolk;
   if (folk.count >= housing(ix, town))
     return housing(ix, town)
@@ -126,7 +124,7 @@ export function whyNoSettlers(ix: Index, town: TownState): string | undefined {
 export function folkDay(ix: Index, t: TownState): void {
   if (t.camp) return;
   const rules = ix.lib.townsfolk;
-  const folk = folkOf(t);
+  const folk = t.folk;
   const grown = foodGrown(ix, t);
   if (!folk.count && !grown && !housing(ix, t)) return;
   t.folk = folk;

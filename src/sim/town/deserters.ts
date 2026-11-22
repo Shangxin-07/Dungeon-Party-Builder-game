@@ -40,7 +40,7 @@ export function deserterHome(ix: Index, t: TownState, o: Outing, d: Deserter): v
   t.records[d.id] = rec;
   back.fatigue = Math.min(
     100,
-    (back.fatigue ?? 0) + ix.lib.wear.fatiguePerTripDay * Math.max(1, day - o.left),
+    back.fatigue + ix.lib.wear.fatiguePerTripDay * Math.max(1, day - o.left),
   );
   applyMorale(ix, back, { deserted: 1 }, t.day);
 

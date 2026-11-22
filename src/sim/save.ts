@@ -196,7 +196,49 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
   // The debrief (M7.03): hauls already sold, nothing waiting, and the old way as the rule.
   15: (_ix, old) => ({ ...old, version: 16, haul: [], haulRule: "sell" }),
   16: (_ix, old) => ({ ...old, version: 17, research: { monsters: {}, shelf: [], desks: [] } }),
+  // M7.19: everything later versions added without a bump is filled in once
+  // here, so the game no longer checks for it being missing all over the place.
+  17: (_ix, old) => {
+    forEachHero(old, (h) => {
+      h.classes ??= {};
+      h.levelUps ??= [];
+      h.injuries ??= [];
+      h.fatigue ??= 0;
+      h.pay ??= 0;
+    });
+    return {
+      ...old,
+      version: 18,
+      intel: old.intel ?? {},
+      sightings: old.sightings ?? {},
+      workshops: old.workshops ?? {},
+      folk: old.folk ?? { count: 0, food: 0, jobs: {} },
+      offers: old.offers ?? [],
+      lairs: old.lairs ?? {},
+    };
+  },
 };
+
+/**
+ * Every hero anywhere in a save (the roster, trips, sites, bodies, raids,
+ * visitors...): anything shaped like one, found by walking the whole save.
+ */
+function forEachHero(raw: unknown, fn: (h: Hero) => void): void {
+  if (!raw || typeof raw !== "object") return;
+  if (Array.isArray(raw)) {
+    for (const x of raw) forEachHero(x, fn);
+    return;
+  }
+  const o = raw as Record<string, unknown>;
+  const isHero =
+    typeof o.id === "string" &&
+    typeof o.classId === "string" &&
+    Array.isArray(o.perks) &&
+    !!o.stats &&
+    typeof o.stats === "object";
+  if (isHero) fn(o as unknown as Hero);
+  for (const v of Object.values(o)) forEachHero(v, fn);
+}
 
 /**
  * Read a town from parsed JSON, upgrading old versions. Returns undefined if

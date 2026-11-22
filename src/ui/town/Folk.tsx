@@ -8,7 +8,6 @@ import {
   folkAt,
   folkIdle,
   folkJobs,
-  folkOf,
   folkRoom,
   foodGrown,
   housing,
@@ -22,7 +21,7 @@ import type { Act } from "./shared";
 
 export function FolkPanel({ town, act }: { town: TownState; act: Act }) {
   const rules = ix.lib.townsfolk;
-  const folk = folkOf(town);
+  const folk = town.folk;
   const room = housing(ix, town);
   const grown = foodGrown(ix, town);
   const eaten = folk.count * rules.eats;

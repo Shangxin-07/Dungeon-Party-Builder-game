@@ -191,7 +191,7 @@ export function quit(ix: Index, t: TownState, h: Hero): void {
   t.stash.push(...h.pack);
   t.roster = t.roster.filter((x) => x.id !== h.id);
   t.party = t.party.filter((id) => id !== h.id);
-  t.porters = (t.porters ?? []).filter((id) => id !== h.id);
+  t.porters = t.porters.filter((id) => id !== h.id);
   t.departed.push({ name: h.name, classId: h.classId, day: t.day, took });
   const gear = took.map((id) => ix.item(id).name.toLowerCase());
   news(
@@ -234,7 +234,7 @@ export function sitesNight(ix: Index, t: TownState): void {
   const rules = ix.lib.rescue;
   for (const site of [...t.sites]) {
     // A party is on its way here: the site waits for it (M7.02).
-    if (site.visitor && (t.outings ?? []).some((o) => o.id === site.visitor)) continue;
+    if (site.visitor && t.outings.some((o) => o.id === site.visitor)) continue;
     site.visitor = undefined;
     // Nobody in town knows about this yet (M7.02): no news, no grief.
     const hidden = !!site.outing;
@@ -342,7 +342,7 @@ function holdingOut(ix: Index, t: TownState, site: LostSite): void {
     ),
   );
   t.dungeon = applyKills(t.dungeon, out.floorKills);
-  const lost = (t.outings ?? []).find((o) => o.id === site.outing);
+  const lost = t.outings.find((o) => o.id === site.outing);
   const home = out.outcome === "wiped" ? [] : out.party.filter((h) => h.condition !== "dead");
   const died = out.party.filter((h) => !home.includes(h));
   site.trapped = [];
@@ -414,7 +414,7 @@ export function answerRaise(ix: Index, town: TownState, heroId: string, agree: b
   const h = hero(t, heroId);
   if (!h.raiseAsk) throw new TownError(`${h.name} hasn't asked for a raise.`);
   if (agree && h.raiseAsk.kind === "share") h.cut = (h.cut ?? 0) + h.raiseAsk.amount;
-  else if (agree) h.pay = (h.pay ?? 0) + h.raiseAsk.amount;
+  else if (agree) h.pay = h.pay + h.raiseAsk.amount;
   h.raiseAsk = undefined;
   h.payLevel = h.level;
   applyMorale(ix, h, agree ? { raiseGiven: 1 } : { raiseRefused: 1 }, t.day);
@@ -445,7 +445,7 @@ export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
   // Nobody who has left the guild stays picked (this also mends saves from
   // before quitting porters were taken off the porter list).
   t.party = t.party.filter((id) => findHero(t, id));
-  t.porters = (t.porters ?? []).filter((id) => findHero(t, id));
+  t.porters = t.porters.filter((id) => findHero(t, id));
   tidyPosts(t);
   tidyDesks(t);
   tidyBenches(t);
@@ -480,7 +480,7 @@ export function waitUntilBack(
   maxDays = 30,
 ): TownState {
   let t = town;
-  for (let i = 0; i < maxDays && (t.outings ?? []).length; i++) {
+  for (let i = 0; i < maxDays && t.outings.length; i++) {
     const before = t;
     t = rest(ix, t, names);
     const heard = t.outings.length !== before.outings.length;

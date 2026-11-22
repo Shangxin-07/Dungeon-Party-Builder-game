@@ -49,6 +49,15 @@ describe("saves from earlier versions", () => {
       }
       expect(ix.alignment(h.alignment)).toBeTruthy();
     }
+    // Filled in once on load (M7.19), so the game never checks for them missing.
+    for (const k of ["intel", "sightings", "workshops", "folk", "offers", "lairs"] as const)
+      expect(t[k]).toBeDefined();
+    const elsewhere = [...t.trips.flatMap((x) => x.party), ...t.raids.flatMap((r) => r.defenders)];
+    for (const h of elsewhere) {
+      expect(Array.isArray(h.injuries)).toBe(true);
+      expect(typeof h.fatigue).toBe("number");
+      expect(typeof h.classes).toBe("object");
+    }
     // And it plays on: a few days' rest, then a trip.
     let next = t;
     for (let d = 0; d < 3; d++) next = rest(ix, next, heroNames);

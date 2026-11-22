@@ -23,7 +23,7 @@ import { type Offer, type TownState, TownError, newRecord } from "./state";
 import { awaySet, materialsShort, materialWords, partySlots, rosterSize, standing } from "./read";
 import { addMaterials, book, edit, news, useMaterials } from "./internal";
 import { pickName } from "./start";
-import { folkOf, housing } from "./folk";
+import { housing } from "./folk";
 
 /** Roll on the offers' own stream (changes `t`). */
 function offerRoll<T>(t: TownState, use: (rng: Rng) => T): T {
@@ -33,16 +33,14 @@ function offerRoll<T>(t: TownState, use: (rng: Rng) => T): T {
   return out;
 }
 
-export const offersOf = (town: TownState): Offer[] => town.offers ?? [];
-
 const offerDef = (ix: Index, o: Offer): OfferDef => ix.offer(o.def);
 
 /** Could this offer turn up today? */
 function canTurnUp(t: TownState, def: OfferDef): boolean {
   if (def.minDay && t.day < def.minDay) return false;
   if (def.needs && !standing(t, def.needs)) return false;
-  if (def.kind === "petition" && def.minFolk && folkOf(t).count < def.minFolk) return false;
-  return !offersOf(t).some((o) => o.def === def.id);
+  if (def.kind === "petition" && def.minFolk && t.folk.count < def.minFolk) return false;
+  return !t.offers.some((o) => o.def === def.id);
 }
 
 /** A hero for a visitor offer: the best of `picks` rolls, kitted. */
@@ -71,7 +69,7 @@ function visitorHero(ix: Index, t: TownState, def: OfferDef, names: readonly str
 export function offersDay(ix: Index, t: TownState, names: readonly string[]): void {
   if (t.camp) return;
   const keep: Offer[] = [];
-  for (const o of offersOf(t)) {
+  for (const o of t.offers) {
     const def = offerDef(ix, o);
     if (t.day > o.until) {
       if (o.taken) news(t, `The "${def.name}" contract ran out before it was delivered.`, "bad");
@@ -119,13 +117,13 @@ export function offerHeadline(ix: Index, o: Offer): string {
 
 /** Find an offer still waiting in the copy `t`. */
 function find(t: TownState, offerId: string): Offer {
-  const o = offersOf(t).find((x) => x.id === offerId);
+  const o = t.offers.find((x) => x.id === offerId);
   if (!o) throw new TownError("That's gone.");
   return o;
 }
 
 const drop = (t: TownState, o: Offer) => {
-  t.offers = offersOf(t).filter((x) => x !== o);
+  t.offers = t.offers.filter((x) => x !== o);
 };
 
 /** Turn an offer away. A contract already taken on can't be: it runs out. */
@@ -199,7 +197,7 @@ export function takeContract(ix: Index, town: TownState, offerId: string): TownS
 
 /** Why a contract can't be delivered now, or undefined if it can. */
 export function cantDeliver(ix: Index, town: TownState, offerId: string): string | undefined {
-  const o = offersOf(town).find((x) => x.id === offerId);
+  const o = town.offers.find((x) => x.id === offerId);
   if (!o) return "That's gone.";
   const def = offerDef(ix, o);
   if (def.kind !== "contract") return "That isn't a contract.";
@@ -228,14 +226,14 @@ export function deliverContract(ix: Index, town: TownState, offerId: string): To
 
 /** Why a petition can't be granted now, or undefined if it can. */
 export function cantGrant(ix: Index, town: TownState, offerId: string): string | undefined {
-  const o = offersOf(town).find((x) => x.id === offerId);
+  const o = town.offers.find((x) => x.id === offerId);
   if (!o) return "That's gone.";
   const def = offerDef(ix, o);
   if (def.kind !== "petition") return "That isn't a petition.";
   if (town.gold < def.gold) return "Not enough gold.";
   const short = materialsShort(ix, town, def.materials);
   if (short) return `Short of ${short}.`;
-  if (def.effect.type === "folk" && folkOf(town).count >= housing(ix, town))
+  if (def.effect.type === "folk" && town.folk.count >= housing(ix, town))
     return "The Cottages are full: there's nowhere for them to live.";
   return undefined;
 }
@@ -266,11 +264,11 @@ export function grantPetition(ix: Index, town: TownState, offerId: string): Town
   useMaterials(t, def.materials);
   const e = def.effect;
   if (e.type === "folk") {
-    const folk = folkOf(t);
+    const folk = t.folk;
     const n = Math.min(e.count, housing(ix, t) - folk.count);
     t.folk = { ...folk, count: folk.count + n };
   } else if (e.type === "food") {
-    const folk = folkOf(t);
+    const folk = t.folk;
     t.folk = { ...folk, food: Math.min(ix.lib.townsfolk.foodStore, folk.food + e.amount) };
   } else if (e.type === "morale") {
     const away = awaySet(t);
@@ -288,7 +286,7 @@ export function grantPetition(ix: Index, town: TownState, offerId: string): Town
 
 /** Why a visitor won't join now, or undefined if they will. */
 export function cantWelcome(ix: Index, town: TownState, offerId: string): string | undefined {
-  const o = offersOf(town).find((x) => x.id === offerId);
+  const o = town.offers.find((x) => x.id === offerId);
   if (!o?.hero) return "They've moved on.";
   if (!standing(town, o.hero.favourite))
     return `${o.hero.name} would only stay for a ${ix.building(o.hero.favourite).name}.`;

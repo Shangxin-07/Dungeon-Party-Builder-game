@@ -26,13 +26,13 @@ export function xpProgress(ix: Index, hero: Hero): { into: number; needed: numbe
 }
 
 /** A hero's level in a class (0 if they don't have it). */
-export const levelIn = (hero: Hero, classId: string): number => hero.classes?.[classId] ?? 0;
+export const levelIn = (hero: Hero, classId: string): number => hero.classes[classId] ?? 0;
 
 /** The class with the most levels; the first learned wins a tie. */
 export function mainClass(hero: Hero): string {
   let best = hero.classId;
   let top = -1;
-  for (const [id, l] of Object.entries(hero.classes ?? {})) if (l > top) [best, top] = [id, l];
+  for (const [id, l] of Object.entries(hero.classes)) if (l > top) [best, top] = [id, l];
   return best;
 }
 

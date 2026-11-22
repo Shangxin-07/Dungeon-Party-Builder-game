@@ -31,7 +31,7 @@ export function monsterNeeds(ix: Index, def: MonsterDef): readonly [number, numb
 
 /** How far the guild's research on a monster has got: 0 unknown, 1 met, 2 Studied, 3 Mastered. */
 export function monsterTier(ix: Index, town: TownState, id: string, known?: Set<string>): number {
-  const points = town.research?.monsters[id] ?? 0;
+  const points = town.research.monsters[id] ?? 0;
   if (!(known ?? knownMonsters(town)).has(id) && !points) return 0;
   const [studied, mastered] = monsterNeeds(ix, ix.monster(id));
   return points >= mastered ? 3 : points >= studied ? 2 : 1;
@@ -41,7 +41,7 @@ export function monsterTier(ix: Index, town: TownState, id: string, known?: Set<
 export function researchTiers(ix: Index, town: TownState): Record<string, number> {
   const out: Record<string, number> = {};
   const known = knownMonsters(town);
-  for (const id of Object.keys(town.research?.monsters ?? {})) {
+  for (const id of Object.keys(town.research.monsters ?? {})) {
     const tier = monsterTier(ix, town, id, known);
     if (tier >= 2) out[id] = tier;
   }

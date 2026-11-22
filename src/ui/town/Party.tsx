@@ -337,21 +337,19 @@ export function PartyPanel({
       {!sneaking && lairBeast && !target ? (
         <p className="mission small warn">
           This party will go into {lairName} to kill the {lairBeast.name}
-          {town.lairs?.[town.orders.lair!]?.slain ? " (it's already dead)" : ""}.
+          {town.lairs[town.orders.lair!]?.slain ? " (it's already dead)" : ""}.
         </p>
       ) : null}
 
       <p className="small">
         Porters{" "}
         <span className="muted">
-          ({(town.porters ?? []).length}/{ix.lib.town.porters.slots})
+          ({town.porters.length}/{ix.lib.town.porters.slots})
         </span>
         :{" "}
-        {(town.porters ?? []).length ? (
-          (town.porters ?? []).map((id) => town.roster.find((x) => x.id === id)?.name).join(", ") +
-          ` ${(town.porters ?? []).length === 1 ? "carries" : "carry"} ${(
-            town.porters ?? []
-          ).reduce((s, id) => {
+        {town.porters.length ? (
+          town.porters.map((id) => town.roster.find((x) => x.id === id)?.name).join(", ") +
+          ` ${town.porters.length === 1 ? "carries" : "carry"} ${town.porters.reduce((s, id) => {
             const p = town.roster.find((x) => x.id === id);
             return s + (p ? heroSheet(ix, p).derived.carrySlots : 0);
           }, 0)} more slots of loot.`

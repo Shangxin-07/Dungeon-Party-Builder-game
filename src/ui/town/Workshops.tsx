@@ -32,7 +32,7 @@ const days = (n: number) =>
 export function WorkshopsPanel({ town, act }: { town: TownState; act: Act }) {
   const open = openWorkshops(ix, town);
   const below = awaySet(town);
-  const queued = open.reduce((n, id) => n + (town.workshops?.[id]?.queue.length ?? 0), 0);
+  const queued = open.reduce((n, id) => n + (town.workshops[id]?.queue.length ?? 0), 0);
   const rules = ix.lib.workshops;
   return (
     <Fold
@@ -77,7 +77,7 @@ function Shop({
   below: ReadonlySet<string>;
 }) {
   const def = ix.building(id);
-  const shop = town.workshops?.[id] ?? { workers: [], queue: [] };
+  const shop = town.workshops[id] ?? { workers: [], queue: [] };
   const seats = benches(ix, town, id);
   const front = shop.queue[0] ? ix.recipe(shop.queue[0].recipe) : undefined;
   const eta = queueDays(ix, town, id, below);

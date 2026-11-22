@@ -67,8 +67,8 @@ export function floorKnowledge(
   const fog = ix.lib.scouting.fog;
   const ago = (day: number) => Math.max(0, town.day - day);
   // The freshest word from below, if it isn't too old to trust.
-  const intel = town.intel?.[depth];
-  const seen = town.sightings?.[depth];
+  const intel = town.intel[depth];
+  const seen = town.sightings[depth];
   const word =
     intel && (!seen || intel.day >= seen.day)
       ? {
@@ -128,7 +128,6 @@ export function recordSightings(ix: Index, t: TownState, o: Outing): void {
   for (const e of o.result.log)
     if (e.floor > 0 && e.room > 0 && e.hour !== undefined) last.set(e.floor, e.hour);
   if (!last.size) return;
-  t.sightings ??= {};
   for (const [depth, hour] of last) {
     const floor = t.dungeon.floors[depth - 1];
     if (!floor) continue;

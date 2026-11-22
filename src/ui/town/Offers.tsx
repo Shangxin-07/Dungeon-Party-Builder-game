@@ -14,7 +14,6 @@ import {
   grantPetition,
   materialWords,
   offerHeadline,
-  offersOf,
   petitionWords,
   sellToCaravan,
   takeContract,
@@ -34,7 +33,7 @@ const KIND_NAMES = {
 } as const;
 
 export function OffersPanel({ town, act }: { town: TownState; act: Act }) {
-  const offers = offersOf(town);
+  const offers = town.offers;
   const kinds = offers.map((o) => KIND_NAMES[ix.offer(o.def).kind]);
   return (
     <Fold

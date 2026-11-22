@@ -66,7 +66,7 @@ export function remember(t: TownState, m: Memorial): void {
 
 /** Keep a finished trip for the debrief and the replay. */
 export function keepTrip(t: TownState, report: TripReport): void {
-  t.trips = [...(t.trips ?? []), report].slice(-TRIP_HISTORY);
+  t.trips = [...t.trips, report].slice(-TRIP_HISTORY);
   t.lastTrip = report;
 }
 
@@ -75,7 +75,7 @@ export function tidySearch(ix: Index, t: TownState): void {
   const id = t.orders.rescue;
   if (!id) return;
   if (t.sites.some((s) => s.id === id)) return;
-  if ((t.outings ?? []).some((o) => o.id === id)) {
+  if (t.outings.some((o) => o.id === id)) {
     return;
   }
   // The party it was for has been given up or found: follow it to its site.
@@ -92,7 +92,7 @@ export function homecoming(ix: Index, t: TownState, o: Outing): void {
   const party = o.party.filter((h) => !(result.deserters ?? []).some((d) => d.id === h.id));
   const startDay = o.left;
   const before = structuredClone(t.records);
-  const risenBefore = new Map((t.risen ?? []).map((r) => [r.id, r]));
+  const risenBefore = new Map(t.risen.map((r) => [r.id, r]));
   t.outings = t.outings.filter((x) => x !== o);
   landAllKills(t, o);
   sealHome(ix, t, o);
@@ -136,7 +136,7 @@ export function homecoming(ix: Index, t: TownState, o: Outing): void {
   const hiddenGold = result.haul
     .filter((h) => h.hidden && !h.keep && !isMaterial(h))
     .reduce((s, h) => s + haulPrice(ix, h.item, h.value, haggle.bonus, fenced), 0);
-  const tally = t.secrets ?? { found: 0, missed: 0, gold: 0 };
+  const tally = t.secrets;
   t.secrets = {
     found: tally.found + result.secrets.found,
     missed: tally.missed + result.secrets.missed,
@@ -181,7 +181,7 @@ export function homecoming(ix: Index, t: TownState, o: Outing): void {
     const r = risenBefore.get(id);
     if (r) news(t, `${risenName(ix, r)} was put down on floor ${r.floor}.`, "good");
   }
-  t.risen = (t.risen ?? []).filter((r) => !result.risenSlain.includes(r.id));
+  t.risen = t.risen.filter((r) => !result.risenSlain.includes(r.id));
 
   // A search: take the freed heroes (and, for a recovery, the dead and the gear) off the site.
   if (visited) {
@@ -214,7 +214,7 @@ export function homecoming(ix: Index, t: TownState, o: Outing): void {
     t.records[p.id] = rec;
     p.porter.watched += fights;
     p.porter.xp += Math.round(xpEach * ix.lib.town.porters.xpShare);
-    p.fatigue = Math.min(100, (p.fatigue ?? 0) + tiredBy);
+    p.fatigue = Math.min(100, p.fatigue + tiredBy);
     fatigue[p.id] = p.fatigue;
   }
 
@@ -426,7 +426,6 @@ export function homecoming(ix: Index, t: TownState, o: Outing): void {
 function bringIntel(ix: Index, t: TownState, o: Outing): void {
   const intel = o.result.intel;
   if (!intel?.length) return;
-  t.intel ??= {};
   const start = ix.lib.time.startHour;
   for (const i of intel) {
     const day = o.left + Math.floor((start + i.hour) / 24);
@@ -462,7 +461,7 @@ function lairNews(ix: Index, t: TownState, o: Outing): void {
       );
       break;
     case "slain": {
-      t.lairs = { ...(t.lairs ?? {}), [lair.id]: { slain: t.day } };
+      t.lairs = { ...t.lairs, [lair.id]: { slain: t.day } };
       const f = t.dungeon.floors[lair.floor - 1];
       if (f) f.population = Math.max(0, f.population - lair.calms);
       news(t, `${o.name} killed the ${beast}! Floor ${lair.floor} is quieter without it.`, "good");
@@ -514,7 +513,7 @@ function wear(ix: Index, t: TownState, party: readonly Hero[], result: Expeditio
   for (const left of party) {
     const h = findHero(t, left.id);
     if (!h) continue;
-    h.fatigue = Math.min(100, (h.fatigue ?? 0) + tiredBy);
+    h.fatigue = Math.min(100, h.fatigue + tiredBy);
     fatigue[h.id] = h.fatigue;
     const downed = wasDowned(result.log, h.id);
     const wounded = lowestHp(result.log, h.id) < ix.lib.wear.woundedBelow;

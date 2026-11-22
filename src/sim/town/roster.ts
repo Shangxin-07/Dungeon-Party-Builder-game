@@ -23,12 +23,12 @@ import { kitOut, keepHpInBounds } from "./gear";
 
 /** Gold to sign a recruit as a porter: free too while the starting heroes are signing up. */
 export function porterPrice(ix: Index, town: TownState): number {
-  return (town.freeHires ?? 0) > 0 ? 0 : ix.lib.town.porters.hireCost;
+  return town.freeHires > 0 ? 0 : ix.lib.town.porters.hireCost;
 }
 
 /** Gold to sign this recruit: free while the starting heroes are signing up. */
 export function hirePrice(ix: Index, town: TownState, recruit: Hero): number {
-  if ((town.freeHires ?? 0) > 0) return 0;
+  if (town.freeHires > 0) return 0;
   const kit = recruit.untrained
     ? 0
     : [...EQUIP_SLOTS.map((s) => recruit.equipment[s]), ...recruit.pack]
@@ -56,7 +56,7 @@ export function hire(ix: Index, town: TownState, recruitId: string, classId?: st
     throw new TownError("Recruits can only start in a base class.");
   const [recruit] = t.recruits.splice(i, 1);
   const h = recruit!.untrained ? trainRecruit(ix, recruit!, classId ?? recruit!.classId) : recruit!;
-  if ((t.freeHires ?? 0) > 0) t.freeHires -= 1;
+  if (t.freeHires > 0) t.freeHires -= 1;
   else book(t, "hired", -price);
   t.roster.push(h);
   t.records[h.id] = newRecord(t.day);
@@ -83,11 +83,10 @@ export function hirePorter(ix: Index, town: TownState, recruitId: string): TownS
   p!.hp = heroSheet(ix, p!).derived.maxHp;
   // A starting recruit signed as a porter uses up one of the free hires, or the
   // guild would wait for them forever and no new recruits would come.
-  if ((t.freeHires ?? 0) > 0) t.freeHires -= 1;
+  if (t.freeHires > 0) t.freeHires -= 1;
   else book(t, "hired", -price);
   t.roster.push(p!);
   t.records[p!.id] = newRecord(t.day);
-  t.porters ??= [];
   if (t.porters.length < rules.slots) t.porters.push(p!.id);
   return t;
 }
@@ -122,8 +121,8 @@ export function trainPorter(
   roll(t, (rng) => gainXp(ix, trained, banked, rng, built(t)));
   t.roster[t.roster.findIndex((x) => x.id === heroId)] = trained;
   // A porter already going with the party stays with it, now as one of the heroes.
-  const going = (t.porters ?? []).includes(heroId);
-  t.porters = (t.porters ?? []).filter((id) => id !== heroId);
+  const going = t.porters.includes(heroId);
+  t.porters = t.porters.filter((id) => id !== heroId);
   if (going || t.party.length < partySlots(ix, t)) t.party.push(heroId);
   return t;
 }
@@ -148,7 +147,7 @@ export function trainMiner(ix: Index, town: TownState, heroId: string, classId: 
       Math.min(30, stats[s] + (cls.baseStats?.[s] ?? 10) - (from.baseStats?.[s] ?? 10)),
     );
   h.stats = stats;
-  const levels = Object.values(h.classes ?? {}).reduce((a, b) => a + b, 0) || 1;
+  const levels = Object.values(h.classes).reduce((a, b) => a + b, 0) || 1;
   h.classes = { [classId]: levels };
   for (const up of h.levelUps) if (up.classId === from.id) up.classId = classId;
   for (const p of h.past ?? []) if (p.classId === from.id) p.classId = classId;
@@ -235,7 +234,7 @@ export function dismiss(_ix: Index, town: TownState, heroId: string): TownState 
   t.stash.push(...h.pack);
   t.roster = t.roster.filter((x) => x.id !== heroId);
   t.party = t.party.filter((id) => id !== heroId);
-  t.porters = (t.porters ?? []).filter((id) => id !== heroId);
+  t.porters = t.porters.filter((id) => id !== heroId);
   return t;
 }
 
@@ -252,7 +251,7 @@ export function chooseLevelClass(
 ): TownState {
   const t = edit(town);
   const h = hero(t, heroId);
-  const isNew = !(h.classes ?? {})[classId];
+  const isNew = !h.classes[classId];
   try {
     roll(t, (rng) => chooseClass(ix, h, classId, rng, built(t)));
   } catch (e) {

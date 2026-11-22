@@ -128,7 +128,7 @@ export function Store({ town }: { town: TownState }) {
       <ul className="store-list small">
         {materials.map((m) => (
           <li key={m.id} title={m.blurb}>
-            <strong>{town.materials?.[m.id] ?? 0}</strong> {m.name.toLowerCase()}{" "}
+            <strong>{town.materials[m.id] ?? 0}</strong> {m.name.toLowerCase()}{" "}
             <span className="muted">({m.blurb})</span>
           </li>
         ))}

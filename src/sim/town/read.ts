@@ -56,7 +56,7 @@ export const rosterSize = (ix: Index, town: TownState) =>
 
 /** Can this hero work a post today? At home, standing, not hurt badly enough to be laid up. */
 export const fitForPost = (h: Hero, away: ReadonlySet<string>) =>
-  !away.has(h.id) && h.condition === "ok" && h.hp > 0 && !h.injuries?.length;
+  !away.has(h.id) && h.condition === "ok" && h.hp > 0 && !h.injuries.length;
 
 /** The posts open today: camp-only ones (the seam) close when the opening ends. */
 export const openPosts = (ix: Index, town: TownState) =>
@@ -70,7 +70,7 @@ export function postWorkers(
   away: ReadonlySet<string> = new Set(),
 ): Hero[] {
   if (!town.camp && ix.post(postId).campOnly) return [];
-  return (town.posts?.[postId] ?? [])
+  return (town.posts[postId] ?? [])
     .map((id) => findHero(town, id))
     .filter((h): h is Hero => !!h && fitForPost(h, away));
 }
@@ -88,7 +88,7 @@ export function postFolk(
   const post = ix.post(postId);
   if (!post.settlers || (!town.camp && post.campOnly)) return 0;
   const room = Math.max(0, post.slots - postWorkers(ix, town, postId, away).length);
-  return Math.min(town.folk?.jobs[`post:${postId}`] ?? 0, room);
+  return Math.min(town.folk.jobs[`post:${postId}`] ?? 0, room);
 }
 
 /** Effects of every post, once per hero working it (townsfolk add no defence). */
@@ -161,10 +161,8 @@ export const vaultShare = (ix: Index, town: TownState) =>
 /** A hero's daily retainer while at home (content/town.ts, M7.12). */
 export const retainer = (ix: Index, h: Hero) =>
   h.porter
-    ? ix.lib.town.porters.wage + (h.pay ?? 0)
-    : ix.lib.town.retainer.base +
-      Math.floor(h.level / ix.lib.town.retainer.levelsPerGold) +
-      (h.pay ?? 0);
+    ? ix.lib.town.porters.wage + h.pay
+    : ix.lib.town.retainer.base + Math.floor(h.level / ix.lib.town.retainer.levelsPerGold) + h.pay;
 
 /** How many shares of a haul a hero takes (porters take less; raises add more). */
 export const shareUnits = (ix: Index, h: Hero) =>
@@ -286,7 +284,7 @@ export function materialsShort(
 ): string | undefined {
   const short: Record<string, number> = {};
   for (const [id, n] of Object.entries(cost ?? {})) {
-    const lack = n - (town.materials?.[id] ?? 0);
+    const lack = n - (town.materials[id] ?? 0);
     if (lack > 0) short[id] = lack;
   }
   return Object.keys(short).length ? materialWords(ix, short) : undefined;
@@ -405,7 +403,7 @@ export function rescueTarget(town: TownState): { site?: LostSite; outing?: Outin
   if (!id) return undefined;
   const site = town.sites.find((s) => s.id === id);
   if (site) return { site };
-  const outing = (town.outings ?? []).find((o) => o.id === id);
+  const outing = town.outings.find((o) => o.id === id);
   if (!outing) return undefined;
   return { outing, site: town.sites.find((s) => s.outing === outing.id) };
 }
@@ -434,11 +432,11 @@ export function searchFloor(town: TownState): number | undefined {
 
 /** The party a hero is out with, if they're away. */
 export const outingOf = (town: TownState, heroId: string) =>
-  (town.outings ?? []).find((o) => o.heroes.includes(heroId) || o.porters.includes(heroId));
+  town.outings.find((o) => o.heroes.includes(heroId) || o.porters.includes(heroId));
 
 /** Everyone out in the dungeon. */
 export const awaySet = (town: TownState): Set<string> =>
-  new Set((town.outings ?? []).flatMap((o) => [...o.heroes, ...o.porters]));
+  new Set(town.outings.flatMap((o) => [...o.heroes, ...o.porters]));
 
 /**
  * How a party that's out looks from town (DESIGN.md §17.3): only the clock
@@ -530,9 +528,9 @@ export function cantLaunch(ix: Index, town: TownState): string | undefined {
   if (needs.length)
     return `Nobody goes down until the camp is held: build ${listAnd(needs)} first.`;
   if (!town.party.length) return "Pick at least one hero for the party.";
-  if ((town.porters ?? []).length > ix.lib.town.porters.slots)
+  if (town.porters.length > ix.lib.town.porters.slots)
     return `Only ${ix.lib.town.porters.slots} porters can go with one party.`;
-  for (const id of [...town.party, ...(town.porters ?? [])]) {
+  for (const id of [...town.party, ...town.porters]) {
     const h = findHero(town, id);
     if (!h) return "Someone in the party has left the guild.";
     const out = outingOf(town, id);
@@ -540,7 +538,7 @@ export function cantLaunch(ix: Index, town: TownState): string | undefined {
     if (h.condition !== "ok" || h.hp <= 0) return `${h.name} can't walk yet. Let them rest.`;
     if (inCampClass(ix, h))
       return `${h.name} is still a miner. Pick a class for them on the roster first.`;
-    const inj = h.injuries?.[0];
+    const inj = h.injuries[0];
     if (inj)
       return `${h.name} is laid up with a ${ix.injury(inj.id).name.toLowerCase()} for ${inj.days} more ${inj.days === 1 ? "day" : "days"}. Pick someone else.`;
   }

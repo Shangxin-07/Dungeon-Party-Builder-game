@@ -85,7 +85,6 @@ import {
   folkJobs,
   folkRoom,
   setFolkJob,
-  offersOf,
   takeContract,
   cantDeliver,
   deliverContract,
@@ -202,12 +201,12 @@ function manPosts(t: TownState): TownState {
  */
 function sawPlanks(t: TownState): TownState {
   if (t.camp || !benches(ix, t, "sawmill")) return t;
-  const shop = t.workshops?.sawmill ?? { workers: [], queue: [] };
+  const shop = t.workshops.sawmill ?? { workers: [], queue: [] };
   if (!shop.workers.length) {
     const h = t.roster.find((x) => !outingOf(t, x.id) && !t.party.includes(x.id) && !x.porter);
     if (h) t = assignBench(ix, t, h.id, "sawmill");
   }
-  const queued = t.workshops?.sawmill?.queue.length ?? 0;
+  const queued = t.workshops.sawmill?.queue.length ?? 0;
   if (queued < 2 && (t.materials.timber ?? 0) >= 3 && (t.materials.planks ?? 0) < 12)
     t = queueJob(ix, t, "sawmill", "planks");
   return t;
@@ -219,7 +218,7 @@ function sawPlanks(t: TownState): TownState {
  * caravans the silk and bone dust over half a dozen.
  */
 function answerOffers(t: TownState): TownState {
-  for (const o of offersOf(t)) {
+  for (const o of t.offers) {
     const def = ix.offer(o.def);
     if (def.kind === "contract" && (o.taken || !cantDeliver(ix, t, o.id))) {
       if (!o.taken) t = takeContract(ix, t, o.id);
@@ -248,7 +247,7 @@ function answerOffers(t: TownState): TownState {
  * then the Sawmill, then the lookout.
  */
 function placeFolk(t: TownState): TownState {
-  if (!t.folk?.count) return t;
+  if (!t.folk.count) return t;
   t = { ...t, folk: { ...t.folk, jobs: {} } };
   for (const job of ["post:salvage", "workshop:sawmill", "post:lookout"]) {
     if (!folkJobs(ix, t).includes(job)) continue;
@@ -328,7 +327,7 @@ function step(t: TownState): TownState {
     const defended = DEFENCES.every((id) => (t.buildings[id] ?? 0) > 0);
     const reserve = 60 + 3 * retainerBill(ix, t);
     // The Temple and Graveyard only once there's a body waiting for them.
-    const waiting = (t.bodies ?? []).length > 0;
+    const waiting = t.bodies.length > 0;
     const more = library.buildings
       .filter((b) => waiting || !FALLEN_BUILDINGS.includes(b.id))
       .map((b) => ({ id: b.id, lvl: nextLevel(ix, t, b.id) }))
@@ -362,7 +361,7 @@ function step(t: TownState): TownState {
   }
   // The fallen (DESIGN.md §10): resurrect while the gold holds out (a week of
   // wages in hand), otherwise bury.
-  for (const b of [...(t.bodies ?? [])]) {
+  for (const b of [...t.bodies]) {
     const q = resurrectQuote(ix, t, b.id);
     if (!q.why && q.terms && t.gold >= q.terms.gold + 7 * retainerBill(ix, t)) {
       t = resurrect(ix, t, b.id);
@@ -586,7 +585,7 @@ function play(seed: number, print: boolean) {
   }
   while (t.day <= days) {
     const key = (x: TripReport) => `${x.seed}:${x.account?.by ?? ""}`;
-    const heard = new Set((t.trips ?? []).map(key));
+    const heard = new Set(t.trips.map(key));
     const wasCamp = t.camp;
     t = step(t);
     const store = { ...t.materials };
@@ -621,7 +620,7 @@ function play(seed: number, print: boolean) {
     // Every trip that set off (some are never heard of again).
     tally.trips += t.outings.filter((o) => o.left === t.day && !launched.has(o.id)).length;
     for (const o of t.outings) launched.add(o.id);
-    for (const o of t.offers ?? []) if (!launched.has(o.id)) (launched.add(o.id), tally.offers++);
+    for (const o of t.offers) if (!launched.has(o.id)) (launched.add(o.id), tally.offers++);
     for (const c of CHECKPOINTS)
       if (c <= days && t.day >= c && !seen.has(c)) {
         seen.add(c);
@@ -700,7 +699,7 @@ if (runs === 1) {
     built += library.buildings.reduce((s, b) => s + (t.buildings[b.id] ?? 0) - b.startLevel, 0);
     unpaid += tally.unpaid;
     tally.unpaid = 0;
-    settlers += t.folk?.count ?? 0;
+    settlers += t.folk.count;
     const r = t.pit.filter((n) => n.outcome !== "held");
     raids += r.length;
     beaten += r.filter((n) => n.outcome === "repelled").length;

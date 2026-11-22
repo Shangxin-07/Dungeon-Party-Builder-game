@@ -15,7 +15,7 @@ export function restHero(ix: Index, h: Hero, days: number): void {
   h.hp = Math.min(d.maxHp, Math.max(h.hp, 0) + per * days);
   h.mana = d.mana;
   h.condition = "ok";
-  h.fatigue = Math.max(0, (h.fatigue ?? 0) - ix.lib.wear.restPerDay * days);
+  h.fatigue = Math.max(0, h.fatigue - ix.lib.wear.restPerDay * days);
 }
 
 /**
@@ -24,7 +24,7 @@ export function restHero(ix: Index, h: Hero, days: number): void {
  */
 export function healInjuries(ix: Index, h: Hero, extra = 0): string[] {
   const healed: string[] = [];
-  h.injuries = (h.injuries ?? []).filter((inj) => {
+  h.injuries = h.injuries.filter((inj) => {
     inj.days -= 1 + Math.max(0, extra);
     if (inj.days > 0) return true;
     healed.push(ix.injury(inj.id).name.toLowerCase());
@@ -63,14 +63,14 @@ export function maybeInjure(
   const chance = Math.max(0, Math.min(1, base - (end - 10) * w.injuryPerEnd));
   const id = roll(t, (rng) => {
     if (!rng.chance(chance)) return undefined;
-    const pool = ix.lib.injuries.filter((i) => !(h.injuries ?? []).some((x) => x.id === i.id));
+    const pool = ix.lib.injuries.filter((i) => !h.injuries.some((x) => x.id === i.id));
     if (!pool.length) return undefined;
     let r = rng.next() * pool.reduce((s, i) => s + i.weight, 0);
     for (const i of pool) if ((r -= i.weight) < 0) return i.id;
     return pool.at(-1)!.id;
   });
   if (!id) return undefined;
-  h.injuries = [...(h.injuries ?? []), { id, days: ix.injury(id).days }];
+  h.injuries = [...h.injuries, { id, days: ix.injury(id).days }];
   const max = heroSheet(ix, h).derived.maxHp;
   h.hp = Math.min(h.hp, max);
   return id;

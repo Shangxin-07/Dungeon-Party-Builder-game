@@ -62,7 +62,7 @@ export function partyFalls(ix: Index, t: TownState, o: Outing): void {
     site.bodies.push(newBody(t, h, t.day, site.floor));
   }
   for (const b of result.bodies) site.bodies.push({ ...b, floor: site.floor });
-  t.risen = (t.risen ?? []).filter((r) => !result.risenSlain.includes(r.id));
+  t.risen = t.risen.filter((r) => !result.risenSlain.includes(r.id));
   t.scavenged = t.scavenged.filter((g) => !result.gearTaken.includes(g.id));
   // If they were searching and got to a site first, what they took is gone from it.
   const visited = result.siteVisited && t.sites.find((s) => s.id === result.siteVisited);
@@ -140,7 +140,7 @@ export function hearOfLoss(
     if (!h) continue;
     t.roster = t.roster.filter((x) => x.id !== id);
     t.party = t.party.filter((x) => x !== id);
-    t.porters = (t.porters ?? []).filter((x) => x !== id);
+    t.porters = t.porters.filter((x) => x !== id);
     const trapped = site?.trapped.some((x) => x.hero.id === id);
     const body = site?.bodies.some((b) => b.hero.id === id);
     if (trapped && knowWhere) continue;
@@ -164,7 +164,7 @@ export function hearOfLoss(
     const p = findHero(t, run.id);
     if (!p?.porter) continue;
     p.porter.watched += fights;
-    p.fatigue = Math.min(100, (p.fatigue ?? 0) + ix.lib.wear.fatiguePerFight * fights);
+    p.fatigue = Math.min(100, p.fatigue + ix.lib.wear.fatiguePerFight * fights);
   }
   const fallen = dead + missing.length;
   const already = o.givenUp !== undefined;
@@ -245,7 +245,7 @@ export function hearOfLoss(
  * can still be sent for them.
  */
 export function giveUp(ix: Index, town: TownState, outingId: string): TownState {
-  const found = (town.outings ?? []).find((o) => o.id === outingId);
+  const found = town.outings.find((o) => o.id === outingId);
   if (!found) throw new TownError("They're not out there any more.");
   if (outingStatus(ix, town, found) !== "lost")
     throw new TownError(`It's too soon to give up on ${found.name}.`);

@@ -52,7 +52,7 @@ export function builderHands(
 ): { heroes: Hero[]; work: number } {
   const rules = ix.lib.town.helpers;
   const heroes = town.roster.filter(
-    (h) => !away.has(h.id) && h.condition === "ok" && h.hp > 0 && !h.injuries?.length,
+    (h) => !away.has(h.id) && h.condition === "ok" && h.hp > 0 && !h.injuries.length,
   );
   const raw = heroes.reduce(
     (s, h) => s + rules.perHero * Math.max(0, 1 + (h.stats.STR - 10) * rules.perStr),

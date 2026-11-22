@@ -50,9 +50,8 @@ export function launch(
   const why = cantLaunch(ix, town);
   if (why) throw new TownError(why);
   const t = edit(town);
-  t.outings ??= [];
   const party = structuredClone(t.party.map((id) => findHero(t, id)!));
-  const porters = structuredClone((t.porters ?? []).map((id) => findHero(t, id)!));
+  const porters = structuredClone(t.porters.map((id) => findHero(t, id)!));
   const seed = roll(t, (rng) => rng.int(0, 2 ** 31 - 1));
   const startDay = t.day;
   const id = `o${t.nextThingId++}`;
@@ -86,10 +85,10 @@ export function launch(
     site: visit,
     gear,
     porters,
-    risen: t.risen ?? [],
+    risen: t.risen,
     lift: liftFloors(ix, t),
     research: researchTiers(ix, t),
-    slainLairs: Object.keys(t.lairs ?? {}).filter((id) => t.lairs?.[id]?.slain),
+    slainLairs: Object.keys(t.lairs).filter((id) => t.lairs[id]?.slain),
     leader: cmd.leader && {
       id: cmd.leader.id,
       disobey: cmd.disobey,
@@ -101,14 +100,14 @@ export function launch(
   if (site && result.siteVisited === site.id) site.visitor = id;
 
   // Fit heroes left at home while the party went down (Glory heroes mind).
-  const away = new Set([...awaySet(t), ...t.party, ...(t.porters ?? [])]);
+  const away = new Set([...awaySet(t), ...t.party, ...t.porters]);
   for (const h of t.roster) {
     if (away.has(h.id) || h.porter) continue;
-    const fit = h.condition === "ok" && !(h.injuries ?? []).length && !fatigueTier(ix, h);
+    const fit = h.condition === "ok" && !h.injuries.length && !fatigueTier(ix, h);
     if (fit) applyMorale(ix, h, { benched: 1 }, startDay);
   }
 
-  const onFile = (t.parties ?? []).find(
+  const onFile = t.parties.find(
     (p) => p.heroes.length === t.party.length && p.heroes.every((x) => t.party.includes(x)),
   );
   const called = name?.trim() || onFile?.name || `${(cmd.leader ?? party[0]!).name}'s party`;
@@ -119,7 +118,7 @@ export function launch(
     left: startDay,
     expected,
     heroes: [...t.party],
-    porters: [...(t.porters ?? [])],
+    porters: [...t.porters],
     ...(cmd.leader ? { leader: cmd.leader.id } : {}),
     seed,
     party,
@@ -159,7 +158,7 @@ export function launch(
  * dungeon, and any stairs they sealed are sealed (M7.16).
  */
 export function landKills(ix: Index, t: TownState): void {
-  for (const o of t.outings ?? []) {
+  for (const o of t.outings) {
     placeSeal(ix, t, o);
     const today = t.day - o.left;
     for (; o.killsLanded <= today; o.killsLanded++) {
@@ -189,7 +188,7 @@ export function landAllKills(t: TownState, o: Outing): void {
  * frets about anyone late.
  */
 export function arrivals(ix: Index, t: TownState): void {
-  for (const o of [...(t.outings ?? [])]) {
+  for (const o of [...t.outings]) {
     const r = o.result;
     // Deserters who slipped away (M7.05) walk in alone, ahead of the party.
     for (const d of r.deserters ?? [])
