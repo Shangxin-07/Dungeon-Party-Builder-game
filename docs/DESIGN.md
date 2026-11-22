@@ -1068,7 +1068,7 @@ With bigger parties, the usual bad outcome should be **losing someone**, not los
 >   | 2 (one too deep) | 1.6% / 0.5% / 3.8% | 2.1% / 0.3% / 6.8% |
 >   | 3 (two too deep) | 16% / 16% / 21% | 24% / 20% / 27% |
 >
->   Floor 1 and the two-floors-deep targets are met. Floor 2 for a fresh party is still under the 10-20% target: a fresh party of four rarely goes down there at all (about one hero downed per ten trips), so only harder fights would get there.
+>   Floor 1 and the two-floors-deep targets are met. Floor 2 for a fresh party is still under the 10-20% target: a fresh party of four rarely goes down there at all (about one hero downed per ten trips), so only harder fights would get there. ✅ Mike (2026-11-22): fine for now. The top 2-3 floors are **training floors** and can be a little easier; tweak later.
 > - **Days bot** (100 towns, `--build`, 60 days; climb 120): floor 1 lost 0.0 → 0.0; floor 2 0.1 → 0.4; floor 3 1.8 → 3.3 (raids 12 → 18, trips 8.9 → 7.7); climbing as the party levels 0.1 → 0.2. Parties geared for their floor barely notice; parties sent too deep lose people.
 
 ### 7. Research
