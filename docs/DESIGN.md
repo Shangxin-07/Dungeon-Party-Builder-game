@@ -1152,3 +1152,101 @@ Crafting beyond the bane recipe can slot in after M7.06 or wait for M8.
 - ✅ **DECIDED D: watching a party that's still out.** Mike: no. A trip stays hidden until someone comes back or finds them. This also gives us rescue missions for the living (holed-up parties), not just recovery missions.
 - ✅ **DECIDED E: the first beast.** The Mire Behemoth on floor 4, as described. Mike: fine for now, tweak later; the first one matters less than the ones after it.
 - ✅ **DECIDED F: research strength.** +15% damage at Studied, +25% at Mastered, plus wards that need research. Mike: fine for now; it's tuning, and the damage bonus may be dropped later.
+
+## 18. Between trips: the town, gold and the full dungeon
+
+> Added 2026-11-22 from Mike's notes after playing M7.09. Design only; nothing here is built yet. Three questions for Mike at the end (**G**, **H**, **I**), each with a recommendation.
+
+### Why
+
+Mike, after a long session:
+
+- **Nothing to do while parties are away.** Once a party is out, you press Next day until it's back. Two parties make it worse.
+- **Early gold is brutal.** It takes a while to notice, but wages eat the gold that should go on kit and buildings. You feel you can't do anything if you want to keep paying wages. (Mike, earlier: harsh wages are fine long-term, and a guild that never delves *should* go broke. So the fix is the early squeeze, not the pressure.)
+- **Every floor is full.** The overflow is good pressure, but there's no moment where you can relax, because the pit map shows every floor at capacity. Maybe a watchtower should be what tells you how full the floors are.
+- Rescue missions feel good, and so does the overflow. Keep both.
+
+What the numbers say (`npm run days`, 30 towns, camp start, floor-1 trips, both parties, building when affordable): two parties bring home about 90 gold a day, and a roster of about 10 heroes at level 3 costs about 50 a day in wages, so over half of all income goes on wages before anything is bought. Floors 2-5 are full from day 4 and stay full, because only the bottom floor breeds and each full floor passes its extras straight up. Clearing floor 2 by 20 monsters is undone in about three days.
+
+### 1. Something to do while they're away
+
+The town already has the start of this: **posts** (barricade, lookout, salvage crew, the seam) put heroes at home to work, and buildings take days to build. The problem is that once posts are set, nothing changes from one day to the next, so there's nothing to decide.
+
+**Option 1a: Workshops and work orders (recommended, with 1b).** Buildings that make things, and the people to run them.
+
+- **Workshops** turn materials into things over days: the Blacksmith forges (iron ore → spearheads, mail, repairs), the Apothecary brews (glowcap → potions, bandages), a new **Sawmill** (timber → planks, the building material for anything past level 1), a **Tannery** (spider silk / hides → light armour). Each has a **queue**: you pick what to make, it takes N days, and it needs someone working it.
+- **Who works them:** heroes resting at home (a hero's stats set the speed: STR for the forge, INT for the still), porters, and **townsfolk** (below). A hero at the forge isn't resting, so you trade recovery for output, which is a real choice every time a party comes home.
+- **Stock and storage:** the store room has a limit (raised by building it up), so you can't make everything forever; you choose what's worth stocking for the next trip.
+- **Why it fits:** salvage (M7.04) and research (M7.07) already turn the haul into materials and knowledge; workshops are where those materials go. Crafting was always meant to follow (§17 "Crafting beyond the bane recipe"). It's all data: a workshop is a building with a `craft` effect and a recipe list in `content/recipes/`.
+
+**Option 1b: The town grows (recommended, with 1a).** Settlers come when the town feels safe, and they are the town's economy.
+
+- **Townsfolk** arrive a few at a time when the pit is held (no raid in the last few days) and there's **housing** (a new Cottages building, levels = room for more). Raids that get through scare them off or kill them; that's the new cost of a raid.
+- They **work**: a townsperson can staff a workshop or a post (salvage, lookout; never the barricade or the dungeon). Slower than a hero, no wage, but they want housing, food and safety.
+- They **pay**: a small tax a day per settler, plus market days (below). This is steady income that doesn't depend on the trip haul, which is also the answer to section 2.
+- **Food** is a second resource: a **Farm / Hunting lodge** feeds the town; hungry towns lose settlers and morale. Keep it light: one number, shown next to gold, never a micro-management screen.
+
+**Option 1c: Town news and offers.** Every day or two something turns up that wants an answer before it goes away: a **caravan** (buys materials, sells rare kit, leaves in 2 days), a **petition** ("the miners want the old shaft reopened": costs gold, gives a post), a **contract** ("200 gold for 6 spider silk by day 30", which also gives the next trip a goal), a **visitor** (a famous hero who'll join if you have their favourite building). Cheap to build, and good with 1a/1b, but on its own it's still mostly "click OK and Next day".
+
+**Option 1d: Surface errands.** Short 1-2 day trips that aren't the dungeon: timber from the woods, stone from the quarry, a trip to the next village to sell. Uses heroes who aren't fit to delve, porters and recruits. Gives the bench something to do, but it's another "send and wait" and doesn't fix the waiting.
+
+**Also, whatever is picked:** **Wait until someone's back** should also stop when a workshop finishes, a caravan arrives, a contract is about to expire or a settler asks for something, so waiting turns into a short run of small decisions rather than a stream of empty days.
+
+### 2. The early gold squeeze
+
+Today wages are 2 + 1 per level per day, for everyone on the roster, home or away. Income is almost entirely the trip haul. Early on that means wages swallow the haul, and growing the roster (which you need for two parties and for rotation) makes it worse before it gets better.
+
+**Option 2a: Shares and a retainer (recommended).** Adventurers are paid like adventurers.
+
+- At home, a hero draws a small **retainer**: 1 gold + 1 per 3 levels a day (about half today's wage at level 3).
+- On a trip, the party takes a **share** of what it brings home (20% of the haul's sale value, split between the heroes who went; porters take a smaller half-share). A failed trip costs no wages at all, and a rich trip pays well, which is something Gold heroes would care about (morale fact: a big share).
+- **The pressure stays:** an idle guild still pays retainers every day and still goes broke, just more slowly (Mike's rule). A big bench of resting heroes still costs gold.
+- **Raises** (M6.06) ask for a bigger share or a bigger retainer.
+- Rough estimate (not simulated yet): on the bot's two-party floor-1 game, wages fall from about 55% of income to about 30-35%, and the gap grows the less the guild delves.
+
+**Option 2b: Town income (comes with 1b).** Settlers' taxes and market days give a floor of income that doesn't depend on the haul. Starts small (a handful of gold a day) and grows with the town, so early on it softens the squeeze without making delving optional.
+
+**Option 2c: The company's stipend.** The mining company that dug the pit pays the guild a **stipend** for the first weeks (say 30 gold a day for 20 days after the camp is held, tapering off), plus a **bounty** on floor-1 kills. Simple, and good for the first hours, but it's a tutorial crutch; it does nothing for the middle game.
+
+**Option 2d: Just cheaper wages.** Lower the numbers (1 + 1 per 2 levels). One line of tuning, but the shape of the problem stays: wages scale with roster, income scales with trips.
+
+### 3. Full floors and a chance to breathe
+
+The pit map shows every floor's population against its capacity, and below floor 1 they're always at capacity. Two separate problems:
+
+- **You can see too much.** Knowing every floor is exactly full feels hopeless, and it's information the town shouldn't really have.
+- **Progress doesn't stick.** Thinning a floor is undone in days, because the floor below pours its extras up straight away.
+
+**Option 3a: Fog over the floors, watchtower and scouts to see (recommended, with 3b).** The pit map shows only what the town knows.
+
+- **Floor 1** is watched from the pit's edge. With a **Watchtower** (level 1) you see its population roughly ("quiet / busy / crowded / overflowing"); level 2 gives the number; level 3 adds floor 2 roughly, by listening at the shaft.
+- **Deeper floors** show the last report from a party or scouts (§17.8 floor intel), with its date: "floor 3, crowded, 6 days ago". Old intel fades to "unknown".
+- The danger is still there, but the player sees "floor 1 quiet, the rest unknown" most of the time, which is a moment to relax. Mike's watchtower idea fits exactly.
+
+**Option 3b: Hold the stairs (recommended, with 3a).** Make clearing stick.
+
+- A party (or a later "seal" mission) can **barricade a stairhead**: the stairs between floor N and N+1. It costs materials carried down (planks, iron, from the workshops in 1a) and a day's work.
+- A held stairhead stops push-ups from below until it breaks. Each day the floor below presses on it (the more over capacity, the harder); when its strength runs out, it breaks and the flood comes through. Better barricades (stone, iron gate) last longer.
+- So a guild can clear floor 1, seal its stairs, and get a quiet floor and no raids for a while: real breathing room it earned, which runs out and has to be renewed. Ties trips, materials and town work together.
+- Deep floors still fill, but that's now "what's waiting behind the seal", which is pressure you can see coming.
+
+**Option 3c: Tides.** The bottom floor breeds in **surges** (a big push every 8-12 days, little in between) instead of a steady stream. Between surges, upper floors drain as parties hunt; a watchtower or scouts warn of the next surge. Gives a rhythm of calm and storm, but it's less in the player's hands than 3b.
+
+**Option 3d: Lower the caps on deep floors / start them empty.** Pure tuning: floors 2-5 start half full and the bottom breeds less. Quick, but they still end up full eventually, so the feeling comes back later.
+
+### Suggested order of PRs (if Mike agrees with the recommendations)
+
+| PR | What |
+|---|---|
+| 1 | **Shares and retainer** (2a): wage rules in `content/town.ts`, share at debrief, raises for shares, the books panel. Small and answers the most painful point first |
+| 2 | **Fog and the watchtower** (3a): pit map shows known floors only, watchtower levels for floor 1-2, dated intel for the rest |
+| 3 | **Workshops** (1a): recipe content, queues, workers, store room limit, Sawmill/planks; Blacksmith and Apothecary get recipes |
+| 4 | **Townsfolk** (1b + 2b): settlers, Cottages, taxes, food, settlers at posts/workshops, raids scare them |
+| 5 | **Hold the stairs** (3b): stairhead barricades, strength vs the floor below, a seal mission |
+| 6 | **Town news** (1c): caravans, contracts, petitions, visitors, and Wait stopping for them |
+
+### Questions for Mike
+
+- **G: town while they're away.** Recommend **1a workshops + 1b townsfolk** (with 1c news later). Or pick a different mix, e.g. 1c only to start small.
+- **H: early gold.** Recommend **2a shares and a retainer**, with 2b town income once settlers come. Or 2c (a stipend for the first weeks), or 2d (just cheaper wages).
+- **I: full floors.** Recommend **3a fog + watchtower** and **3b hold the stairs**. Or 3c tides, or 3d tuning only.
