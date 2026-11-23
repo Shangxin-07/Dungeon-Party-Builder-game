@@ -56,3 +56,32 @@ describe("portrait frames (M8.08)", () => {
     for (const a of ix.lib.alignments) expect(a.frame).toMatch(/^#[0-9a-f]{6}$/i);
   });
 });
+
+describe("hair under headgear (M8.10)", () => {
+  it("hoods and helms leave the hair off; circlets keep it", () => {
+    const html = (classId: string, i: number) =>
+      renderToStaticMarkup(
+        createElement(Portrait, { hero: { id: `h${i}`, name: `Hero ${i}`, classId } }),
+      );
+    const withHair = (classId: string) =>
+      Array.from({ length: 40 }, (_, i) => i).filter((i) => {
+        const f = faceOf({ id: `h${i}`, name: `Hero ${i}`, classId });
+        return f.hair !== undefined;
+      });
+    // Scouts always wear the hood (cell 6): never any hair.
+    for (const i of withHair("scout")) expect(html("scout", i)).not.toContain("faces/hair");
+    // A porter's headband (cell 14) shows the hair.
+    const porter = (i: number) =>
+      renderToStaticMarkup(
+        createElement(Portrait, {
+          hero: {
+            id: `h${i}`,
+            name: `Hero ${i}`,
+            classId: "fighter",
+            porter: { watched: 0, xp: 0 },
+          },
+        }),
+      );
+    expect(withHair("fighter").some((i) => porter(i).includes("faces/hair"))).toBe(true);
+  });
+});
