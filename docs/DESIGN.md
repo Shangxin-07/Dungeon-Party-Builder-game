@@ -1262,7 +1262,7 @@ The pit map shows every floor's population against its capacity, and below floor
 
 ## 19. M8: the graphical pass
 
-> Added 2026-11-23 from Mike's idea, design only; nothing here is built yet. Question J decided (simple shapes, sprites can replace them later); K and L are open at the end. Mock-up: [`docs/mockups/m8-town-map.html`](mockups/m8-town-map.html) (open it in a browser; screenshots below).
+> Added 2026-11-23 from Mike's idea, design only; nothing here is built yet. Questions J, K and L decided 2026-11-23: simple shapes (sprites can replace them later), fixed plots, layered portraits. Mock-up: [`docs/mockups/m8-town-map.html`](mockups/m8-town-map.html) (open it in a browser; screenshots below).
 
 ### Why
 
@@ -1340,5 +1340,5 @@ Each PR is display-only. The days bot and tests are unaffected, apart from new a
   - **J1 (recommended): draw it ourselves in SVG**, like the mock-up. One consistent look, no licences, every piece changeable in code, and it grows with the content. It's simple and a bit "board game", not lush.
   - **J2: a free icon library** (for example game-icons.net, thousands of fantasy icons, CC BY 3.0, needs a credit line) for the small icons only, with the town map and pit still drawn by us. Much more variety for monsters and items quickly; the style is theirs.
   - **J3: pixel-art sprites** (drawn or a CC0 pack). The most "game" look, but every building level and monster needs a picture made, which slows down adding content.
-- **K: town layout.** **K1 (recommended): fixed plots** set in content, so the map is the same each game and needs no new controls. K2: the player places each building on a free plot when they build it, which is more "city builder" but adds a placing step to every build.
-- **L: portraits.** **L1 (recommended): layered faces hashed from the hero**, as above. L2: class icon only, no faces. L3: leave portraits out of M8.
+- ✅ **DECIDED K: town layout. K1, fixed plots** set in content (Mike, 2026-11-23: definitely easier; revisit if it feels immersion-breaking).
+- ✅ **DECIDED L: portraits. L1, layered faces hashed from the hero** (Mike, 2026-11-23). Heroes are endless, so faces are put together from parts in code; picture art Mike makes with an image model fits fixed pieces instead: building sprites per level, portrait part sheets (hair, beards, helmets) and backdrops, each dropped in through `art.sprite` without code changes.
