@@ -26,5 +26,11 @@ export default defineBuilding({
     },
   ],
   // Its look on the town map (M8, DESIGN.md §19).
-  art: { plot: "far-north-west", shape: "house", roof: "#7c5a34", sign: "saw" },
+  art: {
+    plot: "far-north-west",
+    shape: "house",
+    roof: "#7c5a34",
+    sign: "saw",
+    sprite: { sheet: "sawmill", frames: [0, 1] },
+  },
 });

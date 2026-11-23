@@ -14,9 +14,9 @@ export default defineTownMap({
   wall: { rx: 330, ry: 214 },
   plots: {
     north: { x: 450, y: 128 },
-    "north-east": { x: 612, y: 178 },
+    "north-east": { x: 650, y: 182 },
     "north-west": { x: 282, y: 156 },
-    "inner-north-east": { x: 550, y: 196 },
+    "inner-north-east": { x: 540, y: 212 },
     east: { x: 708, y: 282 },
     west: { x: 192, y: 278 },
     "south-east": { x: 646, y: 404 },

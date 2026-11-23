@@ -15,5 +15,5 @@ export default defineBuilding({
     },
   ],
   // Its look on the town map (M8, DESIGN.md §19).
-  art: { plot: "far-west", shape: "graves" },
+  art: { plot: "far-west", shape: "graves", sprite: { sheet: "graveyard", frames: [0] } },
 });

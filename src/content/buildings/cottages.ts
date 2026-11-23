@@ -34,5 +34,10 @@ export default defineBuilding({
     },
   ],
   // Its look on the town map (M8, DESIGN.md §19).
-  art: { plot: "far-south-east", shape: "cottages", roof: "#8a5a3c" },
+  art: {
+    plot: "far-south-east",
+    shape: "cottages",
+    roof: "#8a5a3c",
+    sprite: { sheet: "cottages", frames: [0, 1, 2] },
+  },
 });

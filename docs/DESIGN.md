@@ -1297,6 +1297,8 @@ M8 is a **display pass**: no simulation, balance or save changes. Every picture 
 
 - **Built in M8.01.** A "Town map" fold at the top of the town (open by default, after the trips below). Content: `art` on every building (`plot`, `shape`, `roof`, `sign`, `smoke`, `sprite`), plots in `content/townmap.ts`, checked by `validateLibrary` (known shape and sign, real plot, one building per plot). Drawing in `src/ui/town/map/` (`scene.ts` works out what to show, `draw.tsx` draws it), panel `src/ui/town/TownMap.tsx`. Clicking a building opens the Buildings fold and scrolls to its card (`openFold` in `Fold.tsx`); the pit opens the pit panel. A building with no `art` gets a plain house on the first free plot. The **Tavern** is the first picture art: Mike's pixel sprite (three frames; levels 1-2 use the first two, the third waits for a level 3), cut from his generated sheet with `scripts/cut-sprite.py` and registered in `src/ui/town/map/sprites.ts`. The original sheet is kept in the project files (`art/DPBG-0001-Inn.png`), not the repo.
 
+- **M8.02: every building is pictured.** Mike made sprite sheets for all of them (DPBG-0001 to 0017, one frame per level); the drawn shapes stay as the fallback and for the Palisade ring. The gate, the watchtowers (one picture, drawn once per level on the wall) and the Mine Cage (standing over the hole) take sprites too. Each sheet has its own drawn width on the map (`width` in `sprites.ts`). `scripts/cut-sprite.py` now un-blends see-through pixels and greys the lavender smoke the generator paints over magenta, and takes a frame width (`260px`).
+
 ### 2. The pit, side on
 
 ![Pit map and fight tokens](mockups/m8-pit-and-fight.png)

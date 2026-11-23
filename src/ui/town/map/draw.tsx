@@ -12,8 +12,6 @@ const EDGE = "#120f0b";
 const GLOW = "#e8c271";
 const ACCENT = "#e0a64b";
 const TIMBER = "#b08a52";
-/** Sprite frames are drawn this wide on the map, in map units. */
-export const SPRITE_WIDTH = 124;
 
 /** Width and height of a drawn building, so scaffolding and labels fit round it. */
 export function footprint(art: BuildingArt, level: number): { w: number; h: number } {
@@ -21,8 +19,8 @@ export function footprint(art: BuildingArt, level: number): { w: number; h: numb
   const sheet = art.sprite && SPRITES[art.sprite.sheet];
   if (sheet) {
     // Frames share one ground line and size, so a low level fills less of its frame.
-    const full = (SPRITE_WIDTH * sheet.frameHeight) / sheet.frameWidth;
-    return { w: SPRITE_WIDTH * 0.6, h: full * 0.8 };
+    const full = (sheet.width * sheet.frameHeight) / sheet.frameWidth;
+    return { w: sheet.width * 0.6, h: full * 0.8 };
   }
   switch (art.shape) {
     case "tower":
@@ -378,7 +376,7 @@ export function Sprite({
   const sheet = sprite && SPRITES[sprite.sheet];
   if (!sprite || !sheet) return <Drawn art={art} x={x} y={y} level={level} ghost={ghost} />;
   const frame = spriteFrame(sprite.frames, level);
-  const w = SPRITE_WIDTH;
+  const w = sheet.width;
   const h = (w * sheet.frameHeight) / sheet.frameWidth;
   return (
     <svg

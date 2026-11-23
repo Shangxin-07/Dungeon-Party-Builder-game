@@ -22,5 +22,11 @@ export default defineBuilding({
     },
   ],
   // Its look on the town map (M8, DESIGN.md §19).
-  art: { plot: "south-west", shape: "yard", roof: "#7a5c3a", sign: "sword" },
+  art: {
+    plot: "south-west",
+    shape: "yard",
+    roof: "#7a5c3a",
+    sign: "sword",
+    sprite: { sheet: "training-yard", frames: [0, 1] },
+  },
 });
