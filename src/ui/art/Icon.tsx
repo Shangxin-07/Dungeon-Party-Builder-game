@@ -74,11 +74,8 @@ export function Icon({
 
 /** A hero's icon: their main class, or a porter's pack, or a plain recruit. */
 export function HeroIcon({ hero, size }: { hero: Hero; size?: number }) {
-  if (hero.porter) return <Icon icon={PEOPLE.porter} name="Porter" size={size} />;
-  const id = mainClass(hero);
-  const cls = id ? ix.lib.classes.find((c) => c.id === id) : undefined;
-  if (!cls) return <Icon icon={PEOPLE.recruit} name="Untrained" size={size} />;
-  return <Icon icon={cls.icon} name={cls.name} size={size} />;
+  const { icon, name } = heroIconRef(hero);
+  return <Icon icon={icon} name={name} size={size} />;
 }
 
 export function MonsterIcon({ id, name, size }: { id?: string; name: string; size?: number }) {
@@ -89,4 +86,57 @@ export function MonsterIcon({ id, name, size }: { id?: string; name: string; siz
 export function ItemIcon({ id, size }: { id: string; size?: number }) {
   const item = ix.lib.items.find((x) => x.id === id);
   return <Icon icon={item?.icon} name={item?.name ?? id} size={size} />;
+}
+
+/** The same icon inside an SVG (the fight tokens): the cell, or the initial. */
+export function SvgIcon({
+  icon,
+  name,
+  x,
+  y,
+  size,
+}: {
+  icon?: IconRef;
+  name: string;
+  /** Centre. */
+  x: number;
+  y: number;
+  size: number;
+}) {
+  const art = icon && ICON_ART[icon.sheet];
+  if (!icon || !art)
+    return (
+      <text
+        x={x}
+        y={y + size * 0.2}
+        textAnchor="middle"
+        className="token-letter"
+        fontSize={size * 0.6}
+      >
+        {initial(name)}
+      </text>
+    );
+  const grid = ICON_SHEETS[icon.sheet];
+  const col = icon.cell % grid.cols;
+  const row = Math.floor(icon.cell / grid.cols);
+  return (
+    <svg
+      x={x - size / 2}
+      y={y - size / 2}
+      width={size}
+      height={size}
+      viewBox={`${col * art.cell} ${row * art.cell} ${art.cell} ${art.cell}`}
+      overflow="hidden"
+    >
+      <image href={art.url} width={grid.cols * art.cell} height={grid.rows * art.cell} />
+    </svg>
+  );
+}
+
+/** A hero's icon reference: their main class, a porter's pack, or a plain recruit. */
+export function heroIconRef(hero: Hero): { icon?: IconRef; name: string } {
+  if (hero.porter) return { icon: PEOPLE.porter, name: "Porter" };
+  const id = mainClass(hero);
+  const cls = id ? ix.lib.classes.find((c) => c.id === id) : undefined;
+  return cls ? { icon: cls.icon, name: cls.name } : { icon: PEOPLE.recruit, name: "Untrained" };
 }

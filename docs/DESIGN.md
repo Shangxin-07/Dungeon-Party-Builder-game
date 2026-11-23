@@ -1316,6 +1316,8 @@ The pressure table (Pit panel) as a picture: a cross-section with the town at th
 
 The watch view and replays: each side in front and back rows, one token per combatant, with health and mana bars, a "down" mark, and the last action drawn as a line from attacker to target. Click a token for the full sheet (as now). The log stays underneath, unchanged. Mike loves stats, so this is a layer on top, never a replacement.
 
+- **Built in M8.05.** `src/ui/FightTokens.tsx`, shown above the Party and Opposition lists in the watch view and replays while a fight is on. Heroes stand in their row (back on the far left), monsters in theirs; the latest blow (`last` from `stateAt`) is a dashed curve tinted by the log's good/bad tone. Tokens show the class or monster icon, or its initial until the icon sheets come.
+
 ### 4. Icons
 
 A small icon set (`src/ui/art/icons/`) used everywhere names are: classes (roster, party, level-up), monsters (fight, research, scout reports), items and materials (store room, market, debrief), buildings (signs on the map, the Buildings panel). Content refers to icons by id (`art: { icon: "anvil" }`); a missing one falls back to the name's first letter in a disc, as in the mock-up. Two ways to get them, see question J.

@@ -3,10 +3,11 @@
  * click for the full sheet) and the results card. Used by the town's watch screen and by the sandbox expedition demo.
  */
 import { HeroIcon, MonsterIcon } from "./art/Icon";
+import { FightTokens } from "./FightTokens";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DERIVED, STATS, type Derived } from "../content/types";
 import { knownAbilities } from "../sim/abilities";
-import type { FoeSheet } from "../sim/combat";
+import type { CombatEvent, FoeSheet } from "../sim/combat";
 import {
   timeBelow,
   tripClock,
@@ -50,6 +51,8 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
   let monsters: Map<string, Bar> | null = null;
   let where = "In town";
   let hour: number | undefined;
+  /** The latest blow in the current fight, for the token view's line. */
+  let last: CombatEvent | undefined;
   for (const e of log.slice(0, shown)) {
     if (e.hour !== undefined) hour = e.hour;
     if (e.party) {
@@ -65,13 +68,17 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
         });
       }
     }
-    if (e.kind === "room" || e.kind === "wander" || e.kind === "home") monsters = null;
+    if (e.kind === "room" || e.kind === "wander" || e.kind === "home") {
+      monsters = null;
+      last = undefined;
+    }
     if (e.kind === "room") where = `Floor ${e.floor}, room ${e.room}`;
     if (e.kind === "wander") where = `Climbing back up through floor ${e.floor}`;
     if (e.kind === "home") where = "Back in town";
     if (e.kind === "camp") where = `Camped on floor ${e.floor}`;
     if (e.kind === "raid") where = "At the edge of the pit";
     if (e.kind === "fight" && e.monsters) {
+      last = undefined;
       monsters = new Map(
         e.monsters.map((m) => [
           m.uid,
@@ -81,6 +88,7 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
     }
     const c = e.combat;
     if (!c) continue;
+    if (c.actor && c.target && c.actor !== c.target) last = c;
     if (c.kind === "summon" && c.hp && monsters) {
       monsters.set(c.hp.uid, {
         uid: c.hp.uid,
@@ -107,6 +115,7 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
     monsters: monsters ? [...monsters.values()] : null,
     where,
     hour,
+    last,
   };
 }
 
@@ -550,6 +559,14 @@ export function TripPlayer({
         ) : null}
         {state.where}
       </p>
+      {state.monsters?.length ? (
+        <FightTokens
+          heroes={heroes}
+          party={heroes.map((h) => state.party.find((b) => b.uid === h.id) ?? startBar(h))}
+          monsters={state.monsters}
+          last={state.last}
+        />
+      ) : null}
       <div className="sides">
         <section className="side" aria-labelledby="side-party">
           <h3 id="side-party">Party</h3>

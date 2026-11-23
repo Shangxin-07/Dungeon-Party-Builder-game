@@ -1891,3 +1891,102 @@ sup.down {
   font-size: 10.5px;
   fill: var(--accent);
 }
+
+/* A fight as tokens (M8.05, DESIGN.md §19.3). */
+.tokens {
+  display: block;
+  width: 100%;
+  max-width: 620px;
+  height: auto;
+  margin: 4px auto 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.tokens text {
+  font-family: inherit;
+}
+
+.tokens-divide {
+  stroke: var(--border);
+  stroke-dasharray: 3 4;
+}
+
+.tokens-row {
+  font-size: 10px;
+  fill: var(--muted);
+  text-anchor: middle;
+}
+
+.token-disc {
+  fill: #1f2a1e;
+  stroke: var(--good);
+  stroke-width: 2;
+}
+
+.token.foe .token-disc {
+  fill: #2c1d1a;
+  stroke: var(--bad);
+}
+
+.token.out {
+  opacity: 0.35;
+}
+
+.token-letter {
+  fill: var(--text);
+  font-weight: 600;
+}
+
+.token-track {
+  fill: var(--border);
+}
+
+.token-hp {
+  fill: var(--good);
+  transition: width 0.25s ease;
+}
+
+.token-hp.low {
+  fill: var(--bad);
+}
+
+.token-mana {
+  fill: #7f9ac9;
+}
+
+.token-name {
+  font-size: 10.5px;
+  fill: var(--muted);
+}
+
+.tokens-blow {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  animation: blow 0.4s ease-out;
+}
+
+.tokens-blow.tone-good {
+  stroke: var(--good);
+}
+
+.tokens-blow.tone-bad {
+  stroke: var(--bad);
+}
+
+@keyframes blow {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tokens-blow,
+  .token-hp {
+    animation: none;
+    transition: none;
+  }
+}
