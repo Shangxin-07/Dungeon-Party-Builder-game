@@ -118,6 +118,76 @@ export interface BuildingDef {
    * on its books.
    */
   dealsWith?: readonly string[];
+  /** How it looks on the town map (M8, DESIGN.md §19). Missing: a plain house on no plot. */
+  art?: BuildingArt;
+}
+
+/**
+ * The drawn looks the town map knows (src/ui/town/map/). Most grow with level;
+ * the wall, gate, watchtowers and headframe are drawn round the pit, not on a plot.
+ */
+export const BUILDING_SHAPES = [
+  "hall",
+  "house",
+  "tower",
+  "temple",
+  "stalls",
+  "yard",
+  "field",
+  "graves",
+  "cottages",
+  "block",
+  "wall",
+  "gate",
+  "watchtowers",
+  "headframe",
+] as const;
+export type BuildingShape = (typeof BUILDING_SHAPES)[number];
+
+/** Sign glyphs the town map can draw over a door. */
+export const SIGN_GLYPHS = [
+  "shield",
+  "mug",
+  "coin",
+  "anvil",
+  "flask",
+  "sword",
+  "book",
+  "sun",
+  "eye",
+  "saw",
+  "key",
+] as const;
+export type SignGlyph = (typeof SIGN_GLYPHS)[number];
+
+/** A building's look on the town map (M8, DESIGN.md §19). */
+export interface BuildingArt {
+  /** Its plot (content/townmap.ts). Not needed for the wall, gate, watchtowers and headframe. */
+  plot?: string;
+  shape: BuildingShape;
+  /** Roof colour, a CSS hex colour. */
+  roof?: string;
+  sign?: SignGlyph;
+  /** Smoke from the chimney (forges and the like). */
+  smoke?: boolean;
+  /**
+   * Picture art that replaces the drawn shape: a sprite sheet registered in
+   * src/ui/town/map/sprites.ts (frames side by side). `frames[level - 1]` is
+   * the frame for that level; levels past the list use the last one.
+   */
+  sprite?: { sheet: string; frames: readonly number[] };
+}
+
+/** Where things stand on the town map (M8, DESIGN.md §19). Coordinates are map units. */
+export interface TownMapDef {
+  width: number;
+  height: number;
+  /** The pit, dead centre. */
+  pit: { x: number; y: number; rx: number; ry: number };
+  /** The palisade's ring round the town. */
+  wall: { rx: number; ry: number };
+  /** Plots by id. Each building with a plot stands with its door (bottom centre) here. */
+  plots: Record<string, { x: number; y: number }>;
 }
 
 /** How a new town starts and the house rules of the guild. */

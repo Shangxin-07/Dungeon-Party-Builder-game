@@ -29,4 +29,6 @@ export default defineBuilding({
       effects: [{ type: "defence", amount: 20 }],
     },
   ],
+  // Its look on the town map (M8, DESIGN.md §19).
+  art: { shape: "wall" },
 });

@@ -45,6 +45,7 @@ import { Roster } from "./Roster";
 import { Recruits } from "./Recruits";
 import { Market } from "./Market";
 import { Buildings } from "./Buildings";
+import { TownMap } from "./TownMap";
 import { Memorial } from "./Memorial";
 import { CampPanel, PostsPanel } from "./Posts";
 import { ResearchPanel } from "./Research";
@@ -254,6 +255,7 @@ export function TownPlay({ initial }: { initial: Game }) {
         }}
       />
       <AwayPanel town={town} act={act} />
+      <TownMap town={town} />
       <CampPanel town={town} act={act} />
       {town.freeHires > 0 ? <Recruits town={town} act={act} /> : null}
       {town.camp ? <PostsPanel town={town} act={act} /> : null}

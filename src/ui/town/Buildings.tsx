@@ -47,7 +47,7 @@ export function Buildings({ town, act }: { town: TownState; act: Act }) {
           const work = underConstruction(town, b.id);
           const short = next && materialsShort(ix, town, next.materials);
           return (
-            <li key={b.id} className={`card${damaged ? " damaged" : ""}`}>
+            <li key={b.id} id={`building-${b.id}`} className={`card${damaged ? " damaged" : ""}`}>
               <h3>
                 {b.name}{" "}
                 <span className="muted small">{level ? `level ${level}` : "not built"}</span>

@@ -35,4 +35,13 @@ export default defineBuilding({
       ],
     },
   ],
+  // Its look on the town map (M8, DESIGN.md §19).
+  art: {
+    plot: "north-east",
+    shape: "house",
+    roof: "#9a6a2a",
+    sign: "mug",
+    // Pixel art Mike made for M8.01 (three frames; the third waits for a level 3).
+    sprite: { sheet: "tavern", frames: [0, 1] },
+  },
 });

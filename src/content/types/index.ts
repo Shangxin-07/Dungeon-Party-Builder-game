@@ -94,7 +94,12 @@ export type {
   PetitionOffer,
   VisitorOffer,
   TownsfolkRules,
+  BuildingArt,
+  BuildingShape,
+  SignGlyph,
+  TownMapDef,
 } from "./town";
+export { BUILDING_SHAPES, SIGN_GLYPHS } from "./town";
 export {
   defineClass,
   defineItem,
@@ -117,6 +122,7 @@ export {
   defineOffer,
   defineOfferRules,
   defineTownsfolkRules,
+  defineTownMap,
   defineOpening,
   defineResearchRules,
   defineDungeonRules,

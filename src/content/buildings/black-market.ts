@@ -22,4 +22,6 @@ export default defineBuilding({
       ],
     },
   ],
+  // Its look on the town map (M8, DESIGN.md §19).
+  art: { plot: "inner-south-west", shape: "house", roof: "#2c2a33", sign: "eye" },
 });

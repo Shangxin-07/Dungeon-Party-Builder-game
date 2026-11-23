@@ -142,6 +142,7 @@ import leadershipRules from "./leadership";
 import researchRules from "./research";
 import workshopRules from "./workshops";
 import townsfolkRules from "./townsfolk";
+import townMap from "./townmap";
 import offerRules from "./offers";
 import coastCaravanOffer from "./offers/coast-caravan";
 import deepTradersOffer from "./offers/deep-traders";
@@ -733,6 +734,7 @@ export const library: Library = {
   recipes,
   workshops: workshopRules,
   townsfolk: townsfolkRules,
+  townMap,
   offers,
   offerRules,
 };
