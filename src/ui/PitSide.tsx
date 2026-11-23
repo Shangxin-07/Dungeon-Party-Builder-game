@@ -8,7 +8,9 @@ import type { FloorKnowledge, Outing, TownState } from "../sim/town";
 import { ix } from "./game";
 import { awayLine } from "./town/Away";
 
-const ROW = 46;
+// Condensed in M8.09 (Mike: a little less tall): one line of words per floor.
+const ROW = 32;
+const BOX = 22;
 const TOP = 34;
 
 export interface SealView {
@@ -56,13 +58,13 @@ export function PitSide({
         const seal = seals.find((s) => s.floor === k.depth);
         return (
           <g key={k.depth}>
-            <rect x={x} y={y} width={w} height={34} rx={4} fill="#221e18" stroke="#3a3226" />
+            <rect x={x} y={y} width={w} height={BOX} rx={4} fill="#221e18" stroke="#3a3226" />
             {k.band ? (
               <rect
                 x={x}
-                y={y + 34 - 34 * Math.max(full, 0.06)}
+                y={y + BOX - BOX * Math.max(full, 0.08)}
                 width={w}
-                height={34 * Math.max(full, 0.06)}
+                height={BOX * Math.max(full, 0.08)}
                 rx={3}
                 fill={tone}
                 opacity={k.stale ? 0.3 : 0.55}
@@ -71,34 +73,34 @@ export function PitSide({
               Array.from({ length: 6 }, (_, j) => (
                 <ellipse
                   key={j}
-                  cx={x + 10 + j * (w / 6)}
-                  cy={y + 16 + (j % 2) * 5}
-                  rx={15}
-                  ry={6}
+                  cx={x + 16 + j * ((w - 32) / 5)}
+                  cy={y + 10 + (j % 2) * 4}
+                  rx={13}
+                  ry={5}
                   fill="#3a352c"
                   opacity={0.55}
                 />
               ))
             )}
-            <text x={x - 8} y={y + 22} textAnchor="end" className="pitside-floor">
+            <text x={x - 8} y={y + 16} textAnchor="end" className="pitside-floor">
               {k.depth}
             </text>
-            <text x={x + w + 10} y={y + 14} className="pitside-name">
+            <text x={x + w + 10} y={y + 15} className="pitside-name">
               {def.name}
-            </text>
-            <text x={x + w + 10} y={y + 28} className={`pitside-note${k.stale ? " stale" : ""}`}>
-              {k.band ?? "unknown"} ·{" "}
-              {k.source === "none"
-                ? "no word"
-                : k.source === "watch"
-                  ? "the watch, today"
-                  : `${k.by ?? k.source}, ${k.daysAgo ? `${k.daysAgo}d ago` : "today"}`}
+              <tspan className={`pitside-note${k.stale ? " stale" : ""}`} dx={8}>
+                {k.band ?? "unknown"} ·{" "}
+                {k.source === "none"
+                  ? "no word"
+                  : k.source === "watch"
+                    ? "the watch, today"
+                    : `${k.by ?? k.source}, ${k.daysAgo ? `${k.daysAgo}d ago` : "today"}`}
+              </tspan>
             </text>
             {i < known.length - 1 ? (
               <line
                 x1={x + w - 14}
                 x2={x + w - 6}
-                y1={y + 34}
+                y1={y + BOX}
                 y2={y + ROW}
                 stroke="#5b5240"
                 strokeWidth={3}
@@ -110,17 +112,17 @@ export function PitSide({
                   <rect
                     key={p}
                     x={x + w - 30 + p * 4}
-                    y={y + 36 + p * 3}
+                    y={y + BOX + 1 + p * 3}
                     width={28}
                     height={3}
                     fill={seal.name.toLowerCase().includes("iron") ? "#8b8f96" : "#b08a52"}
-                    transform={`rotate(${p % 2 ? 8 : -8} ${x + w - 16} ${y + 40})`}
+                    transform={`rotate(${p % 2 ? 8 : -8} ${x + w - 16} ${y + BOX + 5})`}
                   />
                 ))}
                 <text
                   x={x + w - 36}
                   textAnchor="end"
-                  y={y + 44}
+                  y={y + BOX + 9}
                   className={`pitside-seal${seal.percent < 34 ? " stale" : ""}`}
                 >
                   sealed {seal.percent}%
@@ -132,8 +134,8 @@ export function PitSide({
       })}
       {outings.map((o, i) => (
         <g key={o.id}>
-          <circle cx={150 - i * 4} cy={TOP + 26 + i * 16} r={5} fill="var(--accent)" />
-          <text x={140 - i * 4} y={TOP + 30 + i * 16} textAnchor="end" className="pitside-party">
+          <circle cx={150 - i * 4} cy={TOP + 20 + i * 16} r={5} fill="var(--accent)" />
+          <text x={140 - i * 4} y={TOP + 24 + i * 16} textAnchor="end" className="pitside-party">
             {o.name}: {awayLine(town, o).text.split(" · ")[0]}
           </text>
         </g>

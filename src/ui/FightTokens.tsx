@@ -49,12 +49,13 @@ export function FightTokens({
   heroes,
   party,
   monsters,
-  last,
+  blows = [],
 }: {
   heroes: readonly Hero[];
   party: readonly Bar[];
   monsters: readonly Bar[];
-  last?: CombatEvent;
+  /** The latest move: one blow, or each hit of a move on a whole group. */
+  blows?: readonly CombatEvent[];
 }) {
   const heroBy = new Map(heroes.map((h) => [h.id, h]));
   const ours = place(
@@ -78,8 +79,13 @@ export function FightTokens({
   const rows = Math.max(1, ...all.map((t) => (t.y - TOP) / GAP + 1));
   const h = TOP + rows * GAP - 10;
   const at = (uid?: string) => all.find((t) => t.bar.uid === uid);
-  const from = at(last?.actor);
-  const to = at(last?.target);
+  const lines = blows.flatMap((b) => {
+    const from = at(b.actor);
+    const to = at(b.target);
+    return from && to ? [{ b, from, to }] : [];
+  });
+  const group = lines.length > 1;
+  const struck = new Map(group ? lines.map((l) => [l.to.bar.uid, l.b.tone] as const) : []);
   return (
     <svg
       className="tokens"
@@ -100,21 +106,25 @@ export function FightTokens({
       <text x={COLUMN.foes.back} y={16} className="tokens-row">
         back
       </text>
-      {from && to ? (
+      {lines.map(({ b, from, to }) => (
         <path
-          key={`${last!.round}-${last!.actor}-${last!.target}-${last!.text}`}
+          key={`${b.round}-${b.actor}-${b.target}-${b.text}`}
           d={`M${from.x} ${from.y} Q${(from.x + to.x) / 2} ${Math.min(from.y, to.y) - 30} ${to.x} ${to.y}`}
-          className={`tokens-blow${last!.tone ? ` tone-${last!.tone}` : ""}`}
+          className={`tokens-blow${group ? " group" : ""}${b.tone ? ` tone-${b.tone}` : ""}`}
         />
-      ) : null}
+      ))}
       {all.map((t) => (
-        <TokenView key={t.bar.uid} t={t} />
+        <TokenView
+          key={t.bar.uid}
+          t={t}
+          struck={struck.has(t.bar.uid) ? (struck.get(t.bar.uid) ?? "plain") : undefined}
+        />
       ))}
     </svg>
   );
 }
 
-function TokenView({ t }: { t: Token }) {
+function TokenView({ t, struck }: { t: Token; struck?: "good" | "bad" | "plain" }) {
   const { bar, x, y } = t;
   const hp = Math.max(0, Math.min(1, bar.hp / bar.max));
   const mana = bar.maxMana ? Math.max(0, Math.min(1, (bar.mana ?? 0) / bar.maxMana)) : undefined;
@@ -126,6 +136,7 @@ function TokenView({ t }: { t: Token }) {
         {bar.state === "up" ? `${bar.hp}/${bar.max}` : bar.state === "dead" ? "dead" : "down"}
       </title>
       <circle cx={x} cy={y} r={R} className="token-disc" />
+      {struck ? <circle cx={x} cy={y} r={R + 4} className={`token-struck tone-${struck}`} /> : null}
       {t.hero ? (
         <foreignObject x={x - R + 1} y={y - R + 1} width={2 * R - 2} height={2 * R - 2}>
           <Portrait hero={t.hero} size={2 * R - 2} className="token-face" />
