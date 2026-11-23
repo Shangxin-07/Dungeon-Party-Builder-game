@@ -1262,7 +1262,7 @@ The pit map shows every floor's population against its capacity, and below floor
 
 ## 19. M8: the graphical pass
 
-> Added 2026-11-23 from Mike's idea, design only; nothing here is built yet. Open questions J, K and L are at the end. Mock-up: [`docs/mockups/m8-town-map.html`](mockups/m8-town-map.html) (open it in a browser; screenshots below).
+> Added 2026-11-23 from Mike's idea, design only; nothing here is built yet. Question J decided (simple shapes, sprites can replace them later); K and L are open at the end. Mock-up: [`docs/mockups/m8-town-map.html`](mockups/m8-town-map.html) (open it in a browser; screenshots below).
 
 ### Why
 
@@ -1336,7 +1336,7 @@ Each PR is display-only. The days bot and tests are unaffected, apart from new a
 
 ### Questions for Mike
 
-- **J: where the art comes from.**
+- ✅ **DECIDED J: where the art comes from. J1, simple shapes we draw**, kept swappable: Mike likes pixel sprites too (2026-11-23), so every `art` entry may later name a sprite sheet frame (`art.sprite`) that replaces the drawn shape for that building, level or monster, with no change to anything else. Sprites can come in piece by piece.
   - **J1 (recommended): draw it ourselves in SVG**, like the mock-up. One consistent look, no licences, every piece changeable in code, and it grows with the content. It's simple and a bit "board game", not lush.
   - **J2: a free icon library** (for example game-icons.net, thousands of fantasy icons, CC BY 3.0, needs a credit line) for the small icons only, with the town map and pit still drawn by us. Much more variety for monsters and items quickly; the style is theirs.
   - **J3: pixel-art sprites** (drawn or a CC0 pack). The most "game" look, but every building level and monster needs a picture made, which slows down adding content.
