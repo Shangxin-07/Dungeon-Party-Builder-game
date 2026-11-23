@@ -26,6 +26,7 @@ import {
   type TownState,
   type TripReport,
 } from "../../sim/town";
+import { Portrait } from "../art/Portrait";
 import { ix } from "../game";
 import type { Act } from "./shared";
 import { TripTown } from "./Trip";
@@ -158,6 +159,17 @@ function Debrief({
   const todo = waitingOn(town, trip);
   return (
     <div className="tally">
+      <ul className="debrief-faces" aria-label="Who went">
+        {r.party.map((h) => (
+          <li key={h.id} className={h.condition === "dead" ? "fallen" : ""}>
+            <Portrait hero={h} size={44} />
+            <span className="small">
+              {h.name}
+              {h.condition === "dead" ? " ✕" : h.injuries.length ? " (hurt)" : ""}
+            </span>
+          </li>
+        ))}
+      </ul>
       <p className="small">
         {summary(trip)}{" "}
         <button type="button" className="link" onClick={() => onWatch(trip)}>

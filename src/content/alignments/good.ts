@@ -5,6 +5,7 @@ export default defineAlignment({
   name: "Good",
   blurb: "Looks after the weak, and can't bear to leave anyone behind.",
   position: 1,
+  frame: "#d4a843",
   weight: 35,
   rules: [
     { fact: "fallenComrades", amount: -2, cap: 6, reason: "couldn't save them" },

@@ -591,8 +591,46 @@ footer {
   background: var(--panel);
 }
 
+.formation-hero {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.formation-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .formation-hero + .formation-hero {
   margin-top: 8px;
+}
+
+/* Who went, at the top of a debrief (M8). */
+.debrief-faces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.debrief-faces li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 64px;
+  text-align: center;
+}
+
+.debrief-faces li.fallen .portrait {
+  filter: grayscale(1) brightness(0.6);
+}
+
+.debrief-faces li.fallen {
+  color: var(--muted);
 }
 
 .warnings {
@@ -2002,7 +2040,7 @@ sup.down {
   flex: none;
   overflow: hidden;
   border-radius: 6px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   background: #2a241b;
   vertical-align: middle;
 }

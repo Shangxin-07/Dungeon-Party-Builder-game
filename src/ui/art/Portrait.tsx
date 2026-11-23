@@ -3,7 +3,8 @@
  * (head, hair, beard, a scar or two, class headgear, injuries), every choice
  * hashed from the hero's id and name, so a hero always looks the same and the
  * save never changes. Hair and beard share a colour; risen heroes keep their
- * face, gone pale and grey-green.
+ * face, gone pale and grey-green. The frame takes the colour of the hero's
+ * alignment (`frame` on the alignment's content).
  */
 import type { Hero } from "../../sim/hero";
 import { mainClass } from "../../sim/levels";
@@ -48,7 +49,7 @@ export interface Face {
 
 /** Who a portrait is of: a hero, or what the memorial remembers of one. */
 export type Sitter = Pick<Hero, "id" | "name" | "classId"> &
-  Partial<Pick<Hero, "classes" | "porter" | "injuries">>;
+  Partial<Pick<Hero, "classes" | "porter" | "injuries" | "alignment">>;
 
 /** FNV-1a: a steady number from a string. */
 function hash(s: string): number {
@@ -122,12 +123,14 @@ export function Portrait({
 }) {
   const f = faceOf(hero, risen || /, Risen$/.test(hero.name));
   const tint = HAIR[f.colour];
+  const frame = hero.alignment ? ix.lib.alignments.find((a) => a.id === hero.alignment) : undefined;
   return (
     <span
       className={`portrait${f.risen ? " risen" : ""} ${className}`}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, borderColor: frame?.frame }}
       role="img"
-      aria-label={`${hero.name}'s portrait`}
+      aria-label={`${hero.name}'s portrait${frame ? `, ${frame.name}` : ""}`}
+      title={frame ? `${hero.name} (${frame.name})` : undefined}
     >
       <Part layer="heads" cell={f.head} size={size} />
       {f.extra !== undefined ? <Part layer="extras" cell={f.extra} size={size} /> : null}

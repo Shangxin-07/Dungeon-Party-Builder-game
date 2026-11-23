@@ -7,6 +7,7 @@ export default defineAlignment({
   name: "Neutral",
   blurb: "Gets the job done and keeps out of other people's quarrels.",
   position: 0,
+  frame: "#7d7566",
   weight: 40,
   rules: [],
 });

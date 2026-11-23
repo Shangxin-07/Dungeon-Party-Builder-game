@@ -529,6 +529,8 @@ export function validateLibrary(lib: Library): string[] {
     if (positions.has(a.position)) err(`${w}: another alignment has the same position`);
     positions.add(a.position);
     if (a.weight <= 0) err(`${w}: weight must be positive`);
+    if (a.frame !== undefined && !/^#[0-9a-f]{6}$/i.test(a.frame))
+      err(`${w}: frame must be a colour like "#d4a843"`);
     rules(w, a.rules);
   }
 
