@@ -33,6 +33,7 @@ import {
   type TownState,
 } from "../../sim/town";
 import { RETREATS } from "../Expedition";
+import { Portrait } from "../art/Portrait";
 import { ix } from "../game";
 import { HeroBars } from "../Watch";
 import { ScoutingReport } from "../Report";
@@ -119,17 +120,20 @@ export function PartyPanel({
             {row(r).length ? (
               row(r).map((h) => (
                 <div key={h.id} className="formation-hero">
-                  <HeroBars hero={h} />
-                  <span className="muted small">
-                    {cmd.leader?.id === h.id ? (
-                      <strong className="leader-mark">Leader · </strong>
-                    ) : null}
-                    {heroTitle(ix, h, true)} · {ix.alignment(h.alignment).name} · morale {h.morale}{" "}
-                    · {describeKit(h)}
-                    {cmd.leader && cmd.leader.id !== h.id
-                      ? ` · costs ${fmtCommand(cmd.costs[h.id] ?? 1)} command`
-                      : ""}
-                  </span>
+                  <Portrait hero={h} size={40} />
+                  <div className="formation-info">
+                    <HeroBars hero={h} />
+                    <span className="muted small">
+                      {cmd.leader?.id === h.id ? (
+                        <strong className="leader-mark">Leader · </strong>
+                      ) : null}
+                      {heroTitle(ix, h, true)} · {ix.alignment(h.alignment).name} · morale{" "}
+                      {h.morale} · {describeKit(h)}
+                      {cmd.leader && cmd.leader.id !== h.id
+                        ? ` · costs ${fmtCommand(cmd.costs[h.id] ?? 1)} command`
+                        : ""}
+                    </span>
+                  </div>
                 </div>
               ))
             ) : (

@@ -39,3 +39,20 @@ describe("portraits (M8.06)", () => {
     expect(html).toContain("heads");
   });
 });
+
+describe("portrait frames (M8.08)", () => {
+  it("frames a hero in their alignment's colour", () => {
+    const good = ix.lib.alignments.find((a) => a.id === "good")!;
+    const html = renderToStaticMarkup(
+      createElement(Portrait, {
+        hero: { id: "h1", name: "Bram", classId: "fighter", alignment: "good" },
+      }),
+    );
+    expect(html).toContain(`border-color:${good.frame}`);
+    expect(html).toContain("Bram&#x27;s portrait, Good");
+  });
+
+  it("every alignment has a frame colour", () => {
+    for (const a of ix.lib.alignments) expect(a.frame).toMatch(/^#[0-9a-f]{6}$/i);
+  });
+});

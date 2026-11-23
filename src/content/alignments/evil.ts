@@ -5,6 +5,7 @@ export default defineAlignment({
   name: "Evil",
   blurb: "In it for themselves, and enjoys the killing a little too much.",
   position: -1,
+  frame: "#9b2c3a",
   weight: 25,
   rules: [
     { fact: "goldShare", amount: 1, per: 5, cap: 3, reason: "a fat purse" },

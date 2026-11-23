@@ -142,6 +142,8 @@ export interface AlignmentDef {
   /** How often recruits have it, relative to the others. */
   weight: number;
   rules: readonly MoraleRule[];
+  /** Colour of the frame round a hero's portrait (M8), "#rrggbb". */
+  frame?: string;
 }
 
 /** What drives a hero (DESIGN.md §6). */
