@@ -73,7 +73,7 @@ export function haulPlan(
   town: TownState,
   rule: HaulRule = town.haulRule ?? "sell",
 ): Record<string, HaulChoice> {
-  return Object.fromEntries((town.haul ?? []).map((it) => [it.id, ruleChoice(ix, town, it, rule)]));
+  return Object.fromEntries(town.haul.map((it) => [it.id, ruleChoice(ix, town, it, rule)]));
 }
 
 export function setHaulRule(_ix: Index, town: TownState, rule: HaulRule): TownState {
@@ -91,7 +91,6 @@ export function settleHaul(
   choices: Readonly<Record<string, HaulChoice>>,
 ): TownState {
   const t = edit(town);
-  t.haul ??= [];
   const sale = homeHaggler(ix, t);
   const fenced = fence(ix, t);
   let gold = 0;
@@ -142,7 +141,7 @@ export function settleHaul(
 /** "Research what's new": every piece the Library can learn from goes there, the rest as the rule says. */
 export function researchPlan(ix: Index, town: TownState): Record<string, HaulChoice> {
   const plan = haulPlan(ix, town);
-  for (const it of town.haul ?? []) if (researchable(ix, town, it.item)) plan[it.id] = "research";
+  for (const it of town.haul) if (researchable(ix, town, it.item)) plan[it.id] = "research";
   return plan;
 }
 
@@ -150,7 +149,7 @@ const pieces = (n: number) => (n === 1 ? "one piece" : `${n} pieces`);
 
 /** Settle everything waiting the way the haul rule says (the bot, tests, "Confirm"). */
 export const settleByRule = (ix: Index, town: TownState, rule?: HaulRule) =>
-  (town.haul ?? []).length ? settleHaul(ix, town, haulPlan(ix, town, rule)) : town;
+  town.haul.length ? settleHaul(ix, town, haulPlan(ix, town, rule)) : town;
 
 /** Break down something from the store room at the Blacksmith. */
 export function salvageStash(ix: Index, town: TownState, itemId: string): TownState {
@@ -180,7 +179,6 @@ export function bringHome(
   bonus: number,
   fenced: number,
 ): { coins: number; worth: number; held: number } {
-  t.haul ??= [];
   let coins = 0;
   let worth = 0;
   let held = 0;

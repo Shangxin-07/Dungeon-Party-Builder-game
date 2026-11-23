@@ -327,10 +327,10 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
       <span>
         Roster <strong>{town.roster.length}</strong>/{rosterSize(ix, town)}
       </span>
-      {town.folk?.count || foodGrown(ix, town) ? (
+      {town.folk.count || foodGrown(ix, town) ? (
         <span title="Townsfolk, and the food in store (M7.15)">
-          Townsfolk <strong>{town.folk?.count ?? 0}</strong>/{housing(ix, town)}, food{" "}
-          <strong>{town.folk?.food ?? 0}</strong>
+          Townsfolk <strong>{town.folk.count ?? 0}</strong>/{housing(ix, town)}, food{" "}
+          <strong>{town.folk.food ?? 0}</strong>
         </span>
       ) : null}
       {town.camp ? <span>At the mining camp</span> : null}
@@ -349,7 +349,7 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
       {town.damaged.length ? (
         <span className="damaged-note">{town.damaged.length} damaged</span>
       ) : null}
-      {(town.outings ?? []).map((o) => {
+      {town.outings.map((o) => {
         const line = awayLine(town, o);
         return (
           <span key={o.id} className={line.tone ?? undefined}>
@@ -365,7 +365,7 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
       >
         Next day
       </button>
-      {(town.outings ?? []).length ? (
+      {town.outings.length ? (
         <button
           type="button"
           className="btn"

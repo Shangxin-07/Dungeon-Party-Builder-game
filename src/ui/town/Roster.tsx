@@ -83,7 +83,7 @@ export function Roster({ town, act }: { town: TownState; act: Act }) {
       ) : (
         <p className="muted">Nobody is left in the guild. Hire someone below.</p>
       )}
-      {(town.outings ?? []).map((o) => (
+      {town.outings.map((o) => (
         <p key={o.id} className="small muted">
           Away with <strong>{o.name}</strong>:{" "}
           {[...o.party, ...o.porterParty]
@@ -177,7 +177,7 @@ export function MinerTraining({ town, hero: h, act }: { town: TownState; hero: H
  * answer, party and row buttons) that opens into the full sheet on click.
  */
 export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Act }) {
-  const inParty = town.party.includes(h.id) || (town.porters ?? []).includes(h.id);
+  const inParty = town.party.includes(h.id) || town.porters.includes(h.id);
   const rec = town.records[h.id];
   const sheet = heroSheet(ix, h);
   const supplies = tally(town.stash.filter((id) => ix.item(id).slot === "consumable"));
@@ -215,7 +215,7 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
           Morale {h.morale} {mood(ix, h)}
         </span>
         {tier ? <span className="warn"> · {tier.name}</span> : null}
-        {h.injuries?.length ? (
+        {h.injuries.length ? (
           <span className="warn">
             {" "}
             ·{" "}

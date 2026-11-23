@@ -14,7 +14,6 @@ export function toggleParty(ix: Index, town: TownState, heroId: string): TownSta
   const h = hero(t, heroId);
   if (h.porter) {
     const slots = ix.lib.town.porters.slots;
-    t.porters ??= [];
     if (t.porters.includes(heroId)) t.porters = t.porters.filter((id) => id !== heroId);
     else if (t.porters.length >= slots)
       throw new TownError(`Only ${slots} porters can go with one party.`);
@@ -46,7 +45,7 @@ export function setOrders(_ix: Index, town: TownState, orders: StandingOrders): 
 
 /** The saved party in this slot, if there's one on file. */
 export const savedParty = (town: TownState, slot: number): SavedParty | undefined =>
-  (town.parties ?? [])[slot];
+  town.parties[slot];
 
 /** Default name for a party slot: Party A, Party B, ... */
 export const partyLetter = (slot: number) => `Party ${String.fromCharCode(65 + slot)}`;
@@ -57,7 +56,6 @@ export function saveParty(ix: Index, town: TownState, slot: number, name?: strin
     throw new TownError(`The guild keeps ${ix.lib.town.savedParties} parties on file.`);
   if (!town.party.length) throw new TownError("Pick some heroes first.");
   const t = edit(town);
-  t.parties ??= [];
   // Sealing the stairs (M7.16) is a one-off: it isn't kept on file.
   const { seal: _seal, ...orders } = ordinaryOrders(t.orders);
   const old = t.parties[slot];
@@ -65,7 +63,7 @@ export function saveParty(ix: Index, town: TownState, slot: number, name?: strin
   t.parties[slot] = {
     name: name?.trim() || old?.name || partyLetter(slot),
     heroes: [...t.party],
-    porters: [...(t.porters ?? [])],
+    porters: [...t.porters],
     ...(t.leader && t.party.includes(t.leader) ? { leader: t.leader } : {}),
     orders,
   };
@@ -129,7 +127,7 @@ export function planRescue(
   mission: "rescue" | "recover" = "recover",
 ): TownState {
   const site = town.sites.find((s) => s.id === id && !s.outing);
-  const outing = (town.outings ?? []).find((o) => o.id === id);
+  const outing = town.outings.find((o) => o.id === id);
   if (!site && !outing) throw new TownError("Nobody is waiting there any more.");
   if (outing && town.day <= outing.expected)
     throw new TownError(`${outing.name} isn't due back until day ${outing.expected}.`);

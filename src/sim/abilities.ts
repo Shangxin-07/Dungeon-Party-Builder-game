@@ -24,7 +24,7 @@ export interface KnownAbility {
 
 /** A hero's classes, deepest first, with their levels. */
 const classesOf = (hero: Hero): [string, number][] => {
-  const list = Object.entries(hero.classes ?? {});
+  const list = Object.entries(hero.classes);
   // Untrained recruits shown as their best-fit class, for previews.
   if (!list.length) list.push([hero.classId, 1]);
   return list.sort((a, b) => b[1] - a[1]);

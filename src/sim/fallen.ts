@@ -50,7 +50,6 @@ export function makeBody(id: string, hero: Hero, day: number, floor: number): Bo
   snap.hp = 0;
   snap.mana = 0;
   snap.condition = "dead";
-  snap.levelUps = snap.levelUps ?? [];
   return { id, hero: snap, gear, died: day, floor };
 }
 
@@ -94,7 +93,7 @@ export function risenSheet(ix: Index, hero: Hero): HeroSheet {
     derived,
     skills,
     passives,
-    tags: [...new Set([...tf.tags, ...Object.keys(hero.classes ?? {})])],
+    tags: [...new Set([...tf.tags, ...Object.keys(hero.classes)])],
   };
 }
 

@@ -43,7 +43,7 @@ export function rise(ix: Index, t: TownState, site: LostSite, b: Body): void {
     floor: site.floor,
     rose: t.day,
   };
-  t.risen = [...(t.risen ?? []), r];
+  t.risen = [...t.risen, r];
   for (const m of t.memorial) if (m.heroId === b.hero.id) m.risen = true;
   news(
     t,
@@ -55,7 +55,7 @@ export function rise(ix: Index, t: TownState, site: LostSite, b: Body): void {
 
 /** Like any monster, the risen push up towards the pit (DESIGN.md §4). */
 export function risenClimb(ix: Index, t: TownState): void {
-  for (const r of t.risen ?? []) {
+  for (const r of t.risen) {
     const days = t.day - r.rose;
     if (r.floor <= 1 || days <= 0 || days % ix.lib.fallen.climbDays) continue;
     r.floor -= 1;
@@ -69,7 +69,7 @@ export function resurrectQuote(
   town: TownState,
   bodyId: string,
 ): { terms?: ResurrectTerms; why?: string } {
-  const b = (town.bodies ?? []).find((x) => x.id === bodyId);
+  const b = town.bodies.find((x) => x.id === bodyId);
   if (!b) return { why: "That body isn't in town." };
   if (b.risen) return { why: `${b.hero.name} rose once already. All that's left is to bury them.` };
   const e = effects(ix, town).find((x) => x.type === "resurrect");
@@ -133,7 +133,7 @@ export function bury(ix: Index, town: TownState, bodyId: string): TownState {
   if (cost === undefined) throw new TownError("You need a working Graveyard to bury anyone.");
   if (town.gold < cost) throw new TownError(`A burial costs ${cost} gold.`);
   const t = edit(town);
-  const b = (t.bodies ?? []).find((x) => x.id === bodyId);
+  const b = t.bodies.find((x) => x.id === bodyId);
   if (!b) throw new TownError("That body isn't in town.");
   book(t, "burials", -cost);
   t.bodies = t.bodies.filter((x) => x !== b);

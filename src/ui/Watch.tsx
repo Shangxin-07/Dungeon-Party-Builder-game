@@ -291,7 +291,7 @@ function HeroDetails({ hero, bar }: { hero: Hero; bar?: Bar }) {
         {fatigueTier(ix, hero) ? (
           <span className="warn"> · {fatigueTier(ix, hero)!.name}</span>
         ) : null}
-        {hero.injuries?.length ? (
+        {hero.injuries.length ? (
           <span className="warn">
             {" "}
             · {hero.injuries.map((i) => ix.injury(i.id).name.toLowerCase()).join(", ")}

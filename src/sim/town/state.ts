@@ -9,7 +9,7 @@ import type { HaulItem } from "../loot";
 import type { RaidReport } from "../raid";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 17;
+export const TOWN_VERSION = 18;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 export const PIT_HISTORY = 60;
@@ -309,24 +309,24 @@ export interface TownState {
   research: ResearchState;
   /**
    * What scouts last brought home about each floor (M7.08, DESIGN.md §17.8),
-   * by floor depth. Missing in older saves: nothing scouted yet.
+   * by floor depth.
    */
-  intel?: Record<number, TownIntel>;
+  intel: Record<number, TownIntel>;
   /**
    * What ordinary parties made of each floor they passed through (M7.13,
    * DESIGN.md §18.3), by depth: a rough feel, dated. Scouts' `intel` is better.
    */
-  sightings?: Record<number, Sighting>;
+  sightings: Record<number, Sighting>;
   /** Workshops (M7.14, DESIGN.md §18.1), by building id: who works there and what's queued. */
-  workshops?: Record<string, Workshop>;
+  workshops: Record<string, Workshop>;
   /** Townsfolk (M7.15): how many, the food in store, and how many work each job. */
-  folk?: Folk;
+  folk: Folk;
   /** Town news (M7.17): offers waiting for an answer. */
-  offers?: Offer[];
+  offers: Offer[];
   /** The offers' own random stream (M7.17), so they don't change the town's other dice. */
   offerSeed?: number;
-  /** Huge beasts' lairs (M7.08), by lair id: the day the beast was killed. Missing: none yet. */
-  lairs?: Record<string, { slain?: number }>;
+  /** Huge beasts' lairs (M7.08), by lair id: the day the beast was killed. */
+  lairs: Record<string, { slain?: number }>;
   /** What the posts brought in yesterday: materials by id, and gold. */
   gathered?: { day: number; materials: Record<string, number>; gold: number };
 }

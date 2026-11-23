@@ -37,7 +37,7 @@ export const openWorkshops = (ix: Index, town: TownState) =>
   workshopIds(ix).filter((id) => benches(ix, town, id) > 0);
 
 const shopOf = (town: TownState, id: string): Workshop =>
-  town.workshops?.[id] ?? { workers: [], queue: [] };
+  town.workshops[id] ?? { workers: [], queue: [] };
 
 /** All of a workshop's recipes, and whether its level allows each today. */
 export function recipesAt(
@@ -92,7 +92,6 @@ export function queueJob(ix: Index, town: TownState, shopId: string, recipeId: s
   const t = edit(town);
   useMaterials(t, r.materials);
   book(t, "crafting", -(r.gold ?? 0));
-  t.workshops ??= {};
   const shop = shopOf(t, shopId);
   shop.queue.push({ id: `j${t.nextThingId++}`, recipe: recipeId, done: 0 });
   t.workshops[shopId] = shop;
@@ -102,7 +101,7 @@ export function queueJob(ix: Index, town: TownState, shopId: string, recipeId: s
 /** Call a job off: everything it cost comes back, whatever work went in. */
 export function cancelJob(ix: Index, town: TownState, shopId: string, jobId: string): TownState {
   const t = edit(town);
-  const shop = t.workshops?.[shopId];
+  const shop = t.workshops[shopId];
   const job = shop?.queue.find((j) => j.id === jobId);
   if (!shop || !job) throw new TownError("That job isn't in the queue.");
   const r = ix.recipe(job.recipe);
@@ -114,12 +113,11 @@ export function cancelJob(ix: Index, town: TownState, shopId: string, jobId: str
 
 /** Which workshop a hero works at, if any. */
 export const benchOf = (town: TownState, heroId: string): string | undefined =>
-  Object.entries(town.workshops ?? {}).find(([, w]) => w.workers.includes(heroId))?.[0];
+  Object.entries(town.workshops).find(([, w]) => w.workers.includes(heroId))?.[0];
 
 /** Take a hero off any bench (in place). */
 export function leaveBench(t: TownState, heroId: string): void {
-  for (const w of Object.values(t.workshops ?? {}))
-    w.workers = w.workers.filter((x) => x !== heroId);
+  for (const w of Object.values(t.workshops)) w.workers = w.workers.filter((x) => x !== heroId);
 }
 
 /**
@@ -141,12 +139,11 @@ export function assignBench(
   if (!open) throw new TownError(`The ${shop.name} isn't working.`);
   const w = shopOf(t, shopId);
   if (w.workers.length >= open) throw new TownError(`Every bench at the ${shop.name} is taken.`);
-  for (const id of Object.keys(t.posts ?? {})) {
+  for (const id of Object.keys(t.posts)) {
     t.posts[id] = t.posts[id]!.filter((x) => x !== heroId);
     if (!t.posts[id]!.length) delete t.posts[id];
   }
   if (t.research) t.research.desks = t.research.desks.filter((d) => d.hero !== heroId);
-  t.workshops ??= {};
   w.workers.push(heroId);
   t.workshops[shopId] = w;
   return t;
@@ -162,12 +159,12 @@ export function workRate(ix: Index, h: Hero, r: RecipeDef): number {
 
 /** Can this hero work a bench today? At home, on their feet, and not nursing an injury. */
 export const canWork = (h: Hero, away: ReadonlySet<string>) =>
-  !away.has(h.id) && h.condition === "ok" && h.hp > 0 && !(h.injuries ?? []).length;
+  !away.has(h.id) && h.condition === "ok" && h.hp > 0 && !h.injuries.length;
 
 /** Townsfolk at a workshop's benches today (M7.15): in the seats the heroes leave. */
 export function benchFolk(ix: Index, town: TownState, shopId: string): number {
-  const seats = benches(ix, town, shopId) - (town.workshops?.[shopId]?.workers.length ?? 0);
-  return Math.min(town.folk?.jobs[`workshop:${shopId}`] ?? 0, Math.max(0, seats));
+  const seats = benches(ix, town, shopId) - (town.workshops[shopId]?.workers.length ?? 0);
+  return Math.min(town.folk.jobs[`workshop:${shopId}`] ?? 0, Math.max(0, seats));
 }
 
 /** Everyone working a workshop today: heroes at home and fit, then townsfolk. */
@@ -206,7 +203,7 @@ export function queueDays(ix: Index, town: TownState, shopId: string, away: Read
  */
 export function workshopDay(ix: Index, t: TownState, away: ReadonlySet<string>): Set<string> {
   const worked = new Set<string>();
-  for (const [shopId, w] of Object.entries(t.workshops ?? {})) {
+  for (const [shopId, w] of Object.entries(t.workshops)) {
     if (!w.queue.length) continue;
     const workers = hands(ix, t, shopId, away);
     if (!workers.length) continue;
@@ -260,6 +257,5 @@ export function costWords(ix: Index, r: RecipeDef): string {
 
 /** Take anyone who has left the guild off the benches. */
 export function tidyBenches(t: TownState): void {
-  for (const w of Object.values(t.workshops ?? {}))
-    w.workers = w.workers.filter((x) => findHero(t, x));
+  for (const w of Object.values(t.workshops)) w.workers = w.workers.filter((x) => findHero(t, x));
 }

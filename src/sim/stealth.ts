@@ -45,9 +45,9 @@ export const lairsOn = (ix: Index, floor: number): LairDef[] =>
 
 /** Lairs the guild knows of: scouts found them (M7.08). */
 export function knownLairs(ix: Index, town: TownState): LairDef[] {
-  const ids = new Set(Object.values(town.intel ?? {}).flatMap((i) => i.lairs ?? []));
+  const ids = new Set(Object.values(town.intel).flatMap((i) => i.lairs ?? []));
   return (ix.lib.lairs ?? []).filter((l) => ids.has(l.id));
 }
 
 /** The beast in this lair is dead. */
-export const lairSlain = (town: TownState, id: string): boolean => !!town.lairs?.[id]?.slain;
+export const lairSlain = (town: TownState, id: string): boolean => !!town.lairs[id]?.slain;

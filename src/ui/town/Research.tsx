@@ -24,7 +24,7 @@ const pts = (n: number) => String(Math.round(n * 10) / 10);
 
 export function ResearchPanel({ town, act }: { town: TownState; act: Act }) {
   const desks = researchDesks(ix, town);
-  const r = town.research ?? { monsters: {}, shelf: [], desks: [] };
+  const r = town.research;
   const topics = researchTopics(ix, town);
   const open = topics.filter((x) => !x.done);
   const below = awaySet(town);

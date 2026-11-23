@@ -23,7 +23,7 @@ type Act = (f: (t: TownState) => TownState) => void;
 
 /** Where parties fell, who's waiting, and what the monsters walked off with. */
 export function LostPanel({ town, act }: { town: TownState; act: Act }) {
-  const risen = town.risen ?? [];
+  const risen = town.risen;
   // Sites of parties the town hasn't heard from yet stay hidden (M7.02).
   const sites = town.sites.filter((s) => !s.outing);
   if (!sites.length && !town.scavenged.length && !risen.length) return null;
@@ -158,7 +158,7 @@ function PlannedNote({ act }: { act: Act }) {
 
 /** Bodies brought home (DESIGN.md §10): bring them back at the Temple, or bury them. */
 export function FallenPanel({ town, act }: { town: TownState; act: Act }) {
-  const bodies = town.bodies ?? [];
+  const bodies = town.bodies;
   if (!bodies.length) return null;
   const burial = burialCost(ix, town);
   return (

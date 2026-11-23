@@ -32,7 +32,7 @@ export function awayLine(town: TownState, o: Outing): { text: string; tone?: "wa
 
 /** The parties below, the clock, and searches for any that are overdue. */
 export function AwayPanel({ town, act }: { town: TownState; act: Act }) {
-  const outings = town.outings ?? [];
+  const outings = town.outings;
   if (!outings.length) return null;
   const searching = rescueTarget(town)?.outing?.id;
   return (

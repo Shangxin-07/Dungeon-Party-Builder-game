@@ -124,7 +124,7 @@ export function PostsPanel({ town, act }: { town: TownState; act: Act }) {
   const below = awaySet(town);
   const leaving = new Set([...below, ...town.party]);
   const working = posts.reduce((n, p) => n + postWorkers(ix, town, p.id, below).length, 0);
-  const onPosts = Object.values(town.posts ?? {}).flat();
+  const onPosts = Object.values(town.posts).flat();
   const belowCount = onPosts.filter((id) => below.has(id)).length;
   const laidUp = onPosts.length - working - belowCount;
   const held = (away: ReadonlySet<string>) =>
@@ -166,7 +166,7 @@ export function PostsPanel({ town, act }: { town: TownState; act: Act }) {
       </p>
       <ul className="cards">
         {posts.map((p) => {
-          const on = (town.posts?.[p.id] ?? [])
+          const on = (town.posts[p.id] ?? [])
             .map((id) => town.roster.find((h) => h.id === id))
             .filter((h) => !!h);
           const takers = hands.filter((h) => !h.porter || p.porters);

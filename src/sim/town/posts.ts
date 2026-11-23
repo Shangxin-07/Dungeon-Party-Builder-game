@@ -27,7 +27,6 @@ export function assignPost(
   const h = findHero(town, heroId);
   if (!h) throw new TownError("They aren't in the guild.");
   const t = edit(town);
-  t.posts ??= {};
   for (const id of Object.keys(t.posts)) {
     t.posts[id] = t.posts[id]!.filter((x) => x !== heroId);
     if (!t.posts[id]!.length) delete t.posts[id];
@@ -48,7 +47,7 @@ export function assignPost(
 
 /** Which post a hero is on, if any. */
 export const postOf = (town: TownState, heroId: string): string | undefined =>
-  Object.entries(town.posts ?? {}).find(([, ids]) => ids.includes(heroId))?.[0];
+  Object.entries(town.posts).find(([, ids]) => ids.includes(heroId))?.[0];
 
 /** Put whatever a loot roll found in town: materials to the store, coins to gold, gear to the store room. */
 function bank(
@@ -134,7 +133,7 @@ export function checkCamp(ix: Index, t: TownState): void {
 
 /** Take anyone who has left the guild off the posts. */
 export function tidyPosts(t: TownState): void {
-  for (const id of Object.keys(t.posts ?? {})) {
+  for (const id of Object.keys(t.posts)) {
     t.posts[id] = t.posts[id]!.filter((x) => findHero(t, x));
     if (!t.posts[id]!.length) delete t.posts[id];
   }

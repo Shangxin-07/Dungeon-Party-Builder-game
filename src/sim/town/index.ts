@@ -156,7 +156,6 @@ export {
   folkAt,
   folkIdle,
   folkJobs,
-  folkOf,
   folkRoom,
   foodGrown,
   housing,
@@ -173,7 +172,6 @@ export {
   dismissOffer,
   grantPetition,
   offerHeadline,
-  offersOf,
   petitionWords,
   sellToCaravan,
   takeContract,
@@ -181,7 +179,8 @@ export {
 } from "./offers";
 export { barricadeChoices, sealsNow, sealWord, setSeal } from "./seals";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
-export { launch, giveUp, outingView } from "./launch";
+export { launch, outingView } from "./launch";
+export { giveUp } from "./lost";
 export { assignPost, postOf, trade } from "./posts";
 export {
   HAUL_RULES,

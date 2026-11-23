@@ -57,7 +57,7 @@ export function makeRecruit(ix: Index, town: TownState, names: readonly string[]
  */
 export function tidyFreeHires(town: TownState): void {
   const waiting = town.recruits.filter((r) => r.untrained).length;
-  town.freeHires = Math.min(town.freeHires ?? 0, waiting);
+  town.freeHires = Math.min(town.freeHires, waiting);
 }
 
 /**
@@ -130,6 +130,12 @@ export function newTown(
     haulRule: "sell",
     research: { monsters: {}, shelf: [], desks: [] },
     posts: {},
+    intel: {},
+    sightings: {},
+    workshops: {},
+    folk: { count: 0, food: 0, jobs: {} },
+    offers: [],
+    lairs: {},
   };
   // M6: the first heroes turn up untrained. The player picks their classes
   // and kits them out from the store room (or calls autoStart).

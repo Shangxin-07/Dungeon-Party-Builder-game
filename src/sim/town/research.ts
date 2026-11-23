@@ -38,8 +38,6 @@ import { leaveBench } from "./workshops";
 /** Research desks the Library has (0 until it's built). */
 export const researchDesks = (ix: Index, town: TownState) => total(ix, town, "researchDesks");
 
-const researchOf = (town: TownState) => town.research ?? { monsters: {}, shelf: [], desks: [] };
-
 /** Research points a hero puts in on a day at a desk. */
 export function studyRate(ix: Index, h: Hero): number {
   const rules = ix.lib.research;
@@ -78,7 +76,7 @@ function nextUnlock(ix: Index, def: MonsterDef, tier: number): string {
 
 /** Everything the Library could study today, monsters first (nearest done first), then the shelf. */
 export function researchTopics(ix: Index, town: TownState): Topic[] {
-  const r = researchOf(town);
+  const r = town.research;
   const known = knownMonsters(town);
   const monsters: Topic[] = [...known].map((id) => {
     const def = ix.monster(id);
@@ -133,7 +131,6 @@ export function assignDesk(
   const h = findHero(town, heroId);
   if (!h) throw new TownError("They aren't in the guild.");
   const t = edit(town);
-  t.research = structuredClone(researchOf(t));
   const desks = t.research.desks;
   const at = desks.findIndex((d) => d.hero === heroId);
   if (leave) {
@@ -149,7 +146,7 @@ export function assignDesk(
         researchDesks(ix, t) ? "Every desk in the Library is taken." : "Research needs a Library.",
       );
     // Off any post or bench: one job at a time.
-    for (const id of Object.keys(t.posts ?? {})) {
+    for (const id of Object.keys(t.posts)) {
       t.posts[id] = t.posts[id]!.filter((x) => x !== heroId);
       if (!t.posts[id]!.length) delete t.posts[id];
     }
@@ -161,7 +158,7 @@ export function assignDesk(
 
 /** Who is at a desk, if anyone, and what they study. */
 export const deskOf = (town: TownState, heroId: string): Desk | undefined =>
-  researchOf(town).desks.find((d) => d.hero === heroId);
+  town.research.desks.find((d) => d.hero === heroId);
 
 /** The topic a desk works on today: its own if still open, else the nearest done. */
 export function deskTopic(ix: Index, town: TownState, desk: Desk): Topic | undefined {
@@ -172,7 +169,6 @@ export function deskTopic(ix: Index, town: TownState, desk: Desk): Topic | undef
 /** Add points to a monster's research; news when it reaches a new tier. */
 export function learnMonster(ix: Index, t: TownState, id: string, points: number): void {
   if (points <= 0) return;
-  t.research ??= { monsters: {}, shelf: [], desks: [] };
   const before = monsterTier(ix, t, id);
   t.research.monsters[id] = Math.round(((t.research.monsters[id] ?? 0) + points) * 10) / 10;
   const after = monsterTier(ix, t, id);
@@ -207,7 +203,6 @@ export function sendToLibrary(ix: Index, t: TownState, itemId: string): string {
   const r = def.research;
   if (!r) throw new TownError(`There's nothing to learn from the ${def.name.toLowerCase()}.`);
   if (!researchDesks(ix, t)) throw new TownError("Research needs a Library.");
-  t.research ??= { monsters: {}, shelf: [], desks: [] };
   if (r.monsters?.length) {
     for (const m of r.monsters) learnMonster(ix, t, m, r.points);
     return def.name.toLowerCase();
@@ -241,7 +236,7 @@ function identify(ix: Index, t: TownState, piece: ShelfItem, by: string): void {
 
 /** A day at the Library (end of each day): every researcher at home studies. */
 export function studyDay(ix: Index, t: TownState, away: ReadonlySet<string>): void {
-  const r = researchOf(t);
+  const r = t.research;
   if (!r.desks.length) return;
   t.research = r;
   const rules = ix.lib.research;

@@ -361,7 +361,7 @@ export function LevelUpPicker({ hero, town, act }: { hero: Hero; town: TownState
 
 /** Fatigue as a bar (M6), and any injuries with the days left to heal. */
 export function WearBar({ hero }: { hero: Hero }) {
-  const f = hero.fatigue ?? 0;
+  const f = hero.fatigue;
   const tier = fatigueTier(ix, hero);
   const next = ix.lib.wear.tiers.find((t) => t.at > f);
   return (
@@ -381,7 +381,7 @@ export function WearBar({ hero }: { hero: Hero }) {
           {f} <span className="muted">{tier?.name ?? "rested"}</span>
         </span>
       </div>
-      {hero.injuries?.length ? (
+      {hero.injuries.length ? (
         <ul className="injuries small">
           {hero.injuries.map((inj) => {
             const def = ix.injury(inj.id);

@@ -81,9 +81,9 @@ export function DebriefPanel({
   act: Act;
   onWatch: (trip: TripReport) => void;
 }) {
-  const trips = [...(town.trips ?? [])].reverse();
+  const trips = [...town.trips].reverse();
   const [pick, setPick] = useState<string>();
-  const waiting = town.haul ?? [];
+  const waiting = town.haul;
   if (!trips.length && !waiting.length) return null;
   const trip = trips.find((t) => tripKey(t) === pick) ?? trips[0];
   const others = trips.filter((t) => t !== trip);
@@ -295,7 +295,7 @@ function Debrief({
             ? `The coins went straight into the purse and the materials into the store. ` +
               (trip.held
                 ? `The rest was worth about ${trip.goldEarned - (trip.coins ?? 0)} gold at the Market the day it came home${
-                    (town.haul ?? []).some((h) => h.day === trip.back && h.from === trip.name)
+                    town.haul.some((h) => h.day === trip.back && h.from === trip.name)
                       ? ": what's still waiting is below."
                       : ", and it's been dealt with."
                   }`
@@ -325,9 +325,9 @@ function waitingOn(town: TownState, trip: TripReport): string[] {
   const back = trip.party
     .map((h) => town.roster.find((x) => x.id === h.id))
     .filter((h) => !!h)
-    .filter((h) => !(town.outings ?? []).some((o) => o.heroes.includes(h.id)));
+    .filter((h) => !town.outings.some((o) => o.heroes.includes(h.id)));
   const ups = back.filter((h) => h.levelUps.length).map((h) => h.name);
-  const hurt = back.filter((h) => h.injuries?.length).map((h) => h.name);
+  const hurt = back.filter((h) => h.injuries.length).map((h) => h.name);
   const raise = back.filter((h) => h.raiseAsk).map((h) => h.name);
   const out: string[] = [];
   if (ups.length) out.push(`level-ups for ${ups.join(", ")} (Roster)`);
@@ -338,7 +338,7 @@ function waitingOn(town: TownState, trip: TripReport): string[] {
 
 /** The haul waiting in town: each piece sold, salvaged or kept. */
 function HaulChoices({ town, act }: { town: TownState; act: Act }) {
-  const held = town.haul ?? [];
+  const held = town.haul;
   const [picked, setPicked] = useState<Record<string, HaulChoice>>({});
   const plan = haulPlan(ix, town);
   const choice = (h: HeldItem) => picked[h.id] ?? plan[h.id] ?? "sell";
