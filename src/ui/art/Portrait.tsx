@@ -27,6 +27,13 @@ const ROWS: Record<Layer, number> = {
   hats: 4,
 };
 
+/**
+ * Headgear that covers the hair: hoods, helms and hats (M8.10). Hair drawn
+ * under them pokes out round the edges, so it's left off. Circlets (9, 11),
+ * the porter's headband (14) and the fur collar (15) keep the hair.
+ */
+const HIDES_HAIR = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13]);
+
 /** Hair colours, as CSS filters over the mid-brown the parts are drawn in. */
 export const HAIR = {
   brown: "none",
@@ -137,7 +144,9 @@ export function Portrait({
       {f.beard !== undefined ? (
         <Part layer="beards" cell={f.beard} size={size} filter={tint} />
       ) : null}
-      {f.hair !== undefined ? <Part layer="hair" cell={f.hair} size={size} filter={tint} /> : null}
+      {f.hair !== undefined && !(f.hat !== undefined && HIDES_HAIR.has(f.hat)) ? (
+        <Part layer="hair" cell={f.hair} size={size} filter={tint} />
+      ) : null}
       {f.injury !== undefined ? <Part layer="injuries" cell={f.injury} size={size} /> : null}
       {f.hat !== undefined ? <Part layer="hats" cell={f.hat} size={size} /> : null}
     </span>
