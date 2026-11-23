@@ -68,7 +68,7 @@ OWN = {
 SPLIT = {
     # The wizard hat and its collar: the hat sits on the head, the collar on
     # the shoulders (Mike, M8.10).
-    ("hats", 3): (64, (1.22, 0, -13), (1.45, 0, -15)),
+    ("hats", 3): (64, (1.3, 0, -20), (1.45, 0, -15)),
 }
 
 
