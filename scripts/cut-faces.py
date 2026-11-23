@@ -40,8 +40,9 @@ FIT = {
     "beards": (1.0, 0, 8),
     "extras": (1.0, 0, 0),
     "injuries": (1.0, 0, 0),
-    # Headgear a touch bigger than the head, so hoods and helms close round it (M8.10).
-    "hats": (1.06, 0, -7),
+    # Headgear bigger than the head and lower, so hoods and helms close round
+    # it and their shoulder pieces reach the shoulders (Mike, M8.10).
+    "hats": (1.22, 0, 3),
 }
 # Single parts that need their own fit, by layer and cell.
 OWN = {
@@ -52,12 +53,12 @@ OWN = {
     ("beards", 7): (1.0, 0, 12),  # mutton chops
     ("injuries", 0): (1.0, 0, -10),  # the head bandage goes round the brow
     ("injuries", 4): (1.0, 0, 24),  # the sling sits on the shoulder
-    ("hats", 0): (1.06, 0, -13),  # miner's cap
-    ("hats", 1): (1.06, 0, -11),  # nasal helm
-    ("hats", 2): (1.06, 0, -10),  # helmet and coif
-    ("hats", 10): (1.06, 0, -10),  # paladin's great helm
-    ("hats", 12): (1.06, 0, -9),  # spellblade's half-helm
-    ("hats", 15): (1.1, 0, 24),  # fur collar
+    ("hats", 0): (1.22, 0, -11),  # miner's cap
+    ("hats", 1): (1.22, 0, -7),  # nasal helm
+    ("hats", 2): (1.22, 0, 0),  # helmet and coif
+    ("hats", 10): (1.22, 0, 0),  # paladin's great helm
+    ("hats", 12): (1.22, 0, 1),  # spellblade's half-helm
+    ("hats", 15): (1.22, 0, 30),  # fur collar
 }
 
 # Parts drawn as two pieces with a gap between, each fitted on its own: the
@@ -65,7 +66,7 @@ OWN = {
 SPLIT = {
     # The wizard hat and its collar: the hat sits on the head, the collar on
     # the shoulders (Mike, M8.10).
-    ("hats", 3): (64, (1.06, 0, -15), (1.06, 0, 2)),
+    ("hats", 3): (64, (1.22, 0, -13), (1.22, 0, 11)),
 }
 
 
