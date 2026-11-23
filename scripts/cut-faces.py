@@ -56,6 +56,8 @@ OWN = {
     ("hats", 0): (1.22, 0, -11),  # miner's cap
     ("hats", 1): (1.22, 0, -7),  # nasal helm
     ("hats", 2): (1.22, 0, 0),  # helmet and coif
+    # Hoods wider still, so the ears stay inside (Mike, M8.10).
+    **{("hats", i): (1.32, 0, 4) for i in (4, 5, 6, 7, 8, 13)},
     ("hats", 10): (1.22, 0, 0),  # paladin's great helm
     ("hats", 12): (1.22, 0, 1),  # spellblade's half-helm
     ("hats", 15): (1.22, 0, 30),  # fur collar
