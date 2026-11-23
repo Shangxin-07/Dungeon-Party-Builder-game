@@ -1310,6 +1310,8 @@ The pressure table (Pit panel) as a picture: a cross-section with the town at th
 - **Parties below** as a marker by the shaft: "Party B, day 2 of ~4". Never where they really are; that's hidden until word comes back.
 - The table stays in a fold under the picture for numbers.
 
+- **Built in M8.04.** `src/ui/PitSide.tsx`, drawn at the top of the pit panel's pressure section from the same fog data (`pitMap`, `sealsNow`); the table moved into a "Floor by floor" fold under it.
+
 ### 3. The fight, as tokens
 
 The watch view and replays: each side in front and back rows, one token per combatant, with health and mana bars, a "down" mark, and the last action drawn as a line from attacker to target. Click a token for the full sheet (as now). The log stays underneath, unchanged. Mike loves stats, so this is a layer on top, never a replacement.

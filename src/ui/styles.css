@@ -1844,3 +1844,50 @@ sup.down {
   font-weight: 600;
   line-height: 1;
 }
+
+/* The pit, side on (M8.04, DESIGN.md §19.2). */
+:root {
+  --pit-rock: #16130f;
+}
+
+.pitside {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  margin: 8px 0;
+  border-radius: 6px;
+}
+
+.pitside text {
+  font-family: inherit;
+}
+
+.pitside-name {
+  font-size: 12px;
+  fill: var(--text);
+}
+
+.pitside-floor {
+  font-size: 13px;
+  fill: var(--text);
+}
+
+.pitside-note,
+.pitside-seal {
+  font-size: 10.5px;
+  fill: var(--muted);
+}
+
+.pitside-seal {
+  fill: var(--accent);
+}
+
+.pitside .stale {
+  fill: var(--bad);
+}
+
+.pitside-party {
+  font-size: 10.5px;
+  fill: var(--accent);
+}
