@@ -467,6 +467,9 @@ export function validateLibrary(lib: Library): string[] {
     }
   };
   icons("class", lib.classes);
+  for (const c of lib.classes)
+    if (c.hats?.some((h) => !Number.isInteger(h) || h < 0 || h > 15))
+      err(`class "${c.id}": portrait hats are cells 0-15`);
   icons("item", lib.items);
   icons("monster", lib.monsters);
 

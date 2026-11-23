@@ -8,6 +8,7 @@ import type { IconRef } from "../content/types";
 import type { CombatEvent } from "../sim/combat";
 import type { Hero } from "../sim/hero";
 import { heroIconRef, SvgIcon } from "./art/Icon";
+import { Portrait } from "./art/Portrait";
 import { ix } from "./game";
 import type { Bar } from "./Watch";
 
@@ -21,6 +22,8 @@ interface Token {
   icon?: IconRef;
   /** What the icon shows: a class or a monster (its initial until the art comes). */
   iconName: string;
+  /** A hero's face, drawn in the disc instead of the class icon. */
+  hero?: Hero;
   label: string;
   x: number;
   y: number;
@@ -59,7 +62,7 @@ export function FightTokens({
     party.map((bar) => {
       const h = heroBy.get(bar.uid);
       const ref = h ? heroIconRef(h) : { name: bar.name };
-      return { bar, icon: ref.icon, iconName: ref.name, label: bar.name, foe: false };
+      return { bar, icon: ref.icon, iconName: ref.name, hero: h, label: bar.name, foe: false };
     }),
     "party",
     (t) => heroBy.get(t.bar.uid)?.row ?? "front",
@@ -126,7 +129,13 @@ function TokenView({ t }: { t: Token }) {
         {bar.state === "up" ? `${bar.hp}/${bar.max}` : bar.state === "dead" ? "dead" : "down"}
       </title>
       <circle cx={x} cy={y} r={R} className="token-disc" />
-      <SvgIcon icon={t.icon} name={t.iconName} x={x} y={y} size={R * 1.5} />
+      {t.hero ? (
+        <foreignObject x={x - R + 1} y={y - R + 1} width={2 * R - 2} height={2 * R - 2}>
+          <Portrait hero={t.hero} size={2 * R - 2} className="token-face" />
+        </foreignObject>
+      ) : (
+        <SvgIcon icon={t.icon} name={t.iconName} x={x} y={y} size={R * 1.5} />
+      )}
       <rect x={x - 24} y={y + R + 4} width={48} height={4} className="token-track" />
       <rect
         x={x - 24}

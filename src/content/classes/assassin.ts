@@ -6,6 +6,7 @@ export default defineClass({
   id: "assassin",
   name: "Assassin",
   icon: { sheet: "classes", cell: 5 },
+  hats: [7],
   kind: "advanced",
   blurb: "Front row. Finds the gap in the armour, then finds another.",
   requires: {

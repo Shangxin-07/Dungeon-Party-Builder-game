@@ -4,6 +4,7 @@ export default defineClass({
   id: "fighter",
   name: "Fighter",
   icon: { sheet: "classes", cell: 1 },
+  hats: [1, 2],
   blurb: "Front row. Soaks up hits so the others don't have to.",
   mainStats: ["STR", "END"],
   baseStats: { STR: 14, DEX: 10, END: 13, PER: 9, INT: 7, WIL: 9, CHA: 9 },

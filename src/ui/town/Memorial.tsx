@@ -5,6 +5,7 @@ import { Fold } from "../Fold";
 import type { TownState } from "../../sim/town";
 import { ix } from "../game";
 import { Departed } from "../Lost";
+import { Portrait } from "../art/Portrait";
 
 export function Memorial({ town }: { town: TownState }) {
   if (!town.memorial.length && !town.departed.length) return null;
@@ -13,6 +14,12 @@ export function Memorial({ town }: { town: TownState }) {
       <ul className="memorial">
         {[...town.memorial].reverse().map((m, i) => (
           <li key={i}>
+            <Portrait
+              hero={{ id: m.heroId ?? m.name, name: m.name, classId: m.classId }}
+              size={32}
+              risen={!!m.risen && !m.buried}
+              className="memorial-face"
+            />{" "}
             <strong>{m.name}</strong>, {ix.cls(m.classId).name}.{" "}
             {m.cause === "raid"
               ? "Died defending the town"

@@ -6,6 +6,7 @@ export default defineClass({
   id: "cleric",
   name: "Cleric",
   icon: { sheet: "classes", cell: 6 },
+  hats: [8, 9],
   blurb: "Front row. Keeps the party standing and smites the undead.",
   mainStats: ["WIL", "CHA"],
   baseStats: { STR: 11, DEX: 9, END: 12, PER: 9, INT: 9, WIL: 14, CHA: 13 },

@@ -1577,9 +1577,8 @@ sup.down {
 
 .hero-toggle {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 8px;
+  align-items: center;
+  gap: 10px;
   width: 100%;
   padding: 0;
   font: inherit;
@@ -1939,6 +1938,11 @@ sup.down {
   font-weight: 600;
 }
 
+.portrait.token-face {
+  border-radius: 50%;
+  overflow: hidden;
+}
+
 .token-track {
   fill: var(--border);
 }
@@ -1989,4 +1993,35 @@ sup.down {
     animation: none;
     transition: none;
   }
+}
+
+/* Portraits (M8.06, DESIGN.md §19.5): stacked pixel-art layers. */
+.portrait {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #2a241b;
+  vertical-align: middle;
+}
+
+.portrait .face-part {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.portrait.risen {
+  filter: grayscale(0.7) sepia(0.3) hue-rotate(60deg) brightness(0.85);
+}
+
+.hero-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-width: 0;
 }

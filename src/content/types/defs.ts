@@ -60,6 +60,11 @@ export interface ClassDef {
   name: string;
   /** Its small picture (M8, DESIGN.md §19.4): a cell of an icon sheet. Missing: its initial in a circle. */
   icon?: IconRef;
+  /**
+   * Headgear on this class's portraits (M8.06, DESIGN.md §19.5): cells of the
+   * hats layer (0-15, src/ui/art/faces/hats.png); a hero gets one of them.
+   */
+  hats?: readonly number[];
   /** Defaults to "base". */
   kind?: ClassKind;
   /** One-line description shown in town. */
