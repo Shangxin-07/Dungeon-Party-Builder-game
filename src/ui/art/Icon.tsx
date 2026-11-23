@@ -9,9 +9,22 @@ import { ICON_SHEETS, type IconRef, type IconSheet } from "../../content/types";
 import type { Hero } from "../../sim/hero";
 import { mainClass } from "../../sim/levels";
 import { ix } from "../game";
+import armour from "./icons/armour.png";
+import classes from "./icons/classes.png";
+import monsters1 from "./icons/monsters-1.png";
+import monsters2 from "./icons/monsters-2.png";
+import supplies from "./icons/supplies.png";
+import weapons from "./icons/weapons.png";
 
 /** Cut icon sheets: a PNG of square cells, `cell` pixels each, in the grid ICON_SHEETS gives. */
-export const ICON_ART: Partial<Record<IconSheet, { url: string; cell: number }>> = {};
+export const ICON_ART: Partial<Record<IconSheet, { url: string; cell: number }>> = {
+  classes: { url: classes, cell: 64 },
+  "monsters-1": { url: monsters1, cell: 64 },
+  "monsters-2": { url: monsters2, cell: 64 },
+  weapons: { url: weapons, cell: 64 },
+  armour: { url: armour, cell: 64 },
+  supplies: { url: supplies, cell: 64 },
+};
 
 /** Icons for people who have no class of their own (cells of the classes sheet). */
 export const PEOPLE = {
@@ -19,6 +32,27 @@ export const PEOPLE = {
   townsfolk: { sheet: "classes", cell: 10 },
   recruit: { sheet: "classes", cell: 11 },
 } as const satisfies Record<string, IconRef>;
+
+/** Spare cells for things with no content of their own. */
+export const SPARE = {
+  /** A risen guild mate fighting for the dungeon. */
+  risen: { sheet: "monsters-2", cell: 6 },
+  /** Anything in a fight we can't name. */
+  unknown: { sheet: "monsters-2", cell: 7 },
+  /** A haul of loot. */
+  loot: { sheet: "supplies", cell: 11 },
+} as const satisfies Record<string, IconRef>;
+
+/** A foe's icon: its monster, a risen guild mate, or the unknown shape. */
+export function monsterIconRef(
+  id: string | undefined,
+  name: string,
+): { icon: IconRef; name: string } {
+  const m = id ? ix.lib.monsters.find((x) => x.id === id) : undefined;
+  if (m?.icon) return { icon: m.icon, name: m.name };
+  if (/, Risen$/.test(name)) return { icon: SPARE.risen, name };
+  return { icon: SPARE.unknown, name: m?.name ?? name };
+}
 
 function initial(name: string): string {
   return (
@@ -79,8 +113,8 @@ export function HeroIcon({ hero, size }: { hero: Hero; size?: number }) {
 }
 
 export function MonsterIcon({ id, name, size }: { id?: string; name: string; size?: number }) {
-  const m = id ? ix.lib.monsters.find((x) => x.id === id) : undefined;
-  return <Icon icon={m?.icon} name={m?.name ?? name} size={size} />;
+  const ref = monsterIconRef(id, name);
+  return <Icon icon={ref.icon} name={ref.name} size={size} />;
 }
 
 export function ItemIcon({ id, size }: { id: string; size?: number }) {

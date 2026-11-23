@@ -7,9 +7,8 @@
 import type { IconRef } from "../content/types";
 import type { CombatEvent } from "../sim/combat";
 import type { Hero } from "../sim/hero";
-import { heroIconRef, SvgIcon } from "./art/Icon";
+import { heroIconRef, monsterIconRef, SvgIcon } from "./art/Icon";
 import { Portrait } from "./art/Portrait";
-import { ix } from "./game";
 import type { Bar } from "./Watch";
 
 const W = 520;
@@ -69,10 +68,8 @@ export function FightTokens({
   );
   const theirs = place(
     monsters.map((bar) => {
-      const def = bar.sheet?.monsterId
-        ? ix.lib.monsters.find((m) => m.id === bar.sheet!.monsterId)
-        : undefined;
-      return { bar, icon: def?.icon, iconName: def?.name ?? bar.name, label: bar.name, foe: true };
+      const ref = monsterIconRef(bar.sheet?.monsterId, bar.name);
+      return { bar, icon: ref.icon, iconName: ref.name, label: bar.name, foe: true };
     }),
     "foes",
     (t) => (t.bar.sheet?.row === "back" ? "back" : "front"),

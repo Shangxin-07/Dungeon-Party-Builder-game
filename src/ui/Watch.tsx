@@ -159,7 +159,7 @@ export function HeroBars({ hero }: { hero: Hero }) {
   const d = heroSheet(ix, hero).derived;
   return (
     <HpBar
-      icon={<HeroIcon hero={hero} size={16} />}
+      icon={<HeroIcon hero={hero} size={20} />}
       bar={{
         uid: hero.id,
         name: hero.name,
@@ -241,7 +241,7 @@ const FOE_DERIVED: readonly Derived[] = [
 export function FoeCard({ bar }: { bar: Bar }) {
   return (
     <li className="hero foe">
-      <HpBar bar={bar} icon={<MonsterIcon id={bar.sheet?.monsterId} name={bar.name} size={16} />} />
+      <HpBar bar={bar} icon={<MonsterIcon id={bar.sheet?.monsterId} name={bar.name} size={20} />} />
       <FoeDetails bar={bar} />
     </li>
   );
@@ -578,7 +578,7 @@ export function TripPlayer({
                 <Combatant
                   key={h.id}
                   bar={bar}
-                  icon={<HeroIcon hero={h} size={16} />}
+                  icon={<HeroIcon hero={h} size={20} />}
                   open={open.has(h.id)}
                   onToggle={() => toggle(h.id)}
                 >
@@ -596,7 +596,7 @@ export function TripPlayer({
                 <Combatant
                   key={b.uid}
                   bar={b}
-                  icon={<MonsterIcon id={b.sheet?.monsterId} name={b.name} size={16} />}
+                  icon={<MonsterIcon id={b.sheet?.monsterId} name={b.name} size={20} />}
                   open={open.has(b.uid)}
                   onToggle={() => toggle(b.uid)}
                 >

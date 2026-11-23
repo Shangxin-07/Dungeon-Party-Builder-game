@@ -74,18 +74,64 @@ def strip(src, out, size):
     print(f"frames {len(crops)}, frameWidth {fw}, frameHeight {fh}")
 
 
+def blobs(img):
+    """Each solid patch of the sheet: (label grid, list of (label, centre y, centre x, (h, w)))."""
+    import numpy as np
+    from collections import deque
+
+    solid = np.array(img)[:, :, 3] > 40
+    h, w = solid.shape
+    label = np.zeros((h, w), dtype=np.int32)
+    found = []
+    for y0, x0 in zip(*np.nonzero(solid)):
+        if label[y0, x0]:
+            continue
+        n = len(found) + 1
+        label[y0, x0] = n
+        todo, sy, sx, count = deque([(y0, x0)]), 0, 0, 0
+        top, left, bottom, right = y0, x0, y0, x0
+        while todo:
+            y, x = todo.popleft()
+            sy, sx, count = sy + y, sx + x, count + 1
+            top, left, bottom, right = min(top, y), min(left, x), max(bottom, y), max(right, x)
+            for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                ny, nx = y + dy, x + dx
+                if 0 <= ny < h and 0 <= nx < w and solid[ny, nx] and not label[ny, nx]:
+                    label[ny, nx] = n
+                    todo.append((ny, nx))
+        found.append((n, sy / count, sx / count, (bottom - top + 1, right - left + 1)))
+    return label, found
+
+
 def grid(src, out, cols, rows, cell):
+    import numpy as np
+
     img, _ = key_out(src)
     sheet = Image.new("RGBA", (cols * cell, rows * cell), (0, 0, 0, 0))
     cw, ch = img.width / cols, img.height / rows
     pad = max(1, cell // 16)
+    # Each patch belongs to the cell its middle sits in, so a staff that pokes
+    # into the row below stays whole and leaves no stray tip behind. Patches
+    # that run across cells (icons touching their neighbours) are cut on the grid.
+    label, found = blobs(img)
+    pixels = np.array(img)
+    joined = [n for n, _, _, (h, w) in found if h > 1.2 * ch or w > 1.2 * cw]
     for i in range(cols * rows):
         c, r = i % cols, i // cols
-        part = img.crop((round(c * cw), round(r * ch), round((c + 1) * cw), round((r + 1) * ch)))
-        box = part.getchannel("A").point(lambda a: 255 if a > 40 else 0).getbbox()
-        if not box:
+        mine = [
+            n
+            for n, y, x, _ in found
+            if int(x // cw) == c and int(y // ch) == r and n not in joined
+        ]
+        rect = np.zeros(label.shape, dtype=bool)
+        rect[round(r * ch) : round((r + 1) * ch), round(c * cw) : round((c + 1) * cw)] = True
+        keep = np.isin(label, mine) | (rect & np.isin(label, joined))
+        if not keep.any():
             continue  # an empty cell
-        part = part.crop(box)
+        ys, xs = np.nonzero(keep)
+        part = pixels.copy()
+        part[~keep] = 0
+        part = Image.fromarray(part).crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
         fit = (cell - 2 * pad) / max(part.width, part.height)
         w, h = max(1, round(part.width * fit)), max(1, round(part.height * fit))
         part = part.convert("RGBa").resize((w, h), Image.LANCZOS).convert("RGBA")

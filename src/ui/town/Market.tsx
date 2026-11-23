@@ -61,7 +61,7 @@ export function Market({ town, act }: { town: TownState; act: Act }) {
                 return (
                   <tr key={id}>
                     <td>
-                      <ItemIcon id={id} />
+                      <ItemIcon id={id} size={24} />
                       {item.name}
                       <div className="muted small">{describeItem(item)}</div>
                     </td>
@@ -93,7 +93,7 @@ export function Market({ town, act }: { town: TownState; act: Act }) {
                   return (
                     <tr key={id}>
                       <td>
-                        <ItemIcon id={id} />
+                        <ItemIcon id={id} size={24} />
                         {item.name}
                         {n > 1 ? ` ×${n}` : ""}
                         <div className="muted small">{describeItem(item)}</div>

@@ -1827,10 +1827,10 @@ sup.down {
 .icon {
   display: inline-block;
   flex: none;
-  vertical-align: -0.2em;
+  vertical-align: middle;
   margin-right: 0.4em;
   background-repeat: no-repeat;
-  image-rendering: pixelated;
+  /* Drawn smaller than the 64px cells, so smooth rather than pixelated. */
 }
 
 .icon-letter {
