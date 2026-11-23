@@ -45,15 +45,27 @@ FIT = {
 }
 # Single parts that need their own fit, by layer and cell.
 OWN = {
+    # The fuller beards were drawn starting higher up the face (Mike, M8.10).
+    ("beards", 2): (1.0, 0, 14),
+    ("beards", 3): (1.0, 0, 14),
+    ("beards", 6): (0.92, 0, 17),  # the braids
+    ("beards", 7): (1.0, 0, 12),  # mutton chops
     ("injuries", 0): (1.0, 0, -10),  # the head bandage goes round the brow
     ("injuries", 4): (1.0, 0, 24),  # the sling sits on the shoulder
     ("hats", 0): (1.06, 0, -13),  # miner's cap
     ("hats", 1): (1.06, 0, -11),  # nasal helm
     ("hats", 2): (1.06, 0, -10),  # helmet and coif
-    ("hats", 3): (1.06, 0, -15),  # wizard hat
     ("hats", 10): (1.06, 0, -10),  # paladin's great helm
     ("hats", 12): (1.06, 0, -9),  # spellblade's half-helm
     ("hats", 15): (1.1, 0, 24),  # fur collar
+}
+
+# Parts drawn as two pieces with a gap between, each fitted on its own: the
+# row to cut at, then the fit above it and the fit below it.
+SPLIT = {
+    # The wizard hat and its collar: the hat sits on the head, the collar on
+    # the shoulders (Mike, M8.10).
+    ("hats", 3): (64, (1.06, 0, -15), (1.06, 0, 2)),
 }
 
 
@@ -82,8 +94,17 @@ def main(src, dest):
         rows = len(parts) // 4
         sheet = Image.new("RGBA", (4 * CELL, rows * CELL), (0, 0, 0, 0))
         for i, part in enumerate(parts):
+            at = ((i % 4) * CELL, (i // 4) * CELL)
+            if (layer, i) in SPLIT:
+                row, above, below = SPLIT[(layer, i)]
+                top, bottom = part.copy(), part.copy()
+                top.paste((0, 0, 0, 0), (0, row, CELL, CELL))
+                bottom.paste((0, 0, 0, 0), (0, 0, CELL, row))
+                sheet.alpha_composite(fitted(top, above), at)
+                sheet.alpha_composite(fitted(bottom, below), at)
+                continue
             fit = OWN.get((layer, i), FIT[layer])
-            sheet.alpha_composite(fitted(part, fit), ((i % 4) * CELL, (i // 4) * CELL))
+            sheet.alpha_composite(fitted(part, fit), at)
         out = os.path.join(dest, f"{layer}.png")
         sheet.quantize(colors=256, method=Image.Quantize.FASTOCTREE).save(out, optimize=True)
         print(f"{layer}: {len(parts)} parts, 4x{rows}")
