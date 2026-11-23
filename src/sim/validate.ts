@@ -7,11 +7,13 @@ import {
   BUILDING_SHAPES,
   DAMAGE_TYPES,
   DERIVED,
+  ICON_SHEETS,
   MORALE_FACTS,
   SIGN_GLYPHS,
   STATS,
   type MoraleRule,
   type ActiveEffect,
+  type IconRef,
   type Library,
   type PassiveEffect,
   type StatBlock,
@@ -447,6 +449,30 @@ export function validateLibrary(lib: Library): string[] {
       }
     });
   }
+  // Icons (M8, DESIGN.md §19.4): a real cell of a known sheet, and one thing per cell.
+  const iconUsers = new Map<string, string>();
+  const cells = (g: { cols: number; rows: number }) => g.cols * g.rows;
+  const icons = (kind: string, defs: readonly { id: string; icon?: IconRef }[]) => {
+    for (const d of defs) {
+      if (!d.icon) continue;
+      const grid = (ICON_SHEETS as Record<string, { cols: number; rows: number }>)[d.icon.sheet];
+      const w = `${kind} "${d.id}" icon`;
+      if (!grid) err(`${w}: unknown sheet "${d.icon.sheet}"`);
+      else if (!(Number.isInteger(d.icon.cell) && d.icon.cell >= 0 && d.icon.cell < cells(grid)))
+        err(`${w}: no cell ${d.icon.cell} on sheet "${d.icon.sheet}"`);
+      const at = `${d.icon.sheet}:${d.icon.cell}`;
+      const other = iconUsers.get(at);
+      if (other && other !== d.id) err(`${w}: cell ${at} is already ${other}'s`);
+      iconUsers.set(at, d.id);
+    }
+  };
+  icons("class", lib.classes);
+  for (const c of lib.classes)
+    if (c.hats?.some((h) => !Number.isInteger(h) || h < 0 || h > 15))
+      err(`class "${c.id}": portrait hats are cells 0-15`);
+  icons("item", lib.items);
+  icons("monster", lib.monsters);
+
   // How buildings look on the town map (M8, DESIGN.md §19).
   const map = lib.townMap;
   if (!(map.width > 0 && map.height > 0)) err("townMap: needs a size");

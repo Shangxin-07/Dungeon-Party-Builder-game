@@ -5,6 +5,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "cursed-blade",
   name: "Cursed Blade",
+  icon: { sheet: "weapons", cell: 4 },
   slot: "weapon",
   value: 75,
   tags: ["sword", "blade", "melee", "unholy"],

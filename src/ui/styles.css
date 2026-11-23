@@ -1577,9 +1577,8 @@ sup.down {
 
 .hero-toggle {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 8px;
+  align-items: center;
+  gap: 10px;
   width: 100%;
   padding: 0;
   font: inherit;
@@ -1822,4 +1821,207 @@ sup.down {
   100% {
     box-shadow: 0 0 0 3px transparent;
   }
+}
+
+/* Icons (M8, DESIGN.md §19.4): pixel art cells, or an initial in a circle until the art comes. */
+.icon {
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
+  margin-right: 0.4em;
+  background-repeat: no-repeat;
+  /* Drawn smaller than the 64px cells, so smooth rather than pixelated. */
+}
+
+.icon-letter {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* The pit, side on (M8.04, DESIGN.md §19.2). */
+:root {
+  --pit-rock: #16130f;
+}
+
+.pitside {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  margin: 8px 0;
+  border-radius: 6px;
+}
+
+.pitside text {
+  font-family: inherit;
+}
+
+.pitside-name {
+  font-size: 12px;
+  fill: var(--text);
+}
+
+.pitside-floor {
+  font-size: 13px;
+  fill: var(--text);
+}
+
+.pitside-note,
+.pitside-seal {
+  font-size: 10.5px;
+  fill: var(--muted);
+}
+
+.pitside-seal {
+  fill: var(--accent);
+}
+
+.pitside .stale {
+  fill: var(--bad);
+}
+
+.pitside-party {
+  font-size: 10.5px;
+  fill: var(--accent);
+}
+
+/* A fight as tokens (M8.05, DESIGN.md §19.3). */
+.tokens {
+  display: block;
+  width: 100%;
+  max-width: 620px;
+  height: auto;
+  margin: 4px auto 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.tokens text {
+  font-family: inherit;
+}
+
+.tokens-divide {
+  stroke: var(--border);
+  stroke-dasharray: 3 4;
+}
+
+.tokens-row {
+  font-size: 10px;
+  fill: var(--muted);
+  text-anchor: middle;
+}
+
+.token-disc {
+  fill: #1f2a1e;
+  stroke: var(--good);
+  stroke-width: 2;
+}
+
+.token.foe .token-disc {
+  fill: #2c1d1a;
+  stroke: var(--bad);
+}
+
+.token.out {
+  opacity: 0.35;
+}
+
+.token-letter {
+  fill: var(--text);
+  font-weight: 600;
+}
+
+.portrait.token-face {
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.token-track {
+  fill: var(--border);
+}
+
+.token-hp {
+  fill: var(--good);
+  transition: width 0.25s ease;
+}
+
+.token-hp.low {
+  fill: var(--bad);
+}
+
+.token-mana {
+  fill: #7f9ac9;
+}
+
+.token-name {
+  font-size: 10.5px;
+  fill: var(--muted);
+}
+
+.tokens-blow {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  animation: blow 0.4s ease-out;
+}
+
+.tokens-blow.tone-good {
+  stroke: var(--good);
+}
+
+.tokens-blow.tone-bad {
+  stroke: var(--bad);
+}
+
+@keyframes blow {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tokens-blow,
+  .token-hp {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Portraits (M8.06, DESIGN.md §19.5): stacked pixel-art layers. */
+.portrait {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #2a241b;
+  vertical-align: middle;
+}
+
+.portrait .face-part {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.portrait.risen {
+  filter: grayscale(0.7) sepia(0.3) hue-rotate(60deg) brightness(0.85);
+}
+
+.hero-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-width: 0;
 }

@@ -9,6 +9,8 @@ import { defineClass } from "../types";
 export default defineClass({
   id: "miner",
   name: "Miner",
+  icon: { sheet: "classes", cell: 0 },
+  hats: [0],
   kind: "camp",
   blurb: "Dug too deep. Holds the pit with a pick-axe until the guild can train them properly.",
   mainStats: ["STR", "END"],

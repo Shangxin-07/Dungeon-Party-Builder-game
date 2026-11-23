@@ -5,6 +5,8 @@ import { defineClass } from "../types";
 export default defineClass({
   id: "spellblade",
   name: "Spellblade",
+  icon: { sheet: "classes", cell: 8 },
+  hats: [12, 13],
   kind: "combo",
   blurb: "Front row. Swings a burning blade and throws the odd spell.",
   requires: { classLevels: { fighter: 5, mage: 5 }, stats: { STR: 12, INT: 12 } },

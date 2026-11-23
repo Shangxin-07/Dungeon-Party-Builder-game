@@ -3,6 +3,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "scale-mail",
   name: "Scale Mail",
+  icon: { sheet: "armour", cell: 5 },
   slot: "armor",
   value: 120,
   tags: ["armor", "heavy", "noisy"],

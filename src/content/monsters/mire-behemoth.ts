@@ -8,6 +8,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "mire-behemoth",
   name: "Mire Behemoth",
+  icon: { sheet: "monsters-2", cell: 5 },
   power: 40,
   stats: { STR: 22, DEX: 6, END: 22, PER: 6, INT: 3, WIL: 14, CHA: 2 },
   overrides: { maxHp: 700 },

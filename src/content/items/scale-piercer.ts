@@ -6,6 +6,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "scale-piercer",
   name: "Scale-piercer",
+  icon: { sheet: "weapons", cell: 6 },
   slot: "weapon",
   value: 140,
   tags: ["spear", "melee", "bane"],

@@ -20,6 +20,7 @@ import {
   type TownState,
 } from "../sim/town";
 import { ix } from "./game";
+import { PitSide } from "./PitSide";
 
 const OUTCOME_TEXT: Record<RaidReport["outcome"], string> = {
   held: "the defences held",
@@ -321,101 +322,115 @@ function PressureMap({ town }: { town: TownState }) {
         below that, it's the last word from a party or scouts, forgotten after{" "}
         {ix.lib.scouting.fog.fadeDays} days.
       </p>
-      <table className="pressure">
-        <thead>
-          <tr>
-            <th>Floor</th>
-            <th>How full</th>
-            <th>Level</th>
-            <th>Word from</th>
-          </tr>
-        </thead>
-        <tbody>
-          {known.map((k) => {
-            const def = ix.floor(k.depth);
-            const width =
-              k.population !== undefined
-                ? Math.min(1, k.population / def.capacity)
-                : k.band
-                  ? bandWidth(k.band)
-                  : 0;
-            const seal = seals.find((x) => x.floor === def.depth);
-            return [
-              <tr key={def.id} className={k.source === "none" ? "muted" : undefined}>
-                <td>
-                  {def.depth}: {def.name}
-                </td>
-                <td>
-                  {k.band ? (
-                    <>
-                      <span className="pop-track" aria-hidden="true">
-                        <span
-                          className={`pop-fill${width >= 1 ? " full" : ""}${k.population === undefined ? " rough" : ""}`}
-                          style={{ width: `${width * 100}%` }}
-                        />
-                      </span>{" "}
-                      <span className={k.stale ? "warn" : undefined}>
-                        {k.band}
-                        {k.population !== undefined ? (
-                          <span className="num muted">
-                            {" "}
-                            ({k.source === "scouts" ? "about " : ""}
-                            {k.population}/{def.capacity})
-                          </span>
-                        ) : null}
-                      </span>
-                    </>
-                  ) : (
-                    "unknown"
-                  )}
-                </td>
-                <td className="num">
-                  {k.level !== undefined ? (
-                    <>
-                      {k.level.toFixed(1)}{" "}
-                      <span
-                        className="muted small"
-                        title="Total monster power of a typical fight there, and on day 1"
-                      >
-                        (power {levelPower(k.level)}, was {floorPower(def.depth)})
-                      </span>
-                    </>
-                  ) : (
-                    <span className="muted">?</span>
-                  )}
-                </td>
-                <td className="small">
-                  {k.source === "none" ? (
-                    <span className="muted">nobody's been down lately</span>
-                  ) : k.source === "watch" ? (
-                    SOURCE_TEXT.watch
-                  ) : (
-                    <span className={k.stale ? "warn" : undefined}>
-                      {k.by ?? SOURCE_TEXT[k.source]}
-                      {k.source === "scouts" ? " (scouting)" : ""}, day {k.day}
-                      {k.daysAgo ? ` (${k.daysAgo} ${k.daysAgo === 1 ? "day" : "days"} ago)` : ""}
-                      {k.stale ? ", may be out of date" : ""}
-                    </span>
-                  )}
-                </td>
-              </tr>,
-              seal ? (
-                <tr key={`${def.id}-seal`} className="seal-row">
-                  <td colSpan={4} className="small">
-                    Stairs down sealed: {seal.name.toLowerCase()},{" "}
-                    <span className={seal.percent < 34 ? "warn" : undefined}>
-                      {sealWord(seal.percent)} ({seal.percent}%)
-                    </span>
-                    <span className="muted">
-                      , put up {seal.by ? `by ${seal.by} ` : ""}on day {seal.day}
-                    </span>
+      <PitSide
+        town={town}
+        known={known}
+        seals={seals}
+        width={(k) =>
+          k.population !== undefined
+            ? Math.min(1, k.population / ix.floor(k.depth).capacity)
+            : k.band
+              ? bandWidth(k.band)
+              : 0
+        }
+      />
+      <Fold id="pit-floors" title="Floor by floor" level={3}>
+        <table className="pressure">
+          <thead>
+            <tr>
+              <th>Floor</th>
+              <th>How full</th>
+              <th>Level</th>
+              <th>Word from</th>
+            </tr>
+          </thead>
+          <tbody>
+            {known.map((k) => {
+              const def = ix.floor(k.depth);
+              const width =
+                k.population !== undefined
+                  ? Math.min(1, k.population / def.capacity)
+                  : k.band
+                    ? bandWidth(k.band)
+                    : 0;
+              const seal = seals.find((x) => x.floor === def.depth);
+              return [
+                <tr key={def.id} className={k.source === "none" ? "muted" : undefined}>
+                  <td>
+                    {def.depth}: {def.name}
                   </td>
-                </tr>
-              ) : null,
-            ];
-          })}
-        </tbody>
-      </table>
+                  <td>
+                    {k.band ? (
+                      <>
+                        <span className="pop-track" aria-hidden="true">
+                          <span
+                            className={`pop-fill${width >= 1 ? " full" : ""}${k.population === undefined ? " rough" : ""}`}
+                            style={{ width: `${width * 100}%` }}
+                          />
+                        </span>{" "}
+                        <span className={k.stale ? "warn" : undefined}>
+                          {k.band}
+                          {k.population !== undefined ? (
+                            <span className="num muted">
+                              {" "}
+                              ({k.source === "scouts" ? "about " : ""}
+                              {k.population}/{def.capacity})
+                            </span>
+                          ) : null}
+                        </span>
+                      </>
+                    ) : (
+                      "unknown"
+                    )}
+                  </td>
+                  <td className="num">
+                    {k.level !== undefined ? (
+                      <>
+                        {k.level.toFixed(1)}{" "}
+                        <span
+                          className="muted small"
+                          title="Total monster power of a typical fight there, and on day 1"
+                        >
+                          (power {levelPower(k.level)}, was {floorPower(def.depth)})
+                        </span>
+                      </>
+                    ) : (
+                      <span className="muted">?</span>
+                    )}
+                  </td>
+                  <td className="small">
+                    {k.source === "none" ? (
+                      <span className="muted">nobody's been down lately</span>
+                    ) : k.source === "watch" ? (
+                      SOURCE_TEXT.watch
+                    ) : (
+                      <span className={k.stale ? "warn" : undefined}>
+                        {k.by ?? SOURCE_TEXT[k.source]}
+                        {k.source === "scouts" ? " (scouting)" : ""}, day {k.day}
+                        {k.daysAgo ? ` (${k.daysAgo} ${k.daysAgo === 1 ? "day" : "days"} ago)` : ""}
+                        {k.stale ? ", may be out of date" : ""}
+                      </span>
+                    )}
+                  </td>
+                </tr>,
+                seal ? (
+                  <tr key={`${def.id}-seal`} className="seal-row">
+                    <td colSpan={4} className="small">
+                      Stairs down sealed: {seal.name.toLowerCase()},{" "}
+                      <span className={seal.percent < 34 ? "warn" : undefined}>
+                        {sealWord(seal.percent)} ({seal.percent}%)
+                      </span>
+                      <span className="muted">
+                        , put up {seal.by ? `by ${seal.by} ` : ""}on day {seal.day}
+                      </span>
+                    </td>
+                  </tr>
+                ) : null,
+              ];
+            })}
+          </tbody>
+        </table>
+      </Fold>
     </>
   );
 }

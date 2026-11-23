@@ -5,6 +5,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "holy-symbol",
   name: "Holy Symbol",
+  icon: { sheet: "armour", cell: 7 },
   slot: "offhand",
   value: 45,
   tags: ["holy", "symbol"],

@@ -2,6 +2,7 @@
  * The Market: buy, sell and haggle. The store room is here too, and with a
  * Blacksmith its gear can be broken down into materials (M7.03).
  */
+import { ItemIcon } from "../art/Icon";
 import { Fold } from "../Fold";
 import { heroSheet } from "../../sim/hero";
 import {
@@ -60,6 +61,7 @@ export function Market({ town, act }: { town: TownState; act: Act }) {
                 return (
                   <tr key={id}>
                     <td>
+                      <ItemIcon id={id} size={24} />
                       {item.name}
                       <div className="muted small">{describeItem(item)}</div>
                     </td>
@@ -91,6 +93,7 @@ export function Market({ town, act }: { town: TownState; act: Act }) {
                   return (
                     <tr key={id}>
                       <td>
+                        <ItemIcon id={id} size={24} />
                         {item.name}
                         {n > 1 ? ` ×${n}` : ""}
                         <div className="muted small">{describeItem(item)}</div>

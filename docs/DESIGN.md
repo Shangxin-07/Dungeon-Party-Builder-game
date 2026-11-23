@@ -1297,6 +1297,8 @@ M8 is a **display pass**: no simulation, balance or save changes. Every picture 
 
 - **Built in M8.01.** A "Town map" fold at the top of the town (open by default, after the trips below). Content: `art` on every building (`plot`, `shape`, `roof`, `sign`, `smoke`, `sprite`), plots in `content/townmap.ts`, checked by `validateLibrary` (known shape and sign, real plot, one building per plot). Drawing in `src/ui/town/map/` (`scene.ts` works out what to show, `draw.tsx` draws it), panel `src/ui/town/TownMap.tsx`. Clicking a building opens the Buildings fold and scrolls to its card (`openFold` in `Fold.tsx`); the pit opens the pit panel. A building with no `art` gets a plain house on the first free plot. The **Tavern** is the first picture art: Mike's pixel sprite (three frames; levels 1-2 use the first two, the third waits for a level 3), cut from his generated sheet with `scripts/cut-sprite.py` and registered in `src/ui/town/map/sprites.ts`. The original sheet is kept in the project files (`art/DPBG-0001-Inn.png`), not the repo.
 
+- **M8.02: every building is pictured.** Mike made sprite sheets for all of them (DPBG-0001 to 0017, one frame per level); the drawn shapes stay as the fallback and for the Palisade ring. The gate, the watchtowers (one picture, drawn once per level on the wall) and the Mine Cage (standing over the hole) take sprites too. Each sheet has its own drawn width on the map (`width` in `sprites.ts`). `scripts/cut-sprite.py` now un-blends see-through pixels and greys the lavender smoke the generator paints over magenta, and takes a frame width (`260px`).
+
 ### 2. The pit, side on
 
 ![Pit map and fight tokens](mockups/m8-pit-and-fight.png)
@@ -1308,17 +1310,26 @@ The pressure table (Pit panel) as a picture: a cross-section with the town at th
 - **Parties below** as a marker by the shaft: "Party B, day 2 of ~4". Never where they really are; that's hidden until word comes back.
 - The table stays in a fold under the picture for numbers.
 
+- **Built in M8.04.** `src/ui/PitSide.tsx`, drawn at the top of the pit panel's pressure section from the same fog data (`pitMap`, `sealsNow`); the table moved into a "Floor by floor" fold under it.
+
 ### 3. The fight, as tokens
 
 The watch view and replays: each side in front and back rows, one token per combatant, with health and mana bars, a "down" mark, and the last action drawn as a line from attacker to target. Click a token for the full sheet (as now). The log stays underneath, unchanged. Mike loves stats, so this is a layer on top, never a replacement.
+
+- **Built in M8.05.** `src/ui/FightTokens.tsx`, shown above the Party and Opposition lists in the watch view and replays while a fight is on. Heroes stand in their row (back on the far left), monsters in theirs; the latest blow (`last` from `stateAt`) is a dashed curve tinted by the log's good/bad tone. Tokens show the class or monster icon, or its initial until the icon sheets come.
 
 ### 4. Icons
 
 A small icon set (`src/ui/art/icons/`) used everywhere names are: classes (roster, party, level-up), monsters (fight, research, scout reports), items and materials (store room, market, debrief), buildings (signs on the map, the Buildings panel). Content refers to icons by id (`art: { icon: "anvil" }`); a missing one falls back to the name's first letter in a disc, as in the mock-up. Two ways to get them, see question J.
 
+- **Built in M8.03 (plumbing).** `icon: { sheet, cell }` on every class, item, material and monster, on six icon sheets (`ICON_SHEETS` in `content/types/defs.ts`: classes, monsters-1, monsters-2, weapons, armour, supplies). `validateLibrary` checks each is a real cell and no two things share one. `src/ui/art/Icon.tsx` draws the cell, or the name's initial in a circle until the sheet arrives (Mike is making them: prompts in the project files, `art/icon-prompts.md`, DPBG-0025 to 0030). Porters, townsfolk and untrained recruits use spare cells of the classes sheet. Shown on roster cards, fight rows (heroes and monsters) and the market. `scripts/cut-sprite.py --grid 4x3 64` cuts a sheet into even square cells.
+- **M8.07: the icon art.** Mike's six sheets (DPBG-0025 to 0030) cut into `src/ui/art/icons/` (64px cells, 132 KB) and registered in `ICON_ART`, replacing the initials. The grid cutter now keeps each patch with the cell its middle sits in, so a staff poking into the next row stays whole. Spare cells: a risen guild mate in a fight shows the risen adventurer, a foe with no monster entry shows the "?" shape, and the loot sack waits for the debrief (`SPARE` in `Icon.tsx`).
+
 ### 5. Portraits (later in M8)
 
 "See who you're sending" (§15): a face for every hero, built from layers (head shape, hair, beard, scars, colours) **hashed from the hero's id**, the same way personalities are, so no dice and no save change. Class adds gear on top (hood, helm, holy symbol), alignment tints the frame, injuries show a bandage, risen heroes get the pale undead palette with their old face. Shown on hero cards, the party panel, the debrief and the memorial.
+
+- **Built in M8.06.** Mike drew the parts (DPBG-0018 to 0024: heads, hair, beards, scars and marks, injuries, two sheets of class headgear); `scripts/cut-faces.py` cuts them into 96px cells and lines each layer up on the head. `src/ui/art/Portrait.tsx` picks every layer by hashing the hero's id and birth name (a risen hero keeps their face, gone pale). Hair and beard share one of five colours, drawn as CSS filters over the brown the parts are painted in. Classes name their headgear cells (`hats` on `ClassDef`, checked by `validateLibrary`); porters wear the porter's cap; a hero with an injury shows one. Shown on roster cards, the memorial and hero fight tokens so far. Alignment frames are not done yet.
 
 ### 6. Later, if wanted
 

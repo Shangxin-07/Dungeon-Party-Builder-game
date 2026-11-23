@@ -4,6 +4,7 @@ import { defineMaterial } from "../types";
 export default defineMaterial({
   id: "bone-dust",
   name: "Bone dust",
+  icon: { sheet: "supplies", cell: 8 },
   blurb: "Left when a skeleton falls, mostly on floor 3.",
   value: 20,
 });

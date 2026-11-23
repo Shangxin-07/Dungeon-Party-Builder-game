@@ -22,5 +22,5 @@ export default defineBuilding({
     },
   ],
   // Its look on the town map (M8, DESIGN.md §19).
-  art: { shape: "gate" },
+  art: { shape: "gate", sprite: { sheet: "gate", frames: [0, 1] } },
 });

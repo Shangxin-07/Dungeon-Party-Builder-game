@@ -5,6 +5,8 @@ import { defineClass } from "../types";
 export default defineClass({
   id: "frost-mage",
   name: "Frost Mage",
+  icon: { sheet: "classes", cell: 3 },
+  hats: [5],
   kind: "advanced",
   blurb: "Back row. Freezes whole rooms solid.",
   requires: { classLevels: { mage: 10 }, stats: { INT: 16 }, building: "library" },

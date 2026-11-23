@@ -2,10 +2,12 @@
  * Watching a trip: the log player, Party and Opposition panels (one line each,
  * click for the full sheet) and the results card. Used by the town's watch screen and by the sandbox expedition demo.
  */
+import { HeroIcon, MonsterIcon } from "./art/Icon";
+import { FightTokens } from "./FightTokens";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DERIVED, STATS, type Derived } from "../content/types";
 import { knownAbilities } from "../sim/abilities";
-import type { FoeSheet } from "../sim/combat";
+import type { CombatEvent, FoeSheet } from "../sim/combat";
 import {
   timeBelow,
   tripClock,
@@ -49,6 +51,8 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
   let monsters: Map<string, Bar> | null = null;
   let where = "In town";
   let hour: number | undefined;
+  /** The latest blow in the current fight, for the token view's line. */
+  let last: CombatEvent | undefined;
   for (const e of log.slice(0, shown)) {
     if (e.hour !== undefined) hour = e.hour;
     if (e.party) {
@@ -64,13 +68,17 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
         });
       }
     }
-    if (e.kind === "room" || e.kind === "wander" || e.kind === "home") monsters = null;
+    if (e.kind === "room" || e.kind === "wander" || e.kind === "home") {
+      monsters = null;
+      last = undefined;
+    }
     if (e.kind === "room") where = `Floor ${e.floor}, room ${e.room}`;
     if (e.kind === "wander") where = `Climbing back up through floor ${e.floor}`;
     if (e.kind === "home") where = "Back in town";
     if (e.kind === "camp") where = `Camped on floor ${e.floor}`;
     if (e.kind === "raid") where = "At the edge of the pit";
     if (e.kind === "fight" && e.monsters) {
+      last = undefined;
       monsters = new Map(
         e.monsters.map((m) => [
           m.uid,
@@ -80,6 +88,7 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
     }
     const c = e.combat;
     if (!c) continue;
+    if (c.actor && c.target && c.actor !== c.target) last = c;
     if (c.kind === "summon" && c.hp && monsters) {
       monsters.set(c.hp.uid, {
         uid: c.hp.uid,
@@ -106,6 +115,7 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
     monsters: monsters ? [...monsters.values()] : null,
     where,
     hour,
+    last,
   };
 }
 
@@ -118,12 +128,15 @@ export function clockText(hours: number): string {
 /** Just the time of day, for log lines. */
 const timeOfDay = (hours: number) => tripClock(ix.lib.time.startHour, hours).time;
 
-function HpBar({ bar }: { bar: Bar }) {
+function HpBar({ bar, icon }: { bar: Bar; icon?: ReactNode }) {
   const pct = Math.round((bar.hp / bar.max) * 100);
   const manaPct = bar.maxMana ? Math.round(((bar.mana ?? 0) / bar.maxMana) * 100) : 0;
   return (
     <div className={`hp hp-${bar.state}`}>
-      <span className="hp-name">{bar.name}</span>
+      <span className="hp-name">
+        {icon}
+        {bar.name}
+      </span>
       <span className="hp-tracks" aria-hidden="true">
         <span className="hp-track">
           <span className="hp-fill" style={{ width: `${pct}%` }} />
@@ -146,6 +159,7 @@ export function HeroBars({ hero }: { hero: Hero }) {
   const d = heroSheet(ix, hero).derived;
   return (
     <HpBar
+      icon={<HeroIcon hero={hero} size={20} />}
       bar={{
         uid: hero.id,
         name: hero.name,
@@ -227,7 +241,7 @@ const FOE_DERIVED: readonly Derived[] = [
 export function FoeCard({ bar }: { bar: Bar }) {
   return (
     <li className="hero foe">
-      <HpBar bar={bar} />
+      <HpBar bar={bar} icon={<MonsterIcon id={bar.sheet?.monsterId} name={bar.name} size={20} />} />
       <FoeDetails bar={bar} />
     </li>
   );
@@ -315,11 +329,13 @@ function HeroDetails({ hero, bar }: { hero: Hero; bar?: Bar }) {
  */
 function Combatant({
   bar,
+  icon,
   open,
   onToggle,
   children,
 }: {
   bar: Bar;
+  icon: ReactNode;
   open: boolean;
   onToggle: () => void;
   children: ReactNode;
@@ -333,7 +349,7 @@ function Combatant({
         title={open ? "Hide details" : "Show details"}
         onClick={onToggle}
       >
-        <HpBar bar={bar} />
+        <HpBar bar={bar} icon={icon} />
       </button>
       {open ? <div className="combatant-details">{children}</div> : null}
     </li>
@@ -543,6 +559,14 @@ export function TripPlayer({
         ) : null}
         {state.where}
       </p>
+      {state.monsters?.length ? (
+        <FightTokens
+          heroes={heroes}
+          party={heroes.map((h) => state.party.find((b) => b.uid === h.id) ?? startBar(h))}
+          monsters={state.monsters}
+          last={state.last}
+        />
+      ) : null}
       <div className="sides">
         <section className="side" aria-labelledby="side-party">
           <h3 id="side-party">Party</h3>
@@ -551,7 +575,13 @@ export function TripPlayer({
               const raw = state.party.find((b) => b.uid === h.id) ?? startBar(h);
               const bar = usesMana(h) ? raw : { ...raw, mana: undefined, maxMana: undefined };
               return (
-                <Combatant key={h.id} bar={bar} open={open.has(h.id)} onToggle={() => toggle(h.id)}>
+                <Combatant
+                  key={h.id}
+                  bar={bar}
+                  icon={<HeroIcon hero={h} size={20} />}
+                  open={open.has(h.id)}
+                  onToggle={() => toggle(h.id)}
+                >
                   <HeroDetails hero={h} bar={bar} />
                 </Combatant>
               );
@@ -566,6 +596,7 @@ export function TripPlayer({
                 <Combatant
                   key={b.uid}
                   bar={b}
+                  icon={<MonsterIcon id={b.sheet?.monsterId} name={b.name} size={20} />}
                   open={open.has(b.uid)}
                   onToggle={() => toggle(b.uid)}
                 >

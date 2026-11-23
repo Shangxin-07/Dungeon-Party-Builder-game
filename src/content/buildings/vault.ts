@@ -22,5 +22,11 @@ export default defineBuilding({
     },
   ],
   // Its look on the town map (M8, DESIGN.md §19).
-  art: { plot: "inner-north-east", shape: "block", roof: "#6b6255", sign: "key" },
+  art: {
+    plot: "inner-north-east",
+    shape: "block",
+    roof: "#6b6255",
+    sign: "key",
+    sprite: { sheet: "vault", frames: [0, 1] },
+  },
 });

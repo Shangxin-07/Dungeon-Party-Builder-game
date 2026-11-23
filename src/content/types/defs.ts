@@ -37,10 +37,34 @@ export interface ClassRequirements {
  */
 export type ClassKind = "base" | "advanced" | "combo" | "camp";
 
+/** The icon sheets (M8, DESIGN.md §19.4), with their grids: a cell counts across, then down. */
+export const ICON_SHEETS = {
+  classes: { cols: 4, rows: 3 },
+  "monsters-1": { cols: 4, rows: 3 },
+  "monsters-2": { cols: 4, rows: 2 },
+  weapons: { cols: 4, rows: 4 },
+  armour: { cols: 4, rows: 4 },
+  supplies: { cols: 4, rows: 3 },
+} as const;
+export type IconSheet = keyof typeof ICON_SHEETS;
+
+/** One icon: a cell of an icon sheet. */
+export interface IconRef {
+  sheet: IconSheet;
+  cell: number;
+}
+
 export interface ClassDef {
   /** Unique kebab-case id, referenced from other content. */
   id: string;
   name: string;
+  /** Its small picture (M8, DESIGN.md §19.4): a cell of an icon sheet. Missing: its initial in a circle. */
+  icon?: IconRef;
+  /**
+   * Headgear on this class's portraits (M8.06, DESIGN.md §19.5): cells of the
+   * hats layer (0-15, src/ui/art/faces/hats.png); a hero gets one of them.
+   */
+  hats?: readonly number[];
   /** Defaults to "base". */
   kind?: ClassKind;
   /** One-line description shown in town. */
@@ -94,6 +118,8 @@ export type ItemSlot = "weapon" | "offhand" | "armor" | "consumable" | "loot" | 
 export interface ItemDef {
   id: string;
   name: string;
+  /** Its small picture (M8, DESIGN.md §19.4): a cell of an icon sheet. Missing: its initial in a circle. */
+  icon?: IconRef;
   slot: ItemSlot;
   /** Base value in coins. */
   value: number;
@@ -191,6 +217,8 @@ export interface StatusDef {
 export interface MonsterDef {
   id: string;
   name: string;
+  /** Its small picture (M8, DESIGN.md §19.4): a cell of an icon sheet. Missing: its initial in a circle. */
+  icon?: IconRef;
   /** Rough fighting strength. Encounters add these up (DESIGN.md §3). */
   power: number;
   stats: StatBlock;

@@ -9,6 +9,7 @@ import { Fold, openFold } from "../Fold";
 import type { TownState } from "../../sim/town";
 import { ix } from "../game";
 import { Damage, Glyph, Look, Scaffold, footprint } from "./map/draw";
+import { SPRITES } from "./map/sprites";
 import { sceneSummary, townScene, type MapBuilding } from "./map/scene";
 
 const HINT = "Point at or tap a building to see what it does. Click it to open it below.";
@@ -121,7 +122,20 @@ export function TownMap({ town }: { town: TownState }) {
           </g>,
         )}
 
-        {cage && cage.level > 0 ? (
+        {cage?.art.sprite && (cage.level || cage.work) ? (
+          spot(
+            cage.caption,
+            openBuilding(cage),
+            // The headframe's feet stand either side of the hole.
+            <Look
+              art={cage.art}
+              x={px}
+              y={py + pry * 0.5}
+              level={cage.level || cage.work!.level}
+              ghost={!cage.level}
+            />,
+          )
+        ) : cage && cage.level > 0 ? (
           spot(
             cage.caption,
             openBuilding(cage),
@@ -207,7 +221,8 @@ function OnPlot({ b }: { b: MapBuilding }) {
   const { art, level, work } = b;
   const shown = level || (work ? work.level : 1);
   const size = footprint(art, shown);
-  const glyph = art.sign && level ? art.sign : undefined;
+  // Picture art carries its own sign.
+  const glyph = art.sign && level && !art.sprite ? art.sign : undefined;
   const nameY = y + (glyph ? 30 : 16);
   return (
     <g>
@@ -299,7 +314,9 @@ function Gate({
     b.caption,
     open,
     <g>
-      {b.level ? (
+      {b.art.sprite && SPRITES[b.art.sprite.sheet] ? (
+        <Look art={b.art} x={x} y={y + 14} level={b.level || b.work!.level} ghost={!b.level} />
+      ) : b.level ? (
         <>
           <rect
             x={x - 20}
@@ -354,6 +371,7 @@ function Towers({
   ] as const;
   const going = b.work ? b.work.level : 0;
   const count = Math.max(b.level, going);
+  const pictured = !!(b.art.sprite && SPRITES[b.art.sprite.sheet]);
   return (
     <>
       {places.slice(0, Math.min(count, places.length)).map(([tx, ty], i) =>
@@ -361,12 +379,32 @@ function Towers({
           b.caption,
           open,
           <g opacity={i < b.level ? 1 : 0.4}>
-            <rect x={tx - 6} y={ty - 40} width={12} height={40} fill="#6b543a" stroke="#120f0b" />
-            <rect x={tx - 10} y={ty - 48} width={20} height={9} fill="#7c5a34" stroke="#120f0b" />
-            <path
-              d={`M${tx - 11} ${ty - 48}L${tx} ${ty - 58}L${tx + 11} ${ty - 48}z`}
-              fill={b.art.roof ?? "#8c3b2c"}
-            />
+            {pictured ? (
+              <Look art={b.art} x={tx} y={ty + 8} level={1} />
+            ) : (
+              <>
+                <rect
+                  x={tx - 6}
+                  y={ty - 40}
+                  width={12}
+                  height={40}
+                  fill="#6b543a"
+                  stroke="#120f0b"
+                />
+                <rect
+                  x={tx - 10}
+                  y={ty - 48}
+                  width={20}
+                  height={9}
+                  fill="#7c5a34"
+                  stroke="#120f0b"
+                />
+                <path
+                  d={`M${tx - 11} ${ty - 48}L${tx} ${ty - 58}L${tx + 11} ${ty - 48}z`}
+                  fill={b.art.roof ?? "#8c3b2c"}
+                />
+              </>
+            )}
             {i >= b.level ? <Scaffold x={tx} y={ty} w={18} h={50} /> : null}
             {b.damaged && i === 0 ? <Damage x={tx} y={ty} h={50} /> : null}
           </g>,

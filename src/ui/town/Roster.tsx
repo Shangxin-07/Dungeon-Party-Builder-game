@@ -1,6 +1,7 @@
 /**
  * The roster: each hero's card, gear, pack and porter training.
  */
+import { Portrait } from "../art/Portrait";
 import { Fold } from "../Fold";
 import { useState } from "react";
 import {
@@ -199,15 +200,18 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
         title={open ? "Hide the full sheet" : "Show the full sheet"}
         onClick={toggle}
       >
-        <h3>{h.name}</h3>
-        <span className="muted small">
-          {h.porter ? "Porter" : heroTitle(ix, h)}
-          {town.camp ? "" : `, ${retainer(ix, h)}g/day at home`}
-          {h.owed ? `, owed ${h.owed}g` : ""}
+        <Portrait hero={h} size={44} />
+        <span className="hero-heading">
+          <h3>{h.name}</h3>
+          <span className="muted small">
+            {h.porter ? "Porter" : heroTitle(ix, h)}
+            {town.camp ? "" : `, ${retainer(ix, h)}g/day at home`}
+            {h.owed ? `, owed ${h.owed}g` : ""}
+          </span>
+          {h.levelUps.length ? <span className="badge">Level up!</span> : null}
+          {h.raiseAsk ? <span className="badge">Wants a raise</span> : null}
+          {leads ? <span className="badge">Leader</span> : null}
         </span>
-        {h.levelUps.length ? <span className="badge">Level up!</span> : null}
-        {h.raiseAsk ? <span className="badge">Wants a raise</span> : null}
-        {leads ? <span className="badge">Leader</span> : null}
       </button>
       <HeroBars hero={h} />
       <p className="small quiet">

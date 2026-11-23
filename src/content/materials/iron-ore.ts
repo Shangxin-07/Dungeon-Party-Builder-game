@@ -4,6 +4,7 @@ import { defineMaterial } from "../types";
 export default defineMaterial({
   id: "iron-ore",
   name: "Iron ore",
+  icon: { sheet: "supplies", cell: 5 },
   blurb: "Seams on every floor, and in goblins' pockets.",
   value: 12,
 });

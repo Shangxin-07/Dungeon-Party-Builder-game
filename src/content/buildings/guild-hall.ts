@@ -68,5 +68,11 @@ export default defineBuilding({
     },
   ],
   // Its look on the town map (M8, DESIGN.md §19).
-  art: { plot: "north", shape: "hall", roof: "#8c3b2c", sign: "shield" },
+  art: {
+    plot: "north",
+    shape: "hall",
+    roof: "#8c3b2c",
+    sign: "shield",
+    sprite: { sheet: "guild-hall", frames: [0, 1, 2, 3, 4] },
+  },
 });

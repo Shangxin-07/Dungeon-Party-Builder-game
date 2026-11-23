@@ -5,6 +5,8 @@ import { defineClass } from "../types";
 export default defineClass({
   id: "paladin",
   name: "Paladin",
+  icon: { sheet: "classes", cell: 7 },
+  hats: [10, 11],
   kind: "combo",
   blurb: "Front row. Holds the line, lays on hands, and hates the undead.",
   requires: {
