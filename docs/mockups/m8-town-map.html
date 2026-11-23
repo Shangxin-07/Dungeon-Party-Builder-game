@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Town map mock-up</title>
+<!--
+  M8 mock-up (DESIGN.md §19). Not part of the game: a throwaway page that shows
+  how the town map, the pit cross-section and the fight tokens could look, all
+  drawn as plain SVG from data, the way the real thing would read content files.
+-->
+<style>
+  :root {
+    --bg: #15130f; --panel: #211d17; --border: #3a3226; --text: #ece4d6;
+    --muted: #a89c88; --accent: #e0a64b; --good: #93b98a; --bad: #c98b7f;
+    color-scheme: dark;
+  }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+  .page { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.3rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 28px 0 6px; }
+  .muted { color: var(--muted); font-size: 0.88rem; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  .tabs button { background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit; font-size: 0.88rem; }
+  .tabs button.on { border-color: var(--accent); color: var(--accent); }
+  svg { display: block; width: 100%; height: auto; }
+  .tip { min-height: 1.5em; margin-top: 6px; font-size: 0.88rem; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 720px) { .row { grid-template-columns: 1fr; } }
+  .bld { cursor: pointer; }
+  .bld:hover > .body { filter: brightness(1.25); }
+  text { font-family: system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Town map mock-up</h1>
+  <p class="muted">The town grows around the pit as you build. Hover a building. Pick a day to see the same town at three points in a game.</p>
+  <div class="tabs" id="tabs"></div>
+  <div class="panel"><svg id="map" viewBox="0 0 900 560" role="img" aria-label="Town map"></svg>
+    <div class="tip" id="tip"> </div></div>
+
+  <div class="row">
+    <div>
+      <h2>The pit, side on</h2>
+      <div class="panel"><svg id="pit" viewBox="0 0 420 330" role="img" aria-label="Pit cross-section"></svg></div>
+      <p class="muted">Only what the town knows: floor 1 from the watchtower, floor 3 from a party six days ago, the rest in fog. The plank seal under floor 1 is worn.</p>
+    </div>
+    <div>
+      <h2>A fight, as tokens</h2>
+      <div class="panel"><svg id="fight" viewBox="0 0 420 330" role="img" aria-label="Fight tokens"></svg></div>
+      <p class="muted">Class and monster icons with health bars, front and back rows. The text log stays underneath, as now.</p>
+    </div>
+  </div>
+</div>
+<script>
+// ---- Content-like data: each building's art lives with it (shape, roof, sign, plot) ----
+const PLOTS = {
+  "guild-hall": [450, 118], "tavern": [628, 150], "market": [708, 272], "blacksmith": [640, 392],
+  "apothecary": [536, 438], "training-yard": [262, 398], "library": [188, 268], "temple": [270, 148],
+  "vault": [546, 186], "black-market": [352, 448], "graveyard": [56, 300], "sawmill": [72, 100],
+  "farm": [92, 486], "cottages": [828, 470], "cottages-2": [830, 110],
+};
+const ART = {
+  "guild-hall":   { shape: "hall",  roof: "#8c3b2c", sign: "shield" },
+  "tavern":       { shape: "house", roof: "#9a6a2a", sign: "mug" },
+  "market":       { shape: "stalls",roof: "#5b7a3a", sign: "coin" },
+  "blacksmith":   { shape: "house", roof: "#4b4b52", sign: "anvil", smoke: true },
+  "apothecary":   { shape: "house", roof: "#4f6e5e", sign: "flask" },
+  "training-yard":{ shape: "yard",  roof: "#7a5c3a", sign: "sword" },
+  "library":      { shape: "tower", roof: "#3f4f7a", sign: "book" },
+  "temple":       { shape: "temple",roof: "#b8a98a", sign: "sun" },
+  "vault":        { shape: "block", roof: "#6b6255", sign: "coin" },
+  "black-market": { shape: "house", roof: "#2c2a33", sign: "eye" },
+  "graveyard":    { shape: "graves",roof: "#555", sign: "" },
+  "sawmill":      { shape: "house", roof: "#7c5a34", sign: "saw" },
+  "farm":         { shape: "field", roof: "#6b5a2a", sign: "" },
+  "cottages":     { shape: "cottages", roof: "#8a5a3c", sign: "" },
+};
+const NAMES = { "guild-hall":"Guild Hall", tavern:"Tavern", market:"Market", blacksmith:"Blacksmith", apothecary:"Apothecary",
+  "training-yard":"Training Yard", library:"Library", temple:"Temple", vault:"Vault", "black-market":"Black Market",
+  graveyard:"Graveyard", sawmill:"Sawmill", farm:"Farm", cottages:"Cottages", palisade:"Palisade", gate:"Gate",
+  watchtower:"Watchtower", "mine-cage":"Mine Cage" };
+
+// Three snapshots of one game: level, plus "building" (days left on the next level) and "damaged".
+const DAYS = {
+  "Day 3 (camp)": { camp: true, b: {}, folk: 0 },
+  "Day 18": { b: { "guild-hall": 1, palisade: 1, gate: 0, watchtower: 0, tavern: 0, market: 1, blacksmith: 1 },
+             building: { gate: 1, tavern: 2 }, folk: 0 },
+  "Day 60": { b: { "guild-hall": 3, palisade: 2, gate: 2, watchtower: 2, tavern: 2, market: 1, blacksmith: 3,
+             apothecary: 1, "training-yard": 1, library: 2, temple: 1, vault: 1, graveyard: 1, sawmill: 1,
+             farm: 2, cottages: 2, "mine-cage": 1, "black-market": 0 },
+             building: { library: 0, "guild-hall": 4, "black-market": 3 }, damaged: { farm: true }, folk: 7 },
+};
+
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const shade = (hex, f) => {
+  const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.max(0, Math.min(255, Math.round(v * f))));
+  return "#" + c.map(v => v.toString(16).padStart(2, "0")).join("");
+};
+
+// ---- Tiny sign glyphs (stand-ins for a real icon set) ----
+function sign(g, kind, x, y) {
+  if (!kind) return;
+  el("circle", { cx: x, cy: y, r: 7, fill: "#1b1813", stroke: "#e0a64b", "stroke-width": 1 }, g);
+  const s = { stroke: "#e0a64b", "stroke-width": 1.4, fill: "none", "stroke-linecap": "round" };
+  const P = (d) => el("path", { d, ...s }, g);
+  const [a, b] = [x, y];
+  ({
+    shield: () => P(`M${a-4} ${b-4}h8v3c0 3-2 5-4 6c-2-1-4-3-4-6z`),
+    mug: () => { P(`M${a-4} ${b-3}h6v7h-6z`); P(`M${a+2} ${b-1}h2v3h-2`); },
+    coin: () => el("circle", { cx: a, cy: b, r: 3.5, ...s }, g),
+    anvil: () => P(`M${a-5} ${b-2}h9l-2 3h-5zM${a-1} ${b+1}v3M${a-3} ${b+4}h5`),
+    flask: () => P(`M${a-1} ${b-5}v3l-3 6h8l-3-6v-3`),
+    sword: () => P(`M${a-4} ${b+4}l8-8M${a-3} ${b+1}l2 2`),
+    book: () => P(`M${a-5} ${b-3}h4c1 0 1 1 1 1v6c0-1-1-1-1-1h-4zM${a+5} ${b-3}h-4M${a+5} ${b-3}v6h-4`),
+    sun: () => { el("circle", { cx: a, cy: b, r: 2.2, ...s }, g); P(`M${a} ${b-5}v1.5M${a} ${b+5}v-1.5M${a-5} ${b}h1.5M${a+5} ${b}h-1.5`); },
+    eye: () => { P(`M${a-5} ${b}q5-5 10 0q-5 5-10 0`); el("circle", { cx: a, cy: b, r: 1.3, fill: "#e0a64b" }, g); },
+    saw: () => P(`M${a-5} ${b+2}h10M${a-5} ${b+2}l1-3l1 3l1-3l1 3l1-3l1 3l1-3l1 3l1-3`),
+  })[kind]?.();
+}
+
+// ---- One parametric building: bigger with each level, scaffolding while building ----
+function house(g, x, y, art, level, ghost) {
+  const w = 34 + level * 10, h = 18 + Math.min(level, 3) * 7;
+  const wall = ghost ? "none" : "#5a4a38", roof = ghost ? "none" : art.roof;
+  const st = ghost ? { stroke: "#a89c88", "stroke-dasharray": "3 3", "stroke-width": 1 } : { stroke: "#120f0b", "stroke-width": 1 };
+  const body = el("g", { class: "body" }, g);
+  if (art.shape === "hall" || art.shape === "block") {
+    el("rect", { x: x - w / 2, y: y - h, width: w, height: h, fill: wall, ...st }, body);
+    el("path", { d: `M${x - w / 2 - 4} ${y - h}L${x} ${y - h - 14 - level * 2}L${x + w / 2 + 4} ${y - h}z`, fill: roof, ...st }, body);
+    if (level >= 3 && !ghost) { el("rect", { x: x - 6, y: y - h - 34, width: 12, height: 20, fill: wall, ...st }, body);
+      el("path", { d: `M${x - 8} ${y - h - 34}L${x} ${y - h - 44}L${x + 8} ${y - h - 34}z`, fill: roof, ...st }, body); }
+    if (level >= 4 && !ghost) el("path", { d: `M${x} ${y - h - 44}v-12l10 4l-10 4`, fill: "#e0a64b", stroke: "#e0a64b" }, body);
+  } else if (art.shape === "tower") {
+    const tw = 22 + level * 4, th = 30 + level * 14;
+    el("rect", { x: x - tw / 2, y: y - th, width: tw, height: th, fill: wall, ...st }, body);
+    el("path", { d: `M${x - tw / 2 - 3} ${y - th}L${x} ${y - th - 18}L${x + tw / 2 + 3} ${y - th}z`, fill: roof, ...st }, body);
+  } else if (art.shape === "temple") {
+    el("rect", { x: x - w / 2, y: y - h, width: w, height: h, fill: "#8a7f6a", ...st }, body);
+    for (let i = 0; i < 4; i++) el("line", { x1: x - w / 2 + 6 + i * (w - 12) / 3, x2: x - w / 2 + 6 + i * (w - 12) / 3, y1: y - h + 2, y2: y, stroke: "#5c5444" }, body);
+    el("path", { d: `M${x - w / 2 - 4} ${y - h}L${x} ${y - h - 12}L${x + w / 2 + 4} ${y - h}z`, fill: roof, ...st }, body);
+  } else if (art.shape === "stalls") {
+    for (let i = 0; i < 1 + level; i++) { const sx = x - 22 + i * 18;
+      el("rect", { x: sx - 7, y: y - 12, width: 14, height: 12, fill: wall, ...st }, body);
+      el("path", { d: `M${sx - 9} ${y - 12}h18l-3 -6h-12z`, fill: i % 2 ? "#a0523a" : roof, ...st }, body); }
+  } else if (art.shape === "yard") {
+    el("rect", { x: x - w / 2 - 6, y: y - 24, width: w + 12, height: 26, fill: "#3b3222", stroke: "#7a5c3a", "stroke-dasharray": "2 2" }, body);
+    for (let i = 0; i < 1 + level; i++) { const dx = x - w / 2 + 6 + i * 14;
+      el("line", { x1: dx, x2: dx, y1: y - 2, y2: y - 16, stroke: "#c2a172", "stroke-width": 2 }, body);
+      el("line", { x1: dx - 5, x2: dx + 5, y1: y - 12, y2: y - 12, stroke: "#c2a172", "stroke-width": 2 }, body);
+      el("circle", { cx: dx, cy: y - 19, r: 3, fill: "#c2a172" }, body); }
+  } else if (art.shape === "graves") {
+    for (let i = 0; i < 2 + level * 3; i++) { const gx = x - 18 + (i % 4) * 12, gy = y - 22 + Math.floor(i / 4) * 12;
+      el("path", { d: `M${gx - 3} ${gy + 6}v-6a3 3 0 0 1 6 0v6z`, fill: "#6f6a60" }, body); }
+  } else if (art.shape === "field") {
+    el("rect", { x: x - 40, y: y - 30, width: 80 + level * 12, height: 34, fill: "#3d3a1e", stroke: "#6b5a2a" }, body);
+    for (let i = 0; i < 6 + level * 2; i++) el("line", { x1: x - 36 + i * 9, x2: x - 36 + i * 9, y1: y - 26, y2: y, stroke: "#8a8a3a", "stroke-width": 2, "stroke-dasharray": "3 2" }, body);
+  } else if (art.shape === "cottages") {
+    for (let i = 0; i < level * 2; i++) { const cx = x - 26 + (i % 3) * 24, cy = y - (Math.floor(i / 3)) * 24;
+      el("rect", { x: cx - 8, y: cy - 10, width: 16, height: 10, fill: wall, ...st }, body);
+      el("path", { d: `M${cx - 10} ${cy - 10}L${cx} ${cy - 18}L${cx + 10} ${cy - 10}z`, fill: roof, ...st }, body); }
+  } else {
+    el("rect", { x: x - w / 2, y: y - h, width: w, height: h, fill: wall, ...st }, body);
+    el("path", { d: `M${x - w / 2 - 4} ${y - h}L${x} ${y - h - 12 - level * 2}L${x + w / 2 + 4} ${y - h}z`, fill: roof, ...st }, body);
+    if (level >= 2 && !ghost) el("rect", { x: x + w / 2, y: y - h * 0.7, width: 14, height: h * 0.7, fill: shade("#5a4a38", 0.85), ...st }, body);
+    if (art.smoke && !ghost) for (let i = 0; i < 3; i++) el("circle", { cx: x - w / 2 + 8 + i * 4, cy: y - h - 18 - i * 7, r: 3 + i, fill: "#777", opacity: 0.35 - i * 0.08 }, body);
+  }
+  if (!ghost && level > 0) for (let i = 0; i < 2 && art.shape !== "graves" && art.shape !== "field" && art.shape !== "yard" && art.shape !== "stalls" && art.shape !== "cottages"; i++)
+    el("rect", { x: x - 10 + i * 14, y: y - h / 2 - 3, width: 5, height: 5, fill: "#e8c271", opacity: 0.8 }, body);
+  return { w, h };
+}
+function scaffold(g, x, y, art, level, days) {
+  house(g, x, y, art, level, true);
+  const w = 34 + level * 10, h = 18 + Math.min(level, 3) * 7;
+  for (let i = 0; i < 3; i++) el("line", { x1: x - w / 2 + i * w / 2, x2: x - w / 2 + i * w / 2, y1: y, y2: y - h - 10, stroke: "#b08a52", "stroke-width": 1.5 }, g);
+  el("line", { x1: x - w / 2 - 3, x2: x + w / 2 + 3, y1: y - h / 2, y2: y - h / 2, stroke: "#b08a52", "stroke-width": 1.5 }, g);
+  el("text", { x, y: y + 30, "text-anchor": "middle", "font-size": 10, fill: "#e0a64b" }, g, `${days} day${days === 1 ? "" : "s"}`);
+}
+
+function drawMap(snap) {
+  const svg = document.getElementById("map"); svg.innerHTML = "";
+  const tip = document.getElementById("tip");
+  // ground
+  el("rect", { x: 0, y: 0, width: 900, height: 560, fill: "#1f2117" }, svg);
+  for (let i = 0; i < 70; i++) { const x = (i * 137) % 900, y = (i * 89) % 560;
+    el("circle", { cx: x, cy: y, r: 1.4, fill: "#2b2e1f" }, svg); }
+  // spoil heaps and track from the gate
+  el("path", { d: "M450 560 Q455 470 450 380", stroke: "#3a3426", "stroke-width": 18, fill: "none" }, svg);
+  el("ellipse", { cx: 450, cy: 290, rx: 150, ry: 88, fill: "#2e2a1f" }, svg);
+
+  // THE PIT, dead centre
+  const pit = el("g", { class: "bld" }, svg);
+  el("ellipse", { cx: 450, cy: 290, rx: 96, ry: 54, fill: "#3b3325", stroke: "#4c4230", "stroke-width": 3 }, pit);
+  el("ellipse", { cx: 450, cy: 294, rx: 78, ry: 42, fill: "#120f0b" }, pit);
+  el("ellipse", { cx: 450, cy: 300, rx: 52, ry: 26, fill: "#060504" }, pit);
+  const glow = el("ellipse", { cx: 450, cy: 304, rx: 22, ry: 9, fill: "#5a2a1a", opacity: 0.5 }, pit);
+  el("animate", { attributeName: "opacity", values: "0.25;0.6;0.25", dur: "4s", repeatCount: "indefinite" }, glow);
+  el("text", { x: 450, y: 358, "text-anchor": "middle", "font-size": 12, "letter-spacing": 3, fill: "#a89c88" }, svg, "THE PIT");
+  pit.addEventListener("mouseenter", () => tip.textContent = "The Pit. Floor 1 quiet (watchtower); deeper floors unknown. Click for the pit map.");
+
+  const b = snap.b, building = snap.building || {}, damaged = snap.damaged || {};
+  const lvl = (id) => b[id] || 0;
+
+  // pit head: a windlass at camp, the Mine Cage headframe later
+  if (snap.camp || !lvl("mine-cage")) {
+    el("path", { d: "M425 262 L438 238 L462 238 L475 262", stroke: "#8a6a3a", "stroke-width": 3, fill: "none" }, svg);
+    el("line", { x1: 438, x2: 462, y1: 242, y2: 242, stroke: "#c2a172", "stroke-width": 4 }, svg);
+  } else {
+    const g = el("g", { class: "bld" }, svg);
+    el("path", { d: "M420 270 L440 200 L460 200 L480 270 M430 240 H470", stroke: "#8b8f96", "stroke-width": 3, fill: "none" }, g);
+    el("circle", { cx: 450, cy: 198, r: 9, fill: "none", stroke: "#b8bcc4", "stroke-width": 3 }, g);
+    g.addEventListener("mouseenter", () => tip.textContent = `Mine Cage, level ${lvl("mine-cage")}: trips ride past floor 1.`);
+  }
+
+  if (snap.camp) {
+    // tents, piles, a makeshift barricade: the mining camp
+    for (const [x, y] of [[330, 210], [580, 220], [560, 380], [320, 370]]) {
+      el("path", { d: `M${x - 16} ${y}L${x} ${y - 20}L${x + 16} ${y}z`, fill: "#8a7a5a", stroke: "#120f0b" }, svg);
+      el("path", { d: `M${x} ${y - 20}L${x - 3} ${y}`, stroke: "#4a4030" }, svg); }
+    for (let i = 0; i < 6; i++) el("rect", { x: 250 + (i % 3) * 7, y: 280 - Math.floor(i / 3) * 5, width: 26, height: 5, rx: 2, fill: "#7c5a34" }, svg);
+    el("text", { x: 262, y: 300, "font-size": 10, fill: "#a89c88", "text-anchor": "middle" }, svg, "timber 6");
+    for (let i = 0; i < 5; i++) el("circle", { cx: 640 + (i % 3) * 7, cy: 290 - Math.floor(i / 3) * 6, r: 4, fill: "#6c6a74" }, svg);
+    el("text", { x: 648, y: 306, "font-size": 10, fill: "#a89c88", "text-anchor": "middle" }, svg, "ore 5");
+    el("path", { d: "M380 340 l10 -14 l10 14 l10 -14 l10 14 l10 -14 l10 14 l10 -14 l10 14", stroke: "#8a6a3a", "stroke-width": 3, fill: "none" }, svg);
+    el("text", { x: 450, y: 70, "text-anchor": "middle", "font-size": 13, fill: "#a89c88" }, svg, "The mining camp: build a Guild Hall and a Palisade to hold the pit");
+    for (const [x, y] of [[600, 120], [300, 120]]) { // ghost plots: where the hall and the wall will go
+      el("rect", { x: x - 26, y: y - 16, width: 52, height: 20, fill: "none", stroke: "#5b5240", "stroke-dasharray": "3 3" }, svg); }
+    el("text", { x: 600, y: 120, "font-size": 9, fill: "#7a6f5c", "text-anchor": "middle" }, svg, "plot");
+    el("text", { x: 300, y: 120, "font-size": 9, fill: "#7a6f5c", "text-anchor": "middle" }, svg, "plot");
+    return;
+  }
+
+  // palisade ring: wood at level 1, stone at 2+; the gate on the south side
+  const pal = lvl("palisade");
+  if (pal) {
+    const stone = pal >= 2;
+    el("ellipse", { cx: 450, cy: 290, rx: 330, ry: 214, fill: "none", stroke: stone ? "#7d786e" : "#7c5a34",
+      "stroke-width": stone ? 7 : 4, "stroke-dasharray": stone ? "14 2" : "3 3" }, svg);
+  }
+  const gateL = lvl("gate"), gateB = building.gate;
+  if (gateL || gateB !== undefined) {
+    const g = el("g", { class: "bld" }, svg);
+    if (gateL) { el("rect", { x: 430, y: 494, width: 40, height: 18, fill: gateL >= 2 ? "#585a60" : "#7c5a34", stroke: "#120f0b" }, g);
+      el("rect", { x: 424, y: 486, width: 8, height: 28, fill: "#4c4230" }, g); el("rect", { x: 468, y: 486, width: 8, height: 28, fill: "#4c4230" }, g); }
+    else scaffold(g, 450, 512, { shape: "house", roof: "#7c5a34" }, 1, gateB);
+    g.addEventListener("mouseenter", () => tip.textContent = gateL ? `Gate, level ${gateL}` : `Gate going up: ${gateB} day(s) left`);
+  }
+  const wt = lvl("watchtower");
+  for (const [i, [x, y]] of [[778, 290], [122, 290], [450, 76]].entries()) {
+    if (i >= wt) break;
+    const g = el("g", { class: "bld" }, svg);
+    el("rect", { x: x - 6, y: y - 40, width: 12, height: 40, fill: "#6b543a", stroke: "#120f0b" }, g);
+    el("rect", { x: x - 10, y: y - 48, width: 20, height: 9, fill: "#7c5a34", stroke: "#120f0b" }, g);
+    el("path", { d: `M${x - 11} ${y - 48}L${x} ${y - 58}L${x + 11} ${y - 48}z`, fill: "#8c3b2c" }, g);
+    g.addEventListener("mouseenter", () => tip.textContent = `Watchtower, level ${wt}: counts floor 1`);
+  }
+
+  // every other building on its plot
+  const ids = Object.keys(ART);
+  for (const id of ids) {
+    const level = lvl(id), next = building[id];
+    if (!level && next === undefined) continue;
+    const [x, y] = PLOTS[id];
+    const g = el("g", { class: "bld" }, svg);
+    if (level) house(g, x, y, ART[id], level);
+    if (next !== undefined && !level) scaffold(g, x, y, ART[id], 1, next);
+    if (next !== undefined && level) { // upgrade in progress: scaffolding over the built level
+      el("line", { x1: x - 26, x2: x - 26, y1: y, y2: y - 60, stroke: "#b08a52", "stroke-width": 1.5 }, g);
+      el("line", { x1: x + 26, x2: x + 26, y1: y, y2: y - 60, stroke: "#b08a52", "stroke-width": 1.5 }, g);
+      el("line", { x1: x - 30, x2: x + 30, y1: y - 44, y2: y - 44, stroke: "#b08a52", "stroke-width": 1.5 }, g);
+      el("text", { x, y: y + 44, "text-anchor": "middle", "font-size": 10, fill: "#e0a64b" }, g, next ? `L${level + 1} in ${next} days` : `L${level + 1} tomorrow`);
+    }
+    if (damaged[id]) { el("path", { d: `M${x - 20} ${y - 6}l8 -10l6 8l10 -12l8 14`, stroke: "#c98b7f", "stroke-width": 2, fill: "none" }, g);
+      for (let i = 0; i < 3; i++) el("circle", { cx: x + 10 + i * 5, cy: y - 40 - i * 9, r: 4 + i * 2, fill: "#555", opacity: 0.5 - i * 0.12 }, g); }
+    if (level) sign(g, ART[id].sign, x, y + 10);
+    el("text", { x, y: y + (ART[id].sign && level ? 30 : 16), "text-anchor": "middle", "font-size": 10, fill: "#a89c88" }, g, NAMES[id]);
+    const what = level ? `${NAMES[id]}, level ${level}` : `${NAMES[id]} going up`;
+    g.addEventListener("mouseenter", () => tip.textContent = what + (damaged[id] ? ". Damaged in a raid: repair for 25%." : next !== undefined ? `. Building: ${next || "<1"} day(s) left.` : ". Click to open its panel."));
+    if (id === "cottages" && level >= 2) { const g2 = el("g", {}, svg); const [x2, y2] = PLOTS["cottages-2"]; house(g2, x2, y2, ART.cottages, 1); }
+  }
+  // townsfolk as little figures on the road, heroes at posts as gold dots
+  for (let i = 0; i < (snap.folk || 0); i++) el("circle", { cx: 700 + (i % 4) * 9, cy: 520 - Math.floor(i / 4) * 9, r: 2.6, fill: "#c9bda8" }, svg);
+  for (const [x, y] of [[372, 260], [528, 258]]) el("circle", { cx: x, cy: y, r: 3.5, fill: "#e0a64b", stroke: "#120f0b" }, svg);
+  svg.addEventListener("mouseleave", () => tip.textContent = " ");
+}
+
+function drawPit() {
+  const s = document.getElementById("pit");
+  el("rect", { x: 0, y: 0, width: 420, height: 330, fill: "#16130f" }, s);
+  el("path", { d: "M0 30 H150 L170 40 H250 L270 30 H420", stroke: "#4c4230", "stroke-width": 3, fill: "none" }, s);
+  el("text", { x: 20, y: 22, "font-size": 11, fill: "#a89c88" }, s, "town");
+  const floors = [
+    { n: 1, name: "Old Workings", band: "quiet", fill: 0.3, src: "watchtower, today", c: "#93b98a" },
+    { n: 2, name: "Spider Galleries", band: "unknown", fill: null, src: "no word", c: null },
+    { n: 3, name: "Bone Halls", band: "crowded", fill: 0.85, src: "Party A, 6 days ago", c: "#c98b7f", stale: true },
+    { n: 4, name: "Flooded Shafts", band: "unknown", fill: null, src: "no word", c: null },
+    { n: 5, name: "Old Delve", band: "unknown", fill: null, src: "no word", c: null },
+  ];
+  floors.forEach((f, i) => {
+    const y = 48 + i * 54, x = 150 - i * 8, w = 120 + i * 16;
+    el("rect", { x, y, width: w, height: 40, rx: 4, fill: f.fill === null ? "#221e18" : "#2a241b", stroke: "#3a3226" }, s);
+    if (f.fill !== null) el("rect", { x, y: y + 40 - 40 * f.fill, width: w, height: 40 * f.fill, rx: 3, fill: f.c, opacity: f.stale ? 0.35 : 0.55 }, s);
+    else for (let k = 0; k < 7; k++) el("ellipse", { cx: x + 12 + k * (w / 7), cy: y + 20 + (k % 2) * 6, rx: 16, ry: 7, fill: "#3a352c", opacity: 0.5 }, s);
+    el("text", { x: x - 10, y: y + 25, "text-anchor": "end", "font-size": 12, fill: "#ece4d6" }, s, `${f.n}`);
+    el("text", { x: x + w + 10, y: y + 17, "font-size": 11, fill: "#ece4d6" }, s, f.name);
+    el("text", { x: x + w + 10, y: y + 32, "font-size": 10, fill: f.stale ? "#c98b7f" : "#a89c88" }, s, `${f.band} · ${f.src}`);
+    if (i < 4) el("line", { x1: x + w - 14, x2: x + w - 22, y1: y + 40, y2: y + 54, stroke: "#5b5240", "stroke-width": 3 }, s);
+  });
+  // a worn plank seal on the stairs below floor 1
+  const sx = 150 + 120 - 30, sy = 88;
+  for (let k = 0; k < 3; k++) el("rect", { x: sx - 6 + k * 4, y: sy + 1 + k * 4, width: 26, height: 3, fill: "#b08a52", transform: `rotate(${k % 2 ? 8 : -8} ${sx + 8} ${sy + 6})` }, s);
+  el("text", { x: sx + 26, y: sy + 13, "font-size": 9, fill: "#e0a64b" }, s, "seal 55%");
+  // a party below: last seen going down, place unknown
+  el("circle", { cx: 220, cy: 150, r: 6, fill: "#e0a64b", opacity: 0.85 }, s);
+  el("text", { x: 230, y: 154, "font-size": 10, fill: "#e0a64b" }, s, "Party B, day 2 of ~4");
+}
+
+function drawFight() {
+  const s = document.getElementById("fight");
+  el("rect", { x: 0, y: 0, width: 420, height: 330, fill: "#16130f" }, s);
+  el("text", { x: 14, y: 22, "font-size": 11, fill: "#a89c88" }, s, "Floor 2 · Spider Galleries · round 4");
+  const token = (x, y, label, glyph, hp, mana, foe, down) => {
+    const g = el("g", { opacity: down ? 0.35 : 1 }, s);
+    el("circle", { cx: x, cy: y, r: 22, fill: foe ? "#2c1d1a" : "#1f2a1e", stroke: foe ? "#c98b7f" : "#93b98a", "stroke-width": 2 }, g);
+    el("text", { x, y: y + 6, "text-anchor": "middle", "font-size": 17, fill: "#ece4d6", "font-weight": 600 }, g, glyph);
+    el("rect", { x: x - 24, y: y + 27, width: 48, height: 5, fill: "#3a3226" }, g);
+    el("rect", { x: x - 24, y: y + 27, width: 48 * hp, height: 5, fill: hp < 0.3 ? "#c98b7f" : "#93b98a" }, g);
+    if (mana !== null) { el("rect", { x: x - 24, y: y + 34, width: 48, height: 3, fill: "#3a3226" }, g);
+      el("rect", { x: x - 24, y: y + 34, width: 48 * mana, height: 3, fill: "#7f9ac9" }, g); }
+    el("text", { x, y: y + 52, "text-anchor": "middle", "font-size": 10, fill: "#a89c88" }, g, label);
+    if (down) el("text", { x, y: y + 64, "text-anchor": "middle", "font-size": 10, fill: "#c98b7f" }, g, "down");
+  };
+  el("text", { x: 14, y: 52, "font-size": 10, fill: "#a89c88" }, s, "back");
+  el("text", { x: 14, y: 126, "font-size": 10, fill: "#a89c88" }, s, "front");
+  token(110, 70, "Mira (Mage)", "M", 0.9, 0.35, false);
+  token(190, 70, "Oswin (Cleric)", "C", 0.7, 0.6, false);
+  token(80, 140, "Bran (Fighter)", "F", 0.25, null, false);
+  token(160, 140, "Tess (Scout)", "S", 0.0, null, false, true);
+  el("line", { x1: 0, x2: 420, y1: 214, y2: 214, stroke: "#3a3226" }, s);
+  el("text", { x: 14, y: 236, "font-size": 10, fill: "#a89c88" }, s, "front");
+  token(100, 256, "Cave Spider", "Sp", 0.5, null, true);
+  token(180, 256, "Cave Spider", "Sp", 0.1, null, true);
+  token(270, 256, "Spider Matriarch", "SM", 0.8, null, true);
+  // a hit flash: last action drawn as a line between tokens
+  el("path", { d: "M262 232 Q220 170 104 142", stroke: "#c98b7f", "stroke-width": 1.5, fill: "none", "stroke-dasharray": "4 3" }, s);
+  el("text", { x: 236, y: 184, "font-size": 10, fill: "#c98b7f" }, s, "bites Bran, 7");
+}
+
+const tabs = document.getElementById("tabs");
+const keys = Object.keys(DAYS);
+function pick(k) { [...tabs.children].forEach(b => b.classList.toggle("on", b.textContent === k)); drawMap(DAYS[k]); }
+for (const k of keys) { const b = document.createElement("button"); b.textContent = k; b.onclick = () => pick(k); tabs.appendChild(b); }
+pick(new URLSearchParams(location.search).get("day") || keys[2]);
+drawPit(); drawFight();
+</script>
+</body>
+</html>

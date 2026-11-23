@@ -1,6 +1,6 @@
 # Dungeon Party Builder: Design & Build Plan
 
-> **Status:** agreed design, 2026-11-20. Built so far: M0 (project setup), M1 (simulation core), M2 (expeditions), M3 (the town), M4 (time, raids and saves), M5 (morale, levels and rescue runs) and M6 (balance and content). **Next: M7, the choices come back to town (§17).**
+> **Status:** agreed design, 2026-11-20. Built so far: M0 (project setup), M1 (simulation core), M2 (expeditions), M3 (the town), M4 (time, raids and saves), M5 (morale, levels and rescue runs) and M6 (balance and content). M7 (the choices come back to town, §17 and §18) is built. **Next: M8, the graphical pass (§19).**
 > Items marked **✅ DECIDED** were open questions; Mike accepted the recommended option for each.
 > A summary of every decision is at the end.
 
@@ -844,7 +844,7 @@ Each milestone ends with something you can run.
 | M5 | Heroes with personalities: morale, motivations, favourite buildings, level-up perks, wipes and recovery runs (built, see §11 "As built in M5") | Play the full design in miniature |
 | M6 | Balance pass (wages, the Market's cut, morale that settles), monster stats in the watch view, the Cleric (built, see §11 "As built in M6") | Feel gold get tight and see what you're up against |
 | M7 | The choices come back to town (§17): trip clock, background trips, debrief with sell / salvage / research, leadership and bigger parties, losses that sting, research, scout and stealth missions | Spend your time deciding in town, not watching |
-| M8 | Gloss: portraits, room scenes, a styled debrief | See who you're sending |
+| M8 | Graphical pass (§19): town map with the pit in the middle, icons, pit cross-section, fight tokens, portraits | See the town grow and who you're sending |
 | M6+ | Grow content: freeform classes (§9), resurrection, burial and risen heroes (§10), alignment (§7), materials and the "holding the pit" opening (§8, built in M6.15 and M6.16), more buildings, more monsters/floors (floors 4-5 built in M6.21), 2D watch view, multiple parties | Keep growing |
 
 ## 16. Decisions (agreed 2026-11-20)
@@ -1142,7 +1142,7 @@ Each one is playable on its own. Version numbers go up by one per PR, starting a
 | M7.06 → M7.07 ✅ | **Research**: Library desks, researchers, Lore, monster tiers, specimens, item research and recipes, wards | Needs the debrief (research choice) and gives stealth its payoff |
 | M7.07 → M7.08 ✅ | **Scout missions and floor intel**: the mission order, slipping past fights, dated intel in the report | Needed to find lairs |
 | M7.08 → M7.09 ✅ | **Stealth and the Mire Behemoth**: Stealth skill, `noisy` gear, sneak missions, the first warded beast, its wallow and bane | Brings research, intel and missions together |
-| M8 | **Gloss**: portraits, room scenes, styled debrief | After the loop, as agreed |
+| M8 | **Gloss**: portraits, room scenes, styled debrief | After the loop, as agreed; now the graphical pass, §19 |
 
 Crafting beyond the bane recipe can slot in after M7.06 or wait for M8.
 
@@ -1259,3 +1259,86 @@ The pit map shows every floor's population against its capacity, and below floor
 - ✅ **DECIDED G: town while they're away.** **1a workshops + 1b townsfolk**, with 1c town news later. Mike: good (2026-11-22).
 - ✅ **DECIDED H: early gold.** **2a shares and a retainer**, with 2b town income once settlers come. Mike: good.
 - ✅ **DECIDED I: full floors.** **3a fog + watchtower** and **3b hold the stairs**. Mike: good.
+
+## 19. M8: the graphical pass
+
+> Added 2026-11-23 from Mike's idea, design only; nothing here is built yet. Open questions J, K and L are at the end. Mock-up: [`docs/mockups/m8-town-map.html`](mockups/m8-town-map.html) (open it in a browser; screenshots below).
+
+### Why
+
+The game is all text and tables. It plays fine, but it reads like a spreadsheet, and nothing on screen shows the town growing or the pit getting worse. Mike: make the town something you can see being built, with the buildings appearing on a town map as you build them, mostly a display change. And the pit should be a literal pit in the middle of town, so "the Pit" means something the moment you see it.
+
+M8 is a **display pass**: no simulation, balance or save changes. Every picture is drawn from state the game already has (building levels, construction, raid damage, fog, the fight log). The text log, tables and Fold panels stay; pictures sit on top of them as the first thing you see, and a click on a picture opens the panel you'd have scrolled to.
+
+### Rules for every picture
+
+- **Art lives with the content.** A building, class, monster or item says how it looks in its own content file (an `art` field), the same way it already says what it does. A new building with no art gets a plain default look, so content never waits on art. `validateLibrary` checks that every art reference exists.
+- **Drawn in code as SVG,** not image files: small, sharp at any size, recoloured from the site's tokens, and it matches the dark theme. Parametric where it can be: one "house" drawing that grows with level and takes a roof colour and a sign, rather than a picture per building per level. Hand-drawn sprites can replace any piece later without changing the data shape (see question J).
+- **Only show what the town knows.** The pit map keeps the fog (§18.3a); parties below stay hidden until word comes back (§17).
+- **Less scrolling, not more.** Pictures replace text where they can (the town map replaces most of the Buildings list at a glance), and every picture folds like the rest.
+
+### 1. The town map (recommended first)
+
+![Town map on day 60](mockups/m8-town-day60.png)
+
+- **The pit in the middle**, big and dark, with a faint glow at the bottom and "THE PIT" under it. Click it to open the pit map (§19.2). At the camp it has a rough windlass over it; with the **Mine Cage** a steel headframe.
+- **Plots around it.** Each building has a fixed plot (`art.plot`, set in content) so every game's town looks familiar and the important ones sit near the pit: Guild Hall to the north, Market and Tavern east, Library and Temple west, Blacksmith and Apothecary by the road, and farm, cottages, sawmill and graveyard outside the wall. Plots for buildings you haven't built are empty ground.
+- **Buildings grow with level:** wider, a second storey, a wing, a tower, a flag at the top level. Shape families (hall, house, tower, temple, stalls, yard, field, graves, cottages) keep it cheap: a new building picks a family, a roof colour and a sign glyph.
+- **Building in progress:** a dashed outline of what's coming and scaffolding, with "2 days" under it; an upgrade shows scaffolding over the current building and "L3 tomorrow".
+- **Raid damage:** broken roof line and smoke until repaired.
+- **The wall and the gate:** the Palisade is a ring round the whole town (stakes at level 1, stone at 2+); the Gate sits where the road leaves; each Watchtower level adds a tower on the wall.
+- **People:** heroes at posts and workshops as gold dots where they work, townsfolk as small figures by the cottages. Small, but the town looks lived in.
+- **The camp start** is tents, a timber pile, an ore heap and a zigzag barricade round the pit, with dashed plots for the Guild Hall and Palisade. Holding the pit turns the camp into the town on the map.
+
+![The mining camp](mockups/m8-town-camp.png) ![Day 18](mockups/m8-town-day18.png)
+
+- **Hover** gives the building's name, level and state; **click** opens its panel (build, upgrade, workshop queue). The Buildings panel stays for building and upgrading, folded by default once the map is there.
+- On a phone the map scales down; labels hide below a width and show on tap.
+
+### 2. The pit, side on
+
+![Pit map and fight tokens](mockups/m8-pit-and-fight.png)
+
+The pressure table (Pit panel) as a picture: a cross-section with the town at the top and floors stacked below, each wider than the last.
+
+- **How full:** a fill level per floor in its fog band (quiet, busy, crowded, full) from the watchtower or the last word; old word drawn faded and marked; unknown floors drawn as murk.
+- **Seals** drawn as planks or an iron gate across the stairs, with their strength.
+- **Parties below** as a marker by the shaft: "Party B, day 2 of ~4". Never where they really are; that's hidden until word comes back.
+- The table stays in a fold under the picture for numbers.
+
+### 3. The fight, as tokens
+
+The watch view and replays: each side in front and back rows, one token per combatant, with health and mana bars, a "down" mark, and the last action drawn as a line from attacker to target. Click a token for the full sheet (as now). The log stays underneath, unchanged. Mike loves stats, so this is a layer on top, never a replacement.
+
+### 4. Icons
+
+A small icon set (`src/ui/art/icons/`) used everywhere names are: classes (roster, party, level-up), monsters (fight, research, scout reports), items and materials (store room, market, debrief), buildings (signs on the map, the Buildings panel). Content refers to icons by id (`art: { icon: "anvil" }`); a missing one falls back to the name's first letter in a disc, as in the mock-up. Two ways to get them, see question J.
+
+### 5. Portraits (later in M8)
+
+"See who you're sending" (§15): a face for every hero, built from layers (head shape, hair, beard, scars, colours) **hashed from the hero's id**, the same way personalities are, so no dice and no save change. Class adds gear on top (hood, helm, holy symbol), alignment tints the frame, injuries show a bandage, risen heroes get the pale undead palette with their old face. Shown on hero cards, the party panel, the debrief and the memorial.
+
+### 6. Later, if wanted
+
+Room scenes for the trip replay (a backdrop per room type), a styled debrief (loot laid out on a table), a day/night tint on the town map, raid nights drawn on the map (monsters coming over the wall).
+
+### Order of PRs
+
+| PR | What |
+|---|---|
+| 1 | **Town map:** `art` on BuildingDef (plot, shape, roof, sign), shared SVG pieces, the map panel at the top of the town with hover/click, camp look, construction and damage; validate art refs |
+| 2 | **Icons:** the icon set and `art.icon` on classes, monsters, items, materials; used in roster, party, store room, debrief |
+| 3 | **Pit map:** cross-section with fog, seals and parties below; table into a fold |
+| 4 | **Fight tokens:** rows, bars, last-action line in the watch view and replays |
+| 5 | **Portraits:** layered, hashed from hero id; cards, party, debrief, memorial |
+
+Each PR is display-only. The days bot and tests are unaffected, apart from new art validation and a smoke test that each picture renders for a fresh game, the camp and a grown town.
+
+### Questions for Mike
+
+- **J: where the art comes from.**
+  - **J1 (recommended): draw it ourselves in SVG**, like the mock-up. One consistent look, no licences, every piece changeable in code, and it grows with the content. It's simple and a bit "board game", not lush.
+  - **J2: a free icon library** (for example game-icons.net, thousands of fantasy icons, CC BY 3.0, needs a credit line) for the small icons only, with the town map and pit still drawn by us. Much more variety for monsters and items quickly; the style is theirs.
+  - **J3: pixel-art sprites** (drawn or a CC0 pack). The most "game" look, but every building level and monster needs a picture made, which slows down adding content.
+- **K: town layout.** **K1 (recommended): fixed plots** set in content, so the map is the same each game and needs no new controls. K2: the player places each building on a free plot when they build it, which is more "city builder" but adds a placing step to every build.
+- **L: portraits.** **L1 (recommended): layered faces hashed from the hero**, as above. L2: class icon only, no faces. L3: leave portraits out of M8.
