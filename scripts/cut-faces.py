@@ -36,7 +36,7 @@ SHEETS = {
 # now and only move (M8.09).
 FIT = {
     "heads": (1.0, 0, 0),
-    "hair": (1.0, 0, -2),
+    "hair": (1.12, 0, -1),  # a little bigger, so it covers the wider heads (Mike, M8.10)
     "beards": (1.0, 0, 8),
     "extras": (1.0, 0, 0),
     "injuries": (1.0, 0, 0),
