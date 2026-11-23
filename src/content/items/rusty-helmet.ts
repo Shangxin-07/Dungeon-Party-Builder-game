@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "rusty-helmet",
   name: "Rusty Helmet",
+  icon: { sheet: "armour", cell: 6 },
   slot: "loot",
   value: 4,
   valueRange: [1, 8],

@@ -3,6 +3,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "short-bow",
   name: "Short Bow",
+  icon: { sheet: "weapons", cell: 13 },
   slot: "weapon",
   value: 25,
   tags: ["bow", "ranged"],

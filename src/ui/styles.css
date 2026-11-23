@@ -1823,3 +1823,24 @@ sup.down {
     box-shadow: 0 0 0 3px transparent;
   }
 }
+
+/* Icons (M8, DESIGN.md §19.4): pixel art cells, or an initial in a circle until the art comes. */
+.icon {
+  display: inline-block;
+  flex: none;
+  vertical-align: -0.2em;
+  margin-right: 0.4em;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.icon-letter {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-weight: 600;
+  line-height: 1;
+}

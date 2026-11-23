@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "greater-healing-potion",
   name: "Greater Healing Potion",
+  icon: { sheet: "supplies", cell: 1 },
   slot: "consumable",
   value: 45,
   tags: ["potion", "heal"],

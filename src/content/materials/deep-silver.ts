@@ -4,6 +4,7 @@ import { defineMaterial } from "../types";
 export default defineMaterial({
   id: "deep-silver",
   name: "Deep silver",
+  icon: { sheet: "supplies", cell: 10 },
   blurb: "Dug from silver veins on floors 4 and 5, or carried by the Lost Delvers.",
   value: 35,
 });

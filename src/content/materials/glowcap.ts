@@ -4,6 +4,7 @@ import { defineMaterial } from "../types";
 export default defineMaterial({
   id: "glowcap",
   name: "Glowcap",
+  icon: { sheet: "supplies", cell: 9 },
   blurb: "Picked from the spore beds on floors 4 and 5, mostly off Sporecallers.",
   value: 22,
 });

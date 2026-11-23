@@ -1318,6 +1318,8 @@ The watch view and replays: each side in front and back rows, one token per comb
 
 A small icon set (`src/ui/art/icons/`) used everywhere names are: classes (roster, party, level-up), monsters (fight, research, scout reports), items and materials (store room, market, debrief), buildings (signs on the map, the Buildings panel). Content refers to icons by id (`art: { icon: "anvil" }`); a missing one falls back to the name's first letter in a disc, as in the mock-up. Two ways to get them, see question J.
 
+- **Built in M8.03 (plumbing).** `icon: { sheet, cell }` on every class, item, material and monster, on six icon sheets (`ICON_SHEETS` in `content/types/defs.ts`: classes, monsters-1, monsters-2, weapons, armour, supplies). `validateLibrary` checks each is a real cell and no two things share one. `src/ui/art/Icon.tsx` draws the cell, or the name's initial in a circle until the sheet arrives (Mike is making them: prompts in the project files, `art/icon-prompts.md`, DPBG-0025 to 0030). Porters, townsfolk and untrained recruits use spare cells of the classes sheet. Shown on roster cards, fight rows (heroes and monsters) and the market. `scripts/cut-sprite.py --grid 4x3 64` cuts a sheet into even square cells.
+
 ### 5. Portraits (later in M8)
 
 "See who you're sending" (§15): a face for every hero, built from layers (head shape, hair, beard, scars, colours) **hashed from the hero's id**, the same way personalities are, so no dice and no save change. Class adds gear on top (hood, helm, holy symbol), alignment tints the frame, injuries show a bandage, risen heroes get the pale undead palette with their old face. Shown on hero cards, the party panel, the debrief and the memorial.

@@ -3,6 +3,7 @@ import { defineClass } from "../types";
 export default defineClass({
   id: "mage",
   name: "Mage",
+  icon: { sheet: "classes", cell: 2 },
   blurb: "Back row. Burns groups of monsters and patches up wounds.",
   mainStats: ["INT", "WIL"],
   baseStats: { STR: 7, DEX: 10, END: 9, PER: 11, INT: 14, WIL: 13, CHA: 10 },

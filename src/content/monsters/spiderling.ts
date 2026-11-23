@@ -4,6 +4,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "spiderling",
   name: "Spiderling",
+  icon: { sheet: "monsters-1", cell: 2 },
   power: 1,
   stats: { STR: 4, DEX: 13, END: 4, PER: 10, INT: 1, WIL: 3, CHA: 1 },
   overrides: { maxHp: 8 },

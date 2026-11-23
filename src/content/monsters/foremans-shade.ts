@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "foremans-shade",
   name: "The Foreman's Shade",
+  icon: { sheet: "monsters-2", cell: 4 },
   power: 13,
   stats: { STR: 13, DEX: 10, END: 13, PER: 12, INT: 10, WIL: 15, CHA: 8 },
   overrides: { maxHp: 54 },

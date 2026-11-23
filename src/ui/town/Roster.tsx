@@ -1,6 +1,7 @@
 /**
  * The roster: each hero's card, gear, pack and porter training.
  */
+import { HeroIcon } from "../art/Icon";
 import { Fold } from "../Fold";
 import { useState } from "react";
 import {
@@ -199,7 +200,10 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
         title={open ? "Hide the full sheet" : "Show the full sheet"}
         onClick={toggle}
       >
-        <h3>{h.name}</h3>
+        <h3>
+          <HeroIcon hero={h} />
+          {h.name}
+        </h3>
         <span className="muted small">
           {h.porter ? "Porter" : heroTitle(ix, h)}
           {town.camp ? "" : `, ${retainer(ix, h)}g/day at home`}

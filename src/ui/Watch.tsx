@@ -2,6 +2,7 @@
  * Watching a trip: the log player, Party and Opposition panels (one line each,
  * click for the full sheet) and the results card. Used by the town's watch screen and by the sandbox expedition demo.
  */
+import { HeroIcon, MonsterIcon } from "./art/Icon";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DERIVED, STATS, type Derived } from "../content/types";
 import { knownAbilities } from "../sim/abilities";
@@ -118,12 +119,15 @@ export function clockText(hours: number): string {
 /** Just the time of day, for log lines. */
 const timeOfDay = (hours: number) => tripClock(ix.lib.time.startHour, hours).time;
 
-function HpBar({ bar }: { bar: Bar }) {
+function HpBar({ bar, icon }: { bar: Bar; icon?: ReactNode }) {
   const pct = Math.round((bar.hp / bar.max) * 100);
   const manaPct = bar.maxMana ? Math.round(((bar.mana ?? 0) / bar.maxMana) * 100) : 0;
   return (
     <div className={`hp hp-${bar.state}`}>
-      <span className="hp-name">{bar.name}</span>
+      <span className="hp-name">
+        {icon}
+        {bar.name}
+      </span>
       <span className="hp-tracks" aria-hidden="true">
         <span className="hp-track">
           <span className="hp-fill" style={{ width: `${pct}%` }} />
@@ -146,6 +150,7 @@ export function HeroBars({ hero }: { hero: Hero }) {
   const d = heroSheet(ix, hero).derived;
   return (
     <HpBar
+      icon={<HeroIcon hero={hero} size={16} />}
       bar={{
         uid: hero.id,
         name: hero.name,
@@ -227,7 +232,7 @@ const FOE_DERIVED: readonly Derived[] = [
 export function FoeCard({ bar }: { bar: Bar }) {
   return (
     <li className="hero foe">
-      <HpBar bar={bar} />
+      <HpBar bar={bar} icon={<MonsterIcon id={bar.sheet?.monsterId} name={bar.name} size={16} />} />
       <FoeDetails bar={bar} />
     </li>
   );
@@ -315,11 +320,13 @@ function HeroDetails({ hero, bar }: { hero: Hero; bar?: Bar }) {
  */
 function Combatant({
   bar,
+  icon,
   open,
   onToggle,
   children,
 }: {
   bar: Bar;
+  icon: ReactNode;
   open: boolean;
   onToggle: () => void;
   children: ReactNode;
@@ -333,7 +340,7 @@ function Combatant({
         title={open ? "Hide details" : "Show details"}
         onClick={onToggle}
       >
-        <HpBar bar={bar} />
+        <HpBar bar={bar} icon={icon} />
       </button>
       {open ? <div className="combatant-details">{children}</div> : null}
     </li>
@@ -551,7 +558,13 @@ export function TripPlayer({
               const raw = state.party.find((b) => b.uid === h.id) ?? startBar(h);
               const bar = usesMana(h) ? raw : { ...raw, mana: undefined, maxMana: undefined };
               return (
-                <Combatant key={h.id} bar={bar} open={open.has(h.id)} onToggle={() => toggle(h.id)}>
+                <Combatant
+                  key={h.id}
+                  bar={bar}
+                  icon={<HeroIcon hero={h} size={16} />}
+                  open={open.has(h.id)}
+                  onToggle={() => toggle(h.id)}
+                >
                   <HeroDetails hero={h} bar={bar} />
                 </Combatant>
               );
@@ -566,6 +579,7 @@ export function TripPlayer({
                 <Combatant
                   key={b.uid}
                   bar={b}
+                  icon={<MonsterIcon id={b.sheet?.monsterId} name={b.name} size={16} />}
                   open={open.has(b.uid)}
                   onToggle={() => toggle(b.uid)}
                 >

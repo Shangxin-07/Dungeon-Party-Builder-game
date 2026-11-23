@@ -4,6 +4,7 @@ import { defineMaterial } from "../types";
 export default defineMaterial({
   id: "timber",
   name: "Timber",
+  icon: { sheet: "supplies", cell: 3 },
   blurb: "Salvaged round the camp, and off the raiders' kills.",
   value: 8,
 });

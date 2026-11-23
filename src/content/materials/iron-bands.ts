@@ -5,6 +5,7 @@ import { defineMaterial } from "../types";
 export default defineMaterial({
   id: "iron-bands",
   name: "Iron bands",
+  icon: { sheet: "supplies", cell: 6 },
   blurb: "Straps, hinges and bolts from the Blacksmith. They turn a heap of planks into a gate.",
   value: 10,
 });

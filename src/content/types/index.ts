@@ -9,6 +9,8 @@
  * (the whole Library and the define* helpers).
  */
 export { STATS, DERIVED, DAMAGE_TYPES } from "./core";
+export { ICON_SHEETS } from "./defs";
+export type { IconRef, IconSheet } from "./defs";
 export type {
   Stat,
   StatBlock,

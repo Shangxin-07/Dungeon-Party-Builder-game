@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "tin-charm",
   name: "Tin Charm",
+  icon: { sheet: "armour", cell: 10 },
   slot: "loot",
   value: 3,
   valueRange: [1, 5],

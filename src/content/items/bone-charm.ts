@@ -5,6 +5,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "bone-charm",
   name: "Bone Charm",
+  icon: { sheet: "armour", cell: 8 },
   slot: "offhand",
   value: 55,
   tags: ["charm", "unholy"],
