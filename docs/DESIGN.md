@@ -1295,6 +1295,8 @@ M8 is a **display pass**: no simulation, balance or save changes. Every picture 
 - **Hover** gives the building's name, level and state; **click** opens its panel (build, upgrade, workshop queue). The Buildings panel stays for building and upgrading, folded by default once the map is there.
 - On a phone the map scales down; labels hide below a width and show on tap.
 
+- **Built in M8.01.** A "Town map" fold at the top of the town (open by default, after the trips below). Content: `art` on every building (`plot`, `shape`, `roof`, `sign`, `smoke`, `sprite`), plots in `content/townmap.ts`, checked by `validateLibrary` (known shape and sign, real plot, one building per plot). Drawing in `src/ui/town/map/` (`scene.ts` works out what to show, `draw.tsx` draws it), panel `src/ui/town/TownMap.tsx`. Clicking a building opens the Buildings fold and scrolls to its card (`openFold` in `Fold.tsx`); the pit opens the pit panel. A building with no `art` gets a plain house on the first free plot. The **Tavern** is the first picture art: Mike's pixel sprite (three frames; levels 1-2 use the first two, the third waits for a level 3), cut from his generated sheet with `scripts/cut-sprite.py` and registered in `src/ui/town/map/sprites.ts`. The original sheet is kept in the project files (`art/DPBG-0001-Inn.png`), not the repo.
+
 ### 2. The pit, side on
 
 ![Pit map and fight tokens](mockups/m8-pit-and-fight.png)

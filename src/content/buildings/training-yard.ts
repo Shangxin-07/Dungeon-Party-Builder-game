@@ -21,4 +21,6 @@ export default defineBuilding({
       effects: [{ type: "trainingXp", amount: 8 }],
     },
   ],
+  // Its look on the town map (M8, DESIGN.md §19).
+  art: { plot: "south-west", shape: "yard", roof: "#7a5c3a", sign: "sword" },
 });

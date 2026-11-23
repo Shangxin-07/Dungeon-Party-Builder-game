@@ -44,6 +44,7 @@ import type {
   ResearchRules,
   TownRules,
   TownsfolkRules,
+  TownMapDef,
   WorkshopRules,
   OfferDef,
   OfferRules,
@@ -100,6 +101,8 @@ export interface Library {
   workshops: WorkshopRules;
   /** Settlers (M7.15). */
   townsfolk: TownsfolkRules;
+  /** The town map's layout (M8, DESIGN.md §19). */
+  townMap: TownMapDef;
   /** Town news (M7.17). */
   offers: readonly OfferDef[];
   offerRules: OfferRules;
@@ -156,6 +159,7 @@ export const defineTownsfolkRules = (def: TownsfolkRules): TownsfolkRules => def
 export const defineResearchRules = (def: ResearchRules): ResearchRules => def;
 
 export const defineOpening = (def: OpeningRules): OpeningRules => def;
+export const defineTownMap = (def: TownMapDef): TownMapDef => def;
 
 export const defineDungeonRules = (def: DungeonRules): DungeonRules => def;
 

@@ -33,4 +33,6 @@ export default defineBuilding({
       effects: [{ type: "housing", amount: 14 }],
     },
   ],
+  // Its look on the town map (M8, DESIGN.md §19).
+  art: { plot: "far-south-east", shape: "cottages", roof: "#8a5a3c" },
 });

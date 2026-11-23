@@ -3,9 +3,15 @@
  * summary (and optional buttons) that stay visible while it's closed. Which
  * panels are open is remembered in this browser only, never in the save.
  */
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 const KEY = "dpb-ui-open";
+const OPEN_EVENT = "dpb-open-fold";
+
+/** Open the panel `id` from elsewhere on the page (the town map's clicks, M8). */
+export function openFold(id: string) {
+  window.dispatchEvent(new CustomEvent<string>(OPEN_EVENT, { detail: id }));
+}
 
 function remembered(): Record<string, boolean> {
   try {
@@ -26,6 +32,15 @@ function remember(id: string, open: boolean) {
 /** Open/closed state for `id`, remembered across visits. */
 export function useFold(id: string, defaultOpen: boolean) {
   const [open, setOpen] = useState(() => remembered()[id] ?? defaultOpen);
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      if ((e as CustomEvent<string>).detail !== id) return;
+      remember(id, true);
+      setOpen(true);
+    };
+    window.addEventListener(OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_EVENT, onOpen);
+  }, [id]);
   const toggle = () =>
     setOpen((o) => {
       remember(id, !o);

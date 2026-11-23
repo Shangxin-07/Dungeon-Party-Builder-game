@@ -26,4 +26,6 @@ export default defineBuilding({
       effects: [{ type: "lift", floors: 2 }],
     },
   ],
+  // Its look on the town map (M8, DESIGN.md §19).
+  art: { shape: "headframe" },
 });

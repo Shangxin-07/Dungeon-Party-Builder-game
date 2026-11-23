@@ -14,4 +14,6 @@ export default defineBuilding({
       effects: [{ type: "burial", gold: 5 }],
     },
   ],
+  // Its look on the town map (M8, DESIGN.md §19).
+  art: { plot: "far-west", shape: "graves" },
 });

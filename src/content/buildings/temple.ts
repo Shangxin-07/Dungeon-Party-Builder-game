@@ -49,4 +49,6 @@ export default defineBuilding({
       ],
     },
   ],
+  // Its look on the town map (M8, DESIGN.md §19).
+  art: { plot: "north-west", shape: "temple", roof: "#b8a98a", sign: "sun" },
 });

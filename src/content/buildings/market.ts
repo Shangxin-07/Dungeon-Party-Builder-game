@@ -31,4 +31,6 @@ export default defineBuilding({
       ],
     },
   ],
+  // Its look on the town map (M8, DESIGN.md §19).
+  art: { plot: "east", shape: "stalls", roof: "#5b7a3a", sign: "coin" },
 });

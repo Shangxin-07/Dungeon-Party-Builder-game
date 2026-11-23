@@ -4,9 +4,11 @@
  * Returns a list of problems; an empty list means the content is good.
  */
 import {
+  BUILDING_SHAPES,
   DAMAGE_TYPES,
   DERIVED,
   MORALE_FACTS,
+  SIGN_GLYPHS,
   STATS,
   type MoraleRule,
   type ActiveEffect,
@@ -445,6 +447,31 @@ export function validateLibrary(lib: Library): string[] {
       }
     });
   }
+  // How buildings look on the town map (M8, DESIGN.md §19).
+  const map = lib.townMap;
+  if (!(map.width > 0 && map.height > 0)) err("townMap: needs a size");
+  const plotUsers = new Map<string, string>();
+  const offPlot = new Set<string>(["wall", "gate", "watchtowers", "headframe"]);
+  for (const b of lib.buildings) {
+    const a = b.art;
+    if (!a) continue;
+    const w = `building "${b.id}" art`;
+    if (!(BUILDING_SHAPES as readonly string[]).includes(a.shape))
+      err(`${w}: unknown shape "${a.shape}"`);
+    if (a.sign && !(SIGN_GLYPHS as readonly string[]).includes(a.sign))
+      err(`${w}: unknown sign "${a.sign}"`);
+    if (a.roof && !/^#[0-9a-f]{6}$/i.test(a.roof)) err(`${w}: roof must be a #rrggbb colour`);
+    if (a.plot) {
+      if (!map.plots[a.plot]) err(`${w}: unknown plot "${a.plot}"`);
+      const other = plotUsers.get(a.plot);
+      if (other) err(`${w}: plot "${a.plot}" is already ${other}'s`);
+      plotUsers.set(a.plot, b.id);
+    } else if (!offPlot.has(a.shape)) err(`${w}: a ${a.shape} needs a plot`);
+    const frames = a.sprite?.frames;
+    if (frames && (!frames.length || frames.some((f) => !Number.isInteger(f) || f < 0)))
+      err(`${w}: sprite frames must be whole numbers, 0 or more`);
+  }
+
   for (const want of ["partySlots", "rosterSize"] as const) {
     const has = lib.buildings.some((b) =>
       b.levels[b.startLevel - 1]?.effects.some((e) => e.type === want && e.amount > 0),
