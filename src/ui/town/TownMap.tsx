@@ -4,6 +4,7 @@
  * Display only: it reads the town and never changes it. Hover or tap shows a
  * line about a building; a click opens its panel below.
  */
+import { Ground } from "./map/ground";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { Fold, openFold } from "../Fold";
 import type { TownState } from "../../sim/town";
@@ -80,15 +81,7 @@ export function TownMap({ town }: { town: TownState }) {
         onMouseLeave={() => say(HINT)}
       >
         <rect width={map.width} height={map.height} fill="var(--map-ground)" />
-        {Array.from({ length: 70 }, (_, i) => (
-          <circle
-            key={i}
-            cx={(i * 137) % map.width}
-            cy={(i * 89) % map.height}
-            r={1.4}
-            fill="var(--map-speck)"
-          />
-        ))}
+        <Ground map={map} buildings={scene.buildings} />
         {/* The road out through the gate, and the trampled spoil round the pit. */}
         <path
           d={`M${px} ${map.height} Q${px + 5} ${py + map.wall.ry - 30} ${px} ${py + pry + 30}`}

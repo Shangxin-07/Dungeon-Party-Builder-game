@@ -46,13 +46,16 @@ export interface Bar {
 }
 
 /** Party and monster bars, and where the party is, after the first `shown` log lines. */
-function stateAt(log: readonly ExpeditionEvent[], shown: number) {
+export function stateAt(log: readonly ExpeditionEvent[], shown: number) {
   const party = new Map<string, Bar>();
   let monsters: Map<string, Bar> | null = null;
   let where = "In town";
   let hour: number | undefined;
-  /** The latest blow in the current fight, for the token view's line. */
-  let last: CombatEvent | undefined;
+  /**
+   * The latest move in the current fight, for the token view's lines: one blow,
+   * or every hit of a move that strikes a whole group (one actor, one round).
+   */
+  let blows: CombatEvent[] = [];
   for (const e of log.slice(0, shown)) {
     if (e.hour !== undefined) hour = e.hour;
     if (e.party) {
@@ -70,7 +73,7 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
     }
     if (e.kind === "room" || e.kind === "wander" || e.kind === "home") {
       monsters = null;
-      last = undefined;
+      blows = [];
     }
     if (e.kind === "room") where = `Floor ${e.floor}, room ${e.room}`;
     if (e.kind === "wander") where = `Climbing back up through floor ${e.floor}`;
@@ -78,7 +81,7 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
     if (e.kind === "camp") where = `Camped on floor ${e.floor}`;
     if (e.kind === "raid") where = "At the edge of the pit";
     if (e.kind === "fight" && e.monsters) {
-      last = undefined;
+      blows = [];
       monsters = new Map(
         e.monsters.map((m) => [
           m.uid,
@@ -88,7 +91,13 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
     }
     const c = e.combat;
     if (!c) continue;
-    if (c.actor && c.target && c.actor !== c.target) last = c;
+    if (c.actor && c.target && c.actor !== c.target) {
+      const move = blows[0];
+      const same = move && c.kind !== "action" && move.actor === c.actor && move.round === c.round;
+      if (!same) blows = [c];
+      else if (!blows.some((b) => b.target === c.target)) blows = [...blows, c];
+      else blows = blows.map((b) => (b.target === c.target ? { ...c } : b));
+    }
     if (c.kind === "summon" && c.hp && monsters) {
       monsters.set(c.hp.uid, {
         uid: c.hp.uid,
@@ -115,7 +124,7 @@ function stateAt(log: readonly ExpeditionEvent[], shown: number) {
     monsters: monsters ? [...monsters.values()] : null,
     where,
     hour,
-    last,
+    blows,
   };
 }
 
@@ -564,7 +573,7 @@ export function TripPlayer({
           heroes={heroes}
           party={heroes.map((h) => state.party.find((b) => b.uid === h.id) ?? startBar(h))}
           monsters={state.monsters}
-          last={state.last}
+          blows={state.blows}
         />
       ) : null}
       <div className="sides">

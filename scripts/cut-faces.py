@@ -2,8 +2,8 @@
 Cut Mike's portrait part sheets (DPBG-0018 to 0024) into the game's face
 layers (M8.06, DESIGN.md §19.5). Every layer comes out as a grid of 96px cells
 that stack straight on top of a head: the generator drew the parts a little
-big and low, so each sheet gets a scale and nudge (FIT), and a few parts that
-sit on the shoulders get their own.
+high, so each sheet gets a nudge (FIT), and a few parts that sit on the
+shoulders or brow get their own.
 
     python3 scripts/cut-faces.py <folder with DPBG-0018...png> src/ui/art/faces
 
@@ -31,17 +31,21 @@ SHEETS = {
     "hats": ["DPBG-0023-ClassHats01.png", "DPBG-0024-ClassHats02.png"],
 }
 # Per layer: scale about the cell centre, then nudge (dx, dy) in output pixels.
+# The parts were drawn at the heads' own scale (a beard as wide as the face):
+# M8.06 shrank them and Mike saw beards under the eyes, so they stay full size
+# now and only move (M8.09).
 FIT = {
     "heads": (1.0, 0, 0),
-    "hair": (0.78, 0, -11),
-    "beards": (0.72, 0, 0),
-    "extras": (0.8, 0, -6),
-    "injuries": (0.8, 0, -8),
+    "hair": (1.0, 0, -2),
+    "beards": (1.0, 0, 8),
+    "extras": (1.0, 0, 0),
+    "injuries": (1.0, 0, 0),
     "hats": (1.0, 0, -6),
 }
 # Single parts that need their own fit, by layer and cell.
 OWN = {
-    ("injuries", 4): (0.9, 0, 22),  # the sling sits on the shoulder
+    ("injuries", 0): (1.0, 0, -10),  # the head bandage goes round the brow
+    ("injuries", 4): (1.0, 0, 24),  # the sling sits on the shoulder
     ("hats", 0): (1.0, 0, -12),  # miner's cap
     ("hats", 1): (1.0, 0, -10),  # nasal helm
     ("hats", 2): (1.0, 0, -9),  # helmet and coif
