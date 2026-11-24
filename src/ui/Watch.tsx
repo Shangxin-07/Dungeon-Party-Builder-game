@@ -1,6 +1,7 @@
 /**
  * Watching a trip: the log player, Party and Opposition panels (one line each,
- * click for the full sheet) and the results card. Used by the town's watch screen and by the sandbox expedition demo.
+ * click for the full sheet) and the results card. On a wide screen the log sits
+ * beside the fight, so a big fight never pushes it off the page (M8.12). Used by the town's watch screen and by the sandbox expedition demo.
  */
 import { HeroIcon, MonsterIcon } from "./art/Icon";
 import { FightTokens } from "./FightTokens";
@@ -568,62 +569,66 @@ export function TripPlayer({
         ) : null}
         {state.where}
       </p>
-      {state.monsters?.length ? (
-        <FightTokens
-          heroes={heroes}
-          party={heroes.map((h) => state.party.find((b) => b.uid === h.id) ?? startBar(h))}
-          monsters={state.monsters}
-          blows={state.blows}
-        />
-      ) : null}
-      <div className="sides">
-        <section className="side" aria-labelledby="side-party">
-          <h3 id="side-party">Party</h3>
-          <ul className="combatants">
-            {heroes.map((h) => {
-              const raw = state.party.find((b) => b.uid === h.id) ?? startBar(h);
-              const bar = usesMana(h) ? raw : { ...raw, mana: undefined, maxMana: undefined };
-              return (
-                <Combatant
-                  key={h.id}
-                  bar={bar}
-                  icon={<HeroIcon hero={h} size={20} />}
-                  open={open.has(h.id)}
-                  onToggle={() => toggle(h.id)}
-                >
-                  <HeroDetails hero={h} bar={bar} />
-                </Combatant>
-              );
-            })}
-          </ul>
-        </section>
-        <section className="side foes" aria-labelledby="side-foes">
-          <h3 id="side-foes">Opposition</h3>
+      <div className="watch">
+        <div className="watch-stage">
           {state.monsters?.length ? (
-            <ul className="combatants">
-              {state.monsters.map((b) => (
-                <Combatant
-                  key={b.uid}
-                  bar={b}
-                  icon={<MonsterIcon id={b.sheet?.monsterId} name={b.name} size={20} />}
-                  open={open.has(b.uid)}
-                  onToggle={() => toggle(b.uid)}
-                >
-                  <FoeDetails bar={b} />
-                </Combatant>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted quiet small">No monsters in sight.</p>
-          )}
-        </section>
-      </div>
+            <FightTokens
+              heroes={heroes}
+              party={heroes.map((h) => state.party.find((b) => b.uid === h.id) ?? startBar(h))}
+              monsters={state.monsters}
+              blows={state.blows}
+            />
+          ) : null}
+          <div className="sides">
+            <section className="side" aria-labelledby="side-party">
+              <h3 id="side-party">Party</h3>
+              <ul className="combatants">
+                {heroes.map((h) => {
+                  const raw = state.party.find((b) => b.uid === h.id) ?? startBar(h);
+                  const bar = usesMana(h) ? raw : { ...raw, mana: undefined, maxMana: undefined };
+                  return (
+                    <Combatant
+                      key={h.id}
+                      bar={bar}
+                      icon={<HeroIcon hero={h} size={20} />}
+                      open={open.has(h.id)}
+                      onToggle={() => toggle(h.id)}
+                    >
+                      <HeroDetails hero={h} bar={bar} />
+                    </Combatant>
+                  );
+                })}
+              </ul>
+            </section>
+            <section className="side foes" aria-labelledby="side-foes">
+              <h3 id="side-foes">Opposition</h3>
+              {state.monsters?.length ? (
+                <ul className="combatants">
+                  {state.monsters.map((b) => (
+                    <Combatant
+                      key={b.uid}
+                      bar={b}
+                      icon={<MonsterIcon id={b.sheet?.monsterId} name={b.name} size={20} />}
+                      open={open.has(b.uid)}
+                      onToggle={() => toggle(b.uid)}
+                    >
+                      <FoeDetails bar={b} />
+                    </Combatant>
+                  ))}
+                </ul>
+              ) : (
+                <p className="muted quiet small">No monsters in sight.</p>
+              )}
+            </section>
+          </div>
+        </div>
 
-      <ol className="log" aria-live="polite" ref={logRef}>
-        {log.slice(0, shown).map((e, i) => (
-          <Line key={i} e={e} />
-        ))}
-      </ol>
+        <ol className="log" aria-live="polite" ref={logRef}>
+          {log.slice(0, shown).map((e, i) => (
+            <Line key={i} e={e} />
+          ))}
+        </ol>
+      </div>
 
       {done ? results : null}
     </>

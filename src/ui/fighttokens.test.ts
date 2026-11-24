@@ -12,6 +12,35 @@ import { type Bar, stateAt } from "./Watch";
 const ix = indexLibrary(library);
 
 describe("fight tokens (M8.05)", () => {
+  it("a big fight wraps into more columns instead of growing tall (M8.12)", () => {
+    const viewBox = (party: number, foes: number) => {
+      const bars = (n: number, p: string): Bar[] =>
+        Array.from({ length: n }, (_, i) => ({
+          uid: `${p}${i}`,
+          name: `Rat ${i}`,
+          hp: 5,
+          max: 5,
+          state: "up",
+        }));
+      const html = renderToStaticMarkup(
+        createElement(FightTokens, {
+          heroes: [],
+          party: bars(party, "h"),
+          monsters: bars(foes, "m"),
+        }),
+      );
+      const [, , w, h] = /viewBox="([^"]+)"/.exec(html)![1]!.split(" ").map(Number);
+      return { w: w!, h: h!, tokens: html.split('<g class="token').length - 1 };
+    };
+    const small = viewBox(3, 3);
+    expect(small).toEqual({ w: 520, h: 222, tokens: 6 });
+    const big = viewBox(8, 12);
+    expect(big.tokens).toBe(20);
+    // Three to a column, every other column half a step lower: never taller than that.
+    expect(big.h).toBe(small.h + 32);
+    expect(big.w).toBeGreaterThan(small.w);
+  });
+
   it("draws both sides, marks the dead and draws the latest blow", () => {
     const heroes = autoStart(ix, newTown(ix, heroNames, 2)).roster;
     const party: Bar[] = heroes.map((h) => ({

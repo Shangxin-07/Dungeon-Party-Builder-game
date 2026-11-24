@@ -11,10 +11,20 @@ import { heroIconRef, monsterIconRef, SvgIcon } from "./art/Icon";
 import { Portrait } from "./art/Portrait";
 import type { Bar } from "./Watch";
 
-const W = 520;
 const R = 19;
 const GAP = 64;
 const TOP = 40;
+/**
+ * Big fights (M8.12): a row never stacks more than this many tokens. More of
+ * them wrap into extra columns, each one half a step lower than the last, so
+ * names never sit side by side and the picture stays short however many fight.
+ */
+const PER_COLUMN = 3;
+/** Between columns of one row, between a side's two rows, and from the middle line. */
+const COLUMN_STEP = 58;
+const ROW_STEP = 108;
+const FROM_MIDDLE = 90;
+const EDGE = 62;
 
 interface Token {
   bar: Bar;
@@ -29,20 +39,53 @@ interface Token {
   foe: boolean;
 }
 
-/** x of each column: party back, party front | foes front, foes back. */
-const COLUMN = { party: { back: 62, front: 170 }, foes: { front: 350, back: 458 } } as const;
+type Unplaced = Omit<Token, "x" | "y">;
+type Row = "front" | "back";
 
+/** How many columns each of a side's rows needs (at least one, to keep its label). */
+function columnsOf(list: readonly Unplaced[], rowOf: (t: Unplaced) => Row) {
+  const count = (row: Row) => list.filter((t) => rowOf(t) === row).length;
+  return {
+    front: Math.max(1, Math.ceil(count("front") / PER_COLUMN)),
+    back: Math.max(1, Math.ceil(count("back") / PER_COLUMN)),
+  };
+}
+
+/** How far a side reaches from the middle line, edge margin included. */
+function reach(cols: { front: number; back: number }) {
+  return (
+    FROM_MIDDLE + (cols.front - 1) * COLUMN_STEP + ROW_STEP + (cols.back - 1) * COLUMN_STEP + EDGE
+  );
+}
+
+/**
+ * Where each token sits. Columns run outward from the middle line: the front
+ * row's first (nearest the enemy), then the back row's. Every other column is
+ * dropped half a step, like a honeycomb.
+ */
 function place(
-  list: Omit<Token, "x" | "y">[],
+  list: readonly Unplaced[],
   side: "party" | "foes",
-  rowOf: (t: Omit<Token, "x" | "y">) => "front" | "back",
+  middle: number,
+  rowOf: (t: Unplaced) => Row,
 ) {
   const out: Token[] = [];
+  const dir = side === "party" ? -1 : 1;
+  const cols = columnsOf(list, rowOf);
+  const labels: { row: Row; x: number }[] = [];
   for (const row of ["front", "back"] as const) {
-    const inRow = list.filter((t) => rowOf(t) === row);
-    inRow.forEach((t, i) => out.push({ ...t, x: COLUMN[side][row], y: TOP + i * GAP }));
+    const first =
+      row === "front" ? FROM_MIDDLE : FROM_MIDDLE + (cols.front - 1) * COLUMN_STEP + ROW_STEP;
+    const xOf = (c: number) => middle + dir * (first + c * COLUMN_STEP);
+    labels.push({ row, x: (xOf(0) + xOf(cols[row] - 1)) / 2 });
+    list
+      .filter((t) => rowOf(t) === row)
+      .forEach((t, i) => {
+        const c = Math.floor(i / PER_COLUMN);
+        out.push({ ...t, x: xOf(c), y: TOP + (i % PER_COLUMN) * GAP + (c % 2) * (GAP / 2) });
+      });
   }
-  return out;
+  return { tokens: out, labels };
 }
 
 export function FightTokens({
@@ -58,26 +101,24 @@ export function FightTokens({
   blows?: readonly CombatEvent[];
 }) {
   const heroBy = new Map(heroes.map((h) => [h.id, h]));
-  const ours = place(
-    party.map((bar) => {
-      const h = heroBy.get(bar.uid);
-      const ref = h ? heroIconRef(h) : { name: bar.name };
-      return { bar, icon: ref.icon, iconName: ref.name, hero: h, label: bar.name, foe: false };
-    }),
-    "party",
-    (t) => heroBy.get(t.bar.uid)?.row ?? "front",
-  );
-  const theirs = place(
-    monsters.map((bar) => {
-      const ref = monsterIconRef(bar.sheet?.monsterId, bar.name);
-      return { bar, icon: ref.icon, iconName: ref.name, label: bar.name, foe: true };
-    }),
-    "foes",
-    (t) => (t.bar.sheet?.row === "back" ? "back" : "front"),
-  );
-  const all = [...ours, ...theirs];
-  const rows = Math.max(1, ...all.map((t) => (t.y - TOP) / GAP + 1));
-  const h = TOP + rows * GAP - 10;
+  const ourList: Unplaced[] = party.map((bar) => {
+    const h = heroBy.get(bar.uid);
+    const ref = h ? heroIconRef(h) : { name: bar.name };
+    return { bar, icon: ref.icon, iconName: ref.name, hero: h, label: bar.name, foe: false };
+  });
+  const ourRow = (t: Unplaced): Row => heroBy.get(t.bar.uid)?.row ?? "front";
+  const theirList: Unplaced[] = monsters.map((bar) => {
+    const ref = monsterIconRef(bar.sheet?.monsterId, bar.name);
+    return { bar, icon: ref.icon, iconName: ref.name, label: bar.name, foe: true };
+  });
+  const theirRow = (t: Unplaced): Row => (t.bar.sheet?.row === "back" ? "back" : "front");
+  // The middle line sits where the party's side ends, so each side gets the room it needs.
+  const middle = reach(columnsOf(ourList, ourRow));
+  const W = middle + reach(columnsOf(theirList, theirRow));
+  const ours = place(ourList, "party", middle, ourRow);
+  const theirs = place(theirList, "foes", middle, theirRow);
+  const all = [...ours.tokens, ...theirs.tokens];
+  const h = Math.max(...all.map((t) => t.y), TOP) + GAP - 10;
   const at = (uid?: string) => all.find((t) => t.bar.uid === uid);
   const lines = blows.flatMap((b) => {
     const from = at(b.actor);
@@ -93,19 +134,12 @@ export function FightTokens({
       role="img"
       aria-label={`The fight: ${all.map((t) => `${t.label} ${t.bar.state === "up" ? `${t.bar.hp} of ${t.bar.max}` : t.bar.state}`).join(", ")}`}
     >
-      <line x1={W / 2} x2={W / 2} y1={8} y2={h - 8} className="tokens-divide" />
-      <text x={COLUMN.party.back} y={16} className="tokens-row">
-        back
-      </text>
-      <text x={COLUMN.party.front} y={16} className="tokens-row">
-        front
-      </text>
-      <text x={COLUMN.foes.front} y={16} className="tokens-row">
-        front
-      </text>
-      <text x={COLUMN.foes.back} y={16} className="tokens-row">
-        back
-      </text>
+      <line x1={middle} x2={middle} y1={8} y2={h - 8} className="tokens-divide" />
+      {[...ours.labels, ...theirs.labels].map((l) => (
+        <text key={`${l.x}-${l.row}`} x={l.x} y={16} className="tokens-row">
+          {l.row}
+        </text>
+      ))}
       {lines.map(({ b, from, to }) => (
         <path
           key={`${b.round}-${b.actor}-${b.target}-${b.text}`}

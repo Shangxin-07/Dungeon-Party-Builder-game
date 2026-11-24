@@ -2297,3 +2297,56 @@ sup.down {
 .icon-count .icon {
   margin: 0;
 }
+
+/*
+ * Watching (M8.12): on a wide screen the log runs beside the fight and stays in
+ * view, so a big party or a crowd of monsters never pushes it off the page.
+ */
+.watch-stage {
+  min-width: 0;
+}
+
+/* Narrow screens: picture, then the log, then the Party and Opposition lists. */
+@media (max-width: 899px) {
+  .watch {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .watch-stage {
+    display: contents;
+  }
+
+  .watch .log {
+    order: 1;
+    max-height: 50vh;
+    margin-bottom: 16px;
+  }
+
+  .watch .sides {
+    order: 2;
+  }
+}
+
+@media (min-width: 900px) {
+  .watch {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .watch .tokens {
+    margin-top: 0;
+  }
+
+  .watch .sides {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .watch .log {
+    position: sticky;
+    top: 12px;
+    max-height: min(620px, calc(100vh - 24px));
+  }
+}
