@@ -1,6 +1,7 @@
 /**
  * The roster: each hero's card, gear, pack and porter training.
  */
+import { ItemIcon } from "../art/Icon";
 import { Portrait } from "../art/Portrait";
 import { Fold } from "../Fold";
 import { useState } from "react";
@@ -51,7 +52,7 @@ import {
   WearBar,
   XpBar,
 } from "../Heroes";
-import { SLOT_NAMES, describeItem, describeKit, tally, type Act } from "./shared";
+import { SLOT_NAMES, describeItem, tally, type Act } from "./shared";
 
 export function Roster({ town, act }: { town: TownState; act: Act }) {
   const home = town.roster.filter((h) => !outingOf(town, h.id));
@@ -226,8 +227,8 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
             {h.injuries.map((i) => `${ix.injury(i.id).name.toLowerCase()} (${i.days}d)`).join(", ")}
           </span>
         ) : null}
-        {open ? null : <span className="muted"> · {describeKit(h)}</span>}
       </p>
+      {open ? null : <KitStrip hero={h} slots={sheet.derived.carrySlots} />}
       {miner && !town.camp ? <MinerTraining town={town} hero={h} act={act} /> : null}
       {trainReady ? <PorterTraining hero={h} act={act} /> : null}
       <LevelUpPicker key={h.levelUps[0]?.level ?? 0} hero={h} town={town} act={act} />
@@ -382,23 +383,22 @@ function HeroGear({
           Kit out
         </button>
       </h4>
-      <ul className="gear">
+      <ul className="gear-slots">
         {EQUIP_SLOTS.map((slot) => {
           const id = h.equipment[slot];
           const spare = tally(town.stash.filter((x) => ix.item(x).slot === slot));
           return (
             <li key={slot}>
-              <span className="muted">{SLOT_NAMES[slot]}</span>
-              <span>
-                {id ? (
-                  <>
-                    {ix.item(id).name}{" "}
-                    <span className="muted small">{describeItem(ix.item(id))}</span>
-                  </>
-                ) : (
-                  <span className="muted">none</span>
-                )}
-              </span>
+              <span className="muted small">{SLOT_NAMES[slot]}</span>
+              <ItemSlot id={id} size={40} empty={SLOT_NAMES[slot]} />
+              {id ? (
+                <span className="gear-name">
+                  {ix.item(id).name}
+                  <span className="muted small">{describeItem(ix.item(id))}</span>
+                </span>
+              ) : (
+                <span className="muted small">none</span>
+              )}
               <span className="gear-actions">
                 {spare.length ? (
                   <select
@@ -418,7 +418,7 @@ function HeroGear({
                 {id ? (
                   <button
                     type="button"
-                    className="link"
+                    className="link small"
                     onClick={() => act((t) => unequip(ix, t, h.id, slot))}
                   >
                     Take off
@@ -436,18 +436,30 @@ function HeroGear({
           ({h.pack.length}/{sheet.derived.carrySlots} slots; the rest carries loot)
         </span>
       </h4>
+      <ul className="pack-slots">
+        {Array.from({ length: Math.max(sheet.derived.carrySlots, h.pack.length) }, (_, i) => {
+          const id = h.pack[i];
+          if (!id)
+            return (
+              <li key={i} className="pack-slot free" title="Free: carries loot home">
+                <ItemSlot size={32} empty="Free" />
+              </li>
+            );
+          return (
+            <li key={i} className="pack-slot">
+              <button
+                type="button"
+                title={`${ix.item(id).name}: ${describeItem(ix.item(id))}. Click to put back in the store room.`}
+                onClick={() => act((t) => unpackItem(ix, t, h.id, i))}
+              >
+                <ItemSlot id={id} size={32} />
+                <span className="pack-name">{ix.item(id).name}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
       <div className="pack">
-        {h.pack.map((id, i) => (
-          <button
-            key={i}
-            type="button"
-            className="chip"
-            title={`${describeItem(ix.item(id))}. Click to put back in the store room.`}
-            onClick={() => act((t) => unpackItem(ix, t, h.id, i))}
-          >
-            {ix.item(id).name} ×
-          </button>
-        ))}
         {supplies.length && !packFull ? (
           <select
             value=""
@@ -462,7 +474,11 @@ function HeroGear({
             ))}
           </select>
         ) : null}
-        {!h.pack.length && !supplies.length ? <span className="muted small">Empty.</span> : null}
+        {h.pack.length ? (
+          <span className="muted small">Click a packed item to put it back.</span>
+        ) : !supplies.length ? (
+          <span className="muted small">Nothing packed, and no supplies in the store room.</span>
+        ) : null}
       </div>
     </>
   );
@@ -503,6 +519,54 @@ function LeaderRecordList({ hero: h, town }: { hero: Hero; town: TownState }) {
       {grudges.length ? (
         <p className="warn">Won't forgive {grudges.join(" or ")} for deserting.</p>
       ) : null}
+    </div>
+  );
+}
+
+/** An inventory slot: a square with the item's icon, or an empty outline. */
+function ItemSlot({ id, size, empty }: { id?: string; size: number; empty?: string }) {
+  return (
+    <span
+      className={`item-slot${id ? "" : " empty"}`}
+      style={{ width: size + 6, height: size + 6 }}
+      title={id ? ix.item(id).name : empty}
+    >
+      {id ? <ItemIcon id={id} size={size} /> : null}
+    </span>
+  );
+}
+
+/**
+ * The compact card's kit at a glance: the three gear slots, then what's
+ * packed (repeats counted), then how many slots are left for loot.
+ */
+function KitStrip({ hero: h, slots }: { hero: Hero; slots: number }) {
+  const packed = tally(h.pack);
+  const free = Math.max(0, slots - h.pack.length);
+  return (
+    <div className="kit-strip" aria-label="Gear and pack">
+      {EQUIP_SLOTS.map((slot) => {
+        const id = h.equipment[slot];
+        return (
+          <span
+            key={slot}
+            className="kit-cell"
+            title={`${SLOT_NAMES[slot]}: ${id ? ix.item(id).name : "none"}`}
+          >
+            <ItemSlot id={id} size={24} empty={`${SLOT_NAMES[slot]}: none`} />
+          </span>
+        );
+      })}
+      <span className="kit-gap" aria-hidden="true" />
+      {packed.map(([id, n]) => (
+        <span key={id} className="kit-cell" title={`${ix.item(id).name}${n > 1 ? ` ×${n}` : ""}`}>
+          <ItemSlot id={id} size={24} />
+          {n > 1 ? <span className="kit-count">{n}</span> : null}
+        </span>
+      ))}
+      <span className="muted small kit-free">
+        {free} {free === 1 ? "slot" : "slots"} for loot
+      </span>
     </div>
   );
 }

@@ -26,6 +26,7 @@ import {
   type TownState,
   type TripReport,
 } from "../../sim/town";
+import { ItemIcon, MonsterIcon } from "../art/Icon";
 import { Portrait } from "../art/Portrait";
 import { ix } from "../game";
 import type { Act } from "./shared";
@@ -265,6 +266,16 @@ function Debrief({
         <summary>
           <strong>Monsters slain:</strong> {t.slainTotal}
           {t.biggest ? `; the biggest, ${t.biggest.name}, by ${t.biggest.by}` : ""}
+          {t.slain.length ? (
+            <span className="icon-strip" aria-hidden="true">
+              {t.slain.map((l) => (
+                <span key={l.id} className="icon-count" title={`${l.name} ×${l.count}`}>
+                  <MonsterIcon id={l.id} name={l.name} size={28} />
+                  {l.count > 1 ? <span className="kit-count">{l.count}</span> : null}
+                </span>
+              ))}
+            </span>
+          ) : null}
         </summary>
         {t.slain.length ? (
           <table className="haul">
@@ -278,7 +289,10 @@ function Debrief({
             <tbody>
               {t.slain.map((l) => (
                 <tr key={l.id}>
-                  <td>{l.name}</td>
+                  <td>
+                    <MonsterIcon id={l.id} name={l.name} size={20} />
+                    {l.name}
+                  </td>
                   <td>{l.count}</td>
                   <td>
                     {Object.entries(l.by)
@@ -301,6 +315,7 @@ function Debrief({
           {trip.materials && Object.keys(trip.materials).length
             ? `, ${materialWords(ix, trip.materials)}`
             : ""}
+          <HaulIcons trip={trip} />
         </summary>
         <p className="small">
           {trip.coins !== undefined
@@ -451,6 +466,7 @@ function HaulChoices({ town, act }: { town: TownState; act: Act }) {
             return (
               <tr key={h.id}>
                 <td>
+                  <ItemIcon id={h.item} size={20} />
                   {ix.item(h.item).name}
                   {h.hidden ? <span className="muted small"> (hidden cache)</span> : null}
                 </td>
@@ -551,5 +567,27 @@ function SharesLine({ town, trip }: { town: TownState; trip: TripReport }) {
         <>Nothing to share out, so the trip cost the guild no pay.</>
       )}
     </p>
+  );
+}
+
+/** Everything the party carried home, as icons with counts: coins, materials, then the rest. */
+function HaulIcons({ trip }: { trip: TripReport }) {
+  const counts = new Map<string, number>();
+  for (const h of trip.result.haul) if (!h.keep) counts.set(h.item, (counts.get(h.item) ?? 0) + 1);
+  if (!counts.size) return null;
+  const rank = (id: string) => {
+    const item = ix.item(id);
+    return item.tags.includes("coins") ? 0 : item.slot === "material" ? 1 : 2;
+  };
+  const lines = [...counts].sort((a, b) => rank(a[0]) - rank(b[0]) || b[1] - a[1]);
+  return (
+    <span className="icon-strip" aria-hidden="true">
+      {lines.map(([id, n]) => (
+        <span key={id} className="icon-count" title={`${ix.item(id).name}${n > 1 ? ` ×${n}` : ""}`}>
+          <ItemIcon id={id} size={28} />
+          {n > 1 ? <span className="kit-count">{n}</span> : null}
+        </span>
+      ))}
+    </span>
   );
 }

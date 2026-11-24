@@ -117,9 +117,12 @@ export function MonsterIcon({ id, name, size }: { id?: string; name: string; siz
   return <Icon icon={ref.icon} name={ref.name} size={size} />;
 }
 
+/** An item's icon. A specimen with no art of its own borrows its monster's. */
 export function ItemIcon({ id, size }: { id: string; size?: number }) {
   const item = ix.lib.items.find((x) => x.id === id);
-  return <Icon icon={item?.icon} name={item?.name ?? id} size={size} />;
+  const from = item?.research?.monsters?.[0];
+  const icon = item?.icon ?? (from ? ix.lib.monsters.find((m) => m.id === from)?.icon : undefined);
+  return <Icon icon={icon} name={item?.name ?? id} size={size} />;
 }
 
 /** The same icon inside an SVG (the fight tokens): the cell, or the initial. */

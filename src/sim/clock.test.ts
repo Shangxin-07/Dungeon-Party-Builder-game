@@ -123,7 +123,8 @@ describe("a trip's clock", () => {
       expect(days / n).toBeGreaterThan(targetFloor - 0.25);
       expect(days / n).toBeLessThan(targetFloor + 0.25);
     }
-  });
+    // 300 whole expeditions: about 1s here, but over the 5s default on a busy CI runner.
+  }, 30_000);
 
   it("is checked by validateLibrary", () => {
     const bad = { ...library, time: { ...time, room: -1, awakeHours: 0 } };
