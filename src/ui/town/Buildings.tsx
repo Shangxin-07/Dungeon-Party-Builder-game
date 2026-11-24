@@ -19,6 +19,7 @@ import {
 import { ix } from "../game";
 import type { Act } from "./shared";
 import { costWords } from "./Posts";
+import { BuildingPicture } from "./BuildingPicture";
 
 /** "5 built, 1 going up, 1 damaged". */
 function buildingSummary(town: TownState): string {
@@ -48,6 +49,13 @@ export function Buildings({ town, act }: { town: TownState; act: Act }) {
           const short = next && materialsShort(ix, town, next.materials);
           return (
             <li key={b.id} id={`building-${b.id}`} className={`card${damaged ? " damaged" : ""}`}>
+              <BuildingPicture
+                building={b}
+                level={level}
+                next={next ? level + 1 : undefined}
+                going={work?.level}
+                damaged={damaged}
+              />
               <h3>
                 {b.name}{" "}
                 <span className="muted small">{level ? `level ${level}` : "not built"}</span>

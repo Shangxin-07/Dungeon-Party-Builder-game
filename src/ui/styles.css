@@ -2102,3 +2102,198 @@ sup.down {
   gap: 2px 8px;
   min-width: 0;
 }
+
+/* Building pictures on the Buildings cards (M8.11): the town map's sprites. */
+.building-picture {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  margin: -4px 0 10px;
+  padding: 8px 6px 4px;
+  border-radius: 6px;
+  background: linear-gradient(to bottom, transparent 55%, rgba(120, 100, 70, 0.18));
+}
+
+.building-frame {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.building-frame svg {
+  display: block;
+  width: 100%;
+  height: 120px;
+}
+
+.building-picture.two .building-frame svg {
+  height: 110px;
+}
+
+.building-frame figcaption {
+  margin-top: 2px;
+  text-align: center;
+}
+
+.building-frame.unbuilt svg {
+  opacity: 0.8;
+}
+
+.building-frame.going svg {
+  opacity: 0.55;
+}
+
+.building-frame.damaged svg {
+  filter: grayscale(0.7) brightness(0.65);
+}
+
+.building-arrow {
+  align-self: center;
+  color: var(--muted);
+  font-size: 1.2rem;
+}
+
+/* Inventory slots on the roster (M8.11): item icons in square slots. */
+.item-slot {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.item-slot.empty {
+  border-style: dashed;
+  background: none;
+}
+
+.item-slot .icon {
+  margin: 0;
+}
+
+.kit-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.kit-cell {
+  position: relative;
+  display: inline-flex;
+}
+
+.kit-count {
+  position: absolute;
+  right: -3px;
+  bottom: -4px;
+  min-width: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--border);
+  color: var(--text);
+  font-size: 0.65rem;
+  line-height: 14px;
+  text-align: center;
+}
+
+.kit-gap {
+  width: 8px;
+}
+
+.kit-free {
+  margin-left: 4px;
+}
+
+.gear-slots {
+  list-style: none;
+  margin: 4px 0 8px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.gear-slots li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.gear-name {
+  display: flex;
+  flex-direction: column;
+}
+
+.gear-slots .gear-actions {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pack-slots {
+  list-style: none;
+  margin: 4px 0 6px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pack-slot {
+  width: 58px;
+  display: flex;
+  justify-content: center;
+}
+
+.pack-slot button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.pack-slot button:hover .item-slot {
+  border-color: var(--accent);
+}
+
+.pack-name {
+  font-size: 0.68rem;
+  line-height: 1.15;
+  text-align: center;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Debrief icon strips (M8.11): what was slain and what came home, at a glance. */
+.icon-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 2px 1.1em;
+}
+
+.icon-count {
+  position: relative;
+  display: inline-flex;
+}
+
+.icon-count .icon {
+  margin: 0;
+}
