@@ -35,6 +35,7 @@ import { news, roll, edit } from "./internal";
 import { cancelRescue } from "./parties";
 import { carrySeal, placeSeal } from "./seals";
 import { carryStone, placeStone } from "./stones";
+import { forwardCamp } from "./digging";
 import { homecoming } from "./homecoming";
 import { hearOfLoss, partyFalls } from "./lost";
 import { deserterDay, deserterHome } from "./deserters";
@@ -83,6 +84,8 @@ export function launch(
   carrySeal(ix, t, orders);
   // And the Seal Stone (M8.17).
   carryStone(ix, t, orders);
+  // A forward camp on a held floor (M8.20): paths down, and a night's rest.
+  const camp = forwardCamp(ix, t);
   // Who leads, and how unruly the party is (M7.05, DESIGN.md §17.5).
   const cmd = partyCommand(ix, party, t.leader);
   const result = runExpedition(ix, party, orders, seed, t.dungeon.floors, {
@@ -91,6 +94,7 @@ export function launch(
     porters,
     risen: t.risen,
     lift: liftFloors(ix, t),
+    ...(camp ? { camp } : {}),
     research: researchTiers(ix, t),
     slainLairs: Object.keys(t.lairs).filter((id) => t.lairs[id]?.slain),
     shards: openShards(ix, t),
@@ -116,7 +120,7 @@ export function launch(
     (p) => p.heroes.length === t.party.length && p.heroes.every((x) => t.party.includes(x)),
   );
   const called = name?.trim() || onFile?.name || `${(cmd.leader ?? party[0]!).name}'s party`;
-  const expected = startDay + usualDays(ix, orders, liftFloors(ix, t));
+  const expected = startDay + usualDays(ix, orders, liftFloors(ix, t), camp);
   t.outings.push({
     id,
     name: called,

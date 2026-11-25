@@ -9,7 +9,7 @@ import type { HaulItem } from "../loot";
 import type { RaidReport } from "../raid";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 22;
+export const TOWN_VERSION = 23;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 export const PIT_HISTORY = 60;
@@ -345,6 +345,11 @@ export interface TownState {
   shards: Record<string, ShardFind>;
   /** How far the guild's name has gone (M8.19, DESIGN.md §20, content/renown.ts). */
   renown: number;
+  /**
+   * Dig sites on held floors (M8.20, DESIGN.md §20, content/digsites/): by
+   * floor, then by site id. A site still being dug out has level 0.
+   */
+  digs: Record<number, Record<string, DigSite>>;
   /** What the posts brought in yesterday: materials by id, and gold. */
   gathered?: { day: number; materials: Record<string, number>; gold: number };
 }
@@ -475,6 +480,16 @@ export type LedgerKind =
   | "spoils"
   /** Rewards for what a party did down there (DESIGN.md §7, content/events/). */
   | "gifts";
+
+/** A dig site on a held floor (M8.20). */
+export interface DigSite {
+  /** 0 while it's first being dug out. */
+  level: number;
+  /** The diggers at work on the next level. */
+  work?: { level: number; daysLeft: number };
+  /** Part-materials the mine has sent up so far, so fractions add up. */
+  carry?: Record<string, number>;
+}
 
 /** Gold in (positive) or out (negative) of one kind on one day. */
 export interface LedgerLine {

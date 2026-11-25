@@ -6,6 +6,7 @@ import type { Body, Risen } from "../fallen";
 import type { Hero } from "../hero";
 import type { HaulItem } from "../loot";
 import type { StandingOrders } from "./orders";
+import type { ForwardCamp } from "./clock";
 
 export type ExpeditionEventKind =
   | "depart"
@@ -257,6 +258,8 @@ export interface ExpeditionExtras {
   risen?: readonly Risen[];
   /** Floors the Mine Cage carries the party past, down and back up (M6.21). */
   lift?: number;
+  /** The deepest working forward camp (M8.20): paths down to it, and a night's rest. */
+  camp?: ForwardCamp;
   /** The party's leader and how unruly the party is (M7.05, see sim/leadership.ts). */
   leader?: TripLeader;
   /** Lairs whose beast is already dead (M7.08). */

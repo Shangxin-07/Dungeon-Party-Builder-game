@@ -249,6 +249,8 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
       count(old.lairs, (x) => x.slain !== undefined) * deeds.lair;
     return { ...old, version: 22, renown: Math.max(0, renown) };
   },
+  // M8.20: dig sites on held floors. None yet.
+  22: (_ix, old) => ({ ...old, version: 23, digs: {} }),
 };
 
 /**

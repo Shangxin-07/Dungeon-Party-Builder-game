@@ -531,6 +531,52 @@ export interface RenownRank {
   effects: readonly BuildingEffect[];
 }
 
+/**
+ * A dig site (M8.20, DESIGN.md §20): a building slot on a held floor (one
+ * whose stairs below are held by a Seal Stone's gateway). Built and raised
+ * like a building, one of each per floor; it works while the gateway holds
+ * and the floor is quiet enough for the diggers.
+ */
+export interface DigSiteDef {
+  id: string;
+  name: string;
+  blurb: string;
+  /** Only on a floor sealed this way ("cleansed" or "bound"): the shrine and the den. */
+  way?: string;
+  levels: readonly DigSiteLevel[];
+  /** Its icon on the panel. Missing: none. */
+  icon?: string;
+}
+
+export interface DigSiteLevel {
+  cost: number;
+  materials?: MaterialCost;
+  /** Days the diggers need. */
+  days: number;
+  summary: string;
+  /** Town-wide effects while it works (the shrine, the den). */
+  effects?: readonly BuildingEffect[];
+  /** Materials it sends up each day while it works (the mine); fractions add up. */
+  yields?: Record<string, number>;
+  /** More it sends up from this floor down (deep-silver lies deep). */
+  deepYields?: { from: number; materials: Record<string, number> };
+  /**
+   * A forward camp: parties going this deep or deeper walk the guild's own
+   * paths down to it (`path` hours a floor, there and back) instead of the
+   * floors' rooms, and the party sleeps there on the way down, healing
+   * `rest` percent of their HP and mana.
+   */
+  camp?: { path: number; rest: number };
+}
+
+/** Dig sites (M8.20): how many a held floor takes, and how quiet it must be. */
+export interface DigRules {
+  /** Sites a held floor has room for: `base` plus `perFloor` for each floor deep. */
+  slots: { base: number; perFloor: number };
+  /** Sites only work while the floor holds at most this share of its capacity. */
+  quiet: number;
+}
+
 /** How often offers turn up (M7.17, content/offers.ts). */
 export interface OfferRules {
   /** Chance a day that something turns up, while fewer than `max` are waiting. */

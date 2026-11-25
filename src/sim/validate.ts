@@ -387,6 +387,28 @@ export function validateLibrary(lib: Library): string[] {
     else if (!b.levels.some((l) => l.effects.some((e) => e.type === "workshop")))
       err(`seal way "${way.id}": the ${b.name} has no benches`);
   }
+  // Dig sites (M8.20): real materials, a real way, sensible camps.
+  const isMaterial = (id: string) => lib.items.some((x) => x.id === id && x.slot === "material");
+  const ways = new Set((lib.sealing?.ways ?? []).map((w) => w.id));
+  for (const d of lib.digSites ?? []) {
+    const w = `dig site "${d.id}"`;
+    if (!d.levels.length) err(`${w}: needs at least one level`);
+    if (d.way && !ways.has(d.way)) err(`${w}: unknown way "${d.way}"`);
+    d.levels.forEach((l, i) => {
+      const lw = `${w} level ${i + 1}`;
+      if (l.days < 0 || l.cost < 0) err(`${lw}: cost and days can't be negative`);
+      const mats = [
+        ...Object.keys(l.materials ?? {}),
+        ...Object.keys(l.yields ?? {}),
+        ...Object.keys(l.deepYields?.materials ?? {}),
+      ];
+      for (const id of mats) if (!isMaterial(id)) err(`${lw}: "${id}" isn't a material`);
+      if (l.camp && (!(l.camp.path >= 0) || !(l.camp.rest >= 0) || l.camp.rest > 100))
+        err(`${lw}: bad camp`);
+    });
+  }
+  if (lib.digging && !(lib.digging.quiet > 0 && lib.digging.quiet <= 1))
+    err("digging: quiet must be a share of capacity");
   // Renown (M8.19): ranks from 0 upwards; building levels that wait for it.
   const ranks = lib.renown?.ranks ?? [];
   if (lib.renown && ranks[0]?.at !== 0) err("renown: the first rank must be at 0");

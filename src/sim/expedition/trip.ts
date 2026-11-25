@@ -44,6 +44,8 @@ export class TripBase {
   protected deepest = 0;
   /** The first floor the party walks; the cage carries them past the ones above. */
   protected first = 1;
+  /** Floors passed on the guild's paths to a forward camp, each way (M8.20). */
+  protected pathFloors = 0;
   protected roomsVisited = 0;
   protected wiped = false;
   /** Downed heroes we've already said are being carried, so the log doesn't repeat it. */

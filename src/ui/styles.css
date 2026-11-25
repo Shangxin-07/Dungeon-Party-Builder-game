@@ -263,6 +263,15 @@ footer {
   padding-left: 18px;
 }
 
+.dig-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.dig-list li {
+  margin-bottom: 6px;
+}
+
 .log-x-camp {
   margin: 6px 0;
   padding-left: 8px;
