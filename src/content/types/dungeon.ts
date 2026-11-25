@@ -439,6 +439,44 @@ export interface SealingRules {
   ways: readonly SealWay[];
   /** Hours the party spends setting a stone, before the surge. */
   hours: number;
+  /** What a set stone becomes: a gateway on the stairs (M8.18). */
+  gateway: GatewayRules;
+}
+
+/** How a gateway lets the floor below up (M8.18, DESIGN.md §20). */
+export type GatewaySetting = "shut" | "trickle" | "open";
+
+/** One level of a gateway: level 1 comes with the stone, the rest are bought. */
+export interface GatewayLevel {
+  /** Strain it takes before it breaches. */
+  limit: number;
+  /** What raising it to this level costs (nothing for level 1). */
+  gold?: number;
+  materials?: Record<string, number>;
+  /** What mending it at this level costs, once it has breached. */
+  repair: { gold: number; materials?: Record<string, number> };
+  summary: string;
+}
+
+/**
+ * Gateways (M8.18): a set Seal Stone holds the stairs, and the town chooses
+ * how much it lets through. Shut strains it while the floor below is over
+ * its capacity; past its limit it breaches, and stands open until mended.
+ */
+export interface GatewayRules {
+  settings: Record<GatewaySetting, { name: string; blurb: string }>;
+  /**
+   * Trickle: up to `perDay` monsters a day come up, at the level of the
+   * floor above (the weak ones). It strains at `strain` times the Shut rate.
+   */
+  trickle: { perDay: number; strain: number };
+  /** Strain a day for every monster the floor below holds over its capacity. */
+  strainPerMonster: number;
+  /** Strain that eases a day while the floor below is at or under its capacity, or it's Open. */
+  ease: number;
+  /** Strain past this share of the limit is news: the town hears it creak. */
+  warnAt: number;
+  levels: readonly GatewayLevel[];
 }
 
 /**

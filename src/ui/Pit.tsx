@@ -5,6 +5,7 @@
  */
 import { Fold } from "./Fold";
 import { library } from "../content";
+import type { GatewaySetting } from "../content/types";
 import { floorPower, levelPower } from "../sim/encounter";
 import { fitDefenders, type RaidReport } from "../sim/raid";
 import {
@@ -13,6 +14,7 @@ import {
   defence,
   forecast,
   pitMap,
+  gatewaysNow,
   sealsNow,
   sealWord,
   watchRange,
@@ -310,6 +312,8 @@ function PressureMap({ town }: { town: TownState }) {
   const known = pitMap(ix, town, below);
   const watch = watchRange(ix, town, below);
   const seals = sealsNow(ix, town);
+  const gates = gatewaysNow(ix, town);
+  const setting = (s: GatewaySetting) => ix.lib.sealing.gateway.settings[s].name;
   return (
     <>
       <h3>Dungeon pressure</h3>
@@ -326,6 +330,13 @@ function PressureMap({ town }: { town: TownState }) {
         town={town}
         known={known}
         seals={seals}
+        gates={gates.map((g) => ({
+          floor: g.floor,
+          setting: setting(g.setting),
+          damaged: g.damaged,
+          percent: g.percent,
+          ...(g.way ? { way: g.way.id } : {}),
+        }))}
         width={(k) =>
           k.population !== undefined
             ? Math.min(1, k.population / ix.floor(k.depth).capacity)
@@ -354,6 +365,7 @@ function PressureMap({ town }: { town: TownState }) {
                     ? bandWidth(k.band)
                     : 0;
               const seal = seals.find((x) => x.floor === def.depth);
+              const gate = gates.find((x) => x.floor === def.depth);
               return [
                 <tr key={def.id} className={k.source === "none" ? "muted" : undefined}>
                   <td>
@@ -423,6 +435,26 @@ function PressureMap({ town }: { town: TownState }) {
                       <span className="muted">
                         , put up {seal.by ? `by ${seal.by} ` : ""}on day {seal.day}
                       </span>
+                    </td>
+                  </tr>
+                ) : null,
+                gate ? (
+                  <tr key={`${def.id}-gate`} className="seal-row">
+                    <td colSpan={4} className="small">
+                      Stairs down held by the {ix.item(gate.stone).name}, level {gate.level}:{" "}
+                      {gate.damaged ? (
+                        <span className="warn">breached, standing open until it's mended</span>
+                      ) : (
+                        <>
+                          {setting(gate.setting)}
+                          {gate.setting === "open" ? null : (
+                            <span className={gate.percent >= 75 ? "warn" : "muted"}>
+                              , strain {gate.percent}%
+                            </span>
+                          )}
+                        </>
+                      )}
+                      <span className="muted"> (the Hearthstone panel sets it)</span>
                     </td>
                   </tr>
                 ) : null,

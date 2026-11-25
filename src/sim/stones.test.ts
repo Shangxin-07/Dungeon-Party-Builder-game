@@ -145,13 +145,17 @@ describe("setting a stone", () => {
 });
 
 describe("stairs shut for good", () => {
-  it("hold everything below back, forever, and never wear", () => {
+  it("hold everything below back while the gateway holds (gateways.test.ts has the rest)", () => {
     let d = newDungeon(ix);
-    d = { ...d, stones: { 1: { stone: STONE, day: 0 } } };
+    d = {
+      ...d,
+      stones: { 1: { stone: STONE, day: 0, setting: "shut", strain: 0, level: 1, damaged: false } },
+    };
     d.floors[1]!.population = 200;
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 15; i++) {
       const out = dungeonDay(ix, d);
       expect(out.day.pushedUp[1]).toBe(0);
+      expect(out.day.breached).toBeUndefined();
       expect(out.day.broke).toBeUndefined();
       d = out.dungeon;
     }
@@ -189,9 +193,9 @@ describe("stairs shut for good", () => {
     expect(result.stoneSet).toBeTruthy();
     {
       expect(out.dungeon.stones[1]?.stone).toBe(STONE);
-      expect(out.news.some((n) => /Nothing will come up them again/.test(n.text))).toBe(true);
+      expect(out.news.some((n) => /Its gateway is Shut/.test(n.text))).toBe(true);
       expect(cantSeal(ix, out, { ...out.orders, targetFloor: 1, seal: "plank-barricade" })).toMatch(
-        /shut for good/,
+        /held by a Seal Stone/,
       );
     }
   });

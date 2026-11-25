@@ -19,15 +19,28 @@ export interface SealView {
   percent: number;
 }
 
+/** A Seal Stone's gateway on the stairs (M8.18). */
+export interface GateView {
+  floor: number;
+  /** "Shut", "Trickle", "Open". */
+  setting: string;
+  damaged: boolean;
+  /** Strain, as a share of its limit. */
+  percent: number;
+  way?: string;
+}
+
 export function PitSide({
   town,
   known,
   seals,
+  gates = [],
   width,
 }: {
   town: TownState;
   known: readonly FloorKnowledge[];
   seals: readonly SealView[];
+  gates?: readonly GateView[];
   /** How full a floor feels from its band, 0-1. */
   width: (k: FloorKnowledge) => number;
 }) {
@@ -56,6 +69,7 @@ export function PitSide({
         const full = width(k);
         const tone = full >= 0.75 ? "var(--bad)" : full >= 0.4 ? "var(--accent)" : "var(--good)";
         const seal = seals.find((s) => s.floor === k.depth);
+        const gate = gates.find((s) => s.floor === k.depth);
         return (
           <g key={k.depth}>
             <rect x={x} y={y} width={w} height={BOX} rx={4} fill="#221e18" stroke="#3a3226" />
@@ -126,6 +140,34 @@ export function PitSide({
                   className={`pitside-seal${seal.percent < 34 ? " stale" : ""}`}
                 >
                   sealed {seal.percent}%
+                </text>
+              </g>
+            ) : null}
+            {gate ? (
+              <g>
+                {/* The stone in its arch over the stairs: cracked open once breached. */}
+                <path
+                  d={`M${x + w - 24} ${y + BOX + 10} v-5 a6 6 0 0 1 12 0 v5`}
+                  stroke="#8b8f96"
+                  strokeWidth={2.5}
+                  fill="none"
+                />
+                <rect
+                  x={x + w - 21}
+                  y={y + BOX + 1}
+                  width={6}
+                  height={gate.damaged || gate.setting === "Open" ? 3 : 8}
+                  fill={gate.way === "bound" ? "#9a6ab8" : "#d8cfa8"}
+                />
+                <text
+                  x={x + w - 30}
+                  textAnchor="end"
+                  y={y + BOX + 9}
+                  className={`pitside-seal${gate.damaged || gate.percent >= 75 ? " stale" : ""}`}
+                >
+                  {gate.damaged
+                    ? "gateway breached"
+                    : `${gate.setting.toLowerCase()}${gate.setting === "Open" ? "" : ` ${gate.percent}%`}`}
                 </text>
               </g>
             ) : null}

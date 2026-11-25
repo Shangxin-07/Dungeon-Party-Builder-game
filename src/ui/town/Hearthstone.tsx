@@ -5,13 +5,28 @@
  * src/sim/town/shards.ts; where the shards are is content (content/shards/).
  */
 import { Fold } from "../Fold";
-import { shardProgress, type ShardStatus, type TownState } from "../../sim/town";
+import {
+  cantMendGateway,
+  cantRaiseGateway,
+  gatewayCostWords,
+  gatewaysNow,
+  mendCost,
+  mendGateway,
+  nextGatewayLevel,
+  raiseGateway,
+  setGateway,
+  shardProgress,
+  type ShardStatus,
+  type TownState,
+} from "../../sim/town";
+import type { GatewaySetting } from "../../content/types";
 import { ix } from "../game";
 import { stoneOf } from "../../sim/shards";
+import type { Act } from "./shared";
 
 const KIND = { bearer: "Carried", cache: "Hidden", library: "Library" } as const;
 
-export function HearthstonePanel({ town }: { town: TownState }) {
+export function HearthstonePanel({ town, act }: { town: TownState; act: Act }) {
   const floors = shardProgress(ix, town);
   if (!floors.length) return null;
   const found = floors.reduce((n, f) => n + f.shards.filter((x) => x.state === "found").length, 0);
@@ -27,9 +42,9 @@ export function HearthstonePanel({ town }: { town: TownState }) {
         The miners cracked the warding stone under the Old Delve, and its shards blew up through the
         floors. Gather all of a floor's shards to forge its Seal Stone (cleansed at the Temple, or
         bound at the Black Market), then send a party to set it on the stairs below that floor: the
-        floor below fights back, but once it's set, nothing comes up those stairs again.
-        Shard-bearers keep to the back tunnels: only a party hunting a thinned-out floor meets one,
-        and it won't stand and fight with a party that isn't seasoned enough.
+        floor below fights back, but once it's set, the stone is a gateway: you choose what comes up
+        those stairs. Shard-bearers keep to the back tunnels: only a party hunting a thinned-out
+        floor meets one, and it won't stand and fight with a party that isn't seasoned enough.
       </p>
       {floors.map(({ set, held: have, need: n, shards }) => (
         <div key={set.id} className="shard-floor">
@@ -37,13 +52,13 @@ export function HearthstonePanel({ town }: { town: TownState }) {
             Floor {set.floor}: {ix.floor(set.floor).name}{" "}
             <span className={have >= n || shut(town, set.floor) ? "good small" : "muted small"}>
               {town.dungeon.stones[set.floor]
-                ? "sealed"
+                ? gateWord(town, set.floor)
                 : stored(town, set.floor).length
                   ? "Seal Stone forged"
                   : `${have} of ${n} in the store room`}
             </span>
           </h4>
-          <StoneLine town={town} floor={set.floor} ready={have >= n} />
+          <StoneLine town={town} floor={set.floor} ready={have >= n} act={act} />
           <ul className="small shard-list">
             {shards.map((s) => (
               <ShardLine key={s.id} s={s} town={town} />
@@ -53,6 +68,12 @@ export function HearthstonePanel({ town }: { town: TownState }) {
       ))}
     </Fold>
   );
+}
+
+/** "sealed, Trickle", "sealed, breached". */
+function gateWord(town: TownState, floor: number): string {
+  const s = town.dungeon.stones[floor]!;
+  return `sealed, ${s.damaged ? "breached" : ix.lib.sealing.gateway.settings[s.setting].name}`;
 }
 
 const shut = (town: TownState, floor: number) =>
@@ -65,15 +86,19 @@ const stored = (town: TownState, floor: number) =>
   );
 
 /** Where the floor's Seal Stone is (M8.17): set, waiting in the store, or ready to forge. */
-function StoneLine({ town, floor, ready }: { town: TownState; floor: number; ready: boolean }) {
+function StoneLine({
+  town,
+  floor,
+  ready,
+  act,
+}: {
+  town: TownState;
+  floor: number;
+  ready: boolean;
+  act: Act;
+}) {
   const set = town.dungeon.stones[floor];
-  if (set)
-    return (
-      <p className="small good">
-        Shut for good: the {ix.item(set.stone).name}, set on day {set.day}
-        {set.by ? ` by ${set.by}` : ""}.
-      </p>
-    );
+  if (set) return <Gateway town={town} floor={floor} act={act} />;
   const stones = stored(town, floor);
   if (stones.length)
     return (
@@ -125,4 +150,78 @@ function bearerName(s: ShardStatus, town: TownState): string | undefined {
     town.memorial.some((m) => m.record.seen.includes(source.monster));
   if (!met) return undefined;
   return `${ix.monster(source.monster).name} carries it. Hunt floor ${source.floor} down to ${Math.round(source.below * 100)}% and send heroes with at least ${source.stand} levels between them.`;
+}
+
+const SETTINGS: GatewaySetting[] = ["shut", "trickle", "open"];
+
+/** A set stone's gateway (M8.18): its setting, strain, level and mending. */
+function Gateway({ town, floor, act }: { town: TownState; floor: number; act: Act }) {
+  const g = gatewaysNow(ix, town).find((x) => x.floor === floor);
+  if (!g) return null;
+  const rules = ix.lib.sealing.gateway;
+  const next = nextGatewayLevel(ix, town, floor);
+  const cantRaise = cantRaiseGateway(ix, town, floor);
+  const cantMend = cantMendGateway(ix, town, floor);
+  const stone = town.dungeon.stones[floor]!;
+  return (
+    <div className="gateway small">
+      <p className="good">
+        The {ix.item(g.stone).name}, set on day {g.day}
+        {g.by ? ` by ${g.by}` : ""}, is the gateway on the stairs below. Level {g.level}.
+      </p>
+      {g.damaged ? (
+        <p className="bad">
+          Breached: it stands open, whatever it's set to, until it's mended (
+          {gatewayCostWords(ix, mendCost(ix, stone))}).{" "}
+          <button
+            type="button"
+            disabled={!!cantMend}
+            title={cantMend}
+            onClick={() => act((t) => mendGateway(ix, t, floor))}
+          >
+            Mend it
+          </button>
+        </p>
+      ) : null}
+      <div className="seg" role="group" aria-label={`Gateway below floor ${floor}`}>
+        {SETTINGS.map((k) => (
+          <button
+            key={k}
+            type="button"
+            className={g.setting === k ? "on" : ""}
+            aria-pressed={g.setting === k}
+            title={rules.settings[k].blurb}
+            onClick={() => act((t) => setGateway(ix, t, floor, k))}
+          >
+            {rules.settings[k].name}
+          </button>
+        ))}
+      </div>
+      <p className="muted">{rules.settings[g.setting].blurb}</p>
+      {g.damaged ? null : (
+        <p>
+          Strain <progress max={g.limit} value={Math.min(g.strain, g.limit)} />{" "}
+          <span className={g.percent >= rules.warnAt * 100 ? "warn" : undefined}>{g.percent}%</span>
+          <span className="muted">
+            {g.days === Infinity
+              ? ", nothing leaning on it"
+              : `, about ${g.days} ${g.days === 1 ? "day" : "days"} to a breach if floor ${floor + 1} stays as full`}
+          </span>
+        </p>
+      )}
+      {next ? (
+        <p>
+          Level {g.level + 1}: {next.summary} ({gatewayCostWords(ix, next)}){" "}
+          <button
+            type="button"
+            disabled={!!cantRaise}
+            title={cantRaise}
+            onClick={() => act((t) => raiseGateway(ix, t, floor))}
+          >
+            Raise it
+          </button>
+        </p>
+      ) : null}
+    </div>
+  );
 }

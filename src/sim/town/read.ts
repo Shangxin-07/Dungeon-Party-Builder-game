@@ -569,7 +569,7 @@ export function cantSeal(ix: Index, town: TownState, orders: StandingOrders): st
   if (orders.targetFloor >= ix.lib.floors.length)
     return `Floor ${orders.targetFloor} is the bottom: there are no stairs below it to seal.`;
   if (town.dungeon.stones[orders.targetFloor])
-    return `The stairs below floor ${orders.targetFloor} are shut for good with a Seal Stone.`;
+    return `The stairs below floor ${orders.targetFloor} are held by a Seal Stone's gateway.`;
   const short = materialsShort(ix, town, b.materials);
   if (short) return `The ${b.name.toLowerCase()} needs ${short} more.`;
   if (town.gold < (b.gold ?? 0)) return `The ${b.name.toLowerCase()} costs ${b.gold} gold.`;

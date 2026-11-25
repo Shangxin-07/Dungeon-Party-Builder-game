@@ -9,7 +9,10 @@
  *
  * A sealed stairhead (M7.16) stops step 2 at those stairs: the floor below
  * keeps its extras, and they wear the seal down until it gives way. A Seal
- * Stone (M8.17) stops it for good.
+ * Stone (M8.17) becomes a gateway (M8.18) the town sets: Shut holds them all
+ * back, Trickle lets a few weak ones up, Open lets everything up. Held back,
+ * the floor below strains the gateway, and past its limit it breaches: open
+ * until the town mends it.
  *
  * Every floor also settles a little way back towards its usual level each day,
  * so killing monsters (which makes room and stops the push-up) lets it calm down.
@@ -19,6 +22,7 @@
  * No randomness here: the same dungeon and the same kills give the same day,
  * which is what lets a watchtower see the next night coming.
  */
+import type { GatewaySetting } from "../content/types";
 import type { Index } from "./library";
 
 export interface FloorPressure {
@@ -47,13 +51,21 @@ export interface DungeonState {
   stones: Record<number, StoneSeal>;
 }
 
-/** A Seal Stone set on a flight of stairs (M8.17). */
+/** A Seal Stone set on a flight of stairs (M8.17): a gateway (M8.18). */
 export interface StoneSeal {
   /** The stone's item id (one per floor and way, content/sealstones.ts). */
   stone: string;
   /** Town day it was set, and who set it. */
   day: number;
   by?: string;
+  /** How much it lets up (M8.18). A new gateway is Shut. */
+  setting: GatewaySetting;
+  /** How hard the floor below is leaning on it; it breaches at its level's limit. */
+  strain: number;
+  /** Gateway level, from 1 (content/sealing.ts gateway.levels). */
+  level: number;
+  /** Breached and not yet mended: it stands open whatever it's set to. */
+  damaged: boolean;
 }
 
 /** A barricade across the top of a flight of stairs (M7.16, DESIGN.md §18.3b). */
@@ -80,6 +92,9 @@ export interface DungeonDay {
   strength: number;
   /** Seals that gave way today, by the floor above them (M7.16). */
   broke?: number[];
+  /** Gateways that breached today, and ones that began to creak (M8.18). */
+  breached?: number[];
+  strained?: number[];
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -162,13 +177,26 @@ export function dungeonDay(ix: Index, d: DungeonState): { dungeon: DungeonState;
   const pushedUp = out.floors.map(() => 0);
   let overflow = { count: 0, level: 0 };
   const broke: number[] = [];
+  const breached: number[] = [];
+  const strained: number[] = [];
   for (let i = bottom; i >= 0; i--) {
     const f = out.floors[i]!;
     const extra = f.population - caps[i]!;
-    // A Seal Stone (M8.17) holds them back for good: penned in, they turn on each other.
-    if (i > 0 && out.stones[i]) {
-      f.population = Math.min(f.population, Math.floor(caps[i]! * rules.seals.crowding));
-      continue;
+    // A Seal Stone's gateway (M8.17, M8.18) holds them back, or some of them.
+    const stone = i > 0 ? out.stones[i] : undefined;
+    if (stone) {
+      const held = gatewayDay(ix, stone, f, caps[i]!);
+      if (held.strained) strained.push(i);
+      if (held.breached) breached.push(i);
+      if (held.up >= 0) {
+        // Penned in, they turn on each other. What Trickle lets up is the weak ones.
+        f.population = Math.min(f.population, Math.floor(caps[i]! * rules.seals.crowding));
+        if (held.up) {
+          arrive(out.floors[i - 1]!, held.up, i);
+          pushedUp[i] = held.up;
+        }
+        continue;
+      }
     }
     const seal = i > 0 ? out.seals?.[i] : undefined;
     if (seal) {
@@ -203,8 +231,73 @@ export function dungeonDay(ix: Index, d: DungeonState): { dungeon: DungeonState;
   if (out.seals && !Object.keys(out.seals).length) delete out.seals;
   return {
     dungeon: out,
-    day: { spawned, pushedUp, overflow, strength, ...(broke.length ? { broke } : {}) },
+    day: {
+      spawned,
+      pushedUp,
+      overflow,
+      strength,
+      ...(broke.length ? { broke } : {}),
+      ...(breached.length ? { breached } : {}),
+      ...(strained.length ? { strained } : {}),
+    },
   };
+}
+
+/** The strain a gateway breaches at. */
+export const gatewayLimit = (ix: Index, s: StoneSeal) =>
+  ix.lib.sealing.gateway.levels[Math.min(s.level, ix.lib.sealing.gateway.levels.length) - 1]!.limit;
+
+/**
+ * One day of a gateway (M8.18), changing `s` and taking what it lets up off
+ * `f`. `up` is how many it let up, or -1 if it holds nothing back today
+ * (Open, breached, or breaching now): then the floor pushes up as if it
+ * weren't there.
+ */
+function gatewayDay(
+  ix: Index,
+  s: StoneSeal,
+  f: FloorPressure,
+  cap: number,
+): { up: number; breached?: boolean; strained?: boolean } {
+  const g = ix.lib.sealing.gateway;
+  const ease = () => (s.strain = round2(Math.max(0, s.strain - g.ease)));
+  if (s.damaged || s.setting === "open") {
+    ease();
+    return { up: -1 };
+  }
+  const trickle = s.setting === "trickle";
+  const up = trickle ? Math.min(g.trickle.perDay, Math.floor(f.population)) : 0;
+  const over = f.population - up - cap;
+  const limit = gatewayLimit(ix, s);
+  const before = s.strain;
+  if (over > 0)
+    s.strain = round2(s.strain + over * g.strainPerMonster * (trickle ? g.trickle.strain : 1));
+  else ease();
+  if (s.strain >= limit) {
+    s.damaged = true;
+    s.strain = 0;
+    return { up: -1, breached: true };
+  }
+  f.population -= up;
+  const warn = limit * g.warnAt;
+  return { up, ...(before < warn && s.strain >= warn ? { strained: true } : {}) };
+}
+
+/**
+ * Days until a gateway breaches if the floor below stays as it is now
+ * (M8.18): a guess, since the floor below only gets fuller. Infinity if
+ * nothing strains it.
+ */
+export function gatewayDays(ix: Index, d: DungeonState, above: number): number {
+  const s = d.stones[above];
+  if (!s || s.damaged || s.setting === "open") return Infinity;
+  const g = ix.lib.sealing.gateway;
+  const below = d.floors[above];
+  const cap = ix.floor(above + 1).capacity;
+  const trickle = s.setting === "trickle";
+  const over = (below?.population ?? 0) - (trickle ? g.trickle.perDay : 0) - cap;
+  const press = over * g.strainPerMonster * (trickle ? g.trickle.strain : 1);
+  return press > 0 ? Math.ceil((gatewayLimit(ix, s) - s.strain) / press) : Infinity;
 }
 
 /**

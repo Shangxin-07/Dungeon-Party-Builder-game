@@ -335,9 +335,13 @@ export function PartyPanel({
       </div>
       {canSeal && shut ? (
         <p className="small muted">
-          The stairs below floor {floor} are shut for good: {ix.item(shut.stone).name}, set on day{" "}
+          The stairs below floor {floor} are held by the {ix.item(shut.stone).name}, set on day{" "}
           {shut.day}
-          {shut.by ? ` by ${shut.by}` : ""}.
+          {shut.by ? ` by ${shut.by}` : ""}. Its gateway is{" "}
+          {shut.damaged
+            ? "breached"
+            : `set to ${ix.lib.sealing.gateway.settings[shut.setting].name}`}{" "}
+          (the Hearthstone panel, on the Pit tab).
         </p>
       ) : null}
       {canSeal && !shut && town.orders.stone ? (
