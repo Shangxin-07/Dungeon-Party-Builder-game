@@ -15,12 +15,13 @@ import type { RecipeDef } from "../../content/types";
 import { heroSheet, type Hero } from "../hero";
 import type { Index } from "../library";
 import { type Job, type TownState, type Workshop, TownError } from "./state";
-import { findHero, materialsShort, materialWords, standing } from "./read";
+import { findHero, materialsShort, materialWords, standing, willDeal } from "./read";
 import { addMaterials, book, edit, listWords, news, useMaterials } from "./internal";
 
 /** Benches a building has today (0 if it isn't a workshop, isn't built, or is damaged). */
 export function benches(ix: Index, town: TownState, shopId: string): number {
-  if (!standing(town, shopId)) return 0;
+  // The Black Market's door stays shut without an Evil hero on the books (M8.17: its bench too).
+  if (!standing(town, shopId) || !willDeal(ix, town, shopId)) return 0;
   const level = town.buildings[shopId] ?? 0;
   const lvl = ix.building(shopId).levels[level - 1];
   return (lvl?.effects ?? []).reduce((n, e) => (e.type === "workshop" ? n + e.benches : n), 0);

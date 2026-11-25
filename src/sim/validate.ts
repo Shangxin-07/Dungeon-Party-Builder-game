@@ -354,6 +354,11 @@ export function validateLibrary(lib: Library): string[] {
     else if (item.slot !== "material" || !item.tags.includes("shard"))
       err(`${w}: "${s.item}" must be a material tagged "shard"`);
     if (!s.shards.length) err(`${w}: needs at least one shard`);
+    for (const m of Object.keys(s.forge?.materials ?? {}))
+      if (!lib.items.some((i) => i.id === m && i.slot === "material"))
+        err(`${w}: forge needs unknown material "${m}"`);
+    if (!(s.forge?.work > 0)) err(`${w}: forge work must be positive`);
+    if (!(s.surge?.power > 0)) err(`${w}: surge power must be positive`);
     for (const x of s.shards) {
       const v = `${w} shard "${x.id}"`;
       if (!ID.test(x.id)) err(`${v}: id must be kebab-case`);
@@ -374,6 +379,13 @@ export function validateLibrary(lib: Library): string[] {
         if (!(x.points > 0)) err(`${v}: points must be positive`);
       } else err(`${v}: unknown kind`);
     }
+  }
+  // Seal Stones (M8.17): each way forged at a workshop.
+  for (const way of lib.sealing?.ways ?? []) {
+    const b = lib.buildings.find((x) => x.id === way.workshop);
+    if (!b) err(`seal way "${way.id}": unknown workshop "${way.workshop}"`);
+    else if (!b.levels.some((l) => l.effects.some((e) => e.type === "workshop")))
+      err(`seal way "${way.id}": the ${b.name} has no benches`);
   }
   for (const i of lib.items)
     if (i.unlock && !monsterIds.has(i.unlock.monster))

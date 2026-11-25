@@ -3,7 +3,8 @@
  * searching, population, hunting and raids.
  */
 import type { MaterialCost } from "./town";
-import type { DamageType } from "./core";
+import type { DamageType, Stat } from "./core";
+import type { MoraleFact } from "./morale";
 
 export interface EncounterDef {
   id: string;
@@ -403,6 +404,41 @@ export interface ShardSetDef {
   /** The material a shard of this floor is (content/materials/). */
   item: string;
   shards: readonly ShardSource[];
+  /**
+   * Forging this floor's Seal Stone (M8.17), on top of every one of its
+   * shards: a workshop job at the Temple (cleansed) or the Black Market
+   * (bound), content/sealing.ts.
+   */
+  forge: { materials: MaterialCost; gold?: number; work: number };
+  /**
+   * When a party sets the stone on the stairs below this floor, the floor
+   * below notices: `power` times one of its usual groups comes up the stairs
+   * at once, and the party can't slip away from it. `text` is logged first.
+   */
+  surge: { power: number; text: string };
+}
+
+/**
+ * The two ways to forge a Seal Stone (M8.17, DESIGN.md §20): cleansed at the
+ * Temple or bound at the Black Market. The alignment choice: the guild feels
+ * `fact` about it when the stone is set (Good heroes like good deeds...).
+ */
+export interface SealWay {
+  id: string;
+  /** "Cleansed": the stone is called "<name> Seal Stone". */
+  name: string;
+  /** The workshop that forges it, and the stat that speeds the work. */
+  workshop: string;
+  stat: Stat;
+  fact: Extract<MoraleFact, "goodDeeds" | "evilDeeds">;
+  blurb: string;
+}
+
+/** How Seal Stones are forged (content/sealing.ts). */
+export interface SealingRules {
+  ways: readonly SealWay[];
+  /** Hours the party spends setting a stone, before the surge. */
+  hours: number;
 }
 
 /**

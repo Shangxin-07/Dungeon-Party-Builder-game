@@ -9,7 +9,14 @@ import type { Index } from "../library";
 import { type HaulItem } from "../loot";
 import { createRng, type Rng } from "../rng";
 import { getRoom } from "../rooms";
-import { DEFAULT_ORDERS, type StandingOrders, describeRetreat, lairOf, sealOf } from "./orders";
+import {
+  DEFAULT_ORDERS,
+  type StandingOrders,
+  describeRetreat,
+  lairOf,
+  sealOf,
+  stoneOrder,
+} from "./orders";
 import { lairsOn, partyStealth, sneakChance } from "../stealth";
 import type { FloorIntel } from "./report";
 import type { ExpeditionResult, ExpeditionExtras } from "./report";
@@ -17,7 +24,8 @@ import { PARTY_HURT_BELOW, WANDER_CHANCE } from "./tuning";
 import { list } from "./trip";
 import { tripDays } from "./clock";
 import { TripRescue } from "./rescue";
-import { shardPlace } from "../shards";
+import { shardPlace, stoneOf } from "../shards";
+import { levelPower, rollEncounter } from "../encounter";
 
 /**
  * Simulate a whole trip. `floors` is the dungeon as it is today (index 0 =
@@ -115,6 +123,8 @@ const aOrAn = (name: string) => `${/^[aeiou]/i.test(name) ? "an" : "a"} ${name.t
 export class Expedition extends TripRescue {
   /** The stairs the party sealed (M7.16). */
   protected sealed?: ExpeditionResult["sealed"];
+  /** The Seal Stone the party set (M8.17). */
+  protected stoneSet?: ExpeditionResult["stoneSet"];
 
   /** See holedNight. */
   night(floor: number) {
@@ -177,8 +187,17 @@ export class Expedition extends TripRescue {
       `${names} set off for ${mission}. Orders: ${describeRetreat(retreat)}; ` +
         `${loot === "everything" ? "carry everything" : "leave the junk"}` +
         `${this.sealing() ? `; seal the stairs below floor ${targetFloor} with ${aOrAn(this.sealing()!.name)}` : ""}` +
+        `${this.stone() ? `; set the ${this.ix.item(this.stone()!).name} on the stairs below floor ${targetFloor}` : ""}` +
         `${this.huntGoal() ? `; thin out floor ${targetFloor} by ${this.orders.clearPercent}%` : ""}.`,
     );
+
+    // The Seal Stone goes down in the packs (M8.17): if the party never sets
+    // it, it comes home again, or lies with them if they fall.
+    const stone = this.stone();
+    if (stone) {
+      const def = this.ix.item(stone);
+      this.haul.push({ item: stone, value: def.value, estimate: def.value, keep: true });
+    }
 
     // The Mine Cage: ride past the top floors, but never the target floor, nor
     // a floor a rescue party has to search.
@@ -280,6 +299,8 @@ export class Expedition extends TripRescue {
         }
       }
     }
+    this.setStone();
+    if (this.wiped) return this.finish("wiped");
     this.buildSeal();
     if (this.wiped) return this.finish("wiped");
     const hunted = this.hunt();
@@ -287,6 +308,65 @@ export class Expedition extends TripRescue {
     this.roomNo = 0;
     this.emit("retreat", `Floor ${targetFloor} is done. The party heads for home.`);
     return this.goHome("returned");
+  }
+
+  /** The Seal Stone the party carries down (M8.17), if it seals the target floor. */
+  protected stone(): string | undefined {
+    const id = stoneOrder(this.orders);
+    const place = id ? stoneOf(this.ix, id) : undefined;
+    return place && place.set.floor === this.orders.targetFloor ? id : undefined;
+  }
+
+  /**
+   * Set the Seal Stone on the stairs below the target floor (M8.17, DESIGN.md
+   * §20). The floor below notices: a surge comes up the stairs, and there's
+   * no slipping away from it. Win, and the stairs are shut for good; lose,
+   * or run, and the stone stays in the packs.
+   */
+  protected setStone(): void {
+    const id = this.stone();
+    const up = this.conscious();
+    if (!id || !up.length) return;
+    const { set } = stoneOf(this.ix, id)!;
+    const floor = this.orders.targetFloor;
+    const name = this.ix.item(id).name;
+    this.campIfTired();
+    this.roomNo = 0;
+    this.emit(
+      "seal",
+      `At the head of the stairs down to floor ${floor + 1}, ${list(up.map((h) => h.name))} start setting the ${name}.`,
+    );
+    this.pass(this.ix.lib.sealing.hours);
+    this.emit("seal", set.surge.text);
+    // The surge comes from the floor below: its kills come off that floor.
+    const below = this.floors?.[floor];
+    const level = below?.level ?? floor + 1;
+    this.depth = floor + 1;
+    const monsters =
+      below && below.population <= 0
+        ? []
+        : rollEncounter(this.ix, floor + 1, this.rng, {
+            level,
+            power: levelPower(level) * set.surge.power,
+            scale: this.fightScale(),
+            ...(below ? { max: below.population } : {}),
+          });
+    const winner = monsters.length ? this.fight(monsters, { cornered: true }) : "party";
+    this.depth = floor;
+    if (this.wiped) return;
+    if (winner !== "party" || this.fledFrom) {
+      this.emit("seal", `The party can't hold the stairs. The ${name} goes back in the packs.`);
+      this.betweenRooms();
+      return;
+    }
+    const at = this.haul.findIndex((h) => h.item === id);
+    if (at >= 0) this.haul.splice(at, 1);
+    this.stoneSet = { floor, stone: id, day: this.tripDay() };
+    this.emit(
+      "seal",
+      `The ${name} is set. The stairs below floor ${floor} are shut, and nothing will come up them again.`,
+    );
+    this.betweenRooms();
   }
 
   /** The barricade the party carries down to seal the stairs with (M7.16), if it can. */
@@ -629,6 +709,7 @@ export class Expedition extends TripRescue {
       ...(this.sneaking() ? { sneaked: this.sneaked } : {}),
       ...(this.lairVisit ? { lair: this.lairVisit } : {}),
       ...(this.sealed ? { sealed: this.sealed } : {}),
+      ...(this.stoneSet ? { stoneSet: this.stoneSet } : {}),
       ...(this.shardsFound.length ? { shards: [...this.shardsFound] } : {}),
     };
   }

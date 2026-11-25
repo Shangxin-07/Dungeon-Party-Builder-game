@@ -180,6 +180,7 @@ export {
 export { barricadeChoices, sealsNow, sealWord, setSeal } from "./seals";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
 export { launch, outingView } from "./launch";
+export { cantStone, setStone, stoneSealed } from "./stones";
 export { openShards, shardProgress, shardsHeld, shardStudyOpen, shardTaken } from "./shards";
 export type { ShardStatus } from "./shards";
 export { giveUp } from "./lost";

@@ -1,6 +1,7 @@
 /**
  * Reading the town: building effects, prices, wages, warnings. Nothing here changes state.
  */
+import { cantStone } from "./stones";
 import type { BuildingEffect, ItemDef, MaterialCost, PostEffect } from "../../content/types";
 import { dungeonDay } from "../dungeon";
 import { describeParty, partyAlignment } from "../alignment";
@@ -554,7 +555,7 @@ export function cantLaunch(ix: Index, town: TownState): string | undefined {
     if (lairSlain(town, lair) && isSneaking(town.orders))
       return `The ${ix.monster(def.monster).name} is dead: there's nothing to sneak past.`;
   }
-  return cantSeal(ix, town, town.orders);
+  return cantSeal(ix, town, town.orders) ?? cantStone(ix, town, town.orders);
 }
 
 /**
@@ -567,6 +568,8 @@ export function cantSeal(ix: Index, town: TownState, orders: StandingOrders): st
   const b = ix.barricade(id);
   if (orders.targetFloor >= ix.lib.floors.length)
     return `Floor ${orders.targetFloor} is the bottom: there are no stairs below it to seal.`;
+  if (town.dungeon.stones[orders.targetFloor])
+    return `The stairs below floor ${orders.targetFloor} are shut for good with a Seal Stone.`;
   const short = materialsShort(ix, town, b.materials);
   if (short) return `The ${b.name.toLowerCase()} needs ${short} more.`;
   if (town.gold < (b.gold ?? 0)) return `The ${b.name.toLowerCase()} costs ${b.gold} gold.`;

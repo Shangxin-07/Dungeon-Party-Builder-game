@@ -15,10 +15,13 @@ export default defineBuilding({
     {
       cost: 180,
       days: 3,
-      summary: "Haul sells for 8% more; sells cursed blades and bone charms",
+      summary:
+        "Haul sells for 8% more; sells cursed blades and bone charms. 1 bench: forges bound Seal Stones",
       effects: [
         { type: "fence", amount: 8 },
         { type: "sells", items: ["cursed-blade", "bone-charm"] },
+        // Forges bound Seal Stones (M8.17).
+        { type: "workshop", benches: 1 },
       ],
     },
   ],

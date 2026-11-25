@@ -30,6 +30,7 @@ import {
   sealsNow,
   sealWord,
   setSeal,
+  setStone,
   type TownState,
 } from "../../sim/town";
 import { RETREATS } from "../Expedition";
@@ -37,6 +38,7 @@ import { Portrait } from "../art/Portrait";
 import { ix } from "../game";
 import { HeroBars } from "../Watch";
 import { ScoutingReport } from "../Report";
+import { stoneOf } from "../../sim/shards";
 import { type Act, describeKit } from "./shared";
 
 export function PartyPanel({
@@ -68,6 +70,12 @@ export function PartyPanel({
   const floor = town.orders.targetFloor;
   const canSeal = !scouting && !sneaking && !target && floor < ix.lib.floors.length;
   const sealHere = sealsNow(ix, town).find((x) => x.floor === floor);
+  // Seal Stones (M8.17): shut for good already, or stones in the store for this floor.
+  const shut = town.dungeon.stones[floor];
+  const stones = Object.keys(town.materials).filter(
+    (id) => (town.materials[id] ?? 0) > 0 && stoneOf(ix, id)?.set.floor === floor,
+  );
+  if (town.orders.stone && !stones.includes(town.orders.stone)) stones.push(town.orders.stone);
   const lairBeast = lairDef ? ix.monster(lairDef.monster) : undefined;
   const quiet = partyStealth(ix, party);
   const bestScout = party
@@ -281,16 +289,32 @@ export function PartyPanel({
             </select>
           </label>
         )}
-        {canSeal ? (
+        {canSeal && !shut ? (
           <label
             title={`Carry a barricade down and seal the stairs below floor ${floor}: nothing comes up them until the floor below wears it down. Built after the floor is walked, before any hunting. A party that turns back first brings the materials home.`}
           >
             Stairs{" "}
             <select
-              value={town.orders.seal ?? ""}
-              onChange={(e) => act((t) => setSeal(ix, t, e.target.value || undefined))}
+              value={town.orders.stone ? `stone:${town.orders.stone}` : (town.orders.seal ?? "")}
+              onChange={(e) => {
+                const v = e.target.value;
+                act((t) =>
+                  v.startsWith("stone:")
+                    ? setStone(ix, t, v.slice("stone:".length))
+                    : setSeal(ix, setStone(ix, t, undefined), v || undefined),
+                );
+              }}
             >
               <option value="">leave the stairs open</option>
+              {stones.map((id) => (
+                <option
+                  key={id}
+                  value={`stone:${id}`}
+                  title="Shut the stairs for good. The floor below sends everything it can up the stairs to stop it."
+                >
+                  shut them for good: the {ix.item(id).name}
+                </option>
+              ))}
               {barricadeChoices(ix, town).map(({ barricade: b, why }) => (
                 <option
                   key={b.id}
@@ -309,7 +333,22 @@ export function PartyPanel({
           </label>
         ) : null}
       </div>
-      {canSeal && sealHere ? (
+      {canSeal && shut ? (
+        <p className="small muted">
+          The stairs below floor {floor} are shut for good: {ix.item(shut.stone).name}, set on day{" "}
+          {shut.day}
+          {shut.by ? ` by ${shut.by}` : ""}.
+        </p>
+      ) : null}
+      {canSeal && !shut && town.orders.stone ? (
+        <p className="mission small">
+          Setting the {ix.item(town.orders.stone).name}: after floor {floor} is walked, the party
+          sets it on the stairs below. The floor below will send everything it can up the stairs at
+          once, and there's no slipping away. Win, and nothing comes up those stairs again; lose or
+          run, and the stone stays in the packs.
+        </p>
+      ) : null}
+      {canSeal && !shut && sealHere ? (
         <p className="small muted">
           The stairs below floor {floor} are already sealed ({sealHere.name.toLowerCase()},{" "}
           {sealWord(sealHere.percent)}, {sealHere.percent}% left). A new barricade replaces it if

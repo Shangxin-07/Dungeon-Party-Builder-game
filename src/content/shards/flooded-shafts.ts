@@ -75,4 +75,10 @@ export default defineShardSet({
       dug: "finds the side gallery from the foreman's tally, and the warm stone set aside there: a shard of the Hearthstone",
     },
   ],
+  // Forging its Seal Stone, beside the shards (M8.17), and the surge when it's set.
+  forge: { materials: { "iron-bands": 4, "deep-silver": 3, glowcap: 3 }, gold: 300, work: 14 },
+  surge: {
+    power: 2.5,
+    text: "The Old Delve answers. Something down there knows what the stone is for, and sends everything it has.",
+  },
 });

@@ -3,7 +3,7 @@
  * Pure reading; what the guild has found is in town/shards.ts, and how a party
  * finds them below is in expedition/run.ts and fights.ts.
  */
-import type { ShardSetDef, ShardSource } from "../content/types";
+import { sealStoneId, type SealWay, type ShardSetDef, type ShardSource } from "../content/types";
 import type { Index } from "./library";
 
 export interface ShardPlace {
@@ -45,3 +45,29 @@ export const isShardBearer = (ix: Index, monsterId: string): boolean =>
   [...shardPlaces(ix).values()].some(
     (p) => p.source.kind === "bearer" && p.source.monster === monsterId,
   );
+
+/** A Seal Stone (M8.17): the floor it seals and how it was forged. */
+export interface StonePlace {
+  set: ShardSetDef;
+  way: SealWay;
+}
+
+const stones = new WeakMap<object, Map<string, StonePlace>>();
+
+/** The floor and way of a Seal Stone item, or undefined if it isn't one. */
+export function stoneOf(ix: Index, itemId: string): StonePlace | undefined {
+  let map = stones.get(ix.lib);
+  if (!map) {
+    map = new Map();
+    for (const set of ix.lib.shards ?? [])
+      for (const way of ix.lib.sealing?.ways ?? []) map.set(sealStoneId(set, way.id), { set, way });
+    stones.set(ix.lib, map);
+  }
+  return map.get(itemId);
+}
+
+/** Things nobody leaves behind: shards and Seal Stones. */
+export const precious = (ix: Index, itemId: string): boolean => {
+  const tags = ix.item(itemId).tags;
+  return tags.includes("shard") || tags.includes("seal-stone");
+};

@@ -60,6 +60,8 @@ describe("saves from earlier versions", () => {
       "shards",
     ] as const)
       expect(t[k]).toBeDefined();
+    // M8.17: stairs shut with Seal Stones.
+    expect(t.dungeon.stones).toEqual(old.dungeon?.stones ?? {});
     const elsewhere = [...t.trips.flatMap((x) => x.party), ...t.raids.flatMap((r) => r.defenders)];
     for (const h of elsewhere) {
       expect(Array.isArray(h.injuries)).toBe(true);

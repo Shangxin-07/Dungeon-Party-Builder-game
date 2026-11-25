@@ -40,4 +40,10 @@ export default defineShardSet({
       dug: "follows the lean of the webs to a warm wall and digs out a shard of the Hearthstone",
     },
   ],
+  // Forging its Seal Stone, beside the shards (M8.17), and the surge when it's set.
+  forge: { materials: { "iron-bands": 3, "spider-silk": 4 }, gold: 150, work: 8 },
+  surge: {
+    power: 2.5,
+    text: "The Bone Halls wake. The dead come up the stairs in ranks to stop the stone going in.",
+  },
 });

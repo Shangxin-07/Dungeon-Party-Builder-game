@@ -16,10 +16,12 @@ export default defineBuilding({
       cost: 220,
       days: 4,
       summary:
-        "Sells holy symbols. Resurrect: 100 gold + 20 a level and 3 bone dust, and they lose 2 levels (or 20%)",
+        "Sells holy symbols. Resurrect: 100 gold + 20 a level and 3 bone dust, and they lose 2 levels (or 20%). 1 bench: forges cleansed Seal Stones",
       effects: [
         // Holy gear (DESIGN.md §7).
         { type: "sells", items: ["holy-symbol"] },
+        // Forges cleansed Seal Stones (M8.17).
+        { type: "workshop", benches: 1 },
         {
           type: "resurrect",
           gold: 100,
@@ -35,9 +37,10 @@ export default defineBuilding({
       materials: { "bone-dust": 4 },
       days: 6,
       summary:
-        "Also sells blessed blades. Resurrect: 80 gold + 15 a level and 2 bone dust, and they lose 1 level (or 10%)",
+        "Also sells blessed blades. Resurrect: 80 gold + 15 a level and 2 bone dust, and they lose 1 level (or 10%). 2 benches",
       effects: [
         { type: "sells", items: ["holy-symbol", "blessed-blade"] },
+        { type: "workshop", benches: 2 },
         {
           type: "resurrect",
           gold: 80,

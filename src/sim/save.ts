@@ -219,6 +219,12 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
   },
   // M8.16: the Hearthstone's shards (DESIGN.md §20). Nothing found yet.
   18: (_ix, old) => ({ ...old, version: 19, shards: {} }),
+  // M8.17: stairs shut for good with Seal Stones. None yet.
+  19: (_ix, old) => ({
+    ...old,
+    version: 20,
+    dungeon: { ...(old.dungeon as Record<string, unknown>), stones: {} },
+  }),
 };
 
 /**

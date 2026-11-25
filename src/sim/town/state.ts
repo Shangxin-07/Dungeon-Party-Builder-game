@@ -9,7 +9,7 @@ import type { HaulItem } from "../loot";
 import type { RaidReport } from "../raid";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 19;
+export const TOWN_VERSION = 20;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 export const PIT_HISTORY = 60;
@@ -159,6 +159,8 @@ export interface Outing {
   killsLanded: number;
   /** The seal this party built (M7.16) is up in the dungeon. */
   sealPlaced?: boolean;
+  /** Its Seal Stone has been set in the dungeon (M8.17). */
+  stonePlaced?: boolean;
   /**
    * The guild gave them up for lost before hearing anything (M7.02): they're
    * off the roster and the payroll, on the memorial as lost. If they do come

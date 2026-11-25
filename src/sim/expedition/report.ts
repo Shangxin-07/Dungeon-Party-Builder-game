@@ -130,6 +130,8 @@ export interface ExpeditionResult {
    * id. Found means taken: in the haul, or lying with the party if it fell.
    */
   shards?: string[];
+  /** The Seal Stone the party set (M8.17): on the stairs below `floor`, on trip day `day`. */
+  stoneSet?: { floor: number; stone: string; day: number };
   log: ExpeditionEvent[];
   /** Where the party fell, if it was wiped. */
   wipeSite?: { floor: number; room: number };
