@@ -1359,3 +1359,88 @@ Each PR is display-only. The days bot and tests are unaffected, apart from new a
   - **J3: pixel-art sprites** (drawn or a CC0 pack). The most "game" look, but every building level and monster needs a picture made, which slows down adding content.
 - ✅ **DECIDED K: town layout. K1, fixed plots** set in content (Mike, 2026-11-23: definitely easier; revisit if it feels immersion-breaking).
 - ✅ **DECIDED L: portraits. L1, layered faces hashed from the hero** (Mike, 2026-11-23). Heroes are endless, so faces are put together from parts in code; picture art Mike makes with an image model fits fixed pieces instead: building sprites per level, portrait part sheets (hair, beards, helmets) and backdrops, each dropped in through `art.sprite` without code changes.
+
+---
+
+## 20. The story: the broken stone and sealing the floors
+
+### Why
+
+The only lore so far is "the bottom floor keeps breeding". There's no reason why, no sense of getting anywhere, and no end. Mike (2026-11-25) wants a story pass: a reason, plot points that come one at a time, and progress you can see, with floors "closed" by something you have to go and get rather than by a single mission.
+
+### The lore: the Hearthstone
+
+✅ **DECIDED M: option A** (Mike, 2026-11-25). The other options are kept below for reference.
+
+Under the Old Delve lay a warding stone, the **Hearthstone**. It kept the deep quiet by *giving life*: things down there slept, healed and stayed put. The miners chased a deep-silver vein into it and cracked it. Its virtue now runs wrong: it pours life out without limit, so the deep breeds beasts, and it won't let the dead lie still. The shards blew up through the floors as it broke, and the strongest creatures on each floor grew round them.
+
+How it ties to what's built:
+
+- **The push-up (§4):** the bottom floor breeds because the cracked core is there. Nothing about the dungeon rules changes; this is what they mean.
+- **The risen (§10):** unburied bodies rise because the stone pushes life into them. Burial and the Temple are how the town fights back in small ways.
+- **Alignment (§7):** each shard can be **cleansed** (Temple; Good heroes like it) or **bound** (Black Market; Evil heroes like it, stronger, a morale cost for Good heroes). Never a ban, as with unholy gear.
+- **Materials:** deep-silver is rune-ore, the vein that led the miners to the stone.
+- **The opening (§8):** the town's founding mistake is the whole plot. The **Foreman's Shade** is the foreman who struck the blow; his pages and his ghost are the story's voice.
+
+Other options, not chosen:
+
+- **B. A mad mage** breeding things on purpose. A face, journals for the Library, a final boss; fits alignment less well and feels like one fight. Could sit inside A later: someone below trying to *use* the broken stone.
+- **C. A portal or breach** the miners broke into. Simple and classic, but explains less (risen, materials).
+- **D. The pit is alive**: something vast buried, its heartbeat spawns. Eerie; "sealing" part of a body is awkward.
+
+### Sealing a floor
+
+Today's barricades (§18.3b) are temporary. A **seal** is the permanent version, earned over several trips.
+
+1. **Find the shards.** Each floor hides **3 shards** of the stone:
+   - one carried by the floor's **shard-bearer**, a named, stronger boss grown round it (built on monster `variant`s, but fixed and always on the floor until killed);
+   - one in a **hidden cache** (the secrets system, M6.3);
+   - one the **Library** finds: research on the floor's specimens tells you which room it's in.
+   Shards come home in the haul like materials, and a lost party's shards are carried by the monsters like scavenged gear.
+2. **Forge the Seal Stone.** With all 3 shards of a floor, forge its Seal Stone as a workshop job: **cleansed** at the Temple or **bound** at the Black Market, with materials and work-days like any recipe. This is the alignment choice.
+3. **The sealing mission.** A party carries the stone to the stairhead below that floor, like a barricade (`orders.seal`), but the floor below **notices**: building it brings a set-piece fight, a surge up the stairs. Win and the seal is permanent; lose or turn back and the stone comes home (or is carried off by monsters if the party is lost).
+4. **The gateway.** The seal becomes a **gateway**, a building on the stairhead with its own levels. It has three settings:
+   - **Shut:** nothing comes up. The floor below fills to its penned-in cap (1.5 times) as with barricades.
+   - **Trickle (Mike likes this):** a few weak monsters come up each day, so the held floor always has something to hunt. A **training floor**: send new heroes down to earn XP safely.
+   - **Open:** everything comes up as before (rarely wanted, but there for completeness, or for a floor you want to farm hard).
+   Left Shut with the floor below ignored too long, the gateway **strains**; past a limit it **breaches** (a flood like a broken barricade, and the gateway is damaged until repaired, never lost). The dungeon still gets worse; you choose where the pressure sits.
+
+✅ **DECIDED: no early seal** (Mike, 2026-11-25). Floor 1 can't be sealed straight after the camp; it's a mid-game goal, once the guild has floors 1 and 2 under control. Its shards should need trips to floor 2 or deeper (for example, the Library find or the cache lies below), and the floor-1 shard-bearer is tough for a fresh party.
+
+### What holding a floor gives
+
+All three, kept small and separate from gold (gold is the balance lever):
+
+- **The town grows downward.** A held floor drains as you hunt (Trickle keeps it from going empty) and gets **dig sites**, building slots that come from depth, not land:
+  - **forward camp:** a rest spot and a shorter climb for deeper trips;
+  - **mine:** daily ore and deep-silver, so the camp is mining again;
+  - later a **shrine** (cleansed seal) or **den** (bound seal).
+- **Renown**, a town number shown in the header. It rises with each seal (and smaller deeds), and brings better recruits at the Tavern, more settlers, better caravans and contracts, and gates the top Guild Hall levels.
+- **A blessing per seal**, a small town-wide effect. Cleansed: holy, gentle (for example, faster healing, fewer bodies rising). Bound: stronger (for example, more loot, monsters fear the town) with a morale cost for Good heroes.
+
+### The story beats
+
+Each seal opens a **chapter**: news in town, a page from the Foreman's Shade, a change on the map, and a reveal about the floor below (what grew round its shard, a hint where to look). Chapters are content (`content/story/`), so beats can be added without code.
+
+### The end: the core
+
+Reaching the **Hearthstone's core** on the bottom floor is the end goal and should be **hard** (Mike, 2026-11-25): every floor above sealed, the core guarded by the strongest thing in the pit. At the core you may **shut it off, permanently**: the breeding stops, the game shows its ending, and you keep playing a town with a finite dungeon. Players who don't want that can leave it running and keep clearing the last floor for as long as they like.
+
+### Order of PRs
+
+| PR | What |
+|---|---|
+| 1 | **Shards and shard-bearers:** shard items, a named bearer per floor, caches and Library finds; shards in the haul and the store room |
+| 2 | **Seal Stones and the sealing mission:** recipes (cleansed/bound), the stairhead set-piece fight, permanent seals in the dungeon |
+| 3 | **Gateways:** Shut / Trickle / Open, strain and breach, repair; pit map shows them |
+| 4 | **Renown and blessings:** the town number and what it unlocks; one blessing per seal |
+| 5 | **Dig sites:** forward camp, mine; then shrine and den |
+| 6 | **Story chapters:** `content/story/`, the Foreman's Shade pages, news |
+| 7 | **The core:** the final floor's guardian, shutting it off, the ending |
+
+### Questions for Mike
+
+- ✅ **DECIDED M: the lore** (Mike, 2026-11-25): A, the Hearthstone.
+- ✅ **DECIDED N: when floor 1 can be sealed** (Mike, 2026-11-25): not early; only once floors 1 and 2 are under control.
+- ✅ **DECIDED: gateway Trickle** (Mike, 2026-11-25): yes, as a training floor for new heroes.
+- ✅ **DECIDED: the core** (Mike, 2026-11-25): hard to reach; shutting it off is permanent and is the end goal; optional.
