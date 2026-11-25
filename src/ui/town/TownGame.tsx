@@ -50,6 +50,7 @@ import { TownMap } from "./TownMap";
 import { Memorial } from "./Memorial";
 import { HearthstonePanel } from "./Hearthstone";
 import { DigSitesPanel } from "./DigSites";
+import { ForemansPagesPanel } from "./ForemansPages";
 import { CampPanel, PostsPanel } from "./Posts";
 import { ResearchPanel } from "./Research";
 import { WorkshopsPanel } from "./Workshops";
@@ -359,6 +360,7 @@ export function TownPlay({ initial }: { initial: Game }) {
           />
           {town.camp ? null : <PostsPanel town={town} act={act} />}
           {town.camp ? null : <ResearchPanel town={town} act={act} />}
+          {town.camp ? null : <ForemansPagesPanel town={town} />}
           {town.camp ? null : <HearthstonePanel town={town} act={act} />}
           {town.camp ? null : <DigSitesPanel town={town} act={act} />}
           <LostPanel town={town} act={act} />

@@ -145,6 +145,7 @@ export {
 export { blessings, boundSeals, gainRenown, renownRank } from "./renown";
 export { cantDig, dig, digView } from "./digs";
 export { floorHeld, forwardCamp, siteWorks } from "./digging";
+export { chapters, floorReveals, storySoFar } from "./story";
 export { answerRaise, raiseWords, rest, waitUntilBack, launchAndWait } from "./days";
 export { payDay, payShares, splitShares } from "./pay";
 export { floorKnowledge, fogBand, pitMap, watchRange } from "./fog";

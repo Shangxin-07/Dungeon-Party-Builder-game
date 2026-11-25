@@ -409,6 +409,22 @@ export function validateLibrary(lib: Library): string[] {
   }
   if (lib.digging && !(lib.digging.quiet > 0 && lib.digging.quiet <= 1))
     err("digging: quiet must be a share of capacity");
+  // Story chapters (M8.21): unique, in a clear order, about real floors.
+  const chapterIds = new Set<string>();
+  const orders = new Set<number>();
+  const depthsKnown = new Set(lib.floors.map((f) => f.depth));
+  for (const c of lib.story ?? []) {
+    const w = `chapter "${c.id}"`;
+    if (chapterIds.has(c.id)) err(`${w}: two chapters with this id`);
+    chapterIds.add(c.id);
+    if (orders.has(c.order)) err(`${w}: another chapter has order ${c.order}`);
+    orders.add(c.order);
+    if (!c.news.trim() || !c.page.trim()) err(`${w}: needs news and a page`);
+    if (c.when.kind === "sealed" && !depthsKnown.has(c.when.floor))
+      err(`${w}: no floor ${c.when.floor}`);
+    if (c.when.kind === "shards" && !(c.when.count >= 1)) err(`${w}: count must be at least 1`);
+    if (c.reveal && !depthsKnown.has(c.reveal.floor)) err(`${w}: reveals unknown floor`);
+  }
   // Renown (M8.19): ranks from 0 upwards; building levels that wait for it.
   const ranks = lib.renown?.ranks ?? [];
   if (lib.renown && ranks[0]?.at !== 0) err("renown: the first rank must be at 0");

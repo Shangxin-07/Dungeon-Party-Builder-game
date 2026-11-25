@@ -13,6 +13,7 @@ import { addNewFloors, newDungeon } from "./dungeon";
 import { rollPersonality, type Hero } from "./hero";
 import type { Index } from "./library";
 import { TOWN_VERSION, tidyFreeHires, type TownState } from "./town";
+import { storyDue } from "./town/story";
 
 /** What goes in an exported save file. */
 export interface SaveFile {
@@ -251,6 +252,15 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
   },
   // M8.20: dig sites on held floors. None yet.
   22: (_ix, old) => ({ ...old, version: 23, digs: {} }),
+  // M8.21: story chapters. Those the guild has already earned are open, as
+  // of today, without the news.
+  23: (ix, old) => {
+    const t = { ...old, story: {} } as unknown as TownState;
+    const story = Object.fromEntries(
+      ix.lib.story.filter((c) => storyDue(t, c.when)).map((c) => [c.id, t.day]),
+    );
+    return { ...old, version: 24, story };
+  },
 };
 
 /**

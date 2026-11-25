@@ -1440,6 +1440,11 @@ All three, kept small and separate from gold (gold is the balance lever):
 - **Renown**, a town number shown in the header. It rises with each seal (and smaller deeds), and brings better recruits at the Tavern, more settlers, better caravans and contracts, and gates the top Guild Hall levels.
 - **A blessing per seal**, a small town-wide effect. Cleansed: holy, gentle (for example, faster healing, fewer bodies rising). Bound: stronger (for example, more loot, monsters fear the town) with a morale cost for Good heroes.
 
+**As built (M8.21, PR 6): story chapters.**
+- Chapters are content (`content/story/`, `defineChapter`), each opened once by what the guild does: the first day of delving (not at the mining camp), the first shard brought home, and sealing each floor 1 to 4. `town.story` keeps the day each opened (TOWN_VERSION 24); an old save opens what it had already earned, without the news.
+- Each chapter is a news line in town (its own tone) and a page from the day book of Tamm, the old foreman, shown newest first in the Foreman's pages panel on the Pit tab.
+- A sealing chapter can **reveal** something about the floor below (what grew round its shard), shown on that floor in the Hearthstone panel. Floor 4's page sets up the core.
+
 **As built (M8.20, PR 5): dig sites.**
 - A floor is **held** while the gateway below it stands. A held floor has room for 1 site plus 1 for each floor deep (floor 1: 2, floor 3: 4), one of each kind (`content/digsites/`, `content/digging.ts`). Building or raising one costs gold and materials, then the diggers take its days (`town.digs`, TOWN_VERSION 23).
 - Sites only dig and work while the floor is quiet: at most 60% of its capacity. Trickle keeps a held floor stocked, so it has to be hunted to keep its sites going. A breach or a busy floor stops them; nothing is ever lost.

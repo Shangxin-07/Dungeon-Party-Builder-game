@@ -43,6 +43,7 @@ import { sealsBroke } from "./seals";
 import { gatewayNews } from "./gateways";
 import { boundSeals } from "./renown";
 import { digDay } from "./digs";
+import { storyDay } from "./story";
 import { offersDay } from "./offers";
 import { folkDay, folkScared } from "./folk";
 import { tidyBenches, workshopDay } from "./workshops";
@@ -472,6 +473,8 @@ export function rest(ix: Index, town: TownState, names: readonly string[]): Town
   arrivals(ix, t);
   freshRecruits(ix, t, names);
   offersDay(ix, t, names);
+  // The story moves on with what the guild did today (M8.21).
+  storyDay(ix, t);
   return t;
 }
 

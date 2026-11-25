@@ -9,7 +9,7 @@ import type { HaulItem } from "../loot";
 import type { RaidReport } from "../raid";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 23;
+export const TOWN_VERSION = 24;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 export const PIT_HISTORY = 60;
@@ -350,6 +350,8 @@ export interface TownState {
    * floor, then by site id. A site still being dug out has level 0.
    */
   digs: Record<number, Record<string, DigSite>>;
+  /** Story chapters opened (M8.21, content/story/): chapter id -> the day it opened. */
+  story: Record<string, number>;
   /** What the posts brought in yesterday: materials by id, and gold. */
   gathered?: { day: number; materials: Record<string, number>; gold: number };
 }
@@ -521,7 +523,8 @@ export interface Offer {
 export interface News {
   day: number;
   text: string;
-  tone?: "good" | "bad";
+  /** "story": a chapter opened (M8.21). */
+  tone?: "good" | "bad" | "story";
 }
 
 /** A building or upgrade in progress. */
