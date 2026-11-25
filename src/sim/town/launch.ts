@@ -156,6 +156,8 @@ export function launch(
   // And so is sealing the stairs (M7.16): it uses up what's in the store.
   delete t.orders.seal;
   delete t.orders.stone;
+  // And going for the heart (M8.22).
+  delete t.orders.core;
   return t;
 }
 

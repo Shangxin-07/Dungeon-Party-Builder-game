@@ -13,11 +13,11 @@ I'm still at the face, in the Old Delve where the vein ends. What's left of the 
 
 I can't put it right. I've tried every night for a hundred years. The light keeps me, the way it keeps the rest of them, and it won't let me finish.
 
-Bring the last of it down, all you've taken from the floors, and I'll show you where I struck. Then you can choose what I couldn't: shut it, or leave it beating.
+Every floor above me is yours now. Come down with the best you've got, and I'll show you where I struck. Then you can choose what I couldn't: shut it, or leave it beating.
 
 Tamm, foreman. Still on shift.`,
   reveal: {
     floor: 5,
-    text: "The heart of the Hearthstone lies in the Old Delve, and the Foreman's Shade keeps the face beside it. He says he'll show the way to whoever brings the last of the shards down.",
+    text: "The heart of the Hearthstone lies in the Old Delve, and the Foreman's Shade keeps the face beside it. He says he'll show the way down to it, now every floor above it is held.",
   },
 });

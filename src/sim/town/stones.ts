@@ -32,6 +32,7 @@ export function setStone(ix: Index, town: TownState, stone: string | undefined):
   t.orders = { ...t.orders, stone, targetFloor: place.set.floor };
   // The stone shuts the stairs for good: no barricade needed as well.
   delete t.orders.seal;
+  delete t.orders.core;
   return t;
 }
 

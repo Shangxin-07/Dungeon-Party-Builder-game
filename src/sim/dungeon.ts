@@ -14,6 +14,9 @@
  * the floor below strains the gateway, and past its limit it breaches: open
  * until the town mends it.
  *
+ * Once the Hearthstone's heart is shut off (M8.22), step 1 stops for good:
+ * what's down there is all there will ever be.
+ *
  * Every floor also settles a little way back towards its usual level each day,
  * so killing monsters (which makes room and stops the push-up) lets it calm down.
  * Monster levels are depth-equivalent: level 2 means "as strong as floor 2",
@@ -49,6 +52,16 @@ export interface DungeonState {
    * same way: nothing comes up them again, and nothing wears them down.
    */
   stones: Record<number, StoneSeal>;
+  /** The Hearthstone's heart (M8.22, DESIGN.md §20): beating, or shut off for good. */
+  core: CoreState;
+}
+
+/** The heart on the bottom floor (M8.22). */
+export interface CoreState {
+  /** Parties that have reached it. */
+  reached: number;
+  /** Shut off for good: the town day, and who did it. The bottom floor breeds no more. */
+  shut: { day: number; by: string } | null;
 }
 
 /** A Seal Stone set on a flight of stairs (M8.17): a gateway (M8.18). */
@@ -106,6 +119,7 @@ export function newDungeon(ix: Index): DungeonState {
     days: 0,
     spawnCarry: 0,
     stones: {},
+    core: { reached: 0, shut: null },
   };
 }
 
@@ -123,6 +137,7 @@ export function addNewFloors(ix: Index, d: DungeonState): boolean {
 
 /** Monsters the bottom floor breeds per day right now. */
 export function spawnRate(ix: Index, d: DungeonState): number {
+  if (d.core.shut) return 0;
   const r = ix.lib.dungeon;
   return r.spawnPerDay + r.spawnGrowthPerDay * d.days;
 }
@@ -166,7 +181,7 @@ export function dungeonDay(ix: Index, d: DungeonState): { dungeon: DungeonState;
   const out = structuredClone(d);
   const bottom = out.floors.length - 1;
 
-  // 1. The bottom floor breeds, at its own depth.
+  // 1. The bottom floor breeds, at its own depth, until its heart is shut off (M8.22).
   const due = spawnRate(ix, out) + out.spawnCarry;
   const spawned = Math.floor(due);
   out.spawnCarry = round2(due - spawned);

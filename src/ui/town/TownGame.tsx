@@ -51,6 +51,7 @@ import { Memorial } from "./Memorial";
 import { HearthstonePanel } from "./Hearthstone";
 import { DigSitesPanel } from "./DigSites";
 import { ForemansPagesPanel } from "./ForemansPages";
+import { EndingPanel } from "./Ending";
 import { CampPanel, PostsPanel } from "./Posts";
 import { ResearchPanel } from "./Research";
 import { WorkshopsPanel } from "./Workshops";
@@ -324,6 +325,7 @@ export function TownPlay({ initial }: { initial: Game }) {
           })}
         </nav>
       </div>
+      <EndingPanel town={town} />
       {error ? (
         <p className="error" role="alert">
           {error}

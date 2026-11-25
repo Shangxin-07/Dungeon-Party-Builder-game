@@ -449,6 +449,25 @@ export interface SealingRules {
   gateway: GatewayRules;
 }
 
+/**
+ * The Hearthstone's core (M8.22, DESIGN.md §20): the end goal. Every floor
+ * above it held by a Seal Stone, a party goes down to the heart and fights
+ * what guards it; win, and they can shut it off for good.
+ */
+export interface CoreRules {
+  /** The floor the heart lies on (the bottom floor). */
+  floor: number;
+  /** What guards it (a monster id): the strongest thing in the pit. */
+  guardian: string;
+  /** The guardian's escort, in usual groups of the core's floor (0: none). */
+  escort: number;
+  /** Hours to walk down to the heart after the floor, and to shut it off. */
+  walkHours: number;
+  shutHours: number;
+  /** What the log says: reaching the heart, the guardian rising, shutting it, and failing. */
+  text: { reach: string; guardian: string; shut: string; beaten: string };
+}
+
 /** How a gateway lets the floor below up (M8.18, DESIGN.md §20). */
 export type GatewaySetting = "shut" | "trickle" | "open";
 

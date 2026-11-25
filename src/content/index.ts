@@ -153,6 +153,8 @@ import diggingsSealed from "./story/diggings-sealed";
 import warrensSealed from "./story/warrens-sealed";
 import boneHallsSealed from "./story/bone-halls-sealed";
 import floodedShaftsSealed from "./story/flooded-shafts-sealed";
+import theHeart from "./story/the-heart";
+import theHeartStilled from "./story/the-heart-stilled";
 import forwardCamp from "./digsites/forward-camp";
 import mineSite from "./digsites/mine";
 import shrineSite from "./digsites/shrine";
@@ -176,6 +178,7 @@ import ironBandsMaterial from "./materials/iron-bands";
 import ironBandsRecipe from "./recipes/iron-bands";
 import plankBarricade from "./barricades/plank-barricade";
 import sealingRules from "./sealing";
+import coreRules from "./core";
 import { sealStones } from "./sealstones";
 import diggingsShards from "./shards/diggings";
 import warrensShards from "./shards/warrens";
@@ -327,6 +330,7 @@ import oldDelveFloor from "./floors/old-delve";
 import ghoulMonster from "./monsters/ghoul";
 import ghastMonster from "./monsters/ghast";
 import caveTrollMonster from "./monsters/cave-troll";
+import hearthbornMonster from "./monsters/hearthborn";
 import sporecallerMonster from "./monsters/sporecaller";
 import lostDelverMonster from "./monsters/lost-delver";
 import foremansShadeMonster from "./monsters/foremans-shade";
@@ -341,6 +345,7 @@ import graveChillAbility from "./abilities/grave-chill";
 import callTheCrewAbility from "./abilities/call-the-crew";
 import numbedStatus from "./statuses/numbed";
 import regeneratingStatus from "./statuses/regenerating";
+import heartFedStatus from "./statuses/heart-fed";
 import ghoulLoot from "./loot/ghoul-loot";
 import trollLoot from "./loot/troll-loot";
 import sporeLoot from "./loot/spore-loot";
@@ -539,6 +544,7 @@ export const statuses: readonly StatusDef[] = [
   chilledStatus,
   numbedStatus,
   regeneratingStatus,
+  heartFedStatus,
 ];
 export const monsters: readonly MonsterDef[] = [
   caveSpiderMonster,
@@ -558,6 +564,7 @@ export const monsters: readonly MonsterDef[] = [
   // Lives only in its wallow (M7.08, content/lairs/).
   mireBehemothMonster,
   caveTrollMonster,
+  hearthbornMonster,
   sporecallerMonster,
   lostDelverMonster,
   foremansShadeMonster,
@@ -780,6 +787,7 @@ export const library: Library = {
   barricades,
   shards,
   sealing: sealingRules,
+  core: coreRules,
   time: timeRules,
   fallen: fallenRules,
   transforms,
@@ -804,6 +812,8 @@ export const library: Library = {
     warrensSealed,
     boneHallsSealed,
     floodedShaftsSealed,
+    theHeart,
+    theHeartStilled,
   ],
 };
 

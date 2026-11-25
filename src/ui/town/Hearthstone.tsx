@@ -7,6 +7,7 @@
 import { Fold } from "../Fold";
 import {
   cantMendGateway,
+  coreBlockers,
   cantRaiseGateway,
   gatewayCostWords,
   gatewaysNow,
@@ -73,7 +74,50 @@ export function HearthstonePanel({ town, act }: { town: TownState; act: Act }) {
           </ul>
         </div>
       ))}
+      <CoreLine town={town} />
     </Fold>
+  );
+}
+
+/** The heart of the Hearthstone (M8.22): beating or shut, and what stands in the way. */
+function CoreLine({ town }: { town: TownState }) {
+  const floor = ix.lib.core.floor;
+  const { shut, reached } = town.dungeon.core;
+  const blockers = coreBlockers(ix, town);
+  return (
+    <div className="shard-floor">
+      <h4>
+        The heart, floor {floor}: {ix.floor(floor).name}{" "}
+        <span className={shut ? "good small" : "warn small"}>
+          {shut ? `shut off on day ${shut.day}` : "beating"}
+        </span>
+      </h4>
+      {floorReveals(ix, town, floor).map((text, i) => (
+        <p key={i} className="small reveal">
+          From the Foreman's pages: {text}
+        </p>
+      ))}
+      {shut ? (
+        <p className="small">
+          {shut.by} shut it off. The bottom floor breeds no more, and the dead lie still.
+        </p>
+      ) : blockers.length ? (
+        <p className="small muted">
+          What's left of the Hearthstone beats at the bottom of the pit, and everything down there
+          came out of it. Every floor above it has to be held before a party can reach it:{" "}
+          {blockers.map((b) => b.why).join("; ")}.
+        </p>
+      ) : (
+        <p className="small">
+          Every floor above it is held. Send the best party the guild has to floor {floor} to shut
+          it off for good (the party's orders, "The heart").{" "}
+          {reached
+            ? `${reached} ${reached === 1 ? "party has" : "parties have"} reached it so far.`
+            : "Whatever guards it will fight with nowhere to run."}{" "}
+          Shut, the pit breeds no more; leaving it beating is fine too.
+        </p>
+      )}
+    </div>
   );
 }
 

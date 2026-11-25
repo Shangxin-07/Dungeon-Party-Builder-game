@@ -31,6 +31,8 @@ import {
   sealWord,
   setSeal,
   setStone,
+  setCore,
+  cantReachCore,
   type TownState,
 } from "../../sim/town";
 import { RETREATS } from "../Expedition";
@@ -76,6 +78,15 @@ export function PartyPanel({
     (id) => (town.materials[id] ?? 0) > 0 && stoneOf(ix, id)?.set.floor === floor,
   );
   if (town.orders.stone && !stones.includes(town.orders.stone)) stones.push(town.orders.stone);
+  // The heart of the Hearthstone (M8.22): on its floor, an ordinary delve only.
+  const coreHere =
+    !scouting &&
+    !sneaking &&
+    !target &&
+    floor === ix.lib.core.floor &&
+    !town.dungeon.core.shut &&
+    !!town.story["flooded-shafts-sealed"];
+  const coreWhy = cantReachCore(ix, town);
   const lairBeast = lairDef ? ix.monster(lairDef.monster) : undefined;
   const quiet = partyStealth(ix, party);
   const bestScout = party
@@ -332,7 +343,39 @@ export function PartyPanel({
             </select>
           </label>
         ) : null}
+        {coreHere ? (
+          <label
+            title={
+              coreWhy ??
+              "Walk the floor, follow the Foreman's Shade down to the heart, fight what guards it, and shut it off for good."
+            }
+          >
+            The heart{" "}
+            <select
+              value={town.orders.core ? "shut" : ""}
+              onChange={(e) => {
+                const on = e.target.value === "shut";
+                act((t) => setCore(ix, t, on));
+              }}
+            >
+              <option value="">leave it beating</option>
+              <option value="shut" disabled={!!coreWhy && !town.orders.core}>
+                shut it off for good{coreWhy ? ": not yet" : ""}
+              </option>
+            </select>
+          </label>
+        ) : null}
       </div>
+      {coreHere && town.orders.core ? (
+        <p className="mission small">
+          Going for the heart: after floor {floor} is walked, the Foreman's Shade leads the party
+          down to the heart of the Hearthstone. What guards it rises with the Delve's crew round it,
+          and there's no slipping away: send the best the guild has, rested. Win, and they shut it
+          off for good; the pit breeds no more.
+        </p>
+      ) : coreHere && coreWhy ? (
+        <p className="small muted">{coreWhy}</p>
+      ) : null}
       {canSeal && shut ? (
         <p className="small muted">
           The stairs below floor {floor} are held by the {ix.item(shut.stone).name}, set on day{" "}
