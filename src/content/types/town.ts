@@ -84,7 +84,15 @@ export type BuildingEffect =
    */
   | { type: "salvage"; amount: number }
   /** Research desks (M7.07, DESIGN.md §17.7): heroes who study here instead of delving. */
-  | { type: "researchDesks"; amount: number };
+  | { type: "researchDesks"; amount: number }
+  /** Percentage points on the chance a day that settlers arrive (M8.19, Renown). */
+  | { type: "settlerChance"; amount: number }
+  /** Percentage points on the chance a day that an offer turns up (M8.19, Renown). */
+  | { type: "offerChance"; amount: number }
+  /** Contracts pay this many percent more (M8.19, Renown). */
+  | { type: "contractPay"; amount: number }
+  /** The unburied dead lie still this many days longer before they rise (M8.19, blessings). */
+  | { type: "riseDelay"; amount: number };
 
 export interface BuildingLevel {
   /** Gold to build or upgrade to this level. */
@@ -99,6 +107,8 @@ export interface BuildingLevel {
   /** One line shown in town, e.g. "4 heroes per party, 8 on the roster". */
   summary: string;
   effects: readonly BuildingEffect[];
+  /** Renown the town needs before it can build this level (M8.19, DESIGN.md §20). */
+  renown?: number;
 }
 
 /** A town building (DESIGN.md §8). Level 0 means not built yet. */
@@ -498,6 +508,28 @@ export interface VisitorOffer extends OfferCommon {
 }
 
 export type OfferDef = CaravanOffer | ContractOffer | PetitionOffer | VisitorOffer;
+
+/**
+ * Renown (M8.19, DESIGN.md §20): how far the guild's name has gone. Deeds
+ * add to it (a breach takes some away); each rank it reaches works like a
+ * building, with effects of its own.
+ */
+export interface RenownRules {
+  deeds: Record<RenownDeed, number>;
+  /** From lowest; the first is where every town starts (`at` 0). */
+  ranks: readonly RenownRank[];
+}
+
+export type RenownDeed = "shard" | "stone" | "lair" | "contract" | "petition" | "breach";
+
+export interface RenownRank {
+  at: number;
+  name: string;
+  /** What the town gets at this rank, shown in town. */
+  summary: string;
+  /** Everything from this rank and below adds up. */
+  effects: readonly BuildingEffect[];
+}
 
 /** How often offers turn up (M7.17, content/offers.ts). */
 export interface OfferRules {

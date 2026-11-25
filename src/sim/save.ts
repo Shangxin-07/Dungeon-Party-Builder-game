@@ -236,6 +236,19 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
     );
     return { ...old, version: 21, dungeon: { ...dungeon, stones } };
   },
+  // M8.19: Renown, for what the guild has already done: shards found, stones
+  // set and lairs' beasts killed (contracts and petitions weren't counted).
+  21: (ix, old) => {
+    const deeds = ix.lib.renown.deeds;
+    const count = (r: unknown, f: (x: Record<string, unknown>) => boolean) =>
+      Object.values((r ?? {}) as Record<string, Record<string, unknown>>).filter(f).length;
+    const dungeon = old.dungeon as { stones?: unknown };
+    const renown =
+      count(old.shards, (x) => x.found !== undefined) * deeds.shard +
+      count(dungeon.stones, () => true) * deeds.stone +
+      count(old.lairs, (x) => x.slain !== undefined) * deeds.lair;
+    return { ...old, version: 22, renown: Math.max(0, renown) };
+  },
 };
 
 /**

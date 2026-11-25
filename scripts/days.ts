@@ -59,6 +59,7 @@ import {
   newTown,
   nextLevel,
   materialsShort,
+  needsRenown,
   partySlots,
   repair,
   repairCost,
@@ -313,11 +314,15 @@ function step(t: TownState): TownState {
   if (build && !t.camp) {
     for (const id of t.damaged) if (t.gold >= repairCost(ix, t, id)) t = repair(ix, t, id);
     // Anything the store has the materials for (DESIGN.md §8).
-    const buildable = (x: { id: string; lvl?: { materials?: Record<string, number> } }) =>
+    const buildable = (x: {
+      id: string;
+      lvl?: { materials?: Record<string, number>; renown?: number };
+    }) =>
       x.lvl &&
       !t.damaged.includes(x.id) &&
       !underConstruction(t, x.id) &&
-      !materialsShort(ix, t, x.lvl.materials);
+      !materialsShort(ix, t, x.lvl.materials) &&
+      !needsRenown(ix, t, x.lvl);
     const next = DEFENCES.map((id) => ({ id, lvl: nextLevel(ix, t, id) }))
       .filter(buildable)
       .sort((a, b) => a.lvl!.cost - b.lvl!.cost)[0];

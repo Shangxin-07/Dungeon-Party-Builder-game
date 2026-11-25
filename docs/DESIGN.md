@@ -1440,6 +1440,11 @@ All three, kept small and separate from gold (gold is the balance lever):
 - **Renown**, a town number shown in the header. It rises with each seal (and smaller deeds), and brings better recruits at the Tavern, more settlers, better caravans and contracts, and gates the top Guild Hall levels.
 - **A blessing per seal**, a small town-wide effect. Cleansed: holy, gentle (for example, faster healing, fewer bodies rising). Bound: stronger (for example, more loot, monsters fear the town) with a morale cost for Good heroes.
 
+**As built (M8.19, PR 4):**
+- **Renown** (`town.renown`, TOWN_VERSION 22) is shown in the town bar with its rank. Deeds add to it (`content/renown.ts`): a shard brought home 2, a Seal Stone set 10, a lair's beast killed 3, a contract delivered or a petition granted 1; a gateway breach takes 3 away. An old save starts with renown for the shards, stones and lairs it already has.
+- Each **rank** works like a building, and its effects add to the town's: *Known in the valley* (10) gives better recruits; *Talked of in the towns* (25) gives one more recruit a day, settlers 20 points more likely and offers 10 points more likely; *Famous* (45) gives a trained recruit a day, contracts paying 20% more, and opens a new sixth Guild Hall level (24 on the roster, parties planned for 12); *A legend* (70) gives better recruits again. Sealing floor 1 makes a guild Known, floors 1-2 Talked of, floors 1-3 Famous. Building levels can ask for renown (`BuildingLevel.renown`).
+- **Blessings** come from each way (`content/sealing.ts`, `blessing`), one per gateway that holds, adding up; a breached gateway gives nothing until mended. Cleansed, *Quiet earth*: injuries mend half a day faster each day and the unburied dead lie 3 days longer. Bound, *Hungry stone*: hauls sell for 5 points more and 4 defence, while Good heroes lose a little morale every day in town (fact `boundSeals`, at most 2).
+
 ### The story beats
 
 Each seal opens a **chapter**: news in town, a page from the Foreman's Shade, a change on the map, and a reveal about the floor below (what grew round its shard, a hint where to look). Chapters are content (`content/story/`), so beats can be added without code.

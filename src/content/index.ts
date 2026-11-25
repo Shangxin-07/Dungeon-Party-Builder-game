@@ -145,6 +145,7 @@ import workshopRules from "./workshops";
 import townsfolkRules from "./townsfolk";
 import townMap from "./townmap";
 import offerRules from "./offers";
+import renownRules from "./renown";
 import coastCaravanOffer from "./offers/coast-caravan";
 import deepTradersOffer from "./offers/deep-traders";
 import oreContractOffer from "./offers/ore-contract";
@@ -782,6 +783,7 @@ export const library: Library = {
   townMap,
   offers,
   offerRules,
+  renown: renownRules,
 };
 
 export { heroNames } from "./names";

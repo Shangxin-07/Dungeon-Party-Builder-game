@@ -20,7 +20,17 @@ import type { Index } from "../library";
 import { applyMorale } from "../morale";
 import { createRng, type Rng } from "../rng";
 import { type Offer, type TownState, TownError, newRecord } from "./state";
-import { awaySet, materialsShort, materialWords, partySlots, rosterSize, standing } from "./read";
+import {
+  awaySet,
+  contractReward,
+  materialsShort,
+  materialWords,
+  partySlots,
+  rosterSize,
+  standing,
+  total,
+} from "./read";
+import { gainRenown } from "./renown";
 import { addMaterials, book, edit, news, useMaterials } from "./internal";
 import { pickName } from "./start";
 import { housing } from "./folk";
@@ -86,7 +96,7 @@ export function offersDay(ix: Index, t: TownState, names: readonly string[]): vo
   const rules = ix.lib.offerRules;
   if (keep.length >= rules.max) return;
   const def = offerRoll(t, (rng) => {
-    if (!rng.chance(rules.chancePerDay)) return undefined;
+    if (!rng.chance(rules.chancePerDay + total(ix, t, "offerChance") / 100)) return undefined;
     const options = (ix.lib.offers ?? []).filter((d) => canTurnUp(t, d));
     if (!options.length) return undefined;
     let pick = rng.next() * options.reduce((s, d) => s + d.weight, 0);
@@ -102,16 +112,16 @@ export function offersDay(ix: Index, t: TownState, names: readonly string[]): vo
     ...(hero ? { hero } : {}),
   };
   t.offers = [...keep, o];
-  news(t, offerHeadline(ix, o));
+  news(t, offerHeadline(ix, t, o));
 }
 
 /** The line the town hears when an offer turns up. */
-export function offerHeadline(ix: Index, o: Offer): string {
+export function offerHeadline(ix: Index, town: TownState, o: Offer): string {
   const def = offerDef(ix, o);
   if (def.kind === "visitor" && o.hero)
     return `${o.hero.name}, a ${ix.cls(o.hero.classId).name.toLowerCase()}, ${def.text} (They'd stay for a ${ix.building(o.hero.favourite).name}.)`;
   if (def.kind === "contract")
-    return `${def.text} ${materialWords(ix, def.wants)} for ${def.reward} gold, within ${def.deadline} days.`;
+    return `${def.text} ${materialWords(ix, def.wants)} for ${contractReward(ix, town, def.reward)} gold, within ${def.deadline} days.`;
   return def.text;
 }
 
@@ -214,9 +224,11 @@ export function deliverContract(ix: Index, town: TownState, offerId: string): To
   const def = offerDef(ix, o);
   if (def.kind !== "contract") throw new TownError("That isn't a contract.");
   useMaterials(t, def.wants);
-  book(t, "contracts", def.reward);
+  const pay = contractReward(ix, t, def.reward);
+  book(t, "contracts", pay);
   drop(t, o);
-  news(t, `The guild delivered on "${def.name}" and was paid ${def.reward} gold.`, "good");
+  news(t, `The guild delivered on "${def.name}" and was paid ${pay} gold.`, "good");
+  gainRenown(ix, t, "contract");
   return t;
 }
 
@@ -262,6 +274,7 @@ export function grantPetition(ix: Index, town: TownState, offerId: string): Town
   if (def.kind !== "petition") throw new TownError("That isn't a petition.");
   book(t, "petitions", -def.gold);
   useMaterials(t, def.materials);
+  gainRenown(ix, t, "petition");
   const e = def.effect;
   if (e.type === "folk") {
     const folk = t.folk;

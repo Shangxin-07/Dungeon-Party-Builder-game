@@ -387,6 +387,19 @@ export function validateLibrary(lib: Library): string[] {
     else if (!b.levels.some((l) => l.effects.some((e) => e.type === "workshop")))
       err(`seal way "${way.id}": the ${b.name} has no benches`);
   }
+  // Renown (M8.19): ranks from 0 upwards; building levels that wait for it.
+  const ranks = lib.renown?.ranks ?? [];
+  if (lib.renown && ranks[0]?.at !== 0) err("renown: the first rank must be at 0");
+  ranks.forEach((r, i) => {
+    if (i && r.at <= ranks[i - 1]!.at) err(`renown rank "${r.name}": must be above the one before`);
+  });
+  for (const b of lib.buildings)
+    b.levels.forEach((l, i) => {
+      if (l.renown !== undefined && !(l.renown > 0))
+        err(`building "${b.id}" level ${i + 1}: renown must be above 0`);
+    });
+  for (const way of lib.sealing?.ways ?? [])
+    if (!way.blessing?.effects.length) err(`seal way "${way.id}": needs a blessing`);
   // Gateways (M8.18): limits that rise with the level, costs in real materials.
   const gw = lib.sealing?.gateway;
   if (gw) {

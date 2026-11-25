@@ -17,5 +17,7 @@ export default defineAlignment({
     { fact: "goodDeeds", amount: 2, cap: 4, reason: "did right by someone" },
     { fact: "evilDeeds", amount: -3, cap: 6, reason: "the party did something vile" },
     { fact: "unholyGear", amount: -3, reason: "carried cursed gear" },
+    // Bound Seal Stones (M8.19): a small daily weight, however many there are.
+    { fact: "boundSeals", amount: -1, cap: 2, reason: "feels the bound stones' hunger" },
   ],
 });

@@ -145,7 +145,9 @@ export function folkDay(ix: Index, t: TownState): void {
   // Newcomers.
   if (whyNoSettlers(ix, t)) return;
   const come = roll(t, (rng) =>
-    rng.next() < rules.arrivalChance ? rng.int(1, rules.arrivalMax) : 0,
+    rng.next() < rules.arrivalChance + total(ix, t, "settlerChance") / 100
+      ? rng.int(1, rules.arrivalMax)
+      : 0,
   );
   const room = Math.min(housing(ix, t) - folk.count, Math.floor(grown / rules.eats) - folk.count);
   const n = Math.max(0, Math.min(come, room));

@@ -66,6 +66,18 @@ export default defineBuilding({
         { type: "rosterSize", amount: 20 },
       ],
     },
+    {
+      // M8.19: only a guild people have heard of can fill a hall this size.
+      cost: 3000,
+      materials: { "iron-ore": 12, "deep-silver": 6, planks: 12 },
+      days: 10,
+      renown: 45,
+      summary: "24 on the roster, parties planned for 12",
+      effects: [
+        { type: "partySlots", amount: 12 },
+        { type: "rosterSize", amount: 24 },
+      ],
+    },
   ],
   // Its look on the town map (M8, DESIGN.md §19).
   art: {

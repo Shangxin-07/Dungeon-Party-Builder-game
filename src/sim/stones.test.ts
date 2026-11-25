@@ -194,6 +194,8 @@ describe("stairs shut for good", () => {
     {
       expect(out.dungeon.stones[1]?.stone).toBe(STONE);
       expect(out.news.some((n) => /Its gateway is Shut/.test(n.text))).toBe(true);
+      // M8.19: the valley hears of it.
+      expect(out.renown).toBeGreaterThanOrEqual(library.renown.deeds.stone);
       expect(cantSeal(ix, out, { ...out.orders, targetFloor: 1, seal: "plank-barricade" })).toMatch(
         /held by a Seal Stone/,
       );

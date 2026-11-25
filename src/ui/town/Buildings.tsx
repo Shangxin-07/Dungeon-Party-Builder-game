@@ -8,6 +8,7 @@ import {
   materialWords,
   materialsShort,
   nextLevel,
+  needsRenown,
   repair,
   repairCost,
   underConstruction,
@@ -47,6 +48,7 @@ export function Buildings({ town, act }: { town: TownState; act: Act }) {
           const fix = damaged ? repairCost(ix, town, b.id) : 0;
           const work = underConstruction(town, b.id);
           const short = next && materialsShort(ix, town, next.materials);
+          const fame = needsRenown(ix, town, next);
           return (
             <li key={b.id} id={`building-${b.id}`} className={`card${damaged ? " damaged" : ""}`}>
               <BuildingPicture
@@ -103,11 +105,12 @@ export function Buildings({ town, act }: { town: TownState; act: Act }) {
                       {short ? `: short of ${short}` : ""}.
                     </p>
                   ) : null}
+                  {fame ? <p className="small warn">{fame}</p> : null}
                   <button
                     type="button"
                     className="btn"
-                    disabled={town.gold < next.cost || !!short}
-                    title={short ? `Short of ${short}.` : undefined}
+                    disabled={town.gold < next.cost || !!short || !!fame}
+                    title={fame ?? (short ? `Short of ${short}.` : undefined)}
                     onClick={() => act((t) => upgrade(ix, t, b.id))}
                   >
                     {level ? "Upgrade" : "Build"} for {costWords(next.cost, next.materials)}

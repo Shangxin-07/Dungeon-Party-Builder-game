@@ -206,6 +206,11 @@ describe("town actions", () => {
     t = build({ ...t, gold: 2000 }, "guild-hall");
     expect(partySlots(ix, t)).toBe(10);
     expect(rosterSize(ix, t)).toBe(20);
+    // M8.19: the sixth waits for the guild's name to spread.
+    const rich = { ...t, gold: 9999, materials: { "iron-ore": 12, "deep-silver": 6, planks: 12 } };
+    expect(() => upgrade(ix, rich, "guild-hall")).toThrow(/Renown/);
+    t = build({ ...rich, renown: 45 }, "guild-hall");
+    expect(partySlots(ix, t)).toBe(12);
     expect(() => upgrade(ix, t, "guild-hall")).toThrow(/bigger/);
   });
 });
