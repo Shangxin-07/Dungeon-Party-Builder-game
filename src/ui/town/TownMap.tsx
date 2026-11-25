@@ -1,6 +1,8 @@
 /**
  * The town map (M8.01, DESIGN.md §19.1): the pit in the middle of town, the
- * wall round it, and every building on its plot, growing with its level.
+ * palisade tight round it with the gate and watchtowers on it (it holds back
+ * what climbs out, M8.14), and every building outside on its plot, growing
+ * with its level.
  * Display only: it reads the town and never changes it. Hover or tap shows a
  * line about a building; a click opens its panel.
  */
@@ -236,7 +238,10 @@ function workWords(level: number, to: number, days: number): string {
       : `${days} day${days === 1 ? "" : "s"}`;
 }
 
-/** The palisade: stakes at level 1, stone after. Dashed and faint while the first level goes up. */
+/**
+ * The palisade, a ring round the pit (not the town): stakes at level 1, stone
+ * after. Dashed and faint while the first level goes up.
+ */
 function Wall({
   b,
   map,
@@ -269,7 +274,7 @@ function Wall({
       {spot(b.caption, open, ring)}
       {b.damaged ? <Damage x={x + map.wall.rx - 10} y={y} h={20} /> : null}
       {b.work ? (
-        <text x={x - map.wall.rx + 20} y={y - map.wall.ry + 40} className="map-work">
+        <text x={x} y={y - map.wall.ry + 26} textAnchor="middle" className="map-work">
           Palisade {workWords(b.level, b.work.level, b.work.daysLeft)}
         </text>
       ) : null}
@@ -331,7 +336,11 @@ function Gate({
   );
 }
 
-/** One tower on the wall per Watchtower level: east, west, then north. */
+/**
+ * One tower on the wall round the pit per Watchtower level: east, west, then
+ * north. The north one stands a little west of the top so the Guild Hall's name
+ * stays readable.
+ */
 function Towers({
   b,
   map,
@@ -344,10 +353,12 @@ function Towers({
   open: () => void;
 }) {
   const { x, y } = map.pit;
+  const { rx, ry } = map.wall;
+  const north = -60;
   const places = [
-    [x + map.wall.rx, y],
-    [x - map.wall.rx, y],
-    [x, y - map.wall.ry],
+    [x + rx, y],
+    [x - rx, y],
+    [x + north, y - ry * Math.sqrt(1 - (north / rx) ** 2)],
   ] as const;
   const going = b.work ? b.work.level : 0;
   const count = Math.max(b.level, going);
@@ -430,7 +441,7 @@ function Camp({
       {Array.from({ length: logs }, (_, i) => (
         <rect
           key={i}
-          x={px - 200 + (i % 3) * 7}
+          x={px - 172 + (i % 3) * 7}
           y={py - 10 - Math.floor(i / 3) * 5}
           width={26}
           height={5}
@@ -439,21 +450,21 @@ function Camp({
         />
       ))}
       {logs ? (
-        <text x={px - 188} y={py + 10} textAnchor="middle" className="map-label">
+        <text x={px - 160} y={py + 10} textAnchor="middle" className="map-label">
           timber {scene.timber}
         </text>
       ) : null}
       {Array.from({ length: stones }, (_, i) => (
         <circle
           key={i}
-          cx={px + 190 + (i % 3) * 7}
+          cx={px + 156 + (i % 3) * 7}
           cy={py - Math.floor(i / 3) * 6}
           r={4}
           fill="#6c6a74"
         />
       ))}
       {stones ? (
-        <text x={px + 198} y={py + 16} textAnchor="middle" className="map-label">
+        <text x={px + 163} y={py + 16} textAnchor="middle" className="map-label">
           ore {scene.ore}
         </text>
       ) : null}
