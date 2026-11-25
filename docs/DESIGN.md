@@ -1492,3 +1492,67 @@ Reaching the **Hearthstone's core** on the bottom floor is the end goal and shou
 - ✅ **DECIDED: gateway Trickle** (Mike, 2026-11-25): yes, as a training floor for new heroes.
 - ✅ **DECIDED: the core** (Mike, 2026-11-25): hard to reach; shutting it off is permanent and is the end goal; optional.
 - ✅ **DECIDED: more shards deeper down** (Mike, 2026-11-25): 3 a floor for floors 1-3, 6 for floors 4-6, and so on. Each floor's count is its own content list.
+
+## 21. More of everything: floor themes, heroes, and below the heart
+
+### Why
+
+The story (§20) is complete, but the floors are themed mostly by name: rooms, traps and events are shared across depth ranges and only the monster mix changes. Heroes are a first name, a class and some numbers. Mike (2026-11-25) wants the content filled out: fully themed floors, more monsters and items, more floors, and heroes with names, backstories, and moments with the dungeon and with each other. Everything stays content (data files under `src/content`), and the balance stays where it is unless Mike says otherwise (each PR reports the days bot before and after).
+
+### The lore below the heart: a chain of stones
+
+✅ **DECIDED: new floors go below the heart** (Mike, 2026-11-25), as long as the lore gives a reason. ✅ **DECIDED: fire names** (Mike, 2026-11-25): no "first" stone, so the chain can go deeper later.
+
+- **The Hearthstone was a copy.** The people who set it, the **Keepers**, chipped it from an older stone below and set it over that stone like a lid, giving the deep life gently so the older thing stayed asleep.
+- **The crack ran both ways.** When the miners broke the Hearthstone, its shards blew upward (§20). The crack also ran down through the older stones beneath. Each is older, smaller and hotter than the one above, and each is named for an earlier stage of the fire:
+  - the **Hearthstone**, floor 5 (the miners' stone, §20);
+  - the **Coalstone**, floor 7, the Keepers' own stone, in their halls;
+  - the **Emberstone**, floor 10, older than any people;
+  - and room left for the **Spark** (floor 15) if the pit ever goes deeper.
+- **Act One ends as now.** Shutting off the heart on floor 5 still shows the ending. Then a new chapter opens: with the heart still, the Delve's floor gives way and the stairs down are found. Floor 10 becomes the bottom that breeds; floors 6 to 9 fill from it as floors 1 to 5 did.
+- **Act Two** works like Act One: shards and shard-bearers on each floor (more the deeper they lie: 6 for floors 4-6, then more), Seal Stones and gateways, and the **Coalstone** on floor 7 stilled like the heart before the way below it is safe.
+- **The end is mending, not shutting off.** At the Emberstone the guild brings what it has learned (the Foreman's pages, the Keepers' writings from the Library, the stilled hearts) and **mends** it. Mended, the whole chain goes quiet the way the Keepers meant: nothing breeds, the dead rest, and the town gets its true ending. Players can still leave it and keep clearing.
+
+Floor ideas for Act Two (names open):
+
+| Floor | Name | Theme |
+|---|---|---|
+| 6 | The Keepers' Stair | Cut stone, far older than the mine; the Keepers' wards, half-working |
+| 7 | The Coal Halls | The Keepers' halls round the Coalstone; what they left behind and why they stopped |
+| 8 | The Glimmering | Living crystal that grew round the deep stones |
+| 9 | The Ember Deeps | Heat, ash and things older than people |
+| 10 | The Kiln | The Emberstone's chamber |
+
+### Floor themes (Act One)
+
+Each floor gets its own rooms, traps and events, two or three new monsters, themed loot, and **one floor rule** so it plays differently. A floor rule is data on the floor (`defineFloor`), handled by a small registered handler like room behaviours.
+
+1. **The Diggings** (the abandoned top workings): runaway carts, rotten props, goblin scavengers with sappers who throw blasting powder, rust beetles that wear down gear. Loot: miner's lamp, crossbow.
+2. **The Warrens** (burrows dug by beasts): web-choked tunnels that fire or Stealth gets past, egg sacs, tunnel hounds. Rule: tight tunnels, so fewer heroes fight in the front row. Loot: silk cloak, antivenom.
+3. **The Bone Halls** (the town's old ossuaries; the stone won't let them rest): skeletons that get back up unless holy or crushing blows finish them, wights, a mourning ghost that Good and Evil heroes answer differently. Loot: silvered weapons, bone armour (unholy).
+4. **The Flooded Shafts**: wading slows travel and chills heroes, drowned miners, shaft eels, leeches that cause bleeding, gear rusts. Loot: oilskins, rope, a harpoon.
+5. **The Old Delve** (the miners' last gallery, nearest the heart): crystal growths, heart-touched beasts that heal, a deep-silver golem. Loot: deep-silver rune gear.
+
+### Heroes
+
+- **Names:** a much bigger pool, with surnames, and epithets earned in play ("Wren the Unlucky").
+- **Backstories:** a content folder of origins (a miner's child, a deserter, a temple orphan, a disgraced noble, raised by goblins...). Each nudges stats and skills, leans towards some alignments and motivations, and has a line of text on the hero sheet.
+- **Moments:** backstories react to floors and events. A miner's child finds their father's tally in the Delve; a temple orphan hates the risen; a deserter knows a soldier's trick.
+- **Ties between heroes:** bonds (siblings, old comrades, sworn rivals, a feud) that come from backstories, and change morale and how they fight beside each other.
+
+### Order of PRs
+
+| PR | What |
+|---|---|
+| M8.23 | This plan |
+| M8.24-28 | One floor theme a PR, top down (Diggings, Warrens, Bone Halls, Flooded Shafts, Old Delve) |
+| next | Names and backstories (a save bump) |
+| next | Backstory moments in the dungeon |
+| next | Ties between heroes |
+| then | Act Two below the heart, a floor or two a PR |
+
+### Questions for Mike
+
+- Who were the Keepers? (Dwarf-like stone-cutters, an old order of priests, or the town's own distant ancestors.)
+- How many shards on floors 7-10 (9 a floor for 7-9 and 12 for 10, following "and so on")?
+- Should mending the Emberstone also free the gateways above (nothing left to hold back)?
