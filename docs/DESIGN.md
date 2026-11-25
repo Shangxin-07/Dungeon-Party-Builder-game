@@ -1418,6 +1418,14 @@ Today's barricades (§18.3b) are temporary. A **seal** is the permanent version,
    - **Trickle (Mike likes this):** a few weak monsters come up each day, so the held floor always has something to hunt. A **training floor**: send new heroes down to earn XP safely.
    - **Open:** everything comes up as before (rarely wanted, but there for completeness, or for a floor you want to farm hard).
    Left Shut with the floor below ignored too long, the gateway **strains**; past a limit it **breaches** (a flood like a broken barricade, and the gateway is damaged until repaired, never lost). The dungeon still gets worse; you choose where the pressure sits.
+   **As built (M8.18, PR 3):**
+   - A set stone is a gateway (`dungeon.stones[floor]` gains `setting`, `strain`, `level` and `damaged`, TOWN_VERSION 21; a stone set before this is Shut at level 1). It starts Shut. The rules are content (`content/sealing.ts`, `gateway`).
+   - **Shut:** nothing comes up, and the floor below is penned at 1.5 times its capacity. Each day it strains the gateway by 0.04 for every monster it holds over its capacity (a packed floor 2 is about 1 a day). Hunting it back under its capacity eases the strain by 1 a day.
+   - **Trickle:** 3 monsters a day come up, at the level of the floor above (the weak ones), and the rest strain it at half the rate. The floor above never runs empty: a training floor (Mike).
+   - **Open:** everything comes up as if the stone weren't there, and the strain eases.
+   - The town hears the gateway creak at 75% strain. At its limit it **breaches**: that night everything held back comes up, and it stands open until mended (gold and materials, at once). It's never lost.
+   - **Levels:** level 1 comes with the stone (limit 30). Level 2 (150 gold, 6 planks, 4 iron bands) takes 60, level 3 (300 gold, 6 iron bands, 2 deep silver) 100. Raising it is done at once. Left Shut and never hunted, a level-1 gateway set mid-game breaches in about 3 weeks, level 2 in about 5 and level 3 in about 8; on Trickle each takes about twice as long.
+   - The Hearthstone panel sets each gateway and shows its strain, its level and how long it might hold. The pit map draws the stone in its arch on the stairs with its setting and strain, and the floor-by-floor table has a line for it.
 
 ✅ **DECIDED: no early seal** (Mike, 2026-11-25). Floor 1 can't be sealed straight after the camp; it's a mid-game goal, once the guild has floors 1 and 2 under control. Its shards should need trips to floor 2 or deeper (for example, the Library find or the cache lies below), and the floor-1 shard-bearer is tough for a fresh party. (As built: floor 1's cache lies on floor 2, its Library find needs the Spider Matriarch Studied, and Skrag only stands and fights with about four level-3-4 heroes.)
 

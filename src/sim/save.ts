@@ -225,6 +225,17 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
     version: 20,
     dungeon: { ...(old.dungeon as Record<string, unknown>), stones: {} },
   }),
+  // M8.18: a set stone is a gateway, Shut at level 1 as before.
+  20: (_ix, old) => {
+    const dungeon = old.dungeon as { stones: Record<string, Record<string, unknown>> };
+    const stones = Object.fromEntries(
+      Object.entries(dungeon.stones).map(([f, s]) => [
+        f,
+        { setting: "shut", strain: 0, level: 1, damaged: false, ...s },
+      ]),
+    );
+    return { ...old, version: 21, dungeon: { ...dungeon, stones } };
+  },
 };
 
 /**

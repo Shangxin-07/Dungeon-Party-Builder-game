@@ -387,6 +387,25 @@ export function validateLibrary(lib: Library): string[] {
     else if (!b.levels.some((l) => l.effects.some((e) => e.type === "workshop")))
       err(`seal way "${way.id}": the ${b.name} has no benches`);
   }
+  // Gateways (M8.18): limits that rise with the level, costs in real materials.
+  const gw = lib.sealing?.gateway;
+  if (gw) {
+    if (!gw.levels.length) err("gateway: needs at least one level");
+    if (gw.levels[0]?.gold || Object.keys(gw.levels[0]?.materials ?? {}).length)
+      err("gateway: level 1 comes with the stone and costs nothing");
+    gw.levels.forEach((l, i) => {
+      const w = `gateway level ${i + 1}`;
+      if (l.limit <= (gw.levels[i - 1]?.limit ?? 0)) err(`${w}: limit must rise with the level`);
+      for (const id of [
+        ...Object.keys(l.materials ?? {}),
+        ...Object.keys(l.repair.materials ?? {}),
+      ])
+        if (!lib.items.some((x) => x.id === id && x.slot === "material"))
+          err(`${w}: "${id}" isn't a material`);
+    });
+    if (gw.trickle.perDay < 0 || gw.strainPerMonster <= 0 || gw.ease < 0)
+      err("gateway: trickle, strain and ease can't be negative");
+  }
   for (const i of lib.items)
     if (i.unlock && !monsterIds.has(i.unlock.monster))
       err(`item "${i.id}": unlocked by unknown monster "${i.unlock.monster}"`);

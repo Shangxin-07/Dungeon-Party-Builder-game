@@ -39,6 +39,7 @@ import { checkCamp, raidSpoils, tidyPosts, workPosts } from "./posts";
 import { researchTiers, studyDay, tidyDesks } from "./research";
 import { payDay } from "./pay";
 import { sealsBroke } from "./seals";
+import { gatewayNews } from "./gateways";
 import { offersDay } from "./offers";
 import { folkDay, folkScared } from "./folk";
 import { tidyBenches, workshopDay } from "./workshops";
@@ -59,6 +60,7 @@ export function nightfall(
   const { dungeon, day } = dungeonDay(ix, t.dungeon);
   t.dungeon = dungeon;
   sealsBroke(t, day.broke);
+  gatewayNews(t, day);
   const targets = ix.lib.buildings
     .filter((b) => !b.raidProof && (t.buildings[b.id] ?? 0) > 0 && !t.damaged.includes(b.id))
     .map((b) => b.id);

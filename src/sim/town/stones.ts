@@ -47,7 +47,7 @@ export function cantStone(ix: Index, town: TownState, orders: StandingOrders): s
   if (orders.targetFloor !== place.set.floor)
     return `The ${name} seals the stairs below floor ${place.set.floor}: send the party to floor ${place.set.floor}.`;
   if (stoneSealed(town, place.set.floor))
-    return `The stairs below floor ${place.set.floor} are already shut for good.`;
+    return `The stairs below floor ${place.set.floor} are already held by a Seal Stone.`;
   if ((town.materials[id] ?? 0) < 1) return `The ${name} isn't in the store.`;
   return undefined;
 }
@@ -70,7 +70,16 @@ export function placeStone(_ix: Index, t: TownState, o: Outing, all = false): vo
   o.stonePlaced = true;
   const stones = {
     ...t.dungeon.stones,
-    [s.floor]: { stone: s.stone, day: o.left + s.day, by: o.name },
+    [s.floor]: {
+      stone: s.stone,
+      day: o.left + s.day,
+      by: o.name,
+      // A new gateway (M8.18) is Shut, at level 1.
+      setting: "shut" as const,
+      strain: 0,
+      level: 1,
+      damaged: false,
+    },
   };
   const seals = { ...(t.dungeon.seals ?? {}) };
   delete seals[s.floor];
@@ -91,7 +100,7 @@ export function stoneNews(ix: Index, t: TownState, o: Outing): void {
   news(
     t,
     `${o.name} set the ${ix.item(s.stone).name} on the stairs below floor ${s.floor}. ` +
-      `Nothing will come up them again.`,
+      `Its gateway is Shut: nothing comes up unless the town lets it (the Hearthstone panel).`,
     "good",
   );
   guildFeels(ix, t, { [place.way.fact]: 1 }, new Set());
