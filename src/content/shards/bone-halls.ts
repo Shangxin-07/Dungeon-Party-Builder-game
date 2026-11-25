@@ -41,4 +41,10 @@ export default defineShardSet({
       dug: "finds the ossuary every skull faces and digs a shard of the Hearthstone out from under it",
     },
   ],
+  // Forging its Seal Stone, beside the shards (M8.17), and the surge when it's set.
+  forge: { materials: { "iron-bands": 4, "bone-dust": 4 }, gold: 200, work: 10 },
+  surge: {
+    power: 2.5,
+    text: "Black water boils up the stairs from the Flooded Shafts, and everything in it comes with it.",
+  },
 });

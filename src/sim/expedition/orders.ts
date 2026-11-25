@@ -60,6 +60,13 @@ export interface StandingOrders {
    * any hunting. Only on an ordinary delve.
    */
   seal?: string;
+  /**
+   * Set this Seal Stone (M8.17, DESIGN.md §20; an item id) on the stairs below
+   * the target floor, which must be the floor it seals: once the floor is
+   * walked, before any hunting. The floor below sends a surge up the stairs.
+   * Only on an ordinary delve.
+   */
+  stone?: string;
 }
 
 /** A scout mission (M7.08): not on a search. */
@@ -79,6 +86,12 @@ export const sealOf = (orders: StandingOrders): string | undefined =>
   orders.rescue || orders.mission === "scout" || orders.mission === "sneak"
     ? undefined
     : orders.seal;
+
+/** The Seal Stone this trip carries down to set (M8.17), if any. */
+export const stoneOrder = (orders: StandingOrders): string | undefined =>
+  orders.rescue || orders.mission === "scout" || orders.mission === "sneak"
+    ? undefined
+    : orders.stone;
 
 export const DEFAULT_ORDERS: StandingOrders = {
   targetFloor: 1,

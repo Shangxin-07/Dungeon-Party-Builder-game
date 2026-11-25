@@ -7,30 +7,43 @@
 import { Fold } from "../Fold";
 import { shardProgress, type ShardStatus, type TownState } from "../../sim/town";
 import { ix } from "../game";
+import { stoneOf } from "../../sim/shards";
 
 const KIND = { bearer: "Carried", cache: "Hidden", library: "Library" } as const;
 
 export function HearthstonePanel({ town }: { town: TownState }) {
   const floors = shardProgress(ix, town);
   if (!floors.length) return null;
-  const held = floors.reduce((n, f) => n + Math.min(f.held, f.need), 0);
+  const found = floors.reduce((n, f) => n + f.shards.filter((x) => x.state === "found").length, 0);
+  const sealed = Object.keys(town.dungeon.stones).length;
   const need = floors.reduce((n, f) => n + f.need, 0);
   return (
-    <Fold id="hearthstone" title="The Hearthstone" summary={`${held} of ${need} shards found`}>
+    <Fold
+      id="hearthstone"
+      title="The Hearthstone"
+      summary={`${found} of ${need} shards found${sealed ? `, ${sealed} ${sealed === 1 ? "floor" : "floors"} sealed` : ""}`}
+    >
       <p className="small muted">
         The miners cracked the warding stone under the Old Delve, and its shards blew up through the
-        floors. Gather all of a floor's shards to forge its Seal Stone. Shard-bearers keep to the
-        back tunnels: only a party hunting a thinned-out floor meets one, and it won't stand and
-        fight with a party that isn't seasoned enough.
+        floors. Gather all of a floor's shards to forge its Seal Stone (cleansed at the Temple, or
+        bound at the Black Market), then send a party to set it on the stairs below that floor: the
+        floor below fights back, but once it's set, nothing comes up those stairs again.
+        Shard-bearers keep to the back tunnels: only a party hunting a thinned-out floor meets one,
+        and it won't stand and fight with a party that isn't seasoned enough.
       </p>
       {floors.map(({ set, held: have, need: n, shards }) => (
         <div key={set.id} className="shard-floor">
           <h4>
             Floor {set.floor}: {ix.floor(set.floor).name}{" "}
-            <span className={have >= n ? "good small" : "muted small"}>
-              {have} of {n} in the store room
+            <span className={have >= n || shut(town, set.floor) ? "good small" : "muted small"}>
+              {town.dungeon.stones[set.floor]
+                ? "sealed"
+                : stored(town, set.floor).length
+                  ? "Seal Stone forged"
+                  : `${have} of ${n} in the store room`}
             </span>
           </h4>
+          <StoneLine town={town} floor={set.floor} ready={have >= n} />
           <ul className="small shard-list">
             {shards.map((s) => (
               <ShardLine key={s.id} s={s} town={town} />
@@ -40,6 +53,46 @@ export function HearthstonePanel({ town }: { town: TownState }) {
       ))}
     </Fold>
   );
+}
+
+const shut = (town: TownState, floor: number) =>
+  !!town.dungeon.stones[floor] || stored(town, floor).length > 0;
+
+/** Seal Stones in the store for this floor (M8.17). */
+const stored = (town: TownState, floor: number) =>
+  Object.keys(town.materials).filter(
+    (id) => (town.materials[id] ?? 0) > 0 && stoneOf(ix, id)?.set.floor === floor,
+  );
+
+/** Where the floor's Seal Stone is (M8.17): set, waiting in the store, or ready to forge. */
+function StoneLine({ town, floor, ready }: { town: TownState; floor: number; ready: boolean }) {
+  const set = town.dungeon.stones[floor];
+  if (set)
+    return (
+      <p className="small good">
+        Shut for good: the {ix.item(set.stone).name}, set on day {set.day}
+        {set.by ? ` by ${set.by}` : ""}.
+      </p>
+    );
+  const stones = stored(town, floor);
+  if (stones.length)
+    return (
+      <p className="small">
+        The {ix.item(stones[0]!).name} is in the store. Send a party to floor {floor} to set it on
+        the stairs below (the party's orders, "Stairs").
+      </p>
+    );
+  if (ready)
+    return (
+      <p className="small">
+        Every shard is home. Forge the Seal Stone:{" "}
+        {ix.lib.sealing.ways
+          .map((w) => `${w.name.toLowerCase()} at the ${ix.building(w.workshop).name}`)
+          .join(", or ")}
+        .
+      </p>
+    );
+  return null;
 }
 
 function ShardLine({ s, town }: { s: ShardStatus; town: TownState }) {

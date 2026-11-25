@@ -103,6 +103,8 @@ describe("shard sets", () => {
           shows: "",
         },
       ],
+      forge: { materials: {}, work: 1 },
+      surge: { power: 1, text: "" },
     };
     const errors = validateLibrary({ ...library, shards: [...library.shards, bad] });
     expect(errors.join("\n")).toMatch(/bottom floor/);

@@ -8,7 +8,8 @@
  * 3. Floor 1's extra climb out of the pit: the overflow the town has to face.
  *
  * A sealed stairhead (M7.16) stops step 2 at those stairs: the floor below
- * keeps its extras, and they wear the seal down until it gives way.
+ * keeps its extras, and they wear the seal down until it gives way. A Seal
+ * Stone (M8.17) stops it for good.
  *
  * Every floor also settles a little way back towards its usual level each day,
  * so killing monsters (which makes room and stops the push-up) lets it calm down.
@@ -39,6 +40,20 @@ export interface DungeonState {
    * the stairs between floors 1 and 2.
    */
   seals?: Record<number, Seal>;
+  /**
+   * Stairs shut for good with a Seal Stone (M8.17, DESIGN.md §20), keyed the
+   * same way: nothing comes up them again, and nothing wears them down.
+   */
+  stones: Record<number, StoneSeal>;
+}
+
+/** A Seal Stone set on a flight of stairs (M8.17). */
+export interface StoneSeal {
+  /** The stone's item id (one per floor and way, content/sealstones.ts). */
+  stone: string;
+  /** Town day it was set, and who set it. */
+  day: number;
+  by?: string;
 }
 
 /** A barricade across the top of a flight of stairs (M7.16, DESIGN.md §18.3b). */
@@ -75,6 +90,7 @@ export function newDungeon(ix: Index): DungeonState {
     floors: floors.map((f) => ({ population: f.startPopulation, level: f.depth })),
     days: 0,
     spawnCarry: 0,
+    stones: {},
   };
 }
 
@@ -149,6 +165,11 @@ export function dungeonDay(ix: Index, d: DungeonState): { dungeon: DungeonState;
   for (let i = bottom; i >= 0; i--) {
     const f = out.floors[i]!;
     const extra = f.population - caps[i]!;
+    // A Seal Stone (M8.17) holds them back for good: penned in, they turn on each other.
+    if (i > 0 && out.stones[i]) {
+      f.population = Math.min(f.population, Math.floor(caps[i]! * rules.seals.crowding));
+      continue;
+    }
     const seal = i > 0 ? out.seals?.[i] : undefined;
     if (seal) {
       const press = rules.seals.wearPerDay + Math.max(0, extra) * rules.seals.perMonster;

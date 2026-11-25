@@ -163,6 +163,8 @@ import planksMaterial from "./materials/planks";
 import ironBandsMaterial from "./materials/iron-bands";
 import ironBandsRecipe from "./recipes/iron-bands";
 import plankBarricade from "./barricades/plank-barricade";
+import sealingRules from "./sealing";
+import { sealStones } from "./sealstones";
 import diggingsShards from "./shards/diggings";
 import warrensShards from "./shards/warrens";
 import boneHallsShards from "./shards/bone-halls";
@@ -419,6 +421,9 @@ export const shards: readonly ShardSetDef[] = [
   floodedShaftsShards,
 ];
 
+/** The Seal Stones (M8.17): one per floor and way, made from the shard sets. */
+const stones = sealStones(shards, sealingRules);
+
 /** Posts round the pit (DESIGN.md §8): duties for heroes at home. */
 export const posts: readonly PostDef[] = [barricadePost, lookoutPost, salvagePost, seamPost];
 
@@ -467,6 +472,8 @@ export const items: readonly ItemDef[] = [
   ...specimens,
   // Materials (DESIGN.md §8): the guild keeps them to build with. See materials/.
   ...materials,
+  // Seal Stones (M8.17), made from the shard sets: see sealstones.ts.
+  ...stones.items,
 ];
 export const abilities: readonly AbilityDef[] = [
   fireboltAbility,
@@ -690,6 +697,8 @@ export const transforms: readonly TransformDef[] = [risenTransform];
 
 /** What the workshops make (M7.14, DESIGN.md §18.1). */
 export const recipes: readonly RecipeDef[] = [
+  // Seal Stones (M8.17): forged at the Temple or the Black Market, see sealstones.ts.
+  ...stones.recipes,
   planksRecipe,
   ironBandsRecipe,
   woodenShieldRecipe,
@@ -758,6 +767,7 @@ export const library: Library = {
   lairs,
   barricades,
   shards,
+  sealing: sealingRules,
   time: timeRules,
   fallen: fallenRules,
   transforms,

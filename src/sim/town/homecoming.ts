@@ -31,6 +31,7 @@ import { restHero, lowestHp, wasDowned, maybeInjure } from "./wounds";
 import { dayInTown, quitters, guildFeels } from "./days";
 import { newBody } from "./bodies";
 import { sealHome } from "./seals";
+import { stoneNews } from "./stones";
 import { landAllKills } from "./launch";
 import { hearOfLoss } from "./lost";
 import { deserterReturns, grudgeHolders, holdGrudges } from "./deserters";
@@ -97,6 +98,7 @@ export function homecoming(ix: Index, t: TownState, o: Outing): void {
   t.outings = t.outings.filter((x) => x !== o);
   landAllKills(t, o);
   sealHome(ix, t, o);
+  stoneNews(ix, t, o);
   const kills = heroKills(party, result);
   // Every kill teaches the Library a little (M7.07).
   learnFromKills(ix, t, result.kills);

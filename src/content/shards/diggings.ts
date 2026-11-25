@@ -42,4 +42,10 @@ export default defineShardSet({
       dug: "follows the Library's map to a warm patch of rubble and digs out a shard of the Hearthstone",
     },
   ],
+  // Forging its Seal Stone, beside the shards (M8.17), and the surge when it's set.
+  forge: { materials: { "iron-bands": 2, planks: 4 }, gold: 100, work: 6 },
+  surge: {
+    power: 2.5,
+    text: "The floor below heaves. Everything in the Warrens that can climb is coming up the stairs at once.",
+  },
 });

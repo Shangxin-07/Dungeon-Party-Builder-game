@@ -34,6 +34,7 @@ import {
 import { news, roll, edit } from "./internal";
 import { cancelRescue } from "./parties";
 import { carrySeal, placeSeal } from "./seals";
+import { carryStone, placeStone } from "./stones";
 import { homecoming } from "./homecoming";
 import { hearOfLoss, partyFalls } from "./lost";
 import { deserterDay, deserterHome } from "./deserters";
@@ -80,6 +81,8 @@ export function launch(
   if (target) orders.targetFloor = Math.max(orders.targetFloor, site?.floor ?? 0);
   // The barricade goes down with the party (M7.16).
   carrySeal(ix, t, orders);
+  // And the Seal Stone (M8.17).
+  carryStone(ix, t, orders);
   // Who leads, and how unruly the party is (M7.05, DESIGN.md §17.5).
   const cmd = partyCommand(ix, party, t.leader);
   const result = runExpedition(ix, party, orders, seed, t.dungeon.floors, {
@@ -148,6 +151,7 @@ export function launch(
   delete t.orders.clearPercent;
   // And so is sealing the stairs (M7.16): it uses up what's in the store.
   delete t.orders.seal;
+  delete t.orders.stone;
   return t;
 }
 
@@ -162,6 +166,7 @@ export function launch(
 export function landKills(ix: Index, t: TownState): void {
   for (const o of t.outings) {
     placeSeal(ix, t, o);
+    placeStone(ix, t, o);
     const today = t.day - o.left;
     for (; o.killsLanded <= today; o.killsLanded++) {
       const k = o.result.dayKills?.[o.killsLanded];

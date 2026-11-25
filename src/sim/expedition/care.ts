@@ -16,6 +16,7 @@ import {
   VALUABLE_PER_SLOT,
 } from "./tuning";
 import { an, TripBase } from "./trip";
+import { precious } from "../shards";
 
 /** Wounds, first aid and packs. Extended by TripFights. */
 export class TripCare extends TripBase {
@@ -173,8 +174,8 @@ export class TripCare extends TripBase {
   /** If the haul doesn't fit, leave behind whatever looks least valuable per slot. */
   protected repack(): void {
     const room = this.capacity();
-    // Nobody leaves a shard of the Hearthstone behind (DESIGN.md §20).
-    const shard = (h: HaulItem) => this.ix.item(h.item).tags.includes("shard");
+    // Nobody leaves a shard of the Hearthstone or a Seal Stone behind (DESIGN.md §20).
+    const shard = (h: HaulItem) => precious(this.ix, h.item);
     while (this.haul.some((h) => !shard(h)) && this.load() > room) {
       let worst = -1;
       this.haul.forEach((h, i) => {
