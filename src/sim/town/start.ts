@@ -10,6 +10,7 @@ import { TOWN_VERSION, newRecord, type TownState } from "./state";
 import { total, recruitsToday, recruitPicks } from "./read";
 import { roll } from "./internal";
 import { kitOut } from "./gear";
+import { storyDay } from "./story";
 
 export function pickName(town: TownState, names: readonly string[], rng: Rng): string {
   const taken = new Set([...town.roster, ...town.recruits].map((h) => h.name));
@@ -139,11 +140,16 @@ export function newTown(
     shards: {},
     renown: 0,
     digs: {},
+    story: {},
   };
   // M6: the first heroes turn up untrained. The player picks their classes
   // and kits them out from the store room (or calls autoStart).
   for (let i = 0; i < rules.startingRecruits; i++) town.recruits.push(makeRecruit(ix, town, names));
-  if (!opening) return town;
+  if (!opening) {
+    // The guild starts delving at once: the story opens (M8.21).
+    storyDay(ix, town);
+    return town;
+  }
   // At the mining camp they're already here, as miners with whatever was to
   // hand: half in the front row with the picks, the rest behind with slings.
   town.camp = true;

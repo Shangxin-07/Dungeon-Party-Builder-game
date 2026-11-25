@@ -577,6 +577,35 @@ export interface DigRules {
   quiet: number;
 }
 
+/**
+ * A story chapter (M8.21, DESIGN.md §20): opened by something the guild
+ * does, it brings news to town, a page of the Foreman's to read, and maybe
+ * a reveal about a floor. Chapters are content (content/story/): add beats
+ * without touching code.
+ */
+export interface ChapterDef {
+  id: string;
+  /** Where it sits among the pages, lowest first. */
+  order: number;
+  title: string;
+  when: StoryTrigger;
+  /** What the town hears when it opens. */
+  news: string;
+  /** The Foreman's page: paragraphs split by blank lines. */
+  page: string;
+  /** What it tells the guild about a floor, shown with that floor's shards. */
+  reveal?: { floor: number; text: string };
+}
+
+/** What opens a chapter. */
+export type StoryTrigger =
+  /** The guild starts delving: a new game, or the mining camp held. */
+  | { kind: "start" }
+  /** This many shards of the Hearthstone found, in all. */
+  | { kind: "shards"; count: number }
+  /** A Seal Stone set on the stairs below this floor. */
+  | { kind: "sealed"; floor: number };
+
 /** How often offers turn up (M7.17, content/offers.ts). */
 export interface OfferRules {
   /** Chance a day that something turns up, while fewer than `max` are waiting. */

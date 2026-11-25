@@ -147,6 +147,12 @@ import townMap from "./townmap";
 import offerRules from "./offers";
 import renownRules from "./renown";
 import digRules from "./digging";
+import theDayBook from "./story/the-day-book";
+import firstShard from "./story/first-shard";
+import diggingsSealed from "./story/diggings-sealed";
+import warrensSealed from "./story/warrens-sealed";
+import boneHallsSealed from "./story/bone-halls-sealed";
+import floodedShaftsSealed from "./story/flooded-shafts-sealed";
 import forwardCamp from "./digsites/forward-camp";
 import mineSite from "./digsites/mine";
 import shrineSite from "./digsites/shrine";
@@ -791,6 +797,14 @@ export const library: Library = {
   renown: renownRules,
   digSites: [forwardCamp, mineSite, shrineSite, denSite],
   digging: digRules,
+  story: [
+    theDayBook,
+    firstShard,
+    diggingsSealed,
+    warrensSealed,
+    boneHallsSealed,
+    floodedShaftsSealed,
+  ],
 };
 
 export { heroNames } from "./names";

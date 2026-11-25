@@ -15,6 +15,7 @@ import {
   nextGatewayLevel,
   raiseGateway,
   setGateway,
+  floorReveals,
   shardProgress,
   type ShardStatus,
   type TownState,
@@ -59,6 +60,11 @@ export function HearthstonePanel({ town, act }: { town: TownState; act: Act }) {
                   : `${have} of ${n} in the store room`}
             </span>
           </h4>
+          {floorReveals(ix, town, set.floor).map((text, i) => (
+            <p key={i} className="small reveal">
+              From the Foreman's pages: {text}
+            </p>
+          ))}
           <StoneLine town={town} floor={set.floor} ready={have >= n} act={act} />
           <ul className="small shard-list">
             {shards.map((s) => (
