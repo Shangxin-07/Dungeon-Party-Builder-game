@@ -2,31 +2,18 @@
  * The town map (M8.01, DESIGN.md §19.1): the pit in the middle of town, the
  * wall round it, and every building on its plot, growing with its level.
  * Display only: it reads the town and never changes it. Hover or tap shows a
- * line about a building; a click opens its panel below.
+ * line about a building; a click opens its panel.
  */
 import { Ground } from "./map/ground";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
-import { Fold, openFold } from "../Fold";
+import { Fold, showFold } from "../Fold";
 import type { TownState } from "../../sim/town";
 import { ix } from "../game";
 import { Damage, Glyph, Look, Scaffold, footprint } from "./map/draw";
 import { SPRITES } from "./map/sprites";
 import { sceneSummary, townScene, type MapBuilding } from "./map/scene";
 
-const HINT = "Point at or tap a building to see what it does. Click it to open it below.";
-
-/** Open a panel and bring `target` (an element id) into view. */
-function show(fold: string, target: string) {
-  openFold(fold);
-  requestAnimationFrame(() => {
-    const el = document.getElementById(target);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    el.classList.remove("flash");
-    void el.getBoundingClientRect();
-    el.classList.add("flash");
-  });
-}
+const HINT = "Point at or tap a building to see what it does. Click it to open it.";
 
 export function TownMap({ town }: { town: TownState }) {
   const scene = townScene(ix, town);
@@ -62,7 +49,7 @@ export function TownMap({ town }: { town: TownState }) {
       {children}
     </g>
   );
-  const openBuilding = (b: MapBuilding) => () => show("buildings", `building-${b.def.id}`);
+  const openBuilding = (b: MapBuilding) => () => showFold("buildings", `building-${b.def.id}`);
 
   const pitCaption =
     "The Pit. " +
@@ -95,7 +82,7 @@ export function TownMap({ town }: { town: TownState }) {
 
         {spot(
           pitCaption,
-          () => show("pit", "pit-heading"),
+          () => showFold("pit", "pit-heading"),
           <g>
             <ellipse
               cx={px}
