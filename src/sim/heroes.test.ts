@@ -325,7 +325,9 @@ describe("wipes and rescue runs", () => {
       // The rescue clock starts when they fell, not when the town hears.
       expect(x.until).toBe(o.fell! + library.rescue.windowDays - 1);
     }
-    for (const it of site.items.filter((i) => i.keep)) expect(dead).toContain(it.owner);
+    // Kept things are the dead's gear, or a shard of the Hearthstone (DESIGN.md §20).
+    for (const it of site.items.filter((i) => i.keep && !ix.item(i.item).tags.includes("shard")))
+      expect(dead).toContain(it.owner);
     // In town they're still just away: no news, nobody missing from the roster.
     for (const id of o.heroes) expect(t.roster.some((h) => h.id === id)).toBe(true);
     expect(t.news.some((n) => sent.some((name) => n.text.includes(`${name} is trapped`)))).toBe(

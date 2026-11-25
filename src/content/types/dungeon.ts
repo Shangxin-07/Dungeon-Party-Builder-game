@@ -388,3 +388,81 @@ export interface RaidRules {
   /** Most heroes who can fight off one raid. */
   maxDefenders: number;
 }
+
+/**
+ * The shards of the Hearthstone on one floor (DESIGN.md §20): what it takes
+ * to forge that floor's Seal Stone. Each entry in `shards` is one shard and
+ * where it is; sealing the floor takes every one of them, so a deeper floor
+ * that hides more shards needs more. Add a floor's set by creating a file in
+ * content/shards/.
+ */
+export interface ShardSetDef {
+  id: string;
+  /** The floor these shards seal (the stairs below it). */
+  floor: number;
+  /** The material a shard of this floor is (content/materials/). */
+  item: string;
+  shards: readonly ShardSource[];
+}
+
+/**
+ * Where one shard is (DESIGN.md §20). Each source gives its shard once, ever.
+ * `floor` is where the party has to go for it, which needn't be the floor the
+ * shard seals: some fell down a shaft when the stone broke.
+ */
+export type ShardSource = {
+  /** Unique across every set: saves key what's been found by it. */
+  id: string;
+  floor: number;
+  /** Shown in the Hearthstone panel before it's found: where the guild thinks it is. */
+  hint: string;
+} & (
+  | {
+      /**
+       * Carried by a shard-bearer: a named boss that grew round it and lives
+       * on the floor until killed. It keeps to the back tunnels: only a party
+       * hunting the floor (a clear-the-floor order) meets it, and only once
+       * the floor is thinned down to `below` of its capacity; then `chance`
+       * per hunting fight that it leads the group, with an escort cut to
+       * `escort` of a usual group's power.
+       */
+      kind: "bearer";
+      monster: string;
+      below: number;
+      chance: number;
+      escort: number;
+      /**
+       * The party sizes it up first: unless the heroes on their feet add up
+       * to this many levels, they back off without a fight (and now know
+       * what carries the shard). Keeps it from wiping a fresh party.
+       */
+      stand: number;
+      /** Logged when it shows: "{monster} ..." */
+      shows: string;
+    }
+  | {
+      /**
+       * Hidden in a cache like the secrets (M6): `chance` per room walked
+       * that the party passes it, then found as a secret `hidden` this well.
+       */
+      kind: "cache";
+      chance: number;
+      hidden: number;
+      /** Logged when found: "<scout> notices <spotted>." */
+      spotted: string;
+    }
+  | {
+      /**
+       * Found by the Library: once every monster in `monsters` is Studied,
+       * `points` of research work out where it lies, and the next party on
+       * `floor` digs it out.
+       */
+      kind: "library";
+      monsters: readonly string[];
+      points: number;
+      /** News when the Library works it out. */
+      lead: string;
+      /** Logged when the party digs it out: "<hero> <dug>." */
+      dug: string;
+    }
+);

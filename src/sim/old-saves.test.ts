@@ -50,7 +50,15 @@ describe("saves from earlier versions", () => {
       expect(ix.alignment(h.alignment)).toBeTruthy();
     }
     // Filled in once on load (M7.19), so the game never checks for them missing.
-    for (const k of ["intel", "sightings", "workshops", "folk", "offers", "lairs"] as const)
+    for (const k of [
+      "intel",
+      "sightings",
+      "workshops",
+      "folk",
+      "offers",
+      "lairs",
+      "shards",
+    ] as const)
       expect(t[k]).toBeDefined();
     const elsewhere = [...t.trips.flatMap((x) => x.party), ...t.raids.flatMap((r) => r.defenders)];
     for (const h of elsewhere) {

@@ -217,6 +217,8 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
       lairs: old.lairs ?? {},
     };
   },
+  // M8.16: the Hearthstone's shards (DESIGN.md §20). Nothing found yet.
+  18: (_ix, old) => ({ ...old, version: 19, shards: {} }),
 };
 
 /**

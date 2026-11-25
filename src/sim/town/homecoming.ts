@@ -2,6 +2,7 @@
  * Home again (M7.02): a party climbs out of the pit, and the haul, XP,
  * records, wear and morale of the trip land in town. See launch.ts.
  */
+import { noteShards } from "./shards";
 import { type ExpeditionResult } from "../expedition";
 import { afterLeading, partyCommand } from "../leadership";
 import { learnFromKills } from "./research";
@@ -112,12 +113,14 @@ export function homecoming(ix: Index, t: TownState, o: Outing): void {
     !o.heroes.includes(h.id) || result.party.some((p) => p.id === h.id && p.condition !== "dead");
   const haggle = haggler(ix, { ...t, roster: t.roster.filter(back) });
   const fenced = fence(ix, t);
-  const recovered = result.haul.filter((h) => h.keep);
   const isMaterial = (h: HaulItem) => ix.item(h.item).slot === "material";
+  // Materials go to the store, kept or not: a shard of the Hearthstone is kept
+  // (DESIGN.md §20) and is still a material.
+  const recovered = result.haul.filter((h) => h.keep && !isMaterial(h));
   const materials: Record<string, number> = {};
-  for (const h of result.haul)
-    if (!h.keep && isMaterial(h)) materials[h.item] = (materials[h.item] ?? 0) + 1;
+  for (const h of result.haul) if (isMaterial(h)) materials[h.item] = (materials[h.item] ?? 0) + 1;
   addMaterials(t, materials);
+  noteShards(ix, t, result, true);
   // Coins into the purse; the rest waits in the debrief (M7.03). Morale and
   // the news go by what it's all worth at the Market, as before.
   const brought = bringHome(

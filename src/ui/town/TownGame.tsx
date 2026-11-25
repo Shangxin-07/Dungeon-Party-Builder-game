@@ -47,6 +47,7 @@ import { Market } from "./Market";
 import { Buildings } from "./Buildings";
 import { TownMap } from "./TownMap";
 import { Memorial } from "./Memorial";
+import { HearthstonePanel } from "./Hearthstone";
 import { CampPanel, PostsPanel } from "./Posts";
 import { ResearchPanel } from "./Research";
 import { WorkshopsPanel } from "./Workshops";
@@ -356,6 +357,7 @@ export function TownPlay({ initial }: { initial: Game }) {
           />
           {town.camp ? null : <PostsPanel town={town} act={act} />}
           {town.camp ? null : <ResearchPanel town={town} act={act} />}
+          {town.camp ? null : <HearthstonePanel town={town} />}
           <LostPanel town={town} act={act} />
           <FallenPanel town={town} act={act} />
         </>

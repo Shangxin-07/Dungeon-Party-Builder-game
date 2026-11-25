@@ -338,6 +338,43 @@ export function validateLibrary(lib: Library): string[] {
     for (const t of [l.fetch, l.hoard]) if (!lootIds.has(t)) err(`${w}: unknown loot table "${t}"`);
     if (l.calms < 0) err(`${w}: calms can't be negative`);
   }
+  // The Hearthstone's shards (DESIGN.md §20): a set per floor, every source findable.
+  ids("shard set", lib.shards ?? []);
+  const sources = new Set<string>();
+  const setFloors = new Set<number>();
+  for (const s of lib.shards ?? []) {
+    const w = `shard set "${s.id}"`;
+    if (!lib.floors.some((f) => f.depth === s.floor)) err(`${w}: no floor ${s.floor}`);
+    if (s.floor >= Math.max(...lib.floors.map((f) => f.depth)))
+      err(`${w}: the bottom floor has no stairs below it to seal`);
+    if (setFloors.has(s.floor)) err(`${w}: two shard sets for floor ${s.floor}`);
+    setFloors.add(s.floor);
+    const item = lib.items.find((i) => i.id === s.item);
+    if (!item) err(`${w}: unknown item "${s.item}"`);
+    else if (item.slot !== "material" || !item.tags.includes("shard"))
+      err(`${w}: "${s.item}" must be a material tagged "shard"`);
+    if (!s.shards.length) err(`${w}: needs at least one shard`);
+    for (const x of s.shards) {
+      const v = `${w} shard "${x.id}"`;
+      if (!ID.test(x.id)) err(`${v}: id must be kebab-case`);
+      if (sources.has(x.id)) err(`${v}: duplicate id`);
+      sources.add(x.id);
+      if (!lib.floors.some((f) => f.depth === x.floor)) err(`${v}: no floor ${x.floor}`);
+      if (x.kind === "bearer") {
+        if (!monsterIds.has(x.monster)) err(`${v}: unknown monster "${x.monster}"`);
+        if (!(x.chance > 0 && x.chance <= 1)) err(`${v}: chance must be above 0, at most 1`);
+        if (!(x.below > 0 && x.below <= 1)) err(`${v}: below must be above 0, at most 1`);
+        if (!(x.escort >= 0)) err(`${v}: escort can't be negative`);
+        if (!(x.stand >= 0)) err(`${v}: stand can't be negative`);
+      } else if (x.kind === "cache") {
+        if (!(x.chance > 0 && x.chance <= 1)) err(`${v}: chance must be above 0, at most 1`);
+      } else if (x.kind === "library") {
+        if (!x.monsters.length) err(`${v}: needs a monster to study`);
+        for (const m of x.monsters) if (!monsterIds.has(m)) err(`${v}: unknown monster "${m}"`);
+        if (!(x.points > 0)) err(`${v}: points must be positive`);
+      } else err(`${v}: unknown kind`);
+    }
+  }
   for (const i of lib.items)
     if (i.unlock && !monsterIds.has(i.unlock.monster))
       err(`item "${i.id}": unlocked by unknown monster "${i.unlock.monster}"`);

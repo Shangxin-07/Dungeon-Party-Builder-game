@@ -14,6 +14,10 @@
  *   right spell. Mastered: +25%, and its resistances are halved. A monster
  *   with a `ward` takes no damage at all until the guild reaches the ward's
  *   tier.
+ * - "shard:<id>", a shard of the Hearthstone the Library can find (DESIGN.md
+ *   §20, content/shards/): open once the monsters it needs are Studied; when
+ *   its points are in, the Library knows where it lies and the next party on
+ *   its floor digs it out.
  * - "shelf:<id>", a find from the haul the debrief sent to the Library (an
  *   unidentified trinket): once its points are in, it turns out to be
  *   whatever ItemResearch.becomes rolls, which goes to the store room.
@@ -34,6 +38,8 @@ import { type Desk, type ShelfItem, type TownState, TownError } from "./state";
 import { built, findHero, total } from "./read";
 import { edit, listWords, news, roll } from "./internal";
 import { leaveBench } from "./workshops";
+import { shardPlaces } from "../shards";
+import { shardStudyOpen, studyShard } from "./shards";
 
 /** Research desks the Library has (0 until it's built). */
 export const researchDesks = (ix: Index, town: TownState) => total(ix, town, "researchDesks");
@@ -50,10 +56,10 @@ export function studyRate(ix: Index, h: Hero): number {
 
 /** A topic the Library can work on, for the Research panel. */
 export interface Topic {
-  /** "monster:<id>" or "shelf:<id>". */
+  /** "monster:<id>", "shard:<id>" or "shelf:<id>". */
   id: string;
   name: string;
-  kind: "monster" | "shelf";
+  kind: "monster" | "shard" | "shelf";
   /** Points so far, and the total needed for the next step (Infinity when there's none). */
   points: number;
   need: number;
@@ -109,7 +115,21 @@ export function researchTopics(ix: Index, town: TownState): Topic[] {
       done: false,
     };
   });
-  return [...shelf, ...monsters];
+  // The Hearthstone's shards (DESIGN.md §20) come first: they're the story.
+  const shards: Topic[] = [];
+  for (const [id, { set, source }] of shardPlaces(ix)) {
+    if (source.kind !== "library" || !shardStudyOpen(ix, town, id)) continue;
+    shards.push({
+      id: `shard:${id}`,
+      name: `Where a ${ix.item(set.item).name} lies`,
+      kind: "shard",
+      points: town.shards[id]?.points ?? 0,
+      need: source.points,
+      unlocks: `Find where a shard of the Hearthstone lies, so a party on floor ${source.floor} can dig it out`,
+      done: false,
+    });
+  }
+  return [...shards, ...shelf, ...monsters];
 }
 
 /** Can this hero study today? At home and on their feet (an injury doesn't stop anyone reading). */
@@ -249,6 +269,7 @@ export function studyDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
     if (!topic) continue;
     const points = studyRate(ix, h);
     if (topic.kind === "monster") learnMonster(ix, t, topic.id.slice("monster:".length), points);
+    else if (topic.kind === "shard") studyShard(ix, t, topic.id.slice("shard:".length), points);
     else {
       const piece = t.research.shelf.find((x) => `shelf:${x.id}` === topic.id);
       if (piece) {

@@ -47,6 +47,8 @@ export type ExpeditionEventKind =
   | "holed"
   /** The party barricades the stairs below its floor (M7.16). */
   | "seal"
+  /** A shard of the Hearthstone found (DESIGN.md §20). */
+  | "shard"
   /** Raids on the town reuse the trip log format. */
   | "raid";
 
@@ -123,6 +125,11 @@ export interface ExpeditionResult {
    * on day `day` of the trip (0 = the day it set off).
    */
   sealed?: { floor: number; barricade: string; day: number };
+  /**
+   * Shards of the Hearthstone this trip found (DESIGN.md §20), by shard source
+   * id. Found means taken: in the haul, or lying with the party if it fell.
+   */
+  shards?: string[];
   log: ExpeditionEvent[];
   /** Where the party fell, if it was wiped. */
   wipeSite?: { floor: number; room: number };
@@ -254,6 +261,11 @@ export interface ExpeditionExtras {
   slainLairs?: readonly string[];
   /** How far the guild has researched each monster (M7.07): monster id -> tier 2 or 3. */
   research?: Readonly<Record<string, number>>;
+  /**
+   * Shards still to be found below (DESIGN.md §20), by shard source id: every
+   * bearer and cache not found yet, and the Library's leads.
+   */
+  shards?: readonly string[];
 }
 
 /** What the trip needs to know about its leader (M7.05). */

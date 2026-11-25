@@ -173,10 +173,14 @@ export class TripCare extends TripBase {
   /** If the haul doesn't fit, leave behind whatever looks least valuable per slot. */
   protected repack(): void {
     const room = this.capacity();
-    while (this.haul.length && this.load() > room) {
-      let worst = 0;
+    // Nobody leaves a shard of the Hearthstone behind (DESIGN.md §20).
+    const shard = (h: HaulItem) => this.ix.item(h.item).tags.includes("shard");
+    while (this.haul.some((h) => !shard(h)) && this.load() > room) {
+      let worst = -1;
       this.haul.forEach((h, i) => {
-        if (worthPerSlot(this.ix, h) <= worthPerSlot(this.ix, this.haul[worst]!)) worst = i;
+        if (shard(h)) return;
+        if (worst < 0 || worthPerSlot(this.ix, h) <= worthPerSlot(this.ix, this.haul[worst]!))
+          worst = i;
       });
       const [dropped] = this.haul.splice(worst, 1);
       const name = this.ix.item(dropped!.item).name.toLowerCase();
