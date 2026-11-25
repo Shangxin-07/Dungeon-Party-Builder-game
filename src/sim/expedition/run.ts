@@ -22,7 +22,7 @@ import type { FloorIntel } from "./report";
 import type { ExpeditionResult, ExpeditionExtras } from "./report";
 import { PARTY_HURT_BELOW, WANDER_CHANCE } from "./tuning";
 import { list } from "./trip";
-import { tripDays } from "./clock";
+import { startFloor, tripDays } from "./clock";
 import { TripRescue } from "./rescue";
 import { shardPlace, stoneOf } from "../shards";
 import { levelPower, rollEncounter } from "../encounter";
@@ -199,20 +199,31 @@ export class Expedition extends TripRescue {
       this.haul.push({ item: stone, value: def.value, estimate: def.value, keep: true });
     }
 
-    // The Mine Cage: ride past the top floors, but never the target floor, nor
-    // a floor a rescue party has to search.
-    this.first = Math.max(
-      1,
-      Math.min(1 + Math.floor(this.extras.lift ?? 0), targetFloor, site?.floor ?? targetFloor),
-    );
+    // The Mine Cage: ride past the top floors, and a forward camp's paths
+    // (M8.20) lead on down to it; but never past the target floor, nor a
+    // floor a rescue party has to search.
+    const camp = this.extras.camp;
+    const start = startFloor(targetFloor, this.extras.lift, camp, site?.floor ?? targetFloor);
+    this.first = start.first;
+    this.pathFloors = start.path;
     const time = this.ix.lib.time;
-    if (this.first > 1) {
+    if (start.cage) {
       this.emit(
         "depart",
-        `The party rides the cage down past ${this.first === 2 ? "floor 1" : `floors 1 to ${this.first - 1}`}.`,
+        `The party rides the cage down past ${start.cage === 1 ? "floor 1" : `floors 1 to ${start.cage}`}.`,
       );
-      this.pass(time.cagePerFloor * (this.first - 1));
+      this.pass(time.cagePerFloor * start.cage);
     }
+    if (start.path && camp) {
+      const from = start.cage + 1;
+      const to = start.first - 1;
+      this.emit(
+        "depart",
+        `The party takes the guild's paths down through ${from === to ? `floor ${to}` : `floors ${from} to ${to}`}.`,
+      );
+      this.pass(camp.path * start.path);
+    }
+    if (start.camp && camp) this.campRest(camp);
 
     for (let depth = this.first; depth <= targetFloor; depth++) {
       const floor = this.ix.floor(depth);
@@ -585,6 +596,22 @@ export class Expedition extends TripRescue {
     return this.goHome("returned");
   }
 
+  /** A night at the forward camp on the way down (M8.20): sleep, and the sickbay's care. */
+  protected campRest(camp: { floor: number; rest: number }): void {
+    this.depth = camp.floor;
+    this.emit(
+      "rest",
+      `The party spends the night at the guild's forward camp on floor ${camp.floor}.`,
+    );
+    for (const h of this.alive()) {
+      const hp = this.heal(h, Math.round((this.maxHp(h) * camp.rest) / 100));
+      const mana = this.restoreMana(h, Math.round((this.maxMana(h) * camp.rest) / 100));
+      const parts = [hp ? `+${hp} HP` : "", mana ? `+${mana} mana` : ""].filter(Boolean);
+      if (parts.length) this.emit("rest", `${h.name}: ${parts.join(", ")}.`);
+    }
+    this.pass(this.ix.lib.time.campHours, true);
+  }
+
   /** Climb back up. Cleared floors are quieter, but something may have wandered in. */
   protected goHome(outcome: "returned" | "retreated"): ExpeditionResult {
     this.roomNo = 0;
@@ -603,11 +630,16 @@ export class Expedition extends TripRescue {
       if (this.wiped) return this.finish("wiped");
     }
     this.depth = 0;
-    if (this.first > 1) {
-      this.pass(time.cagePerFloor * (this.first - 1));
+    if (this.pathFloors && this.extras.camp) {
+      this.pass(this.extras.camp.path * this.pathFloors);
+      this.emit("home", `They take the guild's paths up past the forward camp.`);
+    }
+    const cage = this.first - 1 - this.pathFloors;
+    if (cage > 0) {
+      this.pass(time.cagePerFloor * cage);
       this.emit(
         "home",
-        `The cage hauls them up the last ${this.first - 1 === 1 ? "floor" : `${this.first - 1} floors`}.`,
+        `The cage hauls them up the last ${cage === 1 ? "floor" : `${cage} floors`}.`,
       );
     }
     const back = list([...this.alive(), ...this.followers].map((h) => h.name));

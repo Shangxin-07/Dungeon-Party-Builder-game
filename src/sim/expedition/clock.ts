@@ -33,3 +33,32 @@ export function timeBelow(hours: number): string {
   ].filter(Boolean);
   return parts.join(", ");
 }
+
+/** A forward camp the party can walk down to (M8.20, a dig site on a held floor). */
+export interface ForwardCamp {
+  floor: number;
+  /** Hours a floor on the guild's paths, there and back. */
+  path: number;
+  /** Percent of HP and mana the party gets back sleeping there. */
+  rest: number;
+}
+
+/**
+ * Where a trip starts walking rooms (M6.21, M8.20): the Mine Cage carries the
+ * party past `lift` floors, and a forward camp's paths lead on down to the
+ * camp's floor. Never past the target floor, nor past `stop` (a floor a
+ * rescue party has to search). `cage` and `path` are the floors passed each
+ * way; `camp` is true when the party arrives at the camp to sleep on the way.
+ */
+export function startFloor(
+  target: number,
+  lift = 0,
+  camp?: ForwardCamp,
+  stop = target,
+): { first: number; cage: number; path: number; camp: boolean } {
+  const reach = Math.max(Math.floor(lift), camp?.floor ?? 0);
+  const first = Math.max(1, Math.min(1 + reach, target, stop));
+  const cage = Math.min(Math.floor(lift), first - 1);
+  const path = camp ? first - 1 - cage : 0;
+  return { first, cage, path, camp: !!camp && path > 0 && first - 1 === camp.floor };
+}

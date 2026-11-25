@@ -51,6 +51,8 @@ import type {
   OfferDef,
   OfferRules,
   RenownRules,
+  DigSiteDef,
+  DigRules,
 } from "./town";
 
 /** Everything the simulation needs, indexed by kind. */
@@ -115,6 +117,9 @@ export interface Library {
   offerRules: OfferRules;
   /** Renown and its ranks (M8.19). */
   renown: RenownRules;
+  /** Dig sites on held floors (M8.20). */
+  digSites: readonly DigSiteDef[];
+  digging: DigRules;
 }
 
 /** Identity helpers so definitions get full type checking and editor hints. */
@@ -162,6 +167,8 @@ export const defineRecipe = (def: RecipeDef): RecipeDef => def;
 export const defineOffer = <T extends OfferDef>(def: T): T => def;
 export const defineOfferRules = (def: OfferRules): OfferRules => def;
 export const defineRenownRules = (def: RenownRules): RenownRules => def;
+export const defineDigSite = (def: DigSiteDef): DigSiteDef => def;
+export const defineDigRules = (def: DigRules): DigRules => def;
 export const defineWorkshopRules = (def: WorkshopRules): WorkshopRules => def;
 
 export const defineTownsfolkRules = (def: TownsfolkRules): TownsfolkRules => def;

@@ -39,4 +39,5 @@ export type {
 } from "./report";
 export { DOWNED_LOAD } from "./tuning";
 export { runExpedition, planFloor, holedNight, breakOut } from "./run";
-export { tripDays, tripClock, timeBelow } from "./clock";
+export { tripDays, tripClock, timeBelow, startFloor } from "./clock";
+export type { ForwardCamp } from "./clock";

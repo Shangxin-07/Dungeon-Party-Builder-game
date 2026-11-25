@@ -42,6 +42,7 @@ import { payDay } from "./pay";
 import { sealsBroke } from "./seals";
 import { gatewayNews } from "./gateways";
 import { boundSeals } from "./renown";
+import { digDay } from "./digs";
 import { offersDay } from "./offers";
 import { folkDay, folkScared } from "./folk";
 import { tidyBenches, workshopDay } from "./workshops";
@@ -440,6 +441,7 @@ export function endOfDay(ix: Index, t: TownState, away: ReadonlySet<string>): vo
   checkCamp(ix, t);
   // A day at the benches is only part of a day's rest (M7.14).
   const worked = workshopDay(ix, t, away);
+  digDay(ix, t);
   for (const h of t.roster) {
     if (away.has(h.id)) continue;
     restHero(ix, h, worked.has(h.id) ? ix.lib.workshops.rest : 1);

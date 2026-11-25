@@ -26,6 +26,7 @@ import type {
   TraitDef,
   LairDef,
   BarricadeDef,
+  DigSiteDef,
   OfferDef,
 } from "../content/types";
 
@@ -53,6 +54,7 @@ export interface Index {
   lair(id: string): LairDef;
   barricade(id: string): BarricadeDef;
   offer(id: string): OfferDef;
+  digSite(id: string): DigSiteDef;
   /** The floor at this depth. */
   floor(depth: number): FloorDef;
 }
@@ -96,6 +98,7 @@ export function indexLibrary(lib: Library): Index {
       lair: table("lair", lib.lairs ?? []),
       barricade: table("barricade", lib.barricades ?? []),
       offer: table("offer", lib.offers ?? []),
+      digSite: table("dig site", lib.digSites ?? []),
       floor: (depth) => {
         const f = lib.floors.find((x) => x.depth === depth);
         if (!f) throw new Error(`No floor defined at depth ${depth}`);

@@ -146,6 +146,11 @@ import townsfolkRules from "./townsfolk";
 import townMap from "./townmap";
 import offerRules from "./offers";
 import renownRules from "./renown";
+import digRules from "./digging";
+import forwardCamp from "./digsites/forward-camp";
+import mineSite from "./digsites/mine";
+import shrineSite from "./digsites/shrine";
+import denSite from "./digsites/den";
 import coastCaravanOffer from "./offers/coast-caravan";
 import deepTradersOffer from "./offers/deep-traders";
 import oreContractOffer from "./offers/ore-contract";
@@ -784,6 +789,8 @@ export const library: Library = {
   offers,
   offerRules,
   renown: renownRules,
+  digSites: [forwardCamp, mineSite, shrineSite, denSite],
+  digging: digRules,
 };
 
 export { heroNames } from "./names";

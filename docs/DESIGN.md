@@ -1440,6 +1440,14 @@ All three, kept small and separate from gold (gold is the balance lever):
 - **Renown**, a town number shown in the header. It rises with each seal (and smaller deeds), and brings better recruits at the Tavern, more settlers, better caravans and contracts, and gates the top Guild Hall levels.
 - **A blessing per seal**, a small town-wide effect. Cleansed: holy, gentle (for example, faster healing, fewer bodies rising). Bound: stronger (for example, more loot, monsters fear the town) with a morale cost for Good heroes.
 
+**As built (M8.20, PR 5): dig sites.**
+- A floor is **held** while the gateway below it stands. A held floor has room for 1 site plus 1 for each floor deep (floor 1: 2, floor 3: 4), one of each kind (`content/digsites/`, `content/digging.ts`). Building or raising one costs gold and materials, then the diggers take its days (`town.digs`, TOWN_VERSION 23).
+- Sites only dig and work while the floor is quiet: at most 60% of its capacity. Trickle keeps a held floor stocked, so it has to be hunted to keep its sites going. A breach or a busy floor stops them; nothing is ever lost.
+- **Forward camp:** parties going deeper walk the guild's paths down to it (1 hour a floor, 45 minutes at level 2) instead of the floors' rooms, and sleep there on the way down, getting back half their HP and mana (all of it at level 2). The Mine Cage still wins where it goes further.
+- **Mine:** 1 iron ore a day (2 at level 2), plus a deep-silver every 5 days from floor 3 down (two at level 2).
+- **Shrine** (cleansed stones only): +1 morale a day for heroes at home, and the dead lie 2 days longer. **Den** (bound stones only): 4 XP a day for heroes at home.
+- The Dig sites panel on the Pit tab shows each held floor's sites and what can go up.
+
 **As built (M8.19, PR 4):**
 - **Renown** (`town.renown`, TOWN_VERSION 22) is shown in the town bar with its rank. Deeds add to it (`content/renown.ts`): a shard brought home 2, a Seal Stone set 10, a lair's beast killed 3, a contract delivered or a petition granted 1; a gateway breach takes 3 away. An old save starts with renown for the shards, stones and lairs it already has.
 - Each **rank** works like a building, and its effects add to the town's: *Known in the valley* (10) gives better recruits; *Talked of in the towns* (25) gives one more recruit a day, settlers 20 points more likely and offers 10 points more likely; *Famous* (45) gives a trained recruit a day, contracts paying 20% more, and opens a new sixth Guild Hall level (24 on the roster, parties planned for 12); *A legend* (70) gives better recruits again. Sealing floor 1 makes a guild Known, floors 1-2 Talked of, floors 1-3 Famous. Building levels can ask for renown (`BuildingLevel.renown`).

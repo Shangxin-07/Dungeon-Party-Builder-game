@@ -3,6 +3,7 @@
  */
 import { cantStone } from "./stones";
 import { blessingEffects, renownEffects } from "./renown";
+import { digEffects } from "./digging";
 import type { BuildingEffect, ItemDef, MaterialCost, PostEffect } from "../../content/types";
 import { dungeonDay } from "../dungeon";
 import { describeParty, partyAlignment } from "../alignment";
@@ -14,18 +15,18 @@ import { gearCheck } from "../report";
 import { isScouting, isSneaking, lairOf, sealOf, type StandingOrders } from "../expedition";
 import { knownLairs, lairSlain } from "../stealth";
 import { monsterTier } from "../research";
-import { tripDays } from "../expedition/clock";
+import { startFloor, tripDays, type ForwardCamp } from "../expedition/clock";
 import type { LostSite, Outing, TownState } from "./state";
 
 /**
  * Effects of every working building (damaged ones do nothing until
- * repaired), the guild's Renown ranks and the blessings of the gateways
- * that hold (M8.19).
+ * repaired), the guild's Renown ranks, the blessings of the gateways
+ * that hold (M8.19) and the working dig sites (M8.20).
  */
 export function effects(ix: Index, town: TownState): BuildingEffect[] {
   const out: BuildingEffect[] = [];
   for (const b of ix.lib.buildings) out.push(...buildingEffects(ix, town, b.id));
-  out.push(...renownEffects(ix, town), ...blessingEffects(ix, town));
+  out.push(...renownEffects(ix, town), ...blessingEffects(ix, town), ...digEffects(ix, town));
   return out;
 }
 
@@ -470,15 +471,22 @@ export function outingStatus(ix: Index, town: TownState, o: Outing): "out" | "ov
  * floors' rooms at their usual length, there and back, plus hunting. Never
  * from what actually happens, so it can't give the outcome away.
  */
-export function usualHours(ix: Index, orders: StandingOrders, lift = 0): number {
+export function usualHours(
+  ix: Index,
+  orders: StandingOrders,
+  lift = 0,
+  camp?: ForwardCamp,
+): number {
   const time = ix.lib.time;
   const target = orders.targetFloor;
-  const first = Math.max(1, Math.min(1 + Math.floor(lift), target));
+  const start = startFloor(target, lift, camp);
+  const first = start.first;
   const roomHours = (r: (typeof ix.lib.rooms)[number]) =>
     (r.hours ?? time.room) +
     (time.behaviours[r.behaviour] ?? 0) +
     (r.behaviour === "fight" ? time.fight.hours : 0);
-  let hours = 2 * time.cagePerFloor * (first - 1);
+  let hours = 2 * time.cagePerFloor * start.cage + 2 * (camp?.path ?? 0) * start.path;
+  if (start.camp) hours += time.campHours;
   for (let depth = first; depth <= target; depth++) {
     const floor = ix.floor(depth);
     const fixed = (floor.fixedRooms ?? []).map((id) => ix.room(id));
@@ -509,8 +517,8 @@ export function usualHours(ix: Index, orders: StandingOrders, lift = 0): number 
 }
 
 /** Days a trip with these orders usually takes (see usualHours). */
-export const usualDays = (ix: Index, orders: StandingOrders, lift = 0) =>
-  tripDays(ix.lib.time.startHour, usualHours(ix, orders, lift));
+export const usualDays = (ix: Index, orders: StandingOrders, lift = 0, camp?: ForwardCamp) =>
+  tripDays(ix.lib.time.startHour, usualHours(ix, orders, lift, camp));
 
 /** Things heroes are saying in town: complaints and wishes (DESIGN.md §6, §8). */
 export function grumbles(ix: Index, town: TownState): { hero: string; text: string }[] {
