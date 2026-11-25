@@ -193,7 +193,10 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
   const leads = !h.porter && cmd.leader?.id === h.id;
 
   return (
-    <li className={`hero-card compact${inParty ? " in-party" : ""}${open ? " open" : ""}`}>
+    <li
+      id={`hero-card-${h.id}`}
+      className={`hero-card compact${inParty ? " in-party" : ""}${open ? " open" : ""}`}
+    >
       <button
         type="button"
         className="hero-toggle"

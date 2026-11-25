@@ -13,6 +13,34 @@ export function openFold(id: string) {
   window.dispatchEvent(new CustomEvent<string>(OPEN_EVENT, { detail: id }));
 }
 
+/**
+ * Call `f` with the id of every panel opened with openFold: the town screen
+ * uses it to switch to the tab the panel is on. Returns the unsubscribe.
+ */
+export function onOpenFold(f: (id: string) => void): () => void {
+  const on = (e: Event) => f((e as CustomEvent<string>).detail);
+  window.addEventListener(OPEN_EVENT, on);
+  return () => window.removeEventListener(OPEN_EVENT, on);
+}
+
+/**
+ * Open a panel and bring `target` (an element id) into view with a flash.
+ * Two frames' wait, so a tab switched to by the open has drawn first.
+ */
+export function showFold(fold: string, target: string) {
+  openFold(fold);
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      const el = document.getElementById(target);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.remove("flash");
+      void el.getBoundingClientRect();
+      el.classList.add("flash");
+    }),
+  );
+}
+
 function remembered(): Record<string, boolean> {
   try {
     return JSON.parse(localStorage.getItem(KEY) ?? "{}") ?? {};

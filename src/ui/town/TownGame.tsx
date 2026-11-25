@@ -52,6 +52,30 @@ import { ResearchPanel } from "./Research";
 import { WorkshopsPanel } from "./Workshops";
 import { FolkPanel } from "./Folk";
 import { OffersPanel } from "./Offers";
+import { NeedsYou } from "./NeedsYou";
+import { foldTab, needsByTab, needsYou, TABS, type TabId } from "./needs";
+import { onOpenFold } from "../Fold";
+
+const TAB_KEY = "dpb-ui-tab";
+
+/** The tab this browser was last on (never in the save). */
+function rememberedTab(): TabId {
+  try {
+    const t = localStorage.getItem(TAB_KEY);
+    if (TABS.some((x) => x.id === t)) return t as TabId;
+  } catch {
+    // Blocked storage: start on the guild.
+  }
+  return "guild";
+}
+
+function rememberTab(t: TabId) {
+  try {
+    localStorage.setItem(TAB_KEY, t);
+  } catch {
+    // Private windows: the tab just isn't remembered.
+  }
+}
 
 /** A new game starts at the mining camp (the opening, DESIGN.md §8); it can be skipped on day 1. */
 export const freshTown = () => newTown(ix, heroNames, Date.now() % 2 ** 31, { camp: true });
@@ -151,6 +175,21 @@ export function TownPlay({ initial }: { initial: Game }) {
   const setTown = (t: TownState) => setGame((g) => ({ ...g, town: t }));
   const [watching, setWatching] = useState<false | { trip: TripReport } | RaidReport>(false);
   const [error, setError] = useState<string>();
+  const [tab, setTab] = useState<TabId>(rememberedTab);
+  const pickTab = (t: TabId) => {
+    setTab(t);
+    rememberTab(t);
+  };
+  const needs = needsYou(ix, town);
+  // Opening a panel from elsewhere (the map, the needs-you list) goes to its tab.
+  useEffect(
+    () =>
+      onOpenFold((id) => {
+        const t = foldTab(town, id);
+        if (t) pickTab(t);
+      }),
+    [town],
+  );
 
   useEffect(() => {
     writeSlot(slot, town);
@@ -238,74 +277,114 @@ export function TownPlay({ initial }: { initial: Game }) {
     );
   }
 
+  const launchParty = (prep?: (t: TownState) => TownState) => {
+    try {
+      setTown(launch(ix, prep ? prep(town) : town, heroNames));
+      setError(undefined);
+    } catch (e) {
+      if (e instanceof TownError) setError(e.message);
+      else throw e;
+    }
+  };
+  const onWatchTrip = (trip: TripReport) => {
+    setWatching({ trip });
+    window.scrollTo({ top: 0 });
+  };
+  const counts = needsByTab(town, needs);
+
   return (
     <section className="town" aria-label="Town">
-      <TownBar town={town} act={act} />
+      <div className="town-top">
+        <TownBar town={town} act={act} />
+        <nav className="tabs town-tabs" aria-label="Town">
+          {TABS.map((t) => {
+            // News holds the needs-you list, so its count is everything waiting.
+            const n = t.id === "news" ? needs.length : (counts[t.id] ?? 0);
+            return (
+              <button
+                key={t.id}
+                type="button"
+                className={tab === t.id ? "on" : ""}
+                aria-current={tab === t.id ? "page" : undefined}
+                title={t.holds}
+                onClick={() => pickTab(t.id)}
+              >
+                {t.name}
+                {n ? (
+                  <span className="tab-count" aria-label={`, ${n} waiting`}>
+                    {n}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
       {error ? (
         <p className="error" role="alert">
           {error}
         </p>
       ) : null}
-      <DebriefPanel
-        town={town}
-        act={act}
-        onWatch={(trip) => {
-          setWatching({ trip });
-          window.scrollTo({ top: 0 });
-        }}
-      />
-      <AwayPanel town={town} act={act} />
-      <TownMap town={town} />
-      <CampPanel town={town} act={act} />
-      {town.freeHires > 0 ? <Recruits town={town} act={act} /> : null}
-      {town.camp ? <PostsPanel town={town} act={act} /> : null}
-      <RestockPanel town={town} act={act} />
-      <TalkPanel town={town} />
-      <LostPanel town={town} act={act} />
-      <FallenPanel town={town} act={act} />
-      {town.camp ? null : <OffersPanel town={town} act={act} />}
-      {town.camp ? null : (
-        <PartyPanel
-          town={town}
-          act={act}
-          onLaunch={(prep) => {
-            try {
-              setTown(launch(ix, prep ? prep(town) : town, heroNames));
+      {tab === "guild" ? (
+        <>
+          <CampPanel town={town} act={act} />
+          {town.camp ? <PostsPanel town={town} act={act} /> : null}
+          {town.freeHires > 0 ? <Recruits town={town} act={act} /> : null}
+          <RestockPanel town={town} act={act} />
+          {town.camp ? null : <PartyPanel town={town} act={act} onLaunch={launchParty} />}
+          <Roster town={town} act={act} />
+          {town.freeHires > 0 ? null : <Recruits town={town} act={act} />}
+        </>
+      ) : null}
+      {tab === "town" ? (
+        <>
+          <TownMap town={town} />
+          <Buildings town={town} act={act} />
+          <Market town={town} act={act} />
+          {town.camp ? null : <WorkshopsPanel town={town} act={act} />}
+          {town.camp ? null : <FolkPanel town={town} act={act} />}
+        </>
+      ) : null}
+      {tab === "pit" ? (
+        <>
+          <PitPanel
+            town={town}
+            onWatchRaid={(r) => {
+              setWatching(r);
+              window.scrollTo({ top: 0 });
+            }}
+          />
+          {town.camp ? null : <PostsPanel town={town} act={act} />}
+          {town.camp ? null : <ResearchPanel town={town} act={act} />}
+          <LostPanel town={town} act={act} />
+          <FallenPanel town={town} act={act} />
+        </>
+      ) : null}
+      {tab === "news" ? (
+        <>
+          <NeedsYou needs={needs} />
+          <DebriefPanel town={town} act={act} onWatch={onWatchTrip} />
+          <AwayPanel town={town} act={act} />
+          {town.camp ? null : <OffersPanel town={town} act={act} />}
+          <TalkPanel town={town} />
+        </>
+      ) : null}
+      {tab === "books" ? (
+        <>
+          <Accounts town={town} />
+          <Memorial town={town} />
+          <Saves
+            slot={slot}
+            town={town}
+            onSwitch={(n, t) => {
+              setGame({ slot: n, town: t });
               setError(undefined);
-            } catch (e) {
-              if (e instanceof TownError) setError(e.message);
-              else throw e;
-            }
-          }}
-        />
-      )}
-      <PitPanel
-        town={town}
-        onWatchRaid={(r) => {
-          setWatching(r);
-          window.scrollTo({ top: 0 });
-        }}
-      />
-      {town.camp ? null : <PostsPanel town={town} act={act} />}
-      {town.camp ? null : <WorkshopsPanel town={town} act={act} />}
-      {town.camp ? null : <FolkPanel town={town} act={act} />}
-      {town.camp ? null : <ResearchPanel town={town} act={act} />}
-      <Roster town={town} act={act} />
-      {town.freeHires > 0 ? null : <Recruits town={town} act={act} />}
-      <Market town={town} act={act} />
-      <Buildings town={town} act={act} />
-      <Accounts town={town} />
-      <Memorial town={town} />
-      <Saves
-        slot={slot}
-        town={town}
-        onSwitch={(n, t) => {
-          setGame({ slot: n, town: t });
-          setError(undefined);
-          setWatching(false);
-        }}
-        onError={setError}
-      />
+              setWatching(false);
+            }}
+            onError={setError}
+          />
+        </>
+      ) : null}
     </section>
   );
 }

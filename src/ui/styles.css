@@ -530,16 +530,79 @@ footer {
   color: #e48a7a;
 }
 
-.townbar {
+/* The town bar and the tabs under it stay at the top while the tab scrolls. */
+.town-top {
   position: sticky;
   top: 0;
   z-index: 2;
+  margin-bottom: 20px;
+  padding-top: 4px;
+  background: var(--bg);
+}
+
+.town-tabs {
+  margin: 8px 0 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.town-tabs button {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 520px) {
+  .town-tabs button {
+    padding: 6px 9px;
+  }
+}
+
+.tab-count {
+  min-width: 1.3rem;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bad);
+  color: #1b1408;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.3rem;
+  text-align: center;
+}
+
+.needs-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.need {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: rgb(255 255 255 / 3%);
+}
+
+.need span {
+  flex: 1;
+}
+
+.need-warn {
+  border-left-color: var(--bad);
+}
+
+.townbar {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 20px;
   align-items: center;
   padding: 10px 16px;
-  margin-bottom: 20px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--panel);
