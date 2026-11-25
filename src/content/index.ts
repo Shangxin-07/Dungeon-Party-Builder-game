@@ -207,6 +207,23 @@ import healingPotionRecipe from "./recipes/healing-potion";
 import bandagesRecipe from "./recipes/bandages";
 import greaterHealingPotionRecipe from "./recipes/greater-healing-potion";
 import loreSkill from "./skills/lore";
+import blastingPowderAbility from "./abilities/blasting-powder";
+import rustBiteAbility from "./abilities/rust-bite";
+import goblinSapperMonster from "./monsters/goblin-sapper";
+import rustBeetleMonster from "./monsters/rust-beetle";
+import beetleShellSpecimen from "./specimens/beetle-shell";
+import minersLampItem from "./items/miners-lamp";
+import crossbowItem from "./items/crossbow";
+import brassFittingsItem from "./items/brass-fittings";
+import sapperLoot from "./loot/sapper-loot";
+import beetleLoot from "./loot/beetle-loot";
+import minersToolsLoot from "./loot/miners-tools";
+import ponyTackLoot from "./loot/pony-tack";
+import runawayCartRoom from "./rooms/runaway-cart";
+import toolStoreRoom from "./rooms/tool-store";
+import scavengerCrewEncounter from "./encounters/scavenger-crew";
+import rustBeetlesEncounter from "./encounters/rust-beetles";
+import pitPonyEvent from "./events/pit-pony";
 import goblinEarSpecimen from "./specimens/goblin-ear";
 import spiderFangSpecimen from "./specimens/spider-fang";
 import etchedSkullSpecimen from "./specimens/etched-skull";
@@ -398,6 +415,7 @@ export const materials: readonly ItemDef[] = [
 /** Specimens (M7.07, DESIGN.md §17.7): bits of monsters that feed the Library's research on them. */
 export const specimens: readonly ItemDef[] = [
   goblinEarSpecimen,
+  beetleShellSpecimen,
   spiderFangSpecimen,
   etchedSkullSpecimen,
   trollToothSpecimen,
@@ -475,6 +493,9 @@ export const items: readonly ItemDef[] = [
   // Makeshift kit from the mining camp (the opening, DESIGN.md §8).
   pickAxeItem,
   slingItem,
+  brassFittingsItem,
+  crossbowItem,
+  minersLampItem,
   workLeathersItem,
   // Holy and unholy gear (DESIGN.md §7): the Temple, the Black Market and events.
   holySymbolItem,
@@ -516,6 +537,8 @@ export const abilities: readonly AbilityDef[] = [
   shieldBashAbility,
   gnawAbility,
   acidSpitAbility,
+  rustBiteAbility,
+  blastingPowderAbility,
   webAbility,
   warCryAbility,
   callTheBroodAbility,
@@ -551,6 +574,8 @@ export const monsters: readonly MonsterDef[] = [
   giantRatMonster,
   goblinMonster,
   goblinArcherMonster,
+  rustBeetleMonster,
+  goblinSapperMonster,
   littleSlimeMonster,
   skeletonMonster,
   slimeMonster,
@@ -630,6 +655,8 @@ export const motivations: readonly MotivationDef[] = [
 export const encounters: readonly EncounterDef[] = [
   goblinBandEncounter,
   ratSwarmEncounter,
+  rustBeetlesEncounter,
+  scavengerCrewEncounter,
   skeletonPatrolEncounter,
   slimesEncounter,
   spiderNestEncounter,
@@ -644,6 +671,10 @@ export const lootTables: readonly LootTableDef[] = [
   behemothHoardLoot,
   trinketIdentifiedLoot,
   goblinLoot,
+  ponyTackLoot,
+  minersToolsLoot,
+  beetleLoot,
+  sapperLoot,
   // Events (DESIGN.md §7).
   strangersPurseLoot,
   shrineOfferingsLoot,
@@ -671,6 +702,8 @@ export const rooms: readonly RoomDef[] = [
   fallingRocksRoom,
   monsterLairRoom,
   oldChestRoom,
+  toolStoreRoom,
+  runawayCartRoom,
   quietPassageRoom,
   restSpotRoom,
   spikedPitRoom,
@@ -752,6 +785,7 @@ export const secrets: readonly SecretDef[] = [
 export const events: readonly EventDef[] = [
   woundedStrangerEvent,
   corneredGoblinEvent,
+  pitPonyEvent,
   minersShrineEvent,
   darkAltarEvent,
 ];

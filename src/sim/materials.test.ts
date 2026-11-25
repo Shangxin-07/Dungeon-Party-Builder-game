@@ -17,6 +17,7 @@ import {
   rest,
   upgrade,
   TownError,
+  settleByRule,
 } from "./town";
 import { validateLibrary } from "./validate";
 
@@ -75,7 +76,8 @@ describe("materials", () => {
       for (let d = 0; d < 3 || (cantLaunch(ix, t) && d < 30); d++) t = rest(ix, t, heroNames);
       if (cantLaunch(ix, t)) break;
       const before = { ...t.materials };
-      t = launchAndWait(ix, t, heroNames);
+      // Settle the debrief each time, as a player would (a specimen holds it).
+      t = settleByRule(ix, launchAndWait(ix, t, heroNames));
       const trip = t.lastTrip!.materials ?? {};
       for (const [id, n] of Object.entries(trip)) {
         expect(t.materials[id]).toBe((before[id] ?? 0) + n);
