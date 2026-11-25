@@ -50,6 +50,8 @@ export type ExpeditionEventKind =
   | "seal"
   /** A shard of the Hearthstone found (DESIGN.md §20). */
   | "shard"
+  /** At the Hearthstone's heart (M8.22). */
+  | "core"
   /** Raids on the town reuse the trip log format. */
   | "raid";
 
@@ -133,6 +135,11 @@ export interface ExpeditionResult {
   shards?: string[];
   /** The Seal Stone the party set (M8.17): on the stairs below `floor`, on trip day `day`. */
   stoneSet?: { floor: number; stone: string; day: number };
+  /**
+   * The party reached the Hearthstone's heart (M8.22) on this trip day, and
+   * whether it shut it off.
+   */
+  core?: { day: number; shut: boolean };
   log: ExpeditionEvent[];
   /** Where the party fell, if it was wiped. */
   wipeSite?: { floor: number; room: number };

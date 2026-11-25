@@ -5,7 +5,8 @@
  * that floor's shards.
  *
  * A chapter opens on the day its trigger is met: the guild starts delving,
- * enough shards are found, or a Seal Stone is set. Each opens once, ever.
+ * enough shards are found, a Seal Stone is set, or a party reaches the
+ * Hearthstone's heart (or shuts it off). Each opens once, ever.
  */
 import type { ChapterDef, StoryTrigger } from "../../content/types";
 import type { Index } from "../library";
@@ -21,6 +22,8 @@ export function storyDue(town: TownState, when: StoryTrigger): boolean {
       return Object.values(town.shards).filter((s) => s.found !== undefined).length >= when.count;
     case "sealed":
       return !!town.dungeon.stones[when.floor];
+    case "core":
+      return when.shut ? !!town.dungeon.core.shut : town.dungeon.core.reached > 0;
   }
 }
 

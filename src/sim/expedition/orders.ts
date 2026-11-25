@@ -67,6 +67,13 @@ export interface StandingOrders {
    * Only on an ordinary delve.
    */
   stone?: string;
+  /**
+   * Go down to the Hearthstone's heart and shut it off (M8.22, DESIGN.md
+   * §20): the target floor is the core's floor. Once the floor is walked, the
+   * party fights the heart's guardian, cornered, and shuts it off if it wins.
+   * Only on an ordinary delve.
+   */
+  core?: boolean;
 }
 
 /** A scout mission (M7.08): not on a search. */
@@ -92,6 +99,10 @@ export const stoneOrder = (orders: StandingOrders): string | undefined =>
   orders.rescue || orders.mission === "scout" || orders.mission === "sneak"
     ? undefined
     : orders.stone;
+
+/** Is this trip going for the Hearthstone's heart (M8.22)? */
+export const coreOrder = (orders: StandingOrders): boolean =>
+  !!orders.core && !orders.rescue && orders.mission !== "scout" && orders.mission !== "sneak";
 
 export const DEFAULT_ORDERS: StandingOrders = {
   targetFloor: 1,

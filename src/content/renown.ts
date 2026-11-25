@@ -10,7 +10,7 @@ import { defineRenownRules } from "./types";
  * is 32, Talked of; floors 1-3 is 48, Famous; floor 4 as well is about 70.
  */
 export default defineRenownRules({
-  deeds: { shard: 2, stone: 10, lair: 3, contract: 1, petition: 1, breach: -3 },
+  deeds: { shard: 2, stone: 10, lair: 3, contract: 1, petition: 1, breach: -3, core: 30 },
   ranks: [
     {
       at: 0,

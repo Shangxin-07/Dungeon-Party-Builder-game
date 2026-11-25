@@ -34,6 +34,7 @@ import type {
   BarricadeDef,
   ShardSetDef,
   SealingRules,
+  CoreRules,
   TimeRules,
   FloorDef,
   DungeonRules,
@@ -94,6 +95,8 @@ export interface Library {
   shards: readonly ShardSetDef[];
   /** Forging Seal Stones (M8.17): cleansed or bound. */
   sealing: SealingRules;
+  /** The Hearthstone's core and how it's shut off (M8.22). */
+  core: CoreRules;
   /** The trip clock (M7.01): hours below. */
   time: TimeRules;
   fallen: FallenRules;
@@ -203,6 +206,7 @@ export const defineLair = (def: LairDef): LairDef => def;
 export const defineBarricade = (def: BarricadeDef): BarricadeDef => def;
 export const defineShardSet = (def: ShardSetDef): ShardSetDef => def;
 export const defineSealingRules = (def: SealingRules): SealingRules => def;
+export const defineCoreRules = (def: CoreRules): CoreRules => def;
 /** A Seal Stone's item id (M8.17): one per shard set and way to forge it. */
 export const sealStoneId = (set: ShardSetDef, way: string) => `seal-stone-${set.id}-${way}`;
 

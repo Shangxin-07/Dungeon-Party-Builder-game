@@ -2,6 +2,7 @@
  * Reading the town: building effects, prices, wages, warnings. Nothing here changes state.
  */
 import { cantStone } from "./stones";
+import { cantCore } from "./core";
 import { blessingEffects, renownEffects } from "./renown";
 import { digEffects } from "./digging";
 import type { BuildingEffect, ItemDef, MaterialCost, PostEffect } from "../../content/types";
@@ -577,7 +578,11 @@ export function cantLaunch(ix: Index, town: TownState): string | undefined {
     if (lairSlain(town, lair) && isSneaking(town.orders))
       return `The ${ix.monster(def.monster).name} is dead: there's nothing to sneak past.`;
   }
-  return cantSeal(ix, town, town.orders) ?? cantStone(ix, town, town.orders);
+  return (
+    cantSeal(ix, town, town.orders) ??
+    cantStone(ix, town, town.orders) ??
+    cantCore(ix, town, town.orders)
+  );
 }
 
 /**

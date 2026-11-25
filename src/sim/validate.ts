@@ -425,6 +425,13 @@ export function validateLibrary(lib: Library): string[] {
     if (c.when.kind === "shards" && !(c.when.count >= 1)) err(`${w}: count must be at least 1`);
     if (c.reveal && !depthsKnown.has(c.reveal.floor)) err(`${w}: reveals unknown floor`);
   }
+  // The Hearthstone's heart (M8.22): on a real floor, guarded by a real monster.
+  if (lib.core) {
+    if (!depthsKnown.has(lib.core.floor)) err(`core: no floor ${lib.core.floor}`);
+    if (!monsterIds.has(lib.core.guardian)) err(`core: unknown guardian "${lib.core.guardian}"`);
+    if (!(lib.core.escort >= 0) || !(lib.core.walkHours >= 0) || !(lib.core.shutHours >= 0))
+      err("core: escort and hours can't be negative");
+  }
   // Renown (M8.19): ranks from 0 upwards; building levels that wait for it.
   const ranks = lib.renown?.ranks ?? [];
   if (lib.renown && ranks[0]?.at !== 0) err("renown: the first rank must be at 0");

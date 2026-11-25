@@ -257,10 +257,19 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
   23: (ix, old) => {
     const t = { ...old, story: {} } as unknown as TownState;
     const story = Object.fromEntries(
-      ix.lib.story.filter((c) => storyDue(t, c.when)).map((c) => [c.id, t.day]),
+      ix.lib.story
+        // Nobody could reach the heart before M8.22 (and the save has no record of it yet).
+        .filter((c) => c.when.kind !== "core" && storyDue(t, c.when))
+        .map((c) => [c.id, t.day]),
     );
     return { ...old, version: 24, story };
   },
+  // M8.22: the Hearthstone's heart, beating.
+  24: (_ix, old) => ({
+    ...old,
+    version: 25,
+    dungeon: { ...(old.dungeon as object), core: { reached: 0, shut: null } },
+  }),
 };
 
 /**

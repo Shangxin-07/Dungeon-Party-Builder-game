@@ -12,6 +12,7 @@ import { getRoom } from "../rooms";
 import {
   DEFAULT_ORDERS,
   type StandingOrders,
+  coreOrder,
   describeRetreat,
   lairOf,
   sealOf,
@@ -125,6 +126,8 @@ export class Expedition extends TripRescue {
   protected sealed?: ExpeditionResult["sealed"];
   /** The Seal Stone the party set (M8.17). */
   protected stoneSet?: ExpeditionResult["stoneSet"];
+  /** The party reached the Hearthstone's heart (M8.22). */
+  protected coreVisit?: ExpeditionResult["core"];
 
   /** See holedNight. */
   night(floor: number) {
@@ -188,6 +191,7 @@ export class Expedition extends TripRescue {
         `${loot === "everything" ? "carry everything" : "leave the junk"}` +
         `${this.sealing() ? `; seal the stairs below floor ${targetFloor} with ${aOrAn(this.sealing()!.name)}` : ""}` +
         `${this.stone() ? `; set the ${this.ix.item(this.stone()!).name} on the stairs below floor ${targetFloor}` : ""}` +
+        `${this.goingForCore() ? "; go down to the heart of the Hearthstone and shut it off" : ""}` +
         `${this.huntGoal() ? `; thin out floor ${targetFloor} by ${this.orders.clearPercent}%` : ""}.`,
     );
 
@@ -312,6 +316,8 @@ export class Expedition extends TripRescue {
     }
     this.setStone();
     if (this.wiped) return this.finish("wiped");
+    this.reachCore();
+    if (this.wiped) return this.finish("wiped");
     this.buildSeal();
     if (this.wiped) return this.finish("wiped");
     const hunted = this.hunt();
@@ -378,6 +384,53 @@ export class Expedition extends TripRescue {
       `The ${name} is set. The stairs below floor ${floor} are shut, and nothing will come up them again.`,
     );
     this.betweenRooms();
+  }
+
+  /** Is the party going for the Hearthstone's heart (M8.22), on its floor? */
+  protected goingForCore(): boolean {
+    return coreOrder(this.orders) && this.orders.targetFloor === this.ix.lib.core.floor;
+  }
+
+  /**
+   * Down to the Hearthstone's heart (M8.22, DESIGN.md §20), once its floor is
+   * walked. The Foreman's Shade shows the way; the heart's guardian rises
+   * with the floor's crew round it, and there's no slipping away. Win, and
+   * the party shuts the heart off for good.
+   */
+  protected reachCore(): void {
+    const up = this.conscious();
+    if (!this.goingForCore() || !up.length) return;
+    const core = this.ix.lib.core;
+    const floor = core.floor;
+    this.campIfTired();
+    this.roomNo++;
+    this.roomsVisited++;
+    this.pass(core.walkHours);
+    this.emit("core", core.text.reach);
+    this.coreVisit = { day: this.tripDay(), shut: false };
+    this.emit("core", core.text.guardian);
+    const here = this.floors?.[floor - 1];
+    const level = here?.level ?? floor;
+    const crew =
+      core.escort <= 0 || (here && here.population <= 0)
+        ? []
+        : rollEncounter(this.ix, floor, this.rng, {
+            level,
+            power: levelPower(level) * core.escort,
+            scale: this.fightScale(),
+            ...(here ? { max: here.population } : {}),
+          });
+    const winner = this.fight([core.guardian, ...crew], { cornered: true });
+    if (this.wiped) return;
+    if (winner !== "party" || this.fledFrom) {
+      this.emit("core", core.text.beaten);
+      this.betweenRooms();
+      return;
+    }
+    this.betweenRooms();
+    this.pass(core.shutHours);
+    this.coreVisit = { day: this.tripDay(), shut: true };
+    this.emit("core", core.text.shut);
   }
 
   /** The barricade the party carries down to seal the stairs with (M7.16), if it can. */
@@ -742,6 +795,7 @@ export class Expedition extends TripRescue {
       ...(this.lairVisit ? { lair: this.lairVisit } : {}),
       ...(this.sealed ? { sealed: this.sealed } : {}),
       ...(this.stoneSet ? { stoneSet: this.stoneSet } : {}),
+      ...(this.coreVisit ? { core: this.coreVisit } : {}),
       ...(this.shardsFound.length ? { shards: [...this.shardsFound] } : {}),
     };
   }

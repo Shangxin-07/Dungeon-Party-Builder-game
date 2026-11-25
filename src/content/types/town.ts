@@ -520,7 +520,7 @@ export interface RenownRules {
   ranks: readonly RenownRank[];
 }
 
-export type RenownDeed = "shard" | "stone" | "lair" | "contract" | "petition" | "breach";
+export type RenownDeed = "shard" | "stone" | "lair" | "contract" | "petition" | "breach" | "core";
 
 export interface RenownRank {
   at: number;
@@ -604,7 +604,9 @@ export type StoryTrigger =
   /** This many shards of the Hearthstone found, in all. */
   | { kind: "shards"; count: number }
   /** A Seal Stone set on the stairs below this floor. */
-  | { kind: "sealed"; floor: number };
+  | { kind: "sealed"; floor: number }
+  /** A party reached the Hearthstone's heart (M8.22): `shut`, and shut it off. */
+  | { kind: "core"; shut: boolean };
 
 /** How often offers turn up (M7.17, content/offers.ts). */
 export interface OfferRules {

@@ -1440,6 +1440,13 @@ All three, kept small and separate from gold (gold is the balance lever):
 - **Renown**, a town number shown in the header. It rises with each seal (and smaller deeds), and brings better recruits at the Tavern, more settlers, better caravans and contracts, and gates the top Guild Hall levels.
 - **A blessing per seal**, a small town-wide effect. Cleansed: holy, gentle (for example, faster healing, fewer bodies rising). Bound: stronger (for example, more loot, monsters fear the town) with a morale cost for Good heroes.
 
+**As built (M8.22, PR 7): the core.**
+- The heart lies on floor 5, the Old Delve (`content/core.ts`). A party can go for it only once every floor above is held by a Seal Stone whose gateway stands. In the party's orders, "The heart" offers "shut it off for good" on floor 5; it's a one-off order.
+- After the floor is walked, the Foreman's Shade leads the party down to the heart, and **the Hearthborn** rises: 1,100 HP, heavy armour, and the heart heals it fast whenever a blow hurts it badly. Half a usual group of the Delve's crew fights with it, and the party is cornered. Win, and the party spends 6 hours shutting the heart off.
+- Shut (`dungeon.core`, TOWN_VERSION 25), the bottom floor breeds no more and the dead no longer rise. Everything else plays on with what's left below. It's worth 30 renown. Leaving it beating is fine.
+- **Hard on purpose:** four heroes of level 8 (enough to seal floor 4) almost never win; four of level 12 win about 4 times in 10 and often die trying; four of level 16 about 8 in 10; five or six of level 10-12 about 8 or 9 in 10.
+- Two more chapters: reaching the heart (a page, and a reveal about what guards it) and shutting it off. The town then shows **the ending** once, with the last page, until the player chooses to keep playing.
+
 **As built (M8.21, PR 6): story chapters.**
 - Chapters are content (`content/story/`, `defineChapter`), each opened once by what the guild does: the first day of delving (not at the mining camp), the first shard brought home, and sealing each floor 1 to 4. `town.story` keeps the day each opened (TOWN_VERSION 24); an old save opens what it had already earned, without the news.
 - Each chapter is a news line in town (its own tone) and a page from the day book of Tamm, the old foreman, shown newest first in the Foreman's pages panel on the Pit tab.

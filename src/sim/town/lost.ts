@@ -14,6 +14,7 @@ import { guildFeels } from "./days";
 import { newBody } from "./bodies";
 import { placeSeal } from "./seals";
 import { stoneNews } from "./stones";
+import { coreNews } from "./core";
 import { noteShards } from "./shards";
 import { landAllKills } from "./launch";
 import { heroKills, keepTrip, ownResult, remember, tidySearch, tripXp } from "./homecoming";
@@ -103,6 +104,7 @@ export function hearOfLoss(
   landAllKills(t, o);
   placeSeal(ix, t, o, true);
   stoneNews(ix, t, o);
+  coreNews(ix, t, o);
   const result = o.result;
   // Any shards they found are gone from where they were (DESIGN.md §20).
   noteShards(ix, t, result, false);

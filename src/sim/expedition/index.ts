@@ -23,6 +23,7 @@ export {
   lairOf,
   sealOf,
   stoneOrder,
+  coreOrder,
 } from "./orders";
 export type { RetreatRule, LootRule, StandingOrders } from "./orders";
 export type {
