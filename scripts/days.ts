@@ -690,6 +690,8 @@ if (runs === 1) {
   let unpaid = 0;
   let settlers = 0;
   const secrets = { found: 0, missed: 0, gold: 0 };
+  // The Hearthstone's shards (DESIGN.md §20), found by kind, and floors with all of theirs.
+  const shards = { bearer: 0, cache: 0, library: 0, sets: 0 };
   const deepest: number[] = [];
   const levels = library.buildings.reduce((s, b) => s + b.levels.length - b.startLevel, 0);
   for (let i = 0; i < runs; i++) {
@@ -717,6 +719,10 @@ if (runs === 1) {
     secrets.found += t.secrets.found;
     secrets.missed += t.secrets.missed;
     secrets.gold += t.secrets.gold;
+    for (const set of library.shards) {
+      for (const x of set.shards) if (t.shards[x.id]?.found !== undefined) shards[x.kind]++;
+      if ((t.materials[set.item] ?? 0) >= set.shards.length) shards.sets++;
+    }
     rescued += tally.rescued;
     trapped += tally.trapped;
     tally.rescued = tally.trapped = 0;
@@ -752,6 +758,9 @@ if (runs === 1) {
       `${(unpaid / runs).toFixed(1)} days with unpaid pay\n` +
       `  hidden caches per town: ${(secrets.found / runs).toFixed(1)} found, ` +
       `${(secrets.missed / runs).toFixed(1)} walked past, worth ${(secrets.gold / runs).toFixed(0)} gold\n` +
+      `  shards per town: ${(shards.bearer / runs).toFixed(2)} from bearers, ` +
+      `${(shards.cache / runs).toFixed(2)} hidden, ${(shards.library / runs).toFixed(2)} from the Library; ` +
+      `${(shards.sets / runs).toFixed(2)} floors with every shard home\n` +
       `  the fallen per town: ${(tally.resurrected / runs).toFixed(1)} resurrected, ` +
       `${(tally.buried / runs).toFixed(1)} buried, ${(tally.rose / runs).toFixed(1)} rose, ` +
       `${(tally.putDown / runs).toFixed(1)} risen put down\n` +

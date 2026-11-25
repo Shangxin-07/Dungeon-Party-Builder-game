@@ -9,7 +9,7 @@ import type { HaulItem } from "../loot";
 import type { RaidReport } from "../raid";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 18;
+export const TOWN_VERSION = 19;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 export const PIT_HISTORY = 60;
@@ -36,6 +36,15 @@ export interface Trapped {
   hero: Hero;
   /** The last day a rescue party can reach them alive. */
   until: number;
+}
+
+/** What the guild has done about one of the Hearthstone's shards (DESIGN.md §20). */
+export interface ShardFind {
+  /** Day a party found it (it may still be below, if that party was lost). */
+  found?: number;
+  /** Library shards: research points so far, and the day the Library worked out where it is. */
+  points?: number;
+  lead?: number;
 }
 
 /** Where a party fell. A rescue run can bring back the living and the gear. */
@@ -327,6 +336,11 @@ export interface TownState {
   offerSeed?: number;
   /** Huge beasts' lairs (M7.08), by lair id: the day the beast was killed. */
   lairs: Record<string, { slain?: number }>;
+  /**
+   * The Hearthstone's shards (DESIGN.md §20), by shard source id (content/
+   * shards/): when each was found, and the Library's work on the ones it finds.
+   */
+  shards: Record<string, ShardFind>;
   /** What the posts brought in yesterday: materials by id, and gold. */
   gathered?: { day: number; materials: Record<string, number>; gold: number };
 }

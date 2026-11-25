@@ -13,6 +13,7 @@
  *   lost (hearOfLoss);
  * - deserters walk home on their own (deserters.ts).
  */
+import { openShards } from "./shards";
 import { isScouting, isSneaking, lairOf, runExpedition, type SiteVisit } from "../expedition";
 import { partyCommand } from "../leadership";
 import { researchTiers } from "./research";
@@ -89,6 +90,7 @@ export function launch(
     lift: liftFloors(ix, t),
     research: researchTiers(ix, t),
     slainLairs: Object.keys(t.lairs).filter((id) => t.lairs[id]?.slain),
+    shards: openShards(ix, t),
     leader: cmd.leader && {
       id: cmd.leader.id,
       disobey: cmd.disobey,

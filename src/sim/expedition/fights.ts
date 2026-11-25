@@ -13,6 +13,7 @@ import { type RoomContext } from "../rooms";
 import type { CarriedGear } from "./report";
 import { an, list } from "./trip";
 import { TripCare } from "./care";
+import { shardPlace } from "../shards";
 
 /** Rooms and fights. Extended by TripRescue. */
 export class TripFights extends TripCare {
@@ -107,15 +108,54 @@ export class TripFights extends TripCare {
 
   /** A group of monsters from the current floor, as it is today. Empty if it's been cleared out. */
   protected rollMonsters(): string[] {
+    this.bearerOut = undefined;
     const f = this.floors?.[this.depth - 1];
     const scale = this.fightScale();
     if (!f) return rollEncounter(this.ix, this.depth, this.rng, scale > 1 ? { scale } : {});
     if (f.population <= 0) return [];
-    return rollEncounter(this.ix, this.depth, this.rng, {
+    const monsters = rollEncounter(this.ix, this.depth, this.rng, {
       level: f.level,
       max: f.population,
       ...(scale > 1 ? { scale } : {}),
     });
+    return this.bearerJoins(monsters, f.population);
+  }
+
+  /**
+   * A shard-bearer (DESIGN.md §20) keeps to the back tunnels: only a party
+   * hunting its floor (a clear-the-floor order) runs into it, and only once
+   * the floor is thinned out. Then it may come out at the head of a group,
+   * with an escort cut down to its `escort` share of a usual group.
+   */
+  protected bearerJoins(monsters: string[], population: number): string[] {
+    if (!monsters.length || !this.inHunt) return monsters;
+    for (const id of this.extras.shards ?? []) {
+      if (this.shardsFound.includes(id)) continue;
+      const { source } = shardPlace(this.ix, id);
+      if (source.kind !== "bearer" || source.floor !== this.depth) continue;
+      if (population > this.ix.floor(this.depth).capacity * source.below) continue;
+      if (!this.shardRng.chance(source.chance)) continue;
+      const budget = this.usualPower() * source.escort;
+      const escort: string[] = [];
+      let power = 0;
+      for (const m of monsters) {
+        const p = this.ix.monster(m).power;
+        if (power + p > budget) continue;
+        escort.push(m);
+        power += p;
+      }
+      this.bearerOut = id;
+      return [source.monster, ...escort];
+    }
+    return monsters;
+  }
+
+  /** A shard of the Hearthstone goes in the packs: nobody leaves it behind. */
+  protected takeShard(id: string): void {
+    const def = this.ix.item(shardPlace(this.ix, id).set.item);
+    this.shardsFound.push(id);
+    this.haul.push({ item: def.id, value: def.value, estimate: def.value, keep: true });
+    this.repack();
   }
 
   /** Bigger parties meet bigger groups (M7.05): ×(1 + perFighter per fighter over `over`). */
@@ -133,9 +173,11 @@ export class TripFights extends TripCare {
   /** A group that looks bad (M7.05): well above a usual fight, or led by a boss. */
   protected looksBad(monsters: readonly string[], ratio: number): boolean {
     const power = monsters.reduce((s, id) => s + this.ix.monster(id).power, 0);
-    return (
-      power >= ratio * this.usualPower() || monsters.some((id) => !!this.ix.monster(id).variant)
-    );
+    const boss = (id: string) => {
+      const m = this.ix.monster(id);
+      return !!m.variant || m.tags.includes("shard-bearer");
+    };
+    return power >= ratio * this.usualPower() || monsters.some(boss);
   }
 
   /**
@@ -197,7 +239,28 @@ export class TripFights extends TripCare {
     opts: { surprise?: boolean; cornered?: boolean } = {},
   ): Side | "none" {
     if (monsters.length) this.count(monsters);
-    if (monsters.length && !opts.cornered && this.reacts(monsters)) return "none";
+    // The shard-bearer just rolled (DESIGN.md §20), if it's in this fight.
+    const out = this.bearerOut ? shardPlace(this.ix, this.bearerOut) : undefined;
+    this.bearerOut = undefined;
+    const bearer =
+      out?.source.kind === "bearer" && monsters.includes(out.source.monster) ? out : undefined;
+    if (bearer?.source.kind === "bearer") {
+      const name = this.ix.monster(bearer.source.monster).name;
+      this.emit("shard", bearer.source.shows.replace("{monster}", name));
+      // Sized up: a party not seasoned enough backs off down the tunnel.
+      const levels = this.conscious().reduce((n, h) => n + h.level, 0);
+      if (levels < bearer.source.stand) {
+        const who = this.leader()?.name ?? "Someone";
+        for (const id of monsters) this.seen.add(id);
+        this.emit(
+          "shard",
+          `${who} takes one look and calls the party back. Not with these heroes, not today.`,
+        );
+        return "none";
+      }
+    }
+    // Nobody talks a shard-bearer out of a fight.
+    if (monsters.length && !opts.cornered && !bearer && this.reacts(monsters)) return "none";
     if (monsters.length && !opts.cornered && this.sneakPast(monsters)) return "none";
     if (monsters.length && !opts.cornered && this.slipPast(monsters)) return "none";
     // Monsters on this floor may have picked up a lost hero's gear.
@@ -280,6 +343,15 @@ export class TripFights extends TripCare {
         this.repack();
       }
       for (const r of risen) if (result.risenSlain.includes(r.id)) this.putDown(r);
+      if (bearer?.source.kind === "bearer" && result.kills.includes(bearer.source.monster)) {
+        const who = this.conscious()[0]?.name ?? "Someone";
+        const name = this.ix.monster(bearer.source.monster).name;
+        this.emit(
+          "shard",
+          `${name} is dead. ${who} pries a shard of the Hearthstone from what's left.`,
+        );
+        this.takeShard(bearer.source.id);
+      }
     }
     // The leader goes down (M7.05): the party may lose heart.
     const leaderNow = lead && this.party.find((h) => h.id === lead);

@@ -38,6 +38,8 @@ describe("materials", () => {
       ...library.lootTables.flatMap((t) => t.entries.map((e) => e.item)),
       // M7.14: some are only made, like planks at the Sawmill.
       ...library.recipes.map((r) => r.makes),
+      // DESIGN.md §20: the Hearthstone's shards are found where content/shards/ says.
+      ...library.shards.map((s) => s.item),
     ]);
     const wanted = new Set(
       library.buildings.flatMap((b) =>
@@ -52,6 +54,8 @@ describe("materials", () => {
     for (const r of library.recipes) for (const m of Object.keys(r.materials)) wanted.add(m);
     // M7.16: stairhead barricades.
     for (const b of library.barricades) for (const m of Object.keys(b.materials)) wanted.add(m);
+    // Shards are wanted for their floor's Seal Stone (the next §20 PR's recipes).
+    for (const s of library.shards) wanted.add(s.item);
     for (const m of materials) {
       expect(dropped.has(m.id), m.id).toBe(true);
       expect(wanted.has(m.id), m.id).toBe(true);

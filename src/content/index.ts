@@ -7,6 +7,7 @@
 import type {
   LairDef,
   BarricadeDef,
+  ShardSetDef,
   OfferDef,
   AbilityDef,
   AlignmentDef,
@@ -162,6 +163,19 @@ import planksMaterial from "./materials/planks";
 import ironBandsMaterial from "./materials/iron-bands";
 import ironBandsRecipe from "./recipes/iron-bands";
 import plankBarricade from "./barricades/plank-barricade";
+import diggingsShards from "./shards/diggings";
+import warrensShards from "./shards/warrens";
+import boneHallsShards from "./shards/bone-halls";
+import floodedShaftsShards from "./shards/flooded-shafts";
+import shardDiggingsMaterial from "./materials/shard-diggings";
+import shardWarrensMaterial from "./materials/shard-warrens";
+import shardBoneHallsMaterial from "./materials/shard-bone-halls";
+import shardFloodedShaftsMaterial from "./materials/shard-flooded-shafts";
+import skragShardcrownMonster from "./monsters/skrag-shardcrown";
+import broodQueenMonster from "./monsters/brood-queen";
+import ossuaryKnightMonster from "./monsters/ossuary-knight";
+import oldDrownerMonster from "./monsters/old-drowner";
+import hollowSaintMonster from "./monsters/hollow-saint";
 import ironBoundGate from "./barricades/iron-bound-gate";
 import planksRecipe from "./recipes/planks";
 import woodenShieldRecipe from "./recipes/wooden-shield";
@@ -356,6 +370,10 @@ export const materials: readonly ItemDef[] = [
   // The deep floors (M6.21).
   glowcapMaterial,
   deepSilverMaterial,
+  shardDiggingsMaterial,
+  shardWarrensMaterial,
+  shardBoneHallsMaterial,
+  shardFloodedShaftsMaterial,
 ];
 
 /** Specimens (M7.07, DESIGN.md §17.7): bits of monsters that feed the Library's research on them. */
@@ -389,6 +407,17 @@ export const offers: readonly OfferDef[] = [
 
 /** Stairhead barricades (M7.16, DESIGN.md §18.3b): what a party can seal the stairs with. */
 export const barricades: readonly BarricadeDef[] = [plankBarricade, ironBoundGate];
+
+/**
+ * The Hearthstone's shards (DESIGN.md §20): a set per floor, each listing
+ * where its shards are. Sealing a floor takes all of its set.
+ */
+export const shards: readonly ShardSetDef[] = [
+  diggingsShards,
+  warrensShards,
+  boneHallsShards,
+  floodedShaftsShards,
+];
 
 /** Posts round the pit (DESIGN.md §8): duties for heroes at home. */
 export const posts: readonly PostDef[] = [barricadePost, lookoutPost, salvagePost, seamPost];
@@ -513,6 +542,11 @@ export const monsters: readonly MonsterDef[] = [
   sporecallerMonster,
   lostDelverMonster,
   foremansShadeMonster,
+  skragShardcrownMonster,
+  broodQueenMonster,
+  ossuaryKnightMonster,
+  oldDrownerMonster,
+  hollowSaintMonster,
 ];
 export const skills: readonly SkillDef[] = [
   appraisalSkill,
@@ -723,6 +757,7 @@ export const library: Library = {
   stealth: stealthRules,
   lairs,
   barricades,
+  shards,
   time: timeRules,
   fallen: fallenRules,
   transforms,

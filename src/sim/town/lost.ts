@@ -13,6 +13,7 @@ import { recordSightings } from "./fog";
 import { guildFeels } from "./days";
 import { newBody } from "./bodies";
 import { placeSeal } from "./seals";
+import { noteShards } from "./shards";
 import { landAllKills } from "./launch";
 import { heroKills, keepTrip, ownResult, remember, tidySearch, tripXp } from "./homecoming";
 import { deserterReturns, grudgeHolders, holdGrudges } from "./deserters";
@@ -101,6 +102,8 @@ export function hearOfLoss(
   landAllKills(t, o);
   placeSeal(ix, t, o, true);
   const result = o.result;
+  // Any shards they found are gone from where they were (DESIGN.md §20).
+  noteShards(ix, t, result, false);
   const site = t.sites.find((s) => s.id === o.site);
   const knowWhere = how !== "given-up";
   if (site) {

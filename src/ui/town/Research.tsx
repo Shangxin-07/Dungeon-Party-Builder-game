@@ -150,7 +150,11 @@ export function ResearchPanel({ town, act }: { town: TownState; act: Act }) {
                   {x.name}
                   <span className="muted small">
                     {" "}
-                    {x.kind === "shelf" ? "on the shelf" : TIER_NAMES[x.tier ?? 1]!.toLowerCase()}
+                    {x.kind === "shelf"
+                      ? "on the shelf"
+                      : x.kind === "shard"
+                        ? "the Hearthstone"
+                        : TIER_NAMES[x.tier ?? 1]!.toLowerCase()}
                   </span>
                 </td>
                 <td className="small">

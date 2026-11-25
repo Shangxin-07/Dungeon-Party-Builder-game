@@ -1392,11 +1392,18 @@ Other options, not chosen:
 
 Today's barricades (§18.3b) are temporary. A **seal** is the permanent version, earned over several trips.
 
-1. **Find the shards.** Each floor hides **3 shards** of the stone:
+1. **Find the shards.** Each floor hides shards of the stone: **3 for floors 1-3, 6 for floors 4-6**, and so on, more the deeper you go (Mike, 2026-11-25). The count is content: each floor's set (`content/shards/`) lists its shards and where each one is, and sealing takes them all. Floor 1's three:
    - one carried by the floor's **shard-bearer**, a named, stronger boss grown round it (built on monster `variant`s, but fixed and always on the floor until killed);
    - one in a **hidden cache** (the secrets system, M6.3);
    - one the **Library** finds: research on the floor's specimens tells you which room it's in.
-   Shards come home in the haul like materials, and a lost party's shards are carried by the monsters like scavenged gear.
+   Deeper sets mix the same three kinds (floor 4: two bearers, two caches, two Library finds). Shards come home in the haul like materials, and a lost party's shards are carried by the monsters like scavenged gear.
+
+   **As built (M8.16, PR 1):**
+   - **Shard-bearers keep to the back tunnels.** Only a party hunting a floor (a clear-the-floor order) meets one, and only once the floor is thinned to half its capacity; then 25% a hunting fight (20% on floor 4) it leads the group, with an escort half a usual group. The party **sizes it up first**: unless the heroes on their feet add up to enough levels (Skrag 14, the Brood Queen 18, the Ossuary Knight 26, floor 4's two 32), it backs off without a fight, and the guild now knows its name. So a fresh party never fights one, and a seasoned party that does still risks a death now and then. Bearers: Skrag Shardcrown (goblin, floor 1), the Brood Queen (floor 2), the Ossuary Knight (floor 3), Old Drowner and the Hollow Saint (floor 4).
+   - **Hidden shards** use the secrets rules: 8% a room that the party passes one on its floor, then the best scout spots it like a cache (hidden 45 on floor 2 for floor 1's, up to 70). They roll on their own random stream, so a trip with no shards left plays out exactly as before.
+   - **Library finds** are a research topic once the monsters they need are Studied (floor 1's: the Spider Matriarch, a floor-2 monster); when the points are in, the next party on its floor digs it out.
+   - Shards are materials tagged `shard`: never left behind when packs are full, a fleeing porter grabs them first, they go to the store room. The town remembers which shards are found (`town.shards`, TOWN_VERSION 19), and a shard a party still below has found can't be found by another.
+   - A **Hearthstone** panel on the Pit tab shows each floor's shards: how many are home, how many the Seal Stone takes, and what's known of where the rest are.
 2. **Forge the Seal Stone.** With all 3 shards of a floor, forge its Seal Stone as a workshop job: **cleansed** at the Temple or **bound** at the Black Market, with materials and work-days like any recipe. This is the alignment choice.
 3. **The sealing mission.** A party carries the stone to the stairhead below that floor, like a barricade (`orders.seal`), but the floor below **notices**: building it brings a set-piece fight, a surge up the stairs. Win and the seal is permanent; lose or turn back and the stone comes home (or is carried off by monsters if the party is lost).
 4. **The gateway.** The seal becomes a **gateway**, a building on the stairhead with its own levels. It has three settings:
@@ -1405,7 +1412,7 @@ Today's barricades (§18.3b) are temporary. A **seal** is the permanent version,
    - **Open:** everything comes up as before (rarely wanted, but there for completeness, or for a floor you want to farm hard).
    Left Shut with the floor below ignored too long, the gateway **strains**; past a limit it **breaches** (a flood like a broken barricade, and the gateway is damaged until repaired, never lost). The dungeon still gets worse; you choose where the pressure sits.
 
-✅ **DECIDED: no early seal** (Mike, 2026-11-25). Floor 1 can't be sealed straight after the camp; it's a mid-game goal, once the guild has floors 1 and 2 under control. Its shards should need trips to floor 2 or deeper (for example, the Library find or the cache lies below), and the floor-1 shard-bearer is tough for a fresh party.
+✅ **DECIDED: no early seal** (Mike, 2026-11-25). Floor 1 can't be sealed straight after the camp; it's a mid-game goal, once the guild has floors 1 and 2 under control. Its shards should need trips to floor 2 or deeper (for example, the Library find or the cache lies below), and the floor-1 shard-bearer is tough for a fresh party. (As built: floor 1's cache lies on floor 2, its Library find needs the Spider Matriarch Studied, and Skrag only stands and fights with about four level-3-4 heroes.)
 
 ### What holding a floor gives
 
@@ -1444,3 +1451,4 @@ Reaching the **Hearthstone's core** on the bottom floor is the end goal and shou
 - ✅ **DECIDED N: when floor 1 can be sealed** (Mike, 2026-11-25): not early; only once floors 1 and 2 are under control.
 - ✅ **DECIDED: gateway Trickle** (Mike, 2026-11-25): yes, as a training floor for new heroes.
 - ✅ **DECIDED: the core** (Mike, 2026-11-25): hard to reach; shutting it off is permanent and is the end goal; optional.
+- ✅ **DECIDED: more shards deeper down** (Mike, 2026-11-25): 3 a floor for floors 1-3, 6 for floors 4-6, and so on. Each floor's count is its own content list.

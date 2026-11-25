@@ -62,6 +62,16 @@ export class TripBase {
   protected risenSlain: string[] = [];
   protected disobeyed = 0;
   protected secretRng: Rng;
+  /**
+   * The Hearthstone's shards (DESIGN.md §20) roll on their own stream too, so
+   * a trip with none left to find plays out exactly as it did before them.
+   */
+  protected shardRng: Rng;
+  /** Shard sources found this trip, and the bearer leading the group just rolled. */
+  protected shardsFound: string[] = [];
+  protected bearerOut?: string;
+  /** Out hunting the side tunnels (a clear-the-floor order), where shard-bearers keep. */
+  protected inHunt = false;
   /** "Clear the floor" orders: the target floor's population on arrival, and rooms hunted. */
   protected huntStart = 0;
   protected hunts = 0;
@@ -108,6 +118,7 @@ export class TripBase {
     // Hidden caches roll on their own stream, so adding or tuning them
     // doesn't change what happens in the rest of the trip.
     this.secretRng = createRng((seed ^ 0x5ec2e7) >>> 0);
+    this.shardRng = createRng((seed ^ 0x54a2d5) >>> 0);
     this.floors = floors?.map((f) => ({ ...f }));
     this.party = party.map((h) => ({
       ...h,

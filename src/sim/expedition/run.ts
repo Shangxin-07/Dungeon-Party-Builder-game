@@ -17,6 +17,7 @@ import { PARTY_HURT_BELOW, WANDER_CHANCE } from "./tuning";
 import { list } from "./trip";
 import { tripDays } from "./clock";
 import { TripRescue } from "./rescue";
+import { shardPlace } from "../shards";
 
 /**
  * Simulate a whole trip. `floors` is the dungeon as it is today (index 0 =
@@ -223,6 +224,9 @@ export class Expedition extends TripRescue {
         if (!this.wiped && !this.onRescue()) this.search();
         if (!this.wiped) this.betweenRooms();
         if (this.wiped) return this.finish("wiped");
+
+        // The Library's leads (DESIGN.md §20): dug out on the way through the floor.
+        if (i === 0 && !this.onRescue()) this.digLeads();
 
         const site = this.extras.site;
         if (site && !this.siteVisited && site.floor === depth) {
@@ -479,11 +483,13 @@ export class Expedition extends TripRescue {
         `Hunting: ${killed()} of ${goal} killed. The party searches the side tunnels.`,
       );
       this.pass(this.ix.lib.time.hunt);
+      this.inHunt = true;
       if (lair) getRoom(lair.behaviour)(this.context(lair.id));
       else {
         const monsters = this.rollMonsters();
         if (monsters.length) this.fight(monsters);
       }
+      this.inHunt = false;
       if (!this.wiped) this.search();
       if (!this.wiped) this.betweenRooms();
       if (this.wiped) return this.finish("wiped");
@@ -623,7 +629,48 @@ export class Expedition extends TripRescue {
       ...(this.sneaking() ? { sneaked: this.sneaked } : {}),
       ...(this.lairVisit ? { lair: this.lairVisit } : {}),
       ...(this.sealed ? { sealed: this.sealed } : {}),
+      ...(this.shardsFound.length ? { shards: [...this.shardsFound] } : {}),
     };
+  }
+
+  /**
+   * A shard the Library has worked out the place of (DESIGN.md §20): the
+   * first party through its floor digs it out.
+   */
+  protected digLeads(): void {
+    for (const id of this.extras.shards ?? []) {
+      if (this.shardsFound.includes(id)) continue;
+      const { source } = shardPlace(this.ix, id);
+      if (source.kind !== "library" || source.floor !== this.depth) continue;
+      const who = this.best("scouting")?.hero ?? this.conscious()[0];
+      if (!who) return;
+      this.emit("shard", `${who.name} ${source.dug}.`);
+      this.pass(this.ix.lib.time.cache);
+      this.takeShard(id);
+    }
+  }
+
+  /**
+   * A shard hidden like a cache (DESIGN.md §20): `chance` each room that the
+   * party passes it, then the best scout has to spot it, as with secrets.
+   */
+  protected shardCaches(): void {
+    const rules = this.ix.lib.searching;
+    for (const id of this.extras.shards ?? []) {
+      if (this.shardsFound.includes(id)) continue;
+      const { source } = shardPlace(this.ix, id);
+      if (source.kind !== "cache" || source.floor !== this.depth) continue;
+      if (!this.shardRng.chance(source.chance)) continue;
+      const scout = this.best("scouting");
+      const chance = Math.min(
+        rules.maxChance,
+        Math.max(0, ((scout?.value ?? 0) - source.hidden) / rules.spread),
+      );
+      if (!scout || !this.shardRng.chance(chance)) continue;
+      this.emit("shard", `${scout.hero.name} notices ${source.spotted}.`);
+      this.pass(this.ix.lib.time.cache);
+      this.takeShard(id);
+    }
   }
 
   /**
@@ -632,6 +679,7 @@ export class Expedition extends TripRescue {
    * logged: the party doesn't know what it walked past.
    */
   protected search(): void {
+    this.shardCaches();
     const rules = this.ix.lib.searching;
     const rng = this.secretRng;
     if (!rng.chance(rules.chancePerRoom)) return;

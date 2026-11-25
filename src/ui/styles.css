@@ -247,6 +247,22 @@ footer {
   opacity: 0.75;
 }
 
+.log-x-shard {
+  margin: 6px 0;
+  padding-left: 8px;
+  border-left: 3px solid var(--accent);
+  color: var(--accent);
+}
+
+.shard-floor h4 {
+  margin: 10px 0 4px;
+}
+
+.shard-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
 .log-x-camp {
   margin: 6px 0;
   padding-left: 8px;
