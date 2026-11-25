@@ -1405,7 +1405,7 @@ Today's barricades (§18.3b) are temporary. A **seal** is the permanent version,
    - **Open:** everything comes up as before (rarely wanted, but there for completeness, or for a floor you want to farm hard).
    Left Shut with the floor below ignored too long, the gateway **strains**; past a limit it **breaches** (a flood like a broken barricade, and the gateway is damaged until repaired, never lost). The dungeon still gets worse; you choose where the pressure sits.
 
-**Assumed: sealing floor 1 is the first big goal after the camp is held** (recommended; Mike hadn't said). The floor-1 shard-bearer should be beatable by a well-kitted early party, so the first chapter lands in the first hour or two of play.
+✅ **DECIDED: no early seal** (Mike, 2026-11-25). Floor 1 can't be sealed straight after the camp; it's a mid-game goal, once the guild has floors 1 and 2 under control. Its shards should need trips to floor 2 or deeper (for example, the Library find or the cache lies below), and the floor-1 shard-bearer is tough for a fresh party.
 
 ### What holding a floor gives
 
@@ -1441,6 +1441,6 @@ Reaching the **Hearthstone's core** on the bottom floor is the end goal and shou
 ### Questions for Mike
 
 - **M: the lore.** Assumed A (the Hearthstone). B, C or D instead?
-- **N: when floor 1 can be sealed.** Assumed: the first big goal straight after the camp. Or only once floors 1 and 2 are both under control?
+- ✅ **DECIDED N: when floor 1 can be sealed** (Mike, 2026-11-25): not early; only once floors 1 and 2 are under control.
 - ✅ **DECIDED: gateway Trickle** (Mike, 2026-11-25): yes, as a training floor for new heroes.
 - ✅ **DECIDED: the core** (Mike, 2026-11-25): hard to reach; shutting it off is permanent and is the end goal; optional.
