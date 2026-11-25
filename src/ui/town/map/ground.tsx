@@ -1,6 +1,6 @@
 /**
  * The ground under the town map (M8.09): Mike found the plain backdrop bland.
- * Grass patches, tufts, stones and a ring of trees outside the palisade, all
+ * Grass patches, tufts, stones and a ring of trees round the town, all
  * scattered from a fixed seed so the map looks the same every time; worn
  * footpaths run from the pit to every building that stands. Nothing here is
  * clickable, and nothing is drawn where a plot, the road or the pit sits.
@@ -38,10 +38,10 @@ export function clearOf(map: TownMapDef, x: number, y: number, margin = 0): bool
   return true;
 }
 
-/** Inside the palisade's ring (scaled by `k`)? */
+/** On the town's trodden ground (scaled by `k`)? */
 function inside(map: TownMapDef, x: number, y: number, k = 1): boolean {
-  const dx = (x - map.pit.x) / (map.wall.rx * k);
-  const dy = (y - map.pit.y) / (map.wall.ry * k);
+  const dx = (x - map.pit.x) / (map.town.rx * k);
+  const dy = (y - map.pit.y) / (map.town.ry * k);
   return dx * dx + dy * dy < 1;
 }
 
@@ -69,7 +69,7 @@ export function groundScatter(map: TownMapDef): GroundScatter {
   }
   for (let i = 0; i < 220; i++) {
     const p = at();
-    // Fewer tufts on the trampled ground inside the ring.
+    // Fewer tufts on the town's trampled ground.
     if (inside(map, p.x, p.y, 0.9) && rnd() < 0.6) continue;
     if (clearOf(map, p.x, p.y)) out.tufts.push({ ...p, tall: rnd() < 0.3 });
   }
@@ -82,7 +82,7 @@ export function groundScatter(map: TownMapDef): GroundScatter {
     if (!inside(map, p.x, p.y, 1.05) && clearOf(map, p.x, p.y))
       out.flowers.push({ ...p, tone: Math.floor(rnd() * 3) });
   }
-  // Woods crowd the edges of the map, outside the ring, thinning inwards.
+  // Woods crowd the edges of the map, outside the town, thinning inwards.
   for (let i = 0; i < 400 && out.trees.length < 70; i++) {
     const p = at();
     const edge = Math.min(p.x, map.width - p.x, p.y * 1.4, (map.height - p.y) * 1.4);
@@ -112,22 +112,22 @@ export function Ground({ map, buildings }: { map: TownMapDef; buildings: readonl
           <ellipse cx={p.x + p.rx * 0.55} cy={p.y - p.ry * 0.3} rx={p.rx * 0.5} ry={p.ry * 0.7} />
         </g>
       ))}
-      {/* Inside the ring the ground is trodden bare. */}
+      {/* The town's ground is trodden bare. */}
       <ellipse
         cx={pit.x}
         cy={pit.y}
-        rx={map.wall.rx * 0.92}
-        ry={map.wall.ry * 0.9}
+        rx={map.town.rx * 0.92}
+        ry={map.town.ry * 0.9}
         fill="var(--map-trodden)"
       />
-      {/* Worn footpaths from the pit's lip to each building's door. */}
+      {/* Worn footpaths from the wall round the pit to each building's door. */}
       {buildings
         .filter((b) => b.at && b.level > 0)
         .map((b) => {
           const { x, y } = b.at!;
           const a = Math.atan2(y - pit.y, x - pit.x);
-          const sx = pit.x + Math.cos(a) * pit.rx * 1.45;
-          const sy = pit.y + Math.sin(a) * pit.ry * 1.5;
+          const sx = pit.x + Math.cos(a) * map.wall.rx;
+          const sy = pit.y + Math.sin(a) * map.wall.ry;
           const mx = (sx + x) / 2 + (y - pit.y) * 0.08;
           const my = (sy + y) / 2 - (x - pit.x) * 0.04;
           return (

@@ -184,8 +184,10 @@ export interface TownMapDef {
   height: number;
   /** The pit, dead centre. */
   pit: { x: number; y: number; rx: number; ry: number };
-  /** The palisade's ring round the town. */
+  /** The palisade's ring round the pit; the gate and watchtowers stand on it. */
   wall: { rx: number; ry: number };
+  /** The trodden ground of the town round the pit, where the buildings stand. */
+  town: { rx: number; ry: number };
   /** Plots by id. Each building with a plot stands with its door (bottom centre) here. */
   plots: Record<string, { x: number; y: number }>;
 }

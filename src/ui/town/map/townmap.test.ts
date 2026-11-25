@@ -83,6 +83,17 @@ describe("town map (M8.01)", () => {
     expect(shed.art.shape).toBe("house");
   });
 
+  it("the wall rings the pit, and every plot stands outside it (M8.14)", () => {
+    const { pit, wall, town, plots } = library.townMap;
+    expect(wall.rx).toBeGreaterThan(pit.rx * 1.6);
+    expect(wall.rx).toBeLessThan(town.rx);
+    expect(wall.ry).toBeLessThan(town.ry);
+    for (const [id, p] of Object.entries(plots)) {
+      const d = ((p.x - pit.x) / wall.rx) ** 2 + ((p.y - pit.y) / wall.ry) ** 2;
+      expect(d, `plot ${id}`).toBeGreaterThan(1);
+    }
+  });
+
   it("is display only: drawing never changes the town", () => {
     const t = grown();
     const before = JSON.stringify(t);
