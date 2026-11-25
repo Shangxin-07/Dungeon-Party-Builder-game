@@ -195,7 +195,7 @@ describe("stairs shut for good", () => {
       expect(out.dungeon.stones[1]?.stone).toBe(STONE);
       expect(out.news.some((n) => /Its gateway is Shut/.test(n.text))).toBe(true);
       expect(cantSeal(ix, out, { ...out.orders, targetFloor: 1, seal: "plank-barricade" })).toMatch(
-        /shut for good/,
+        /held by a Seal Stone/,
       );
     }
   });
