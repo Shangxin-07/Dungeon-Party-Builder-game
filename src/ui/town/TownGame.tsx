@@ -12,6 +12,7 @@ import {
   rosterSize,
   TownError,
   waitUntilBack,
+  renownRank,
   retainerBill,
   foodGrown,
   housing,
@@ -391,6 +392,24 @@ export function TownPlay({ initial }: { initial: Game }) {
   );
 }
 
+/** The guild's Renown (M8.19) in the town bar: the number, the rank, and what's next on hover. */
+function RenownBadge({ town }: { town: TownState }) {
+  const { rank, next } = renownRank(ix, town.renown);
+  const title = [
+    `${rank.name}: ${rank.summary}`,
+    next ? `At ${next.at}, ${next.name.toLowerCase()}: ${next.summary}` : "",
+    "Sealing floors spreads the guild's name most; shards, lairs, contracts and petitions add a little.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return (
+    <span title={title}>
+      Renown <strong>{town.renown}</strong>{" "}
+      <span className="muted">({rank.name.toLowerCase()})</span>
+    </span>
+  );
+}
+
 export function TownBar({ town, act }: { town: TownState; act: Act }) {
   return (
     <div className="townbar">
@@ -416,7 +435,7 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
           <strong>{town.folk.food ?? 0}</strong>
         </span>
       ) : null}
-      {town.camp ? <span>At the mining camp</span> : null}
+      {town.camp ? <span>At the mining camp</span> : <RenownBadge town={town} />}
       <span title="What holds back what climbs out of the pit tonight, with those below away">
         Defence <strong>{defence(ix, town, awaySet(town))}</strong>
       </span>

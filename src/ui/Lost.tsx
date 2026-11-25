@@ -12,6 +12,7 @@ import {
   resurrect,
   resurrectQuote,
   materialWords,
+  riseDays,
   type TownState,
 } from "../sim/town";
 import { risenName } from "../sim/fallen";
@@ -75,7 +76,7 @@ export function LostPanel({ town, act }: { town: TownState; act: Act }) {
                 );
               })}
               {s.bodies.map((b) => {
-                const rises = b.died + library.fallen.riseDays;
+                const rises = b.died + riseDays(ix, town);
                 return (
                   <p key={b.id} className={b.risen ? "small muted" : "small warn"}>
                     <strong>{b.hero.name}</strong>

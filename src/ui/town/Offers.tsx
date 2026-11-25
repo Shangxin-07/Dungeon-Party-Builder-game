@@ -84,7 +84,7 @@ function OfferCard({ town, act, o }: { town: TownState; act: Act; o: Offer }) {
         {o.hero ? `${o.hero.name}, passing through` : def.name}{" "}
         <span className={`muted small${left ? "" : " warn"}`}>({when})</span>
       </h4>
-      <p className="small">{offerHeadline(ix, o)}</p>
+      <p className="small">{offerHeadline(ix, town, o)}</p>
       {def.kind === "caravan" ? (
         <>
           <p className="small">Buying, as many as you have:</p>

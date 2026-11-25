@@ -108,6 +108,11 @@ export const MORALE_FACTS = [
   "evilDeeds",
   /** 1 if they carried unholy gear (tag "unholy") on the trip. */
   "unholyGear",
+  /**
+   * Bound Seal Stones holding stairs (M8.19, DESIGN.md §20): counted for
+   * everyone at home every day. Good heroes feel their hunger.
+   */
+  "boundSeals",
 ] as const;
 
 export type MoraleFact = (typeof MORALE_FACTS)[number];

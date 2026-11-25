@@ -20,6 +20,7 @@ import { stoneOf } from "../shards";
 import { type TownState, TownError } from "./state";
 import { book, edit, news, useMaterials } from "./internal";
 import { materialsShort, materialWords } from "./read";
+import { gainRenown } from "./renown";
 
 function gateway(town: TownState, floor: number): StoneSeal {
   const s = town.dungeon.stones[floor];
@@ -145,6 +146,7 @@ export function gatewaysNow(ix: Index, town: TownState) {
 
 /** Tonight's news from the gateways (changes `t`). */
 export function gatewayNews(
+  ix: Index,
   t: TownState,
   day: { breached?: readonly number[]; strained?: readonly number[] },
 ): void {
@@ -154,10 +156,12 @@ export function gatewayNews(
       `The gateway on the stairs below floor ${f} is creaking: the floor below is leaning on it. Hunt it down, let some through, or raise the gateway.`,
       "bad",
     );
-  for (const f of day.breached ?? [])
+  for (const f of day.breached ?? []) {
+    gainRenown(ix, t, "breach");
     news(
       t,
       `The gateway on the stairs below floor ${f} has breached. Everything held behind it is coming up, and it stands open until it's mended.`,
       "bad",
     );
+  }
 }

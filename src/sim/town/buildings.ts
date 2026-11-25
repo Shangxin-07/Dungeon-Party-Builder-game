@@ -14,6 +14,17 @@ export function nextLevel(ix: Index, town: TownState, buildingId: string) {
   return def.levels[level];
 }
 
+/** Why the town's name isn't big enough for this level yet (M8.19), or undefined. */
+export function needsRenown(
+  ix: Index,
+  town: TownState,
+  level: { renown?: number } | undefined,
+): string | undefined {
+  if (!level?.renown || town.renown >= level.renown) return undefined;
+  const rank = ix.lib.renown.ranks.find((r) => r.at >= level.renown!);
+  return `Needs ${level.renown} Renown${rank ? ` (${rank.name.toLowerCase()})` : ""}: the guild has ${town.renown}.`;
+}
+
 /** The work going on at a building, if any. */
 export const underConstruction = (town: TownState, buildingId: string) =>
   town.construction.find((c) => c.building === buildingId);
@@ -28,6 +39,8 @@ export function upgrade(ix: Index, town: TownState, buildingId: string): TownSta
   if (!next) throw new TownError("It can't be built any bigger yet.");
   if (underConstruction(town, buildingId)) throw new TownError("The builders are already at it.");
   if (town.damaged.includes(buildingId)) throw new TownError("Repair it first.");
+  const fame = needsRenown(ix, town, next);
+  if (fame) throw new TownError(fame);
   if (town.gold < next.cost) throw new TownError("Not enough gold.");
   const short = materialsShort(ix, town, next.materials);
   if (short) throw new TownError(`Not enough materials: short of ${short}.`);

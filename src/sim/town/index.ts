@@ -57,6 +57,10 @@ export {
   trainingXp,
   xpBonus,
   healingBonus,
+  recruitPicks,
+  recruitsToday,
+  riseDays,
+  contractReward,
   liftFloors,
   vaultShare,
   retainer,
@@ -130,7 +134,15 @@ export {
   planRescue,
   cancelRescue,
 } from "./parties";
-export { nextLevel, underConstruction, upgrade, builderHands, repair } from "./buildings";
+export {
+  nextLevel,
+  needsRenown,
+  underConstruction,
+  upgrade,
+  builderHands,
+  repair,
+} from "./buildings";
+export { blessings, boundSeals, gainRenown, renownRank } from "./renown";
 export { answerRaise, raiseWords, rest, waitUntilBack, launchAndWait } from "./days";
 export { payDay, payShares, splitShares } from "./pay";
 export { floorKnowledge, fogBand, pitMap, watchRange } from "./fog";

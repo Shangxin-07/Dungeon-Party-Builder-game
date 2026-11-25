@@ -137,6 +137,7 @@ export function newTown(
     offers: [],
     lairs: {},
     shards: {},
+    renown: 0,
   };
   // M6: the first heroes turn up untrained. The player picks their classes
   // and kits them out from the store room (or calls autoStart).

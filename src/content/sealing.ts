@@ -62,6 +62,15 @@ export default defineSealingRules({
       stat: "WIL",
       fact: "goodDeeds",
       blurb: "The priests burn the wrongness out of the shards and set them in one quiet stone.",
+      // Holy and gentle (DESIGN.md §20): wounds close faster, the dead lie stiller.
+      blessing: {
+        name: "Quiet earth",
+        text: "Injuries mend half a day faster each day, and the unburied dead lie 3 days longer before they rise.",
+        effects: [
+          { type: "healing", amount: 0.5 },
+          { type: "riseDelay", amount: 3 },
+        ],
+      },
     },
     {
       id: "bound",
@@ -71,6 +80,16 @@ export default defineSealingRules({
       fact: "evilDeeds",
       blurb:
         "The shards are bound together still burning, their hunger turned on whatever's below.",
+      // Stronger, at a price (DESIGN.md §20): more for the haul, and the
+      // monsters fear the town. Good heroes feel the stone's hunger every day.
+      blessing: {
+        name: "Hungry stone",
+        text: "Hauls sell for 5 points more, and what climbs out of the pit fears the town (4 defence). Good heroes lose a little morale each day.",
+        effects: [
+          { type: "fence", amount: 5 },
+          { type: "defence", amount: 4 },
+        ],
+      },
     },
   ],
 });

@@ -9,7 +9,7 @@ import type { HaulItem } from "../loot";
 import type { RaidReport } from "../raid";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 21;
+export const TOWN_VERSION = 22;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 export const PIT_HISTORY = 60;
@@ -343,6 +343,8 @@ export interface TownState {
    * shards/): when each was found, and the Library's work on the ones it finds.
    */
   shards: Record<string, ShardFind>;
+  /** How far the guild's name has gone (M8.19, DESIGN.md §20, content/renown.ts). */
+  renown: number;
   /** What the posts brought in yesterday: materials by id, and gold. */
   gathered?: { day: number; materials: Record<string, number>; gold: number };
 }

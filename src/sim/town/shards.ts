@@ -10,6 +10,7 @@ import type { Index } from "../library";
 import { monsterTier } from "../research";
 import { shardPlace, shardPlaces } from "../shards";
 import type { TownState } from "./state";
+import { gainRenown } from "./renown";
 import { news } from "./internal";
 
 /** Shard sources a party still out has found: the town doesn't know yet, but they're gone. */
@@ -49,6 +50,8 @@ export function noteShards(ix: Index, t: TownState, result: ExpeditionResult, ho
     t.shards[id] = { ...t.shards[id], found: t.day };
   }
   if (!home) return;
+  // The valley hears of every shard the guild brings home (M8.19).
+  gainRenown(ix, t, "shard", (result.shards ?? []).filter((id) => shardPlaces(ix).has(id)).length);
   const sets = new Set((result.shards ?? []).flatMap((id) => shardPlaces(ix).get(id)?.set ?? []));
   for (const set of sets) {
     const held = shardsHeld(t, set);

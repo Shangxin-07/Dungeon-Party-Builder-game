@@ -43,8 +43,9 @@ export function HearthstonePanel({ town, act }: { town: TownState; act: Act }) {
         floors. Gather all of a floor's shards to forge its Seal Stone (cleansed at the Temple, or
         bound at the Black Market), then send a party to set it on the stairs below that floor: the
         floor below fights back, but once it's set, the stone is a gateway: you choose what comes up
-        those stairs. Shard-bearers keep to the back tunnels: only a party hunting a thinned-out
-        floor meets one, and it won't stand and fight with a party that isn't seasoned enough.
+        those stairs. Every gateway that holds blesses the town, and every seal spreads the guild's
+        name. Shard-bearers keep to the back tunnels: only a party hunting a thinned-out floor meets
+        one, and it won't stand and fight with a party that isn't seasoned enough.
       </p>
       {floors.map(({ set, held: have, need: n, shards }) => (
         <div key={set.id} className="shard-floor">
@@ -169,6 +170,12 @@ function Gateway({ town, floor, act }: { town: TownState; floor: number; act: Ac
         The {ix.item(g.stone).name}, set on day {g.day}
         {g.by ? ` by ${g.by}` : ""}, is the gateway on the stairs below. Level {g.level}.
       </p>
+      {g.way ? (
+        <p className={g.damaged ? "muted" : undefined}>
+          Blessing, <strong>{g.way.blessing.name}</strong>
+          {g.damaged ? " (lost while it's breached)" : ""}: {g.way.blessing.text}
+        </p>
+      ) : null}
       {g.damaged ? (
         <p className="bad">
           Breached: it stands open, whatever it's set to, until it's mended (

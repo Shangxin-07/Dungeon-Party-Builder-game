@@ -16,6 +16,7 @@ import { stoneOrder, type StandingOrders } from "../expedition";
 import type { Index } from "../library";
 import { stoneOf } from "../shards";
 import { type Outing, type TownState, TownError } from "./state";
+import { gainRenown } from "./renown";
 import { edit, news, useMaterials } from "./internal";
 import { guildFeels } from "./days";
 
@@ -104,4 +105,5 @@ export function stoneNews(ix: Index, t: TownState, o: Outing): void {
     "good",
   );
   guildFeels(ix, t, { [place.way.fact]: 1 }, new Set());
+  gainRenown(ix, t, "stone");
 }

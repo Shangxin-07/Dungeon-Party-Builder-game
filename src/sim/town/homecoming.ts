@@ -21,6 +21,7 @@ import {
   newRecord,
 } from "./state";
 import { xpBonus, built, haggler, marketRate, haulPrice, fence, findHero, maxHp } from "./read";
+import { gainRenown } from "./renown";
 import { news, book, roll, listWords, gearOf, addMaterials } from "./internal";
 import type { HaulItem } from "../loot";
 import { cancelRescue } from "./parties";
@@ -470,6 +471,7 @@ function lairNews(ix: Index, t: TownState, o: Outing): void {
       const f = t.dungeon.floors[lair.floor - 1];
       if (f) f.population = Math.max(0, f.population - lair.calms);
       news(t, `${o.name} killed the ${beast}! Floor ${lair.floor} is quieter without it.`, "good");
+      gainRenown(ix, t, "lair");
       break;
     }
     case "fled":

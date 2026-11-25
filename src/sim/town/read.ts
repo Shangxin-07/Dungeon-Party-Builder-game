@@ -2,6 +2,7 @@
  * Reading the town: building effects, prices, wages, warnings. Nothing here changes state.
  */
 import { cantStone } from "./stones";
+import { blessingEffects, renownEffects } from "./renown";
 import type { BuildingEffect, ItemDef, MaterialCost, PostEffect } from "../../content/types";
 import { dungeonDay } from "../dungeon";
 import { describeParty, partyAlignment } from "../alignment";
@@ -16,10 +17,15 @@ import { monsterTier } from "../research";
 import { tripDays } from "../expedition/clock";
 import type { LostSite, Outing, TownState } from "./state";
 
-/** Effects of every working building (damaged ones do nothing until repaired). */
+/**
+ * Effects of every working building (damaged ones do nothing until
+ * repaired), the guild's Renown ranks and the blessings of the gateways
+ * that hold (M8.19).
+ */
 export function effects(ix: Index, town: TownState): BuildingEffect[] {
   const out: BuildingEffect[] = [];
   for (const b of ix.lib.buildings) out.push(...buildingEffects(ix, town, b.id));
+  out.push(...renownEffects(ix, town), ...blessingEffects(ix, town));
   return out;
 }
 
@@ -251,6 +257,14 @@ export const marketRate = (ix: Index, base: number, bonus = 0) =>
 
 /** Percentage points a fence (the Black Market, DESIGN.md §7) adds to the haul rate. */
 export const fence = (ix: Index, town: TownState) => total(ix, town, "fence");
+
+/** Days the unburied dead lie still before they rise (cleansed blessings add to it, M8.19). */
+export const riseDays = (ix: Index, town: TownState) =>
+  ix.lib.fallen.riseDays + total(ix, town, "riseDelay");
+
+/** What a contract pays now: more as the guild's name spreads (M8.19). */
+export const contractReward = (ix: Index, town: TownState, reward: number) =>
+  Math.round(reward * (1 + total(ix, town, "contractPay") / 100));
 
 /**
  * What the Market pays for one piece of a trip's haul worth `value`. Coins

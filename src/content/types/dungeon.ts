@@ -2,7 +2,7 @@
  * The dungeon: encounters, loot tables, rooms, floors, secrets, porters,
  * searching, population, hunting and raids.
  */
-import type { MaterialCost } from "./town";
+import type { BuildingEffect, MaterialCost } from "./town";
 import type { DamageType, Stat } from "./core";
 import type { MoraleFact } from "./morale";
 
@@ -432,6 +432,12 @@ export interface SealWay {
   stat: Stat;
   fact: Extract<MoraleFact, "goodDeeds" | "evilDeeds">;
   blurb: string;
+  /**
+   * What every gateway forged this way gives the town while it holds (M8.19,
+   * DESIGN.md §20): building effects, adding up seal by seal. A breached
+   * gateway gives nothing until it's mended.
+   */
+  blessing: { name: string; text: string; effects: readonly BuildingEffect[] };
 }
 
 /** How Seal Stones are forged (content/sealing.ts). */
