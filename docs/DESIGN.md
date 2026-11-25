@@ -1370,7 +1370,7 @@ The only lore so far is "the bottom floor keeps breeding". There's no reason why
 
 ### The lore: the Hearthstone
 
-**Assumed: option A**, recommended. Mike hadn't picked one explicitly when this was written; the other options are kept below in case he changes his mind.
+✅ **DECIDED M: option A** (Mike, 2026-11-25). The other options are kept below for reference.
 
 Under the Old Delve lay a warding stone, the **Hearthstone**. It kept the deep quiet by *giving life*: things down there slept, healed and stayed put. The miners chased a deep-silver vein into it and cracked it. Its virtue now runs wrong: it pours life out without limit, so the deep breeds beasts, and it won't let the dead lie still. The shards blew up through the floors as it broke, and the strongest creatures on each floor grew round them.
 
@@ -1440,7 +1440,7 @@ Reaching the **Hearthstone's core** on the bottom floor is the end goal and shou
 
 ### Questions for Mike
 
-- **M: the lore.** Assumed A (the Hearthstone). B, C or D instead?
+- ✅ **DECIDED M: the lore** (Mike, 2026-11-25): A, the Hearthstone.
 - ✅ **DECIDED N: when floor 1 can be sealed** (Mike, 2026-11-25): not early; only once floors 1 and 2 are under control.
 - ✅ **DECIDED: gateway Trickle** (Mike, 2026-11-25): yes, as a training floor for new heroes.
 - ✅ **DECIDED: the core** (Mike, 2026-11-25): hard to reach; shutting it off is permanent and is the end goal; optional.
