@@ -212,7 +212,13 @@ export function validateLibrary(lib: Library): string[] {
         err(`${w}: variant chance must be above 0 and at most 1`);
     }
     passives(w, m.passives);
-    for (const t of m.triggers ?? []) actives(w, t.effects);
+    for (const t of m.triggers ?? []) {
+      actives(w, t.effects);
+      // A monster that gets back up every time would never die.
+      if (t.on === "slain" && !t.once) err(`${w}: a "slain" trigger must be once`);
+      if (t.on === "slain" && !t.effects.some((e) => e.type === "heal"))
+        err(`${w}: a "slain" trigger must heal`);
+    }
     if (m.loot && !lootIds.has(m.loot)) err(`${w}: unknown loot table "${m.loot}"`);
     const pts = m.research?.points;
     if (pts && !(pts[0] > 0 && pts[1] > pts[0]))

@@ -138,6 +138,8 @@ export class BattleEffects extends BattleBase {
         target.statuses = [];
         this.emit({ kind: "downed", target: target.uid, text: `${target.name} goes down!` });
         this.checkExposed();
+      } else if (this.cheatsDeath(target, type)) {
+        // Back on its feet (a "slain" trigger): not a kill yet.
       } else {
         target.state = "dead";
         if (target.monsterId) this.kills.push(target.monsterId);
@@ -169,6 +171,25 @@ export class BattleEffects extends BattleBase {
       this.emit({ kind: "exposed", text });
     }
     this.exposed = open;
+  }
+
+  /**
+   * A "slain" trigger (§21): the bones pull themselves back together, unless
+   * the killing blow was of a kind that finishes them. True if it got up.
+   */
+  protected cheatsDeath(f: Fighter, type: DamageType): boolean {
+    const i = f.triggers.findIndex(
+      (t, n) =>
+        t.on === "slain" && !(t.once && f.firedTriggers.has(n)) && !t.unless?.includes(type),
+    );
+    if (i < 0) return false;
+    const t = f.triggers[i]!;
+    f.firedTriggers.add(i);
+    if (t.message)
+      this.emit({ kind: "action", actor: f.uid, text: t.message.replace("{self}", f.name) });
+    this.applyEffects(f, f, t.effects, false);
+    if (f.hp <= 0) f.hp = 1;
+    return true;
   }
 
   protected fireTriggers(f: Fighter, amount: number): void {

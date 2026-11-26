@@ -260,3 +260,46 @@ describe("a floor's fighting ground (§21)", () => {
     expect(hits(ground)).toBeGreaterThan(hits());
   });
 });
+
+describe("the restless dead (§21)", () => {
+  it("get back up once, unless the killing blow breaks, burns or blesses them", () => {
+    let rose = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const r = runCombat(ix, party(seed), ["restless-bones"], { seed });
+      const ups = r.log.filter((e) => /drag themselves back together/.test(e.text));
+      expect(ups.length).toBeLessThanOrEqual(1);
+      rose += ups.length;
+      // Getting up isn't a kill: one set of bones, at most one kill.
+      expect(r.kills.length).toBeLessThanOrEqual(1);
+    }
+    expect(rose).toBeGreaterThan(0);
+  });
+
+  it("never get up from a crushing, fire or holy killing blow", () => {
+    const lastHit = (log: CombatEvent[], before: number) =>
+      log
+        .slice(0, before)
+        .reverse()
+        .find((x) => x.kind === "damage" && x.text.startsWith("Restless Bones"));
+    let checked = 0;
+    for (let seed = 1; seed <= 60; seed++) {
+      // Half the party swings maces, so some killing blows crush.
+      const heroes = party(seed).map((h, i) =>
+        i % 2 ? h : { ...h, equipment: { ...h.equipment, weapon: "mace" } },
+      );
+      const r = runCombat(ix, heroes, ["restless-bones"], { seed });
+      r.log.forEach((e, i) => {
+        if (!/drag themselves back together/.test(e.text)) return;
+        const blow = lastHit(r.log, i);
+        expect(blow?.text).not.toMatch(/crushing|fire|holy/);
+        checked++;
+      });
+      const killed = r.log.find((e) => e.kind === "killed");
+      if (killed) {
+        const blow = lastHit(r.log, r.log.indexOf(killed));
+        if (blow && /crushing|fire|holy/.test(blow.text)) checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(5);
+  });
+});

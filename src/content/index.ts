@@ -239,6 +239,20 @@ import cocoonedDelverRoom from "./rooms/cocooned-delver";
 import houndPackEncounter from "./encounters/hound-pack";
 import lurkerWebEncounter from "./encounters/lurker-web";
 import webbedGoblinEvent from "./events/webbed-goblin";
+import drainedStatus from "./statuses/drained";
+import wightTouchAbility from "./abilities/wight-touch";
+import restlessBonesMonster from "./monsters/restless-bones";
+import wightMonster from "./monsters/wight";
+import wightShroudSpecimen from "./specimens/wight-shroud";
+import boneMailItem from "./items/bone-mail";
+import silveredMaceItem from "./items/silvered-mace";
+import wightLoot from "./loot/wight-loot";
+import graveGoodsLoot from "./loot/grave-goods";
+import boneStacksRoom from "./rooms/bone-stacks";
+import ossuaryNicheRoom from "./rooms/ossuary-niche";
+import restlessDeadEncounter from "./encounters/restless-dead";
+import wightAndBonesEncounter from "./encounters/wight-and-bones";
+import mourningGhostEvent from "./events/mourning-ghost";
 import goblinEarSpecimen from "./specimens/goblin-ear";
 import spiderFangSpecimen from "./specimens/spider-fang";
 import etchedSkullSpecimen from "./specimens/etched-skull";
@@ -430,6 +444,7 @@ export const materials: readonly ItemDef[] = [
 /** Specimens (M7.07, DESIGN.md §17.7): bits of monsters that feed the Library's research on them. */
 export const specimens: readonly ItemDef[] = [
   goblinEarSpecimen,
+  wightShroudSpecimen,
   houndToothSpecimen,
   beetleShellSpecimen,
   spiderFangSpecimen,
@@ -509,6 +524,8 @@ export const items: readonly ItemDef[] = [
   // Makeshift kit from the mining camp (the opening, DESIGN.md §8).
   pickAxeItem,
   slingItem,
+  silveredMaceItem,
+  boneMailItem,
   antivenomItem,
   silkCloakItem,
   brassFittingsItem,
@@ -555,6 +572,7 @@ export const abilities: readonly AbilityDef[] = [
   shieldBashAbility,
   gnawAbility,
   acidSpitAbility,
+  wightTouchAbility,
   hamstringAbility,
   rustBiteAbility,
   blastingPowderAbility,
@@ -580,6 +598,7 @@ export const statuses: readonly StatusDef[] = [
   sunderedStatus,
   bleedingStatus,
   webbedStatus,
+  drainedStatus,
   venomWardStatus,
   hobbledStatus,
   emboldenedStatus,
@@ -595,6 +614,8 @@ export const monsters: readonly MonsterDef[] = [
   giantRatMonster,
   goblinMonster,
   goblinArcherMonster,
+  wightMonster,
+  restlessBonesMonster,
   webLurkerMonster,
   tunnelHoundMonster,
   rustBeetleMonster,
@@ -678,6 +699,8 @@ export const motivations: readonly MotivationDef[] = [
 export const encounters: readonly EncounterDef[] = [
   goblinBandEncounter,
   ratSwarmEncounter,
+  wightAndBonesEncounter,
+  restlessDeadEncounter,
   lurkerWebEncounter,
   houndPackEncounter,
   rustBeetlesEncounter,
@@ -696,6 +719,8 @@ export const lootTables: readonly LootTableDef[] = [
   behemothHoardLoot,
   trinketIdentifiedLoot,
   goblinLoot,
+  graveGoodsLoot,
+  wightLoot,
   cocoonLoot,
   houndLoot,
   ponyTackLoot,
@@ -729,6 +754,8 @@ export const rooms: readonly RoomDef[] = [
   fallingRocksRoom,
   monsterLairRoom,
   oldChestRoom,
+  ossuaryNicheRoom,
+  boneStacksRoom,
   cocoonedDelverRoom,
   webCurtainRoom,
   toolStoreRoom,
@@ -814,6 +841,7 @@ export const secrets: readonly SecretDef[] = [
 export const events: readonly EventDef[] = [
   woundedStrangerEvent,
   corneredGoblinEvent,
+  mourningGhostEvent,
   webbedGoblinEvent,
   pitPonyEvent,
   minersShrineEvent,

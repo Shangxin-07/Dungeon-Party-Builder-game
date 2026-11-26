@@ -40,7 +40,10 @@ describe("floors", () => {
       floorOdds(ix, floor).find((o) => o.monster === id)?.share ?? 0;
     expect(share(2, "cave-spider")).toBeGreaterThan(share(3, "cave-spider"));
     expect(share(3, "skeleton")).toBeGreaterThan(share(2, "skeleton"));
-    expect(share(3, "skeleton")).toBeGreaterThan(0.4);
+    // The Bone Halls are the dead's: skeletons, restless bones and wights (§21).
+    const dead = ["skeleton", "restless-bones", "wight"].reduce((n, id) => n + share(3, id), 0);
+    expect(dead).toBeGreaterThan(0.4);
+    expect(share(3, "restless-bones")).toBeGreaterThan(share(4, "restless-bones"));
   });
 });
 
