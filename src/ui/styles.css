@@ -2489,3 +2489,23 @@ sup.down {
     max-height: min(620px, calc(100vh - 24px));
   }
 }
+
+/* Materials as icons with counts (town offers). */
+.material-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  vertical-align: middle;
+}
+
+.material-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.offer li .icon,
+.offer h4 .icon {
+  vertical-align: middle;
+  margin-right: 6px;
+}
