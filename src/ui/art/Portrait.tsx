@@ -35,18 +35,28 @@ const ROWS: Record<Layer, number> = {
 const HIDES_HAIR = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13]);
 
 /**
- * The heads aren't all built alike: wide heads have their ears further out,
- * and mouths sit a pixel or two higher or lower (M8.34). Details that hang off
- * an ear or a mouth move with them, in 96px cell pixels, by head.
+ * The heads aren't all built alike: wide heads (1, 5) reach further out, ears
+ * and mouths and eyes sit a pixel or two apart (M8.34, measured against
+ * Mike's marked-up grids). Details that follow one of them move with it, in
+ * 96px cell pixels, by head: [dx per head] and [dy per head].
  */
+const WIDE_DX = [0, 2, 0, 0, 0, 2, 0, 0];
 const EAR_DX = [0, 1, 1, 0, -2, 4, -1, -1];
-const MOUTH_DY = [0, -2, 2, 0, 1, -1, 2, 1];
-/** Which details follow the ear or the mouth: extras 3 nose ring, 6 earring; injury 3 cut lip. */
+const NOSE_DY = [0, -2, 2, 0, 1, -1, 2, 1];
+const LIP_DY = [0, -2, 1, -1, 0, -3, 0, 0];
+const EYE_DY = [0, -2, 2, 0, -2, 0, 0, 0];
+const NONE = [0, 0, 0, 0, 0, 0, 0, 0];
+const FOLLOWS: Record<string, [number[], number[]]> = {
+  "extras:1": [WIDE_DX, NONE], // cheek scar
+  "extras:3": [NONE, NOSE_DY], // nose ring
+  "extras:6": [EAR_DX, NONE], // earring
+  "injuries:2": [NONE, EYE_DY], // black eye
+  "injuries:3": [NONE, LIP_DY], // cut lip
+  "injuries:4": [WIDE_DX, NONE], // sling over the shoulder
+};
 function shiftFor(layer: "extras" | "injuries", cell: number, head: number): [number, number] {
-  if (layer === "extras" && cell === 6) return [EAR_DX[head] ?? 0, 0];
-  if ((layer === "extras" && cell === 3) || (layer === "injuries" && cell === 3))
-    return [0, MOUTH_DY[head] ?? 0];
-  return [0, 0];
+  const f = FOLLOWS[`${layer}:${cell}`];
+  return f ? [f[0][head] ?? 0, f[1][head] ?? 0] : [0, 0];
 }
 
 /** Hair colours, as CSS filters over the mid-brown the parts are drawn in. */

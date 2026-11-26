@@ -55,17 +55,18 @@ OWN = {
     # cheek and an earring in one, M8.34): each is moved onto its own spot,
     # measured against the heads (eyes y~36, nose tip ~51, mouth ~57, earlobe
     # x~75 y~49).
+    ("extras", 0): (1.0, 0, -8),  # eye scar: its cross on the eye, not the cheek
     ("extras", 1): (1.0, -4, 0),  # cheek scar kept inside the jaw on narrow heads
     ("extras", 2): (0.8, 0, -16),  # eyepatch over the eye, sized to it
     ("extras", 3): (1.0, 1, -6),  # nose ring hangs from the nose, not the chin
     ("extras", 6): (1.0, 10, 5),  # earring on the earlobe
     ("extras", 7): (1.0, 1, -5),  # tattoo on the temple
-    ("injuries", 0): (1.06, 0, -19),  # the head bandage goes round the brow
-    ("injuries", 1): (1.0, 0, -15),  # bandage over one eye (flipped, see FLIP)
+    ("injuries", 0): (1.08, -3, -22),  # the head bandage goes round the brow
+    ("injuries", 1): (1.0, 0, -23),  # bandage over one eye (flipped, see FLIP)
     ("injuries", 2): (1.0, 1, -15),  # black eye round the eye
-    ("injuries", 3): (1.0, 0, -6),  # cut lip on the lip
-    ("injuries", 4): (1.0, 0, 36),  # the sling sits over the shoulder
-    ("injuries", 5): (1.08, 0, -11),  # bloodied cloth on the forehead
+    ("injuries", 3): (1.0, -1, -9),  # cut lip on the lip
+    ("injuries", 4): (1.0, 0, 42),  # the sling sits over the shoulder
+    ("injuries", 5): (1.08, -2, -11),  # bloodied cloth on the forehead
     ("injuries", 7): (1.0, 3, 6),  # bruised jaw out on the jaw
     ("hats", 0): (1.22, 0, -11),  # miner's cap
     ("hats", 1): (1.32, 0, -10),  # nasal helm
