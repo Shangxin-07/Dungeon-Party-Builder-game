@@ -269,6 +269,20 @@ import floodedLockerRoom from "./rooms/flooded-locker";
 import drownedCrewEncounter from "./encounters/drowned-crew";
 import eelRunEncounter from "./encounters/eel-run";
 import strandedDelverEvent from "./events/stranded-delver";
+import crystalCrawlerMonster from "./monsters/crystal-crawler";
+import oreGolemMonster from "./monsters/ore-golem";
+import crystalChipSpecimen from "./specimens/crystal-chip";
+import golemRuneSpecimen from "./specimens/golem-rune";
+import heartCrystalItem from "./items/heart-crystal";
+import runeplateItem from "./items/runeplate";
+import crawlerLoot from "./loot/crawler-loot";
+import golemLoot from "./loot/golem-loot";
+import crystalGrottoLoot from "./loot/crystal-grotto";
+import crystalGrottoRoom from "./rooms/crystal-grotto";
+import crystalBurstRoom from "./rooms/crystal-burst";
+import crystalBroodEncounter from "./encounters/crystal-brood";
+import oreGolemEncounter from "./encounters/ore-golem";
+import singingCrystalEvent from "./events/singing-crystal";
 import goblinEarSpecimen from "./specimens/goblin-ear";
 import spiderFangSpecimen from "./specimens/spider-fang";
 import etchedSkullSpecimen from "./specimens/etched-skull";
@@ -460,6 +474,8 @@ export const materials: readonly ItemDef[] = [
 /** Specimens (M7.07, DESIGN.md §17.7): bits of monsters that feed the Library's research on them. */
 export const specimens: readonly ItemDef[] = [
   goblinEarSpecimen,
+  golemRuneSpecimen,
+  crystalChipSpecimen,
   minersTagSpecimen,
   eelSkinSpecimen,
   wightShroudSpecimen,
@@ -542,6 +558,8 @@ export const items: readonly ItemDef[] = [
   // Makeshift kit from the mining camp (the opening, DESIGN.md §8).
   pickAxeItem,
   slingItem,
+  runeplateItem,
+  heartCrystalItem,
   harpoonItem,
   oilskinsItem,
   silveredMaceItem,
@@ -635,6 +653,8 @@ export const monsters: readonly MonsterDef[] = [
   giantRatMonster,
   goblinMonster,
   goblinArcherMonster,
+  oreGolemMonster,
+  crystalCrawlerMonster,
   leechMonster,
   shaftEelMonster,
   drownedMinerMonster,
@@ -723,6 +743,8 @@ export const motivations: readonly MotivationDef[] = [
 export const encounters: readonly EncounterDef[] = [
   goblinBandEncounter,
   ratSwarmEncounter,
+  oreGolemEncounter,
+  crystalBroodEncounter,
   eelRunEncounter,
   drownedCrewEncounter,
   wightAndBonesEncounter,
@@ -745,6 +767,9 @@ export const lootTables: readonly LootTableDef[] = [
   behemothHoardLoot,
   trinketIdentifiedLoot,
   goblinLoot,
+  crystalGrottoLoot,
+  golemLoot,
+  crawlerLoot,
   floodedLockerLoot,
   eelLoot,
   drownedLoot,
@@ -783,6 +808,8 @@ export const rooms: readonly RoomDef[] = [
   fallingRocksRoom,
   monsterLairRoom,
   oldChestRoom,
+  crystalBurstRoom,
+  crystalGrottoRoom,
   floodedLockerRoom,
   sumpRoom,
   ossuaryNicheRoom,
@@ -872,6 +899,7 @@ export const secrets: readonly SecretDef[] = [
 export const events: readonly EventDef[] = [
   woundedStrangerEvent,
   corneredGoblinEvent,
+  singingCrystalEvent,
   strandedDelverEvent,
   mourningGhostEvent,
   webbedGoblinEvent,

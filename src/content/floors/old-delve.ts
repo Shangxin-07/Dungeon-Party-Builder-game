@@ -10,4 +10,15 @@ export default defineFloor({
   capacity: 80,
   startPopulation: 80,
   evictedLevelDrop: 1,
+  // Nearest the heart: its life runs through everything down here (§21).
+  ground: {
+    name: "The heart's warmth",
+    description:
+      "The heart's life runs through everything this deep: the monsters are tougher (+1 armour), but holy light burns them a little more.",
+    text: "The rock is warm here, and the heart beats somewhere below.",
+    monsters: [
+      { type: "modifyStat", stat: "armor", amount: 1 },
+      { type: "resist", damageType: "holy", percent: -15 },
+    ],
+  },
 });
