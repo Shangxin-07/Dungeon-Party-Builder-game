@@ -34,6 +34,31 @@ const ROWS: Record<Layer, number> = {
  */
 const HIDES_HAIR = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13]);
 
+/**
+ * The heads aren't all built alike: wide heads (1, 5) reach further out, ears
+ * and mouths and eyes sit a pixel or two apart (M8.34, measured against
+ * Mike's marked-up grids). Details that follow one of them move with it, in
+ * 96px cell pixels, by head: [dx per head] and [dy per head].
+ */
+const WIDE_DX = [0, 2, 0, 0, 0, 2, 0, 0];
+const EAR_DX = [0, 1, 1, 0, -2, 4, -1, -1];
+const NOSE_DY = [0, -2, 2, 0, 1, -1, 2, 1];
+const LIP_DY = [0, -2, 1, -1, 0, -3, 0, 0];
+const EYE_DY = [0, -2, 2, 0, -2, 0, 0, 0];
+const NONE = [0, 0, 0, 0, 0, 0, 0, 0];
+const FOLLOWS: Record<string, [number[], number[]]> = {
+  "extras:1": [WIDE_DX, NONE], // cheek scar
+  "extras:3": [NONE, NOSE_DY], // nose ring
+  "extras:6": [EAR_DX, NONE], // earring
+  "injuries:2": [NONE, EYE_DY], // black eye
+  "injuries:3": [NONE, LIP_DY], // cut lip
+  "injuries:4": [WIDE_DX, NONE], // sling over the shoulder
+};
+function shiftFor(layer: "extras" | "injuries", cell: number, head: number): [number, number] {
+  const f = FOLLOWS[`${layer}:${cell}`];
+  return f ? [f[0][head] ?? 0, f[1][head] ?? 0] : [0, 0];
+}
+
 /** Hair colours, as CSS filters over the mid-brown the parts are drawn in. */
 export const HAIR = {
   brown: "none",
@@ -98,12 +123,15 @@ function Part({
   cell,
   size,
   filter,
+  shift,
 }: {
   layer: Layer;
   cell: number;
   size: number;
   filter?: string;
+  shift?: [number, number];
 }) {
+  const [dx, dy] = shift ?? [0, 0];
   return (
     <span
       className="face-part"
@@ -112,6 +140,7 @@ function Part({
         backgroundSize: `${4 * size}px ${ROWS[layer] * size}px`,
         backgroundPosition: `-${(cell % 4) * size}px -${Math.floor(cell / 4) * size}px`,
         filter: filter && filter !== "none" ? filter : undefined,
+        transform: dx || dy ? `translate(${(dx * size) / 96}px, ${(dy * size) / 96}px)` : undefined,
       }}
     />
   );
@@ -140,14 +169,28 @@ export function Portrait({
       title={frame ? `${hero.name} (${frame.name})` : undefined}
     >
       <Part layer="heads" cell={f.head} size={size} />
-      {f.extra !== undefined ? <Part layer="extras" cell={f.extra} size={size} /> : null}
+      {f.extra !== undefined ? (
+        <Part
+          layer="extras"
+          cell={f.extra}
+          size={size}
+          shift={shiftFor("extras", f.extra, f.head)}
+        />
+      ) : null}
       {f.beard !== undefined ? (
         <Part layer="beards" cell={f.beard} size={size} filter={tint} />
       ) : null}
       {f.hair !== undefined && !(f.hat !== undefined && HIDES_HAIR.has(f.hat)) ? (
         <Part layer="hair" cell={f.hair} size={size} filter={tint} />
       ) : null}
-      {f.injury !== undefined ? <Part layer="injuries" cell={f.injury} size={size} /> : null}
+      {f.injury !== undefined ? (
+        <Part
+          layer="injuries"
+          cell={f.injury}
+          size={size}
+          shift={shiftFor("injuries", f.injury, f.head)}
+        />
+      ) : null}
       {f.hat !== undefined ? <Part layer="hats" cell={f.hat} size={size} /> : null}
     </span>
   );
