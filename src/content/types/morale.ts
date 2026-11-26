@@ -1,6 +1,8 @@
 /**
- * Morale, motivation and alignment (DESIGN.md §6, §7).
+ * Morale, motivation and alignment (DESIGN.md §6, §7), and backstories (§21).
  */
+import type { PassiveEffect } from "./core";
+
 /**
  * Numbers the town works out about something that happened to a hero: a
  * trip, a day of rest, news from the dungeon. Morale rules turn these into
@@ -191,4 +193,24 @@ export interface MoraleRulesDef {
   dislikeChance: number;
   /** Gear tags a hero might dislike (never one their class likes). */
   dislikeTags: readonly string[];
+}
+
+/**
+ * Where a hero comes from (§21): a line on their sheet, a small nudge to their
+ * stats or skills, and tags later moments and ties between heroes look for.
+ * Rolled once, from their name, and never changes.
+ */
+export interface BackstoryDef {
+  id: string;
+  name: string;
+  /** One line on the hero sheet. {name} is the hero's first name. */
+  text: string;
+  /** Relative chance a recruit has this backstory. */
+  weight: number;
+  /** Multiplies the weight for heroes of these alignments (missing: 1). */
+  alignments?: Readonly<Record<string, number>>;
+  /** Always-on: a point of a stat, a few points of a skill. Kept small. */
+  passives: readonly PassiveEffect[];
+  /** For moments and ties (§21), e.g. "miner-kin", "faith", "soldier". */
+  tags: readonly string[];
 }

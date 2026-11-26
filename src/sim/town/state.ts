@@ -9,7 +9,7 @@ import type { HaulItem } from "../loot";
 import type { RaidReport } from "../raid";
 
 /** Bump when the shape of TownState changes, and add a migration in save.ts. */
-export const TOWN_VERSION = 25;
+export const TOWN_VERSION = 26;
 
 /** How many nights of pit history and full raid reports the town keeps. */
 export const PIT_HISTORY = 60;

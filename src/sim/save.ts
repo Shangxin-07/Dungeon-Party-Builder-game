@@ -9,6 +9,7 @@
  * file only reads, upgrades and writes them.
  */
 import { rollAlignment } from "./alignment";
+import { rollBackstory } from "./backstory";
 import { addNewFloors, newDungeon } from "./dungeon";
 import { rollPersonality, type Hero } from "./hero";
 import type { Index } from "./library";
@@ -270,6 +271,12 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
     version: 25,
     dungeon: { ...(old.dungeon as object), core: { reached: 0, shut: null } },
   }),
+  // M8.29: backstories and surnames, rolled from each hero's id and name as
+  // new heroes' are, so every copy of a hero (roster, trips, bodies) agrees.
+  25: (ix, old) => {
+    forEachHero(old, (h) => Object.assign(h, rollBackstory(ix, h.id, h.name, h.alignment)));
+    return { ...old, version: 26 };
+  },
 };
 
 /**

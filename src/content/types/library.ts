@@ -10,7 +10,7 @@ import type {
   SkillDef,
   PerkDef,
 } from "./defs";
-import type { AlignmentDef, MotivationDef, MoraleRulesDef } from "./morale";
+import type { AlignmentDef, BackstoryDef, MotivationDef, MoraleRulesDef } from "./morale";
 import type {
   LevelRules,
   RescueRules,
@@ -74,6 +74,10 @@ export interface Library {
   floors: readonly FloorDef[];
   buildings: readonly BuildingDef[];
   motivations: readonly MotivationDef[];
+  /** Where heroes come from (§21). */
+  backstories: readonly BackstoryDef[];
+  /** Family names, rolled with the backstory (§21). */
+  surnames: readonly string[];
   alignments: readonly AlignmentDef[];
   town: TownRules;
   dungeon: DungeonRules;
@@ -188,6 +192,8 @@ export const defineTownMap = (def: TownMapDef): TownMapDef => def;
 export const defineDungeonRules = (def: DungeonRules): DungeonRules => def;
 
 export const defineMotivation = (def: MotivationDef): MotivationDef => def;
+
+export const defineBackstory = (def: BackstoryDef): BackstoryDef => def;
 
 export const defineAlignment = (def: AlignmentDef): AlignmentDef => def;
 

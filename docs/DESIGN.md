@@ -1543,6 +1543,8 @@ Each floor gets its own rooms, traps and events, two or three new monsters, them
 
 - **Names:** a much bigger pool, with surnames, and epithets earned in play ("Wren the Unlucky").
 - **Backstories:** a content folder of origins (a miner's child, a deserter, a temple orphan, a disgraced noble, raised by goblins...). Each nudges stats and skills, leans towards some alignments and motivations, and has a line of text on the hero sheet.
+
+  **As built (M8.29):** 40 first names (24 new) and 36 surnames; every hero has a surname (logs still use the first name). Twelve backstories (content/backstories/): miner's child, deserter, temple orphan, disgraced noble, goblin-raised, valley hunter, scholar, sellsword, grave-digger, smuggler, farmhand and pilgrim. Each gives +1 to a stat, some a skill nudge too, is weighted towards some alignments, and carries tags for the moments and ties to come. Backstory and surname are rolled from the hero's id and name like their alignment (no dice used), and old saves get theirs the same way (TOWN_VERSION 26). They show at the top of the hero's personality line. Epithets wait for the moments PR. The +1 stat nudges the days bot a touch (climb policy, 40 towns: gold from trips 3190 to 3326, deaths 0.1 either way).
 - **Moments:** backstories react to floors and events. A miner's child finds their father's tally in the Delve; a temple orphan hates the risen; a deserter knows a soldier's trick.
 - **Ties between heroes:** bonds (siblings, old comrades, sworn rivals, a feud) that come from backstories, and change morale and how they fight beside each other.
 
@@ -1552,7 +1554,7 @@ Each floor gets its own rooms, traps and events, two or three new monsters, them
 |---|---|
 | M8.23 | This plan |
 | M8.24-28 | One floor theme a PR, top down (Diggings, Warrens, Bone Halls, Flooded Shafts, Old Delve) |
-| next | Names and backstories (a save bump) |
+| M8.29 | Names and backstories (a save bump) |
 | next | Backstory moments in the dungeon |
 | next | Ties between heroes |
 | then | Act Two below the heart, a floor or two a PR |

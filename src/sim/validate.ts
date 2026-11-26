@@ -684,6 +684,20 @@ export function validateLibrary(lib: Library): string[] {
   for (const b of lib.buildings)
     for (const a of b.dealsWith ?? [])
       if (!alignIds.has(a)) err(`building "${b.id}": deals with unknown alignment "${a}"`);
+  // Backstories and surnames (M8.29).
+  ids("backstory", lib.backstories);
+  if (!lib.backstories.length) err("needs at least one backstory");
+  if (!lib.surnames.length) err("needs at least one surname");
+  for (const b of lib.backstories) {
+    const w = `backstory "${b.id}"`;
+    if (b.weight <= 0) err(`${w}: weight must be positive`);
+    if (!b.text.includes("{name}")) err(`${w}: text should name the hero with {name}`);
+    for (const [a, x] of Object.entries(b.alignments ?? {})) {
+      if (!alignIds.has(a)) err(`${w}: unknown alignment "${a}"`);
+      if (!(x >= 0)) err(`${w}: alignment weight must not be negative`);
+    }
+    passives(w, b.passives);
+  }
   // Leaders (M7.05): traits and the command table.
   ids("trait", lib.traits ?? []);
   const motivationIds = new Set(lib.motivations.map((m) => m.id));
