@@ -217,9 +217,19 @@ export class BattleBase {
     return this;
   }
 
+  /** Ties between heroes (M8.32): extra passives by hero id. */
+  protected bonds: Readonly<Record<string, readonly PassiveEffect[]>> = {};
+  withBonds(bonds: Readonly<Record<string, readonly PassiveEffect[]>> | undefined): this {
+    this.bonds = bonds ?? {};
+    return this;
+  }
+
+  /** Passives from where and with whom this fighter fights: the ground and their ties. */
   private groundFor(f: Fighter): readonly PassiveEffect[] {
-    if (!this.ground) return [];
-    return (f.side === "party" ? this.ground.heroes : this.ground.monsters) ?? [];
+    const bond = (f.heroId && f.side === "party" && this.bonds[f.heroId]) || [];
+    if (!this.ground) return bond;
+    const side = (f.side === "party" ? this.ground.heroes : this.ground.monsters) ?? [];
+    return bond.length ? [...side, ...bond] : side;
   }
 
   /** The guild's research tier on this fighter's kind of monster (0 for anyone else). */

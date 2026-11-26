@@ -277,6 +277,11 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
     forEachHero(old, (h) => Object.assign(h, rollBackstory(ix, h.id, h.name, h.alignment)));
     return { ...old, version: 26 };
   },
+  // M8.31: backstory moments. Nobody has had one yet.
+  26: (_ix, old) => {
+    forEachHero(old, (h) => (h.moments = []));
+    return { ...old, version: 27 };
+  },
 };
 
 /**

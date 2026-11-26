@@ -64,6 +64,11 @@ export interface Hero {
   backstory: string;
   /** Family name (M8.29). Logs use their first name alone. */
   surname: string;
+  /**
+   * Backstory moments they've had (M8.31, content/moments/), each once, in
+   * the order they first happened. The latest with an epithet names them.
+   */
+  moments: string[];
   /** A gear tag they like using ("sword", "fire"...), if any. */
   likes?: string;
   /** A gear tag they hate using, if any. */
@@ -326,6 +331,7 @@ export function createHero(
     payLevel: 1,
     ...rollPersonality(ix, opts.id, opts.name, stats, cls.id),
     ...origins(ix, opts.id, opts.name),
+    moments: [],
   };
   for (const itemId of cls.startingKit) {
     const item = ix.item(itemId);
@@ -459,6 +465,7 @@ export function rollRecruit(
     untrained: true,
     ...rollPersonality(ix, opts.id, opts.name, stats),
     ...origins(ix, opts.id, opts.name),
+    moments: [],
   };
 }
 

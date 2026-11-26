@@ -22,6 +22,8 @@ import type {
   MonsterDef,
   MotivationDef,
   BackstoryDef,
+  MomentDef,
+  TieDef,
   PerkDef,
   PostDef,
   RoomDef,
@@ -366,6 +368,29 @@ import graveDiggerBackstory from "./backstories/grave-digger";
 import smugglerBackstory from "./backstories/smuggler";
 import farmhandBackstory from "./backstories/farmhand";
 import pilgrimBackstory from "./backstories/pilgrim";
+import siblingsTie from "./ties/siblings";
+import oldComradesTie from "./ties/old-comrades";
+import badBloodTie from "./ties/bad-blood";
+import oldScoreTie from "./ties/old-score";
+import campKidsTie from "./ties/camp-kids";
+import prayerPartnersTie from "./ties/prayer-partners";
+import teacherTie from "./ties/teacher";
+import rivalsTie from "./ties/rivals";
+import burialMarksMoment from "./moments/burial-marks";
+import cantSwimMoment from "./moments/cant-swim";
+import fathersTallyMoment from "./moments/fathers-tally";
+import finestPieceMoment from "./moments/finest-piece";
+import hearthsWarmthMoment from "./moments/hearths-warmth";
+import homeTunnelsMoment from "./moments/home-tunnels";
+import houndTracksMoment from "./moments/hound-tracks";
+import oldRitesMoment from "./moments/old-rites";
+import ownTongueMoment from "./moments/own-tongue";
+import regimentBadgeMoment from "./moments/regiment-badge";
+import runeNotesMoment from "./moments/rune-notes";
+import smugglersNookMoment from "./moments/smugglers-nook";
+import strandedCousinMoment from "./moments/stranded-cousin";
+import unflinchingMoment from "./moments/unflinching";
+import worthyFoeMoment from "./moments/worthy-foe";
 import { surnames } from "./names";
 import goldMotivation from "./motivations/gold";
 import gloryMotivation from "./motivations/glory";
@@ -764,6 +789,36 @@ export const backstories: readonly BackstoryDef[] = [
   pilgrimBackstory,
 ];
 
+export const moments: readonly MomentDef[] = [
+  burialMarksMoment,
+  cantSwimMoment,
+  fathersTallyMoment,
+  finestPieceMoment,
+  hearthsWarmthMoment,
+  homeTunnelsMoment,
+  houndTracksMoment,
+  oldRitesMoment,
+  ownTongueMoment,
+  regimentBadgeMoment,
+  runeNotesMoment,
+  smugglersNookMoment,
+  strandedCousinMoment,
+  unflinchingMoment,
+  worthyFoeMoment,
+];
+
+/** In order: a pair gets the first that fits and rolls. */
+export const ties: readonly TieDef[] = [
+  siblingsTie,
+  oldComradesTie,
+  badBloodTie,
+  oldScoreTie,
+  campKidsTie,
+  prayerPartnersTie,
+  teacherTie,
+  rivalsTie,
+];
+
 export const motivations: readonly MotivationDef[] = [
   goldMotivation,
   gloryMotivation,
@@ -954,6 +1009,8 @@ export const library: Library = {
   buildings,
   motivations,
   backstories,
+  moments,
+  ties,
   surnames,
   alignments,
   town: townRules,

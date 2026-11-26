@@ -1546,7 +1546,11 @@ Each floor gets its own rooms, traps and events, two or three new monsters, them
 
   **As built (M8.29):** 40 first names (24 new) and 36 surnames; every hero has a surname (logs still use the first name). Twelve backstories (content/backstories/): miner's child, deserter, temple orphan, disgraced noble, goblin-raised, valley hunter, scholar, sellsword, grave-digger, smuggler, farmhand and pilgrim. Each gives +1 to a stat, some a skill nudge too, is weighted towards some alignments, and carries tags for the moments and ties to come. Backstory and surname are rolled from the hero's id and name like their alignment (no dice used), and old saves get theirs the same way (TOWN_VERSION 26). They show at the top of the hero's personality line. Epithets wait for the moments PR. The +1 stat nudges the days bot a touch (climb policy, 40 towns: gold from trips 3190 to 3326, deaths 0.1 either way).
 - **Moments:** backstories react to floors and events. A miner's child finds their father's tally in the Delve; a temple orphan hates the risen; a deserter knows a soldier's trick.
+
+  **As built (M8.31):** content/moments/ holds 15 moments. Each names backstory tags, floors, a trigger and a chance. A trigger is arriving on a floor, after certain rooms (by id or behaviour), or after a won fight with certain monsters (by id or tag). A moment's effects can be morale with its own reason, a heal for the hero or the whole party, a hurt, a loot roll, a gift of gold that reaches town, and an epithet. Most happen once for a hero; some can happen every trip. They roll on their own stream, so a trip with no moment due plays out as before. At home a hero remembers each moment (hero.moments, TOWN_VERSION 27), feels its morale, and an epithet names them ("Wren the Unflinching", with news when it's new). The hero sheet lists their stories. Examples: the miner's child finds their father's tally in the Old Delve; faithful heroes say the rites over the dead and pray at the heart; the goblin-raised curse goblins in their own tongue (and feel it); the farmhand nearly drowns in the Flooded Shafts; a camp-born hero cuts a cousin out of the webs. Starter parties average about 0.8 moments a trip. The days bot didn't move beyond noise (climb policy, 40 towns: gold from trips 3326 to 3405, deaths 0.1 either way).
 - **Ties between heroes:** bonds (siblings, old comrades, sworn rivals, a feud) that come from backstories, and change morale and how they fight beside each other.
+
+  **As built (M8.32):** content/ties/ holds 8 ties: siblings (same surname), old comrades (two soldiers), bad blood (goblin-raised against camp folk), an old score (a noble and a smuggler), childhood friends (two camp-born), prayer partners, teacher and pupil, and rivals. A tie fits a pair by their backstory tags. The two heroes' ids roll for it, and the first tie in order that fits and rolls is theirs. So a tie never changes and needs no saving (no save bump). Ties only matter when both heroes go together. After the trip each gets a little morale (bad blood and old scores cost some), and in every fight their partner starts on their feet each gets a small passive: siblings +2 evasion, comrades +2 attack, rivals +1 attack, friends +1 initiative, prayer partners +3 resist, bad blood -1 initiative. Among four random recruits, about half the parties have at least one tie. The hero sheet lists a hero's ties with the roster, and the party panel says which ties are going down together. Days bot within noise (climb: gold from trips 3405 to 3475, deaths 0.1; policy 3: deaths 2.5 to 2.2).
 
 ### Order of PRs
 
@@ -1555,8 +1559,8 @@ Each floor gets its own rooms, traps and events, two or three new monsters, them
 | M8.23 | This plan |
 | M8.24-28 | One floor theme a PR, top down (Diggings, Warrens, Bone Halls, Flooded Shafts, Old Delve) |
 | M8.29 | Names and backstories (a save bump) |
-| next | Backstory moments in the dungeon |
-| next | Ties between heroes |
+| M8.31 | Backstory moments in the dungeon (a save bump) |
+| M8.32 | Ties between heroes |
 | then | Act Two below the heart, a floor or two a PR |
 
 ### Questions for Mike

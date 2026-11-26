@@ -1,7 +1,7 @@
 /**
  * Morale, motivation and alignment (DESIGN.md §6, §7), and backstories (§21).
  */
-import type { PassiveEffect } from "./core";
+import type { DamageType, PassiveEffect } from "./core";
 
 /**
  * Numbers the town works out about something that happened to a hero: a
@@ -213,4 +213,76 @@ export interface BackstoryDef {
   passives: readonly PassiveEffect[];
   /** For moments and ties (§21), e.g. "miner-kin", "faith", "soldier". */
   tags: readonly string[];
+}
+
+/**
+ * A backstory moment (M8.31, DESIGN.md §21): something in the dungeon that
+ * means more to a hero because of where they came from. A miner's child finds
+ * their father's tally; a temple orphan says the rites over the restless dead.
+ * Checked for each conscious hero whose backstory has one of `tags`.
+ */
+export interface MomentDef {
+  id: string;
+  name: string;
+  /** Backstory tags it happens to (any one is enough). */
+  tags: readonly string[];
+  /** Floors it can happen on, inclusive. */
+  floors: readonly [number, number];
+  /**
+   * When it's checked: arriving on a floor, after one of these rooms (room ids
+   * or behaviours), or after a won fight with one of these monsters (ids or tags).
+   */
+  on:
+    | { kind: "floor" }
+    | { kind: "room"; rooms: readonly string[] }
+    | { kind: "fight"; monsters: readonly string[] };
+  /** Chance each time it's checked. */
+  chance: number;
+  /** Only ever once for a hero (default); false: once a trip. */
+  once?: boolean;
+  /** Logged when it happens. {hero} is the hero's first name. */
+  text: string;
+  effects: readonly MomentEffect[];
+}
+
+/** What a moment does, to the hero it happens to unless it says otherwise. */
+export type MomentEffect =
+  /** Morale when they get home, with the reason for their log. */
+  | { type: "morale"; amount: number; reason: string }
+  /** Heal the hero, or everyone alive, by this share of max HP. */
+  | { type: "heal"; percent: number; all?: boolean }
+  /** Hurt the hero (grows with depth like traps). Resistances apply, armour doesn't. */
+  | { type: "hurt"; damage: readonly [number, number]; damageType: DamageType }
+  /** Roll a loot table into the packs. `from` reads like "in the niche". */
+  | { type: "loot"; table: string; from: string }
+  /** Gold that reaches the town after the trip. {gold} and {hero} in `news`. */
+  | { type: "gift"; gold: readonly [number, number]; news: string }
+  /** A name they're known by from now on: "the Unflinching" makes "Wren the Unflinching". */
+  | { type: "epithet"; name: string };
+
+/**
+ * A tie between two heroes (M8.32, DESIGN.md §21): siblings, old comrades,
+ * sworn rivals, a feud. Worked out from the two heroes' backstories (and
+ * surnames) with a roll from their ids, so it never changes and needs no
+ * saving. It only matters when both go down together.
+ */
+export interface TieDef {
+  id: string;
+  /** What each is to the other, e.g. "sibling", "old comrade". */
+  name: string;
+  /** For the hero sheet and the log. {a} and {b} are the two first names. */
+  text: string;
+  /**
+   * Who it can be between: one hero has a backstory tag from the first list,
+   * the other from the second. An empty list matches anyone.
+   */
+  between: readonly [readonly string[], readonly string[]];
+  /** Only between heroes with the same surname. */
+  sameSurname?: boolean;
+  /** Chance a pair who fit have this tie. The first tie (in content order) to roll wins. */
+  chance: number;
+  /** Morale for each of them after a trip together. {other} is the other's first name. */
+  morale?: { amount: number; reason: string };
+  /** For each of them in every fight the other starts on their feet. */
+  passives?: readonly PassiveEffect[];
 }

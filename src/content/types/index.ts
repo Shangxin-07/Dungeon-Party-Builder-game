@@ -45,6 +45,9 @@ export type {
   MotivationDef,
   MoraleRulesDef,
   BackstoryDef,
+  MomentDef,
+  MomentEffect,
+  TieDef,
 } from "./morale";
 export type {
   LevelRules,
@@ -158,6 +161,8 @@ export {
   defineDungeonRules,
   defineMotivation,
   defineBackstory,
+  defineMoment,
+  defineTie,
   defineAlignment,
   defineMoraleRules,
   defineLevelRules,

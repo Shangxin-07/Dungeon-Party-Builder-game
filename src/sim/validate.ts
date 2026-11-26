@@ -698,6 +698,49 @@ export function validateLibrary(lib: Library): string[] {
     }
     passives(w, b.passives);
   }
+  // Backstory moments (M8.31).
+  ids("moment", lib.moments);
+  const storyTags = new Set(lib.backstories.flatMap((b) => b.tags));
+  const behaviours = new Set(lib.rooms.map((r) => r.behaviour));
+  const monsterTags = new Set(lib.monsters.flatMap((m) => m.tags));
+  const deepestFloor = Math.max(...lib.floors.map((f) => f.depth));
+  for (const m of lib.moments) {
+    const w = `moment "${m.id}"`;
+    if (!m.tags.length) err(`${w}: happens to no backstory`);
+    for (const t of m.tags) if (!storyTags.has(t)) err(`${w}: no backstory has the tag "${t}"`);
+    const [a, b] = m.floors;
+    if (!(a >= 1 && a <= b && b <= deepestFloor)) err(`${w}: floors must be within 1-${deepestFloor}`);
+    if (!(m.chance > 0 && m.chance <= 1)) err(`${w}: chance must be above 0, at most 1`);
+    if (!m.text.includes("{hero}")) err(`${w}: text should name the hero with {hero}`);
+    if (m.on.kind === "room")
+      for (const r of m.on.rooms)
+        if (!roomIds.has(r) && !behaviours.has(r)) err(`${w}: unknown room or behaviour "${r}"`);
+    if (m.on.kind === "fight")
+      for (const x of m.on.monsters)
+        if (!monsterIds.has(x) && !monsterTags.has(x)) err(`${w}: unknown monster or tag "${x}"`);
+    if (!m.effects.length) err(`${w}: does nothing`);
+    for (const e of m.effects) {
+      if (e.type === "loot" && !lootIds.has(e.table)) err(`${w}: unknown loot table "${e.table}"`);
+      if (e.type === "morale" && !e.reason) err(`${w}: morale needs a reason`);
+      if (e.type === "heal" && !(e.percent > 0)) err(`${w}: heal must be positive`);
+      if (e.type === "hurt" && !(e.damage[0] >= 0 && e.damage[0] <= e.damage[1]))
+        err(`${w}: bad damage range`);
+      if (e.type === "gift" && !(e.gold[0] >= 0 && e.gold[0] <= e.gold[1]))
+        err(`${w}: bad gold range`);
+      if (e.type === "epithet" && !e.name.trim()) err(`${w}: epithet needs a name`);
+    }
+  }
+  // Ties between heroes (M8.32).
+  ids("tie", lib.ties);
+  for (const x of lib.ties) {
+    const w = `tie "${x.id}"`;
+    if (!(x.chance > 0 && x.chance <= 1)) err(`${w}: chance must be above 0, at most 1`);
+    if (!x.text.includes("{a}") || !x.text.includes("{b}")) err(`${w}: text should name {a} and {b}`);
+    for (const t of x.between.flat()) if (!storyTags.has(t)) err(`${w}: no backstory has the tag "${t}"`);
+    if (!x.morale && !x.passives?.length) err(`${w}: does nothing`);
+    if (x.morale && !x.morale.reason) err(`${w}: morale needs a reason`);
+    passives(w, x.passives ?? []);
+  }
   // Leaders (M7.05): traits and the command table.
   ids("trait", lib.traits ?? []);
   const motivationIds = new Set(lib.motivations.map((m) => m.id));

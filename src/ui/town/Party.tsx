@@ -5,6 +5,7 @@ import { Fold } from "../Fold";
 import { library } from "../../content";
 import type { Row } from "../../content/types";
 import { describeParty, partyAlignment } from "../../sim/alignment";
+import { tiesAmong, tieText } from "../../sim/ties";
 import { describeRetreat, isScouting, isSneaking, type LootRule } from "../../sim/expedition";
 import { knownLairs, lairSlain, partyStealth, sneakChance } from "../../sim/stealth";
 import { heroSheet, heroTitle } from "../../sim/hero";
@@ -170,6 +171,11 @@ export function PartyPanel({
           {describeParty(ix, party)}
         </p>
       ) : null}
+      {tiesAmong(ix, party).map((t) => (
+        <p key={`${t.a.id}-${t.b.id}`} className="small muted" title={t.tie.name}>
+          {tieText(t)}
+        </p>
+      ))}
       {party.length ? null : (
         <p className="muted small">
           Add heroes from the roster below. There's no limit: the leader's command says how many go

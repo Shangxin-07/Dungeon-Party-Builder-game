@@ -10,7 +10,14 @@ import type {
   SkillDef,
   PerkDef,
 } from "./defs";
-import type { AlignmentDef, BackstoryDef, MotivationDef, MoraleRulesDef } from "./morale";
+import type {
+  AlignmentDef,
+  BackstoryDef,
+  MomentDef,
+  TieDef,
+  MotivationDef,
+  MoraleRulesDef,
+} from "./morale";
 import type {
   LevelRules,
   RescueRules,
@@ -76,6 +83,8 @@ export interface Library {
   motivations: readonly MotivationDef[];
   /** Where heroes come from (§21). */
   backstories: readonly BackstoryDef[];
+  moments: readonly MomentDef[];
+  ties: readonly TieDef[];
   /** Family names, rolled with the backstory (§21). */
   surnames: readonly string[];
   alignments: readonly AlignmentDef[];
@@ -194,6 +203,8 @@ export const defineDungeonRules = (def: DungeonRules): DungeonRules => def;
 export const defineMotivation = (def: MotivationDef): MotivationDef => def;
 
 export const defineBackstory = (def: BackstoryDef): BackstoryDef => def;
+export const defineMoment = (def: MomentDef): MomentDef => def;
+export const defineTie = (def: TieDef): TieDef => def;
 
 export const defineAlignment = (def: AlignmentDef): AlignmentDef => def;
 

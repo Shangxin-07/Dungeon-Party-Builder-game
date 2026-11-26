@@ -11,7 +11,9 @@ import { fatigueTier, heroSheet, type Hero } from "../hero";
 import { risenName } from "../fallen";
 import { gainXp } from "../levels";
 import type { Index } from "../library";
-import { applyMorale, gearTags, moraleChanges, type Facts } from "../morale";
+import { applyMorale, gearTags, moraleChanges, nudgeMorale, type Facts } from "../morale";
+import { epithet, knownAs } from "../moments";
+import { tiesAmong } from "../ties";
 import {
   type Memorial,
   type Outing,
@@ -315,6 +317,32 @@ export function homecoming(ix: Index, t: TownState, o: Outing): void {
     };
     morale[h.id] = moraleChanges(ix, h, facts, { leaderCha, leaderLoss });
     applyMorale(ix, h, facts, t.day, { leaderCha, leaderLoss });
+    // Backstory moments (M8.31): remembered, felt, and maybe a name to go with them.
+    for (const m of (result.moments ?? []).filter((x) => x.hero === h.id)) {
+      const named = epithet(ix, h);
+      if (!h.moments.includes(m.moment)) h.moments.push(m.moment);
+      if (m.morale) {
+        const got = nudgeMorale(ix, h, m.morale.amount, m.morale.reason, t.day);
+        if (got) morale[h.id]!.push({ amount: got, reason: m.morale.reason });
+      }
+      const now = epithet(ix, h);
+      if (now && now !== named) news(t, `${h.name} came home with a new name: ${knownAs(ix, h)}.`);
+    }
+  }
+  // Ties between heroes (M8.32): how it felt to go down with each other.
+  const cameHome = party
+    .map((left) => findHero(t, left.id))
+    .filter((h): h is Hero => !!h && result.party.some((p) => p.id === h.id && p.condition !== "dead"));
+  for (const { tie, a, b } of tiesAmong(ix, cameHome)) {
+    if (!tie.morale) continue;
+    for (const [h, other] of [
+      [a, b],
+      [b, a],
+    ] as const) {
+      const reason = tie.morale.reason.replaceAll("{other}", other.name);
+      const got = nudgeMorale(ix, h, tie.morale.amount, reason, t.day);
+      if (got) (morale[h.id] ??= []).push({ amount: got, reason });
+    }
   }
 
   // The leader (M7.05): better for having led, and maybe changed by what happened.
