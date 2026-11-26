@@ -187,7 +187,7 @@ describe("in town", () => {
     let t = knowing();
     t = { ...t, research: { ...t.research, monsters: { "mire-behemoth": 240 } } };
     // Swap in a party that can do it.
-    const strong = tough(5).map((h) => ({
+    const strong = tough(4).map((h) => ({
       ...h,
       equipment: { ...h.equipment, weapon: "scale-piercer" },
     }));

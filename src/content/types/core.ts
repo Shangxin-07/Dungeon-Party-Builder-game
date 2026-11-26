@@ -67,7 +67,13 @@ export type Effect = PassiveEffect | ActiveEffect;
 
 /** Run effects when something happens to a creature. */
 export interface Trigger {
-  on: "damaged";
+  /**
+   * "damaged": after a hit. "slain" (§21, the Bone Halls): when a blow would
+   * kill a monster, it gets back up instead (the effects should heal it).
+   */
+  on: "damaged" | "slain";
+  /** "slain" only: a killing blow of one of these types finishes it for good. */
+  unless?: readonly DamageType[];
   /** Only fire if the hit did at least this much damage. */
   minDamage?: number;
   /** Only fire if the creature survived the hit. */
