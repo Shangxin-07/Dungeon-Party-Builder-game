@@ -1,7 +1,7 @@
 /**
  * Morale, motivation and alignment (DESIGN.md §6, §7), and backstories (§21).
  */
-import type { PassiveEffect } from "./core";
+import type { DamageType, PassiveEffect } from "./core";
 
 /**
  * Numbers the town works out about something that happened to a hero: a
@@ -214,3 +214,48 @@ export interface BackstoryDef {
   /** For moments and ties (§21), e.g. "miner-kin", "faith", "soldier". */
   tags: readonly string[];
 }
+
+/**
+ * A backstory moment (M8.31, DESIGN.md §21): something in the dungeon that
+ * means more to a hero because of where they came from. A miner's child finds
+ * their father's tally; a temple orphan says the rites over the restless dead.
+ * Checked for each conscious hero whose backstory has one of `tags`.
+ */
+export interface MomentDef {
+  id: string;
+  name: string;
+  /** Backstory tags it happens to (any one is enough). */
+  tags: readonly string[];
+  /** Floors it can happen on, inclusive. */
+  floors: readonly [number, number];
+  /**
+   * When it's checked: arriving on a floor, after one of these rooms (room ids
+   * or behaviours), or after a won fight with one of these monsters (ids or tags).
+   */
+  on:
+    | { kind: "floor" }
+    | { kind: "room"; rooms: readonly string[] }
+    | { kind: "fight"; monsters: readonly string[] };
+  /** Chance each time it's checked. */
+  chance: number;
+  /** Only ever once for a hero (default); false: once a trip. */
+  once?: boolean;
+  /** Logged when it happens. {hero} is the hero's first name. */
+  text: string;
+  effects: readonly MomentEffect[];
+}
+
+/** What a moment does, to the hero it happens to unless it says otherwise. */
+export type MomentEffect =
+  /** Morale when they get home, with the reason for their log. */
+  | { type: "morale"; amount: number; reason: string }
+  /** Heal the hero, or everyone alive, by this share of max HP. */
+  | { type: "heal"; percent: number; all?: boolean }
+  /** Hurt the hero (grows with depth like traps). Resistances apply, armour doesn't. */
+  | { type: "hurt"; damage: readonly [number, number]; damageType: DamageType }
+  /** Roll a loot table into the packs. `from` reads like "in the niche". */
+  | { type: "loot"; table: string; from: string }
+  /** Gold that reaches the town after the trip. {gold} and {hero} in `news`. */
+  | { type: "gift"; gold: readonly [number, number]; news: string }
+  /** A name they're known by from now on: "the Unflinching" makes "Wren the Unflinching". */
+  | { type: "epithet"; name: string };

@@ -94,6 +94,24 @@ export function applyMorale(
   return hero.morale - before;
 }
 
+/**
+ * A one-off morale change with its own reason (a backstory moment, M8.31).
+ * Losses are softened by WIL like any other. Returns the change.
+ */
+export function nudgeMorale(
+  ix: Index,
+  hero: Hero,
+  amount: number,
+  reason: string,
+  day: number,
+): number {
+  const a = amount < 0 ? Math.round(amount * lossFactor(ix, hero)) : amount;
+  const before = hero.morale;
+  hero.morale = Math.max(0, Math.min(100, hero.morale + a));
+  if (a) note(hero, { day, amount: a, reason });
+  return hero.morale - before;
+}
+
 /** A recent note with the same reason absorbs a repeat, so a week of quiet days is one line. */
 const MERGE_DAYS = 7;
 const MERGE_BACK = 4;

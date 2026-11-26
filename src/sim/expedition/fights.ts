@@ -14,6 +14,12 @@ import type { CarriedGear } from "./report";
 import { an, list } from "./trip";
 import { TripCare } from "./care";
 import { shardPlace } from "../shards";
+import { dueMoment, type MomentTrigger } from "../moments";
+import type { MomentDef } from "../../content/types";
+import type { TripMoment } from "./report";
+
+/** Moment damage grows with depth, like traps. */
+const MOMENT_HURT_PER_FLOOR = 1.3;
 
 /** Rooms and fights. Extended by TripRescue. */
 export class TripFights extends TripCare {
@@ -100,6 +106,45 @@ export class TripFights extends TripCare {
     if (pick < 0) return undefined;
     const [paid] = this.haul.splice(pick, 1);
     return an(this.ix.item(paid!.item).name.toLowerCase());
+  }
+
+  // -------------------------------------------------------------------------
+  // Backstory moments (M8.31, content/moments/)
+  // -------------------------------------------------------------------------
+
+  /** Check everyone standing for a moment due now. At most one each. */
+  protected moments(on: MomentTrigger): void {
+    if (!this.ix.lib.moments.length) return;
+    for (const h of this.conscious()) {
+      const had = this.momentsHad.filter((x) => x.hero === h.id).map((x) => x.moment);
+      const m = dueMoment(this.ix, h, this.depth, on, had, this.momentRng);
+      if (m) this.playMoment(h, m);
+    }
+  }
+
+  protected playMoment(h: Hero, m: MomentDef): void {
+    this.emit("moment", m.text.replaceAll("{hero}", h.name));
+    const had: TripMoment = { hero: h.id, moment: m.id };
+    for (const e of m.effects) {
+      if (e.type === "morale") had.morale = { amount: e.amount, reason: e.reason };
+      else if (e.type === "heal") {
+        for (const x of e.all ? this.alive() : [h]) {
+          const hp = this.heal(x, Math.round((this.maxHp(x) * e.percent) / 100));
+          if (hp) this.emit("moment", `${x.name}: +${hp} HP.`);
+        }
+      } else if (e.type === "hurt") {
+        const scale = MOMENT_HURT_PER_FLOOR ** (this.depth - 1);
+        const raw = this.momentRng.int(e.damage[0], e.damage[1]);
+        this.hurt(h, Math.round(raw * scale), e.damageType);
+      } else if (e.type === "loot") this.findLoot(e.table, e.from, true);
+      else if (e.type === "gift") {
+        const gold = this.momentRng.int(e.gold[0], e.gold[1]);
+        const news = e.news.replaceAll("{gold}", String(gold)).replaceAll("{hero}", h.name);
+        this.gifts.push({ gold, news });
+      } else if (e.type === "epithet")
+        this.emit("moment", `From now on, they call ${h.name} ${e.name}.`);
+    }
+    this.momentsHad.push(had);
   }
 
   // -------------------------------------------------------------------------
@@ -353,6 +398,7 @@ export class TripFights extends TripCare {
         );
         this.takeShard(bearer.source.id);
       }
+      if (result.kills.length) this.moments({ kind: "fight", monsters: result.kills });
     }
     // The leader goes down (M7.05): the party may lose heart.
     const leaderNow = lead && this.party.find((h) => h.id === lead);

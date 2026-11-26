@@ -19,6 +19,7 @@ import type {
   ExpeditionExtras,
   ExpeditionResult,
   FloorIntel,
+  TripMoment,
 } from "./report";
 
 export const an = (name: string) => (/^[aeiou]/i.test(name) ? `an ${name}` : `a ${name}`);
@@ -69,6 +70,9 @@ export class TripBase {
    * a trip with none left to find plays out exactly as it did before them.
    */
   protected shardRng: Rng;
+  /** Backstory moments (M8.31) roll on their own stream as well. */
+  protected momentRng: Rng;
+  protected momentsHad: TripMoment[] = [];
   /** Shard sources found this trip, and the bearer leading the group just rolled. */
   protected shardsFound: string[] = [];
   protected bearerOut?: string;
@@ -121,6 +125,7 @@ export class TripBase {
     // doesn't change what happens in the rest of the trip.
     this.secretRng = createRng((seed ^ 0x5ec2e7) >>> 0);
     this.shardRng = createRng((seed ^ 0x54a2d5) >>> 0);
+    this.momentRng = createRng((seed ^ 0x6d0e27) >>> 0);
     this.floors = floors?.map((f) => ({ ...f }));
     this.party = party.map((h) => ({
       ...h,

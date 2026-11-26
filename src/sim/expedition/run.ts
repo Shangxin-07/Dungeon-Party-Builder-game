@@ -238,6 +238,7 @@ export class Expedition extends TripRescue {
       this.deepest = depth;
       this.roomNo = 0;
       this.emit("floor", `Floor ${depth}: ${floor.name}.`);
+      this.moments({ kind: "floor" });
       const notes = this.notes();
       if (notes) notes.of = rooms.length;
 
@@ -248,6 +249,7 @@ export class Expedition extends TripRescue {
         this.roomsVisited++;
         this.emit("room", `${room.name}. ${this.rng.pick(room.descriptions)}`);
         getRoom(room.behaviour)(this.context(room.id));
+        if (!this.wiped) this.moments({ kind: "room", room });
         this.noteRoom(room.id);
         // A rescue mission (M7.02) hurries through the rooms.
         const pace = this.onRescue() ? this.ix.lib.rescue.rescuePace : 1;
@@ -790,6 +792,7 @@ export class Expedition extends TripRescue {
       deeds: this.deeds,
       gifts: wiped || holed ? [] : this.gifts,
       parleys: this.parleys,
+      moments: wiped || holed ? [] : this.momentsHad,
       ...(this.scouting() ? { intel: wiped ? [] : this.intelNow(), slipped: this.slipped } : {}),
       ...(this.sneaking() ? { sneaked: this.sneaked } : {}),
       ...(this.lairVisit ? { lair: this.lairVisit } : {}),

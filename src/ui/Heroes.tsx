@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { STATS, type PassiveEffect, type Stat } from "../content/types";
 import { backstoryText } from "../sim/backstory";
+import { epithet } from "../sim/moments";
 import { abilitiesAtLevel, abilityCost, knownAbilities, upcomingAbilities } from "../sim/abilities";
 import { classDepth, fatigueTier, type Hero } from "../sim/hero";
 import { classOptions, levelIn, xpProgress, type ClassOption } from "../sim/levels";
@@ -87,17 +88,34 @@ export function Personality({ hero, town }: { hero: Hero; town?: TownState }) {
   const fav = ix.building(hero.favourite).name;
   const has = town ? standing(town, hero.favourite) : undefined;
   const story = ix.backstory(hero.backstory);
+  const named = epithet(ix, hero);
   return (
     <p className="personality small">
       <span title={`${story.name}: ${describePassives(story.passives)}`}>
         <strong>
           {hero.name} {hero.surname}
+          {named ? `, ${named}` : ""}
         </strong>{" "}
         <span className="muted">
           · {backstoryText(ix, hero)} ({describePassives(story.passives)})
         </span>
       </span>
       <br />
+      {hero.moments.length ? (
+        <>
+          Stories:{" "}
+          {hero.moments.map((id) => (
+            <span
+              key={id}
+              className="perk"
+              title={ix.moment(id).text.replaceAll("{hero}", hero.name)}
+            >
+              {ix.moment(id).name}
+            </span>
+          ))}
+          <br />
+        </>
+      ) : null}
       <span title={m.blurb}>
         <strong>{m.name}</strong> <span className="muted">· {m.blurb}</span>
       </span>

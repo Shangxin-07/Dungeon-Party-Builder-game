@@ -1485,6 +1485,12 @@ sup.down {
   color: #c9b6e8;
 }
 
+/* Backstory moments (M8.31). */
+.log-x-moment {
+  color: #e8c98a;
+  font-style: italic;
+}
+
 .log-x-parley {
   color: #c9b6e8;
   font-style: italic;

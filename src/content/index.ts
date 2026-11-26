@@ -22,6 +22,7 @@ import type {
   MonsterDef,
   MotivationDef,
   BackstoryDef,
+  MomentDef,
   PerkDef,
   PostDef,
   RoomDef,
@@ -366,6 +367,21 @@ import graveDiggerBackstory from "./backstories/grave-digger";
 import smugglerBackstory from "./backstories/smuggler";
 import farmhandBackstory from "./backstories/farmhand";
 import pilgrimBackstory from "./backstories/pilgrim";
+import burialMarksMoment from "./moments/burial-marks";
+import cantSwimMoment from "./moments/cant-swim";
+import fathersTallyMoment from "./moments/fathers-tally";
+import finestPieceMoment from "./moments/finest-piece";
+import hearthsWarmthMoment from "./moments/hearths-warmth";
+import homeTunnelsMoment from "./moments/home-tunnels";
+import houndTracksMoment from "./moments/hound-tracks";
+import oldRitesMoment from "./moments/old-rites";
+import ownTongueMoment from "./moments/own-tongue";
+import regimentBadgeMoment from "./moments/regiment-badge";
+import runeNotesMoment from "./moments/rune-notes";
+import smugglersNookMoment from "./moments/smugglers-nook";
+import strandedCousinMoment from "./moments/stranded-cousin";
+import unflinchingMoment from "./moments/unflinching";
+import worthyFoeMoment from "./moments/worthy-foe";
 import { surnames } from "./names";
 import goldMotivation from "./motivations/gold";
 import gloryMotivation from "./motivations/glory";
@@ -764,6 +780,24 @@ export const backstories: readonly BackstoryDef[] = [
   pilgrimBackstory,
 ];
 
+export const moments: readonly MomentDef[] = [
+  burialMarksMoment,
+  cantSwimMoment,
+  fathersTallyMoment,
+  finestPieceMoment,
+  hearthsWarmthMoment,
+  homeTunnelsMoment,
+  houndTracksMoment,
+  oldRitesMoment,
+  ownTongueMoment,
+  regimentBadgeMoment,
+  runeNotesMoment,
+  smugglersNookMoment,
+  strandedCousinMoment,
+  unflinchingMoment,
+  worthyFoeMoment,
+];
+
 export const motivations: readonly MotivationDef[] = [
   goldMotivation,
   gloryMotivation,
@@ -954,6 +988,7 @@ export const library: Library = {
   buildings,
   motivations,
   backstories,
+  moments,
   surnames,
   alignments,
   town: townRules,

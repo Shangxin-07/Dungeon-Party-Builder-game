@@ -40,6 +40,8 @@ export type ExpeditionEventKind =
   | "site"
   /** Something the party decided about, by its alignment (DESIGN.md §7, content/events/). */
   | "event"
+  /** A backstory moment (M8.31, content/moments/). */
+  | "moment"
   /** Monsters talked to the party instead of fighting it (DESIGN.md §7). */
   | "parley"
   /** The party camps in a tunnel after a long day awake (M7.01). */
@@ -188,6 +190,8 @@ export interface ExpeditionResult {
   gifts?: { gold: number; news: string }[];
   /** Fights monsters talked their way out of (DESIGN.md §7). */
   parleys?: number;
+  /** Backstory moments the heroes had (M8.31). Trips from before M8.31 have none. */
+  moments?: TripMoment[];
   /**
    * What a scout mission saw, floor by floor (M7.08). It only reaches the
    * town if the scouts get home.
@@ -199,6 +203,14 @@ export interface ExpeditionResult {
   sneaked?: { past: number; heard: number };
   /** The lair the party went into (M7.08), and how that went. */
   lair?: { id: string; outcome: "fetched" | "slain" | "fled" | "fought" | "empty" };
+}
+
+/** A backstory moment one hero had on a trip (M8.31, content/moments/). */
+export interface TripMoment {
+  hero: string;
+  moment: string;
+  /** Morale it's worth when they get home, and why. */
+  morale?: { amount: number; reason: string };
 }
 
 /**
