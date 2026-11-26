@@ -7,6 +7,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "skrag-shardcrown",
   name: "Skrag Shardcrown",
+  icon: { sheet: "monsters-4", cell: 0 },
   power: 30,
   stats: { STR: 15, DEX: 12, END: 14, PER: 10, INT: 8, WIL: 10, CHA: 11 },
   overrides: { maxHp: 380 },

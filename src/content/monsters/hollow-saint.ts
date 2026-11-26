@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "hollow-saint",
   name: "The Hollow Saint",
+  icon: { sheet: "monsters-4", cell: 4 },
   power: 52,
   stats: { STR: 16, DEX: 13, END: 16, PER: 12, INT: 9, WIL: 16, CHA: 10 },
   overrides: { maxHp: 850 },

@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "runeplate",
   name: "Delver's Runeplate",
+  icon: { sheet: "loot-2", cell: 10 },
   slot: "armor",
   value: 170,
   tags: ["armor", "heavy", "silver"],

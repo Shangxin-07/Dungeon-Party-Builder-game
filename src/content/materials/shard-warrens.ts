@@ -4,6 +4,7 @@ import { defineMaterial } from "../types";
 export default defineMaterial({
   id: "shard-warrens",
   name: "Warrens shard",
+  icon: { sheet: "specimens", cell: 14 },
   blurb: "A shard of the Hearthstone from the Warrens. Forge them all into floor 2's Seal Stone.",
   // Worth more than anything else in the packs: nobody leaves one behind, and a
   // porter running for it grabs it first.

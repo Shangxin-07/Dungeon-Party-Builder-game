@@ -4,6 +4,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "rust-beetle",
   name: "Rust Beetle",
+  icon: { sheet: "monsters-3", cell: 1 },
   power: 3,
   stats: { STR: 9, DEX: 7, END: 12, PER: 6, INT: 2, WIL: 6, CHA: 1 },
   overrides: { maxHp: 24 },

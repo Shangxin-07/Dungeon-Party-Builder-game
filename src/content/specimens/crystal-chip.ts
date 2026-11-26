@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "crystal-chip",
   name: "Crystal Chip",
+  icon: { sheet: "specimens", cell: 11 },
   slot: "loot",
   value: 5,
   tags: ["specimen"],

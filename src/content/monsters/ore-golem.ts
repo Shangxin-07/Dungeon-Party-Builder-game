@@ -4,6 +4,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "ore-golem",
   name: "Ore Golem",
+  icon: { sheet: "monsters-3", cell: 10 },
   power: 12,
   stats: { STR: 18, DEX: 6, END: 18, PER: 6, INT: 1, WIL: 14, CHA: 1 },
   overrides: { maxHp: 90 },

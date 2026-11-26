@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "crystal-crawler",
   name: "Crystal Crawler",
+  icon: { sheet: "monsters-3", cell: 9 },
   power: 8,
   stats: { STR: 13, DEX: 9, END: 14, PER: 9, INT: 2, WIL: 10, CHA: 1 },
   overrides: { maxHp: 46 },

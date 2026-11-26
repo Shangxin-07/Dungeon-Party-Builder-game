@@ -4,6 +4,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "tunnel-hound",
   name: "Tunnel Hound",
+  icon: { sheet: "monsters-3", cell: 2 },
   power: 3,
   stats: { STR: 8, DEX: 13, END: 8, PER: 13, INT: 3, WIL: 6, CHA: 1 },
   overrides: { maxHp: 18 },

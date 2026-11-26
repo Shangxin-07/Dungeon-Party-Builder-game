@@ -4,6 +4,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "shaft-eel",
   name: "Shaft Eel",
+  icon: { sheet: "monsters-3", cell: 7 },
   power: 6,
   stats: { STR: 11, DEX: 15, END: 9, PER: 12, INT: 2, WIL: 6, CHA: 1 },
   overrides: { maxHp: 30 },

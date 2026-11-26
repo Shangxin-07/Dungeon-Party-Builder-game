@@ -7,6 +7,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "hearthborn",
   name: "The Hearthborn",
+  icon: { sheet: "monsters-4", cell: 5 },
   power: 80,
   stats: { STR: 22, DEX: 12, END: 22, PER: 14, INT: 10, WIL: 20, CHA: 6 },
   overrides: { maxHp: 1100 },

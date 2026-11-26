@@ -4,6 +4,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "goblin-sapper",
   name: "Goblin Sapper",
+  icon: { sheet: "monsters-3", cell: 0 },
   power: 3,
   stats: { STR: 7, DEX: 11, END: 7, PER: 9, INT: 9, WIL: 6, CHA: 5 },
   overrides: { maxHp: 15 },
