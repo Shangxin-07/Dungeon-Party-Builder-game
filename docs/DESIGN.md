@@ -1510,8 +1510,9 @@ The story (§20) is complete, but the floors are themed mostly by name: rooms, t
   - the **Emberstone**, floor 10, older than any people;
   - and room left for the **Spark** (floor 15) if the pit ever goes deeper.
 - **Act One ends as now.** Shutting off the heart on floor 5 still shows the ending. Then a new chapter opens: with the heart still, the Delve's floor gives way and the stairs down are found. Floor 10 becomes the bottom that breeds; floors 6 to 9 fill from it as floors 1 to 5 did.
-- **Act Two** works like Act One: shards and shard-bearers on each floor (more the deeper they lie: 6 for floors 4-6, then more), Seal Stones and gateways, and the **Coalstone** on floor 7 stilled like the heart before the way below it is safe.
-- **The end is mending, not shutting off.** At the Emberstone the guild brings what it has learned (the Foreman's pages, the Keepers' writings from the Library, the stilled hearts) and **mends** it. Mended, the whole chain goes quiet the way the Keepers meant: nothing breeds, the dead rest, and the town gets its true ending. Players can still leave it and keep clearing.
+- **Act Two** works like Act One: shards and shard-bearers on each floor (6 for floors 4-6, 9 for floors 7-9, 12 for floors 10-12), Seal Stones and gateways, and the **Coalstone** on floor 7 stilled like the heart before the way below it is safe.
+- **The end: mend it or bind it.** At the Emberstone the guild chooses, as with the Seal Stones (§20): **mend** it (Good: the guild brings what it has learned, the Foreman's pages, the Keepers' writings from the Library, the stilled hearts, and makes it whole) or **bind** it (Evil: put the stone to work for the guild). Mending is the morale road: the whole chain goes quiet the way the Keepers meant, nothing breeds, the dead rest, and **every floor above it is safe**. Binding is the profit road: the stone's life is the guild's to draw on (richer hauls, stronger heroes) but the deep never quite sleeps, and Good heroes never like it. Either way the town gets its ending; players can still leave it and keep clearing.
+- **The Keepers stay vague** (Mike, 2026-11-26): no names or history, only hints and stories about keeping and caring for the stones.
 
 Floor ideas for Act Two (names open):
 
@@ -1554,6 +1555,6 @@ Each floor gets its own rooms, traps and events, two or three new monsters, them
 
 ### Questions for Mike
 
-- Who were the Keepers? (Dwarf-like stone-cutters, an old order of priests, or the town's own distant ancestors.)
-- How many shards on floors 7-10 (9 a floor for 7-9 and 12 for 10, following "and so on")?
-- Should mending the Emberstone also free the gateways above (nothing left to hold back)?
+- ✅ **DECIDED: who the Keepers were** (Mike, 2026-11-26): left vague; hints and stories about caring for the stones.
+- ✅ **DECIDED: shards deeper down** (Mike, 2026-11-26): 6 a floor for floors 4-6, 9 for 7-9, 12 for 10-12.
+- ✅ **DECIDED: the end** (Mike, 2026-11-26): keep the Good/Evil choice: mend the stone (morale) or bind it (profit). Mending makes every floor above it safe.
