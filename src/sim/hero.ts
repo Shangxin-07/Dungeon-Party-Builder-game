@@ -13,6 +13,7 @@ import {
   type StatBlock,
 } from "../content/types";
 import { rollAlignment } from "./alignment";
+import { rollBackstory } from "./backstory";
 import type { Index } from "./library";
 import { createRng, type Rng } from "./rng";
 import { computeDerived, effectiveStats, skillValue, type DerivedBlock } from "./stats";
@@ -59,6 +60,10 @@ export interface Hero {
   alignment: string;
   /** Building id they'd love the town to have. */
   favourite: string;
+  /** Backstory id (M8.29): where they came from before the pit. Gives a small bonus. */
+  backstory: string;
+  /** Family name (M8.29). Logs use their first name alone. */
+  surname: string;
   /** A gear tag they like using ("sword", "fire"...), if any. */
   likes?: string;
   /** A gear tag they hate using, if any. */
@@ -200,6 +205,7 @@ export function heroPassives(ix: Index, hero: Hero): PassiveEffect[] {
     if (id) out.push(...(ix.item(id).passives ?? []));
   }
   for (const id of hero.perks) out.push(...ix.perk(id).passives);
+  out.push(...ix.backstory(hero.backstory).passives);
   out.push(...depthPassives(ix, hero));
   for (const inj of hero.injuries) out.push(...ix.injury(inj.id).passives);
   out.push(...(fatigueTier(ix, hero)?.passives ?? []));
@@ -318,8 +324,8 @@ export function createHero(
     injuries: [],
     pay: 0,
     payLevel: 1,
-    alignment: rollAlignment(ix, opts.id, opts.name),
     ...rollPersonality(ix, opts.id, opts.name, stats, cls.id),
+    ...origins(ix, opts.id, opts.name),
   };
   for (const itemId of cls.startingKit) {
     const item = ix.item(itemId);
@@ -333,6 +339,12 @@ export function createHero(
   hero.hp = derived.maxHp;
   hero.mana = derived.mana;
   return hero;
+}
+
+/** Alignment, backstory and surname: who a hero is, from their id and name. */
+function origins(ix: Index, id: string, name: string) {
+  const alignment = rollAlignment(ix, id, name);
+  return { alignment, ...rollBackstory(ix, id, name, alignment) };
 }
 
 /** A small, stable number from a string, so personalities don't use up the dice. */
@@ -445,8 +457,8 @@ export function rollRecruit(
     pay: 0,
     payLevel: 1,
     untrained: true,
-    alignment: rollAlignment(ix, opts.id, opts.name),
     ...rollPersonality(ix, opts.id, opts.name, stats),
+    ...origins(ix, opts.id, opts.name),
   };
 }
 

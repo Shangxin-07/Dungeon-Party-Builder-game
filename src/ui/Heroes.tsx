@@ -5,6 +5,7 @@
  */
 import { useState } from "react";
 import { STATS, type PassiveEffect, type Stat } from "../content/types";
+import { backstoryText } from "../sim/backstory";
 import { abilitiesAtLevel, abilityCost, knownAbilities, upcomingAbilities } from "../sim/abilities";
 import { classDepth, fatigueTier, type Hero } from "../sim/hero";
 import { classOptions, levelIn, xpProgress, type ClassOption } from "../sim/levels";
@@ -85,8 +86,18 @@ export function Personality({ hero, town }: { hero: Hero; town?: TownState }) {
   const al = ix.alignment(hero.alignment);
   const fav = ix.building(hero.favourite).name;
   const has = town ? standing(town, hero.favourite) : undefined;
+  const story = ix.backstory(hero.backstory);
   return (
     <p className="personality small">
+      <span title={`${story.name}: ${describePassives(story.passives)}`}>
+        <strong>
+          {hero.name} {hero.surname}
+        </strong>{" "}
+        <span className="muted">
+          · {backstoryText(ix, hero)} ({describePassives(story.passives)})
+        </span>
+      </span>
+      <br />
       <span title={m.blurb}>
         <strong>{m.name}</strong> <span className="muted">· {m.blurb}</span>
       </span>

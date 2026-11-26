@@ -38,7 +38,14 @@ export type {
   PerkDef,
 } from "./defs";
 export { MORALE_FACTS } from "./morale";
-export type { MoraleFact, MoraleRule, AlignmentDef, MotivationDef, MoraleRulesDef } from "./morale";
+export type {
+  MoraleFact,
+  MoraleRule,
+  AlignmentDef,
+  MotivationDef,
+  MoraleRulesDef,
+  BackstoryDef,
+} from "./morale";
 export type {
   LevelRules,
   RescueRules,
@@ -150,6 +157,7 @@ export {
   defineResearchRules,
   defineDungeonRules,
   defineMotivation,
+  defineBackstory,
   defineAlignment,
   defineMoraleRules,
   defineLevelRules,

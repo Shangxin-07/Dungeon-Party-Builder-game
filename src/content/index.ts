@@ -21,6 +21,7 @@ import type {
   LootTableDef,
   MonsterDef,
   MotivationDef,
+  BackstoryDef,
   PerkDef,
   PostDef,
   RoomDef,
@@ -353,6 +354,19 @@ import fieldMedicPerk from "./perks/field-medic";
 import packMulePerk from "./perks/pack-mule";
 import sharpEyedPerk from "./perks/sharp-eyed";
 import quickReflexesPerk from "./perks/quick-reflexes";
+import minersChildBackstory from "./backstories/miners-child";
+import deserterBackstory from "./backstories/deserter";
+import templeOrphanBackstory from "./backstories/temple-orphan";
+import disgracedNobleBackstory from "./backstories/disgraced-noble";
+import goblinRaisedBackstory from "./backstories/goblin-raised";
+import hunterBackstory from "./backstories/hunter";
+import scholarBackstory from "./backstories/scholar";
+import sellswordBackstory from "./backstories/sellsword";
+import graveDiggerBackstory from "./backstories/grave-digger";
+import smugglerBackstory from "./backstories/smuggler";
+import farmhandBackstory from "./backstories/farmhand";
+import pilgrimBackstory from "./backstories/pilgrim";
+import { surnames } from "./names";
 import goldMotivation from "./motivations/gold";
 import gloryMotivation from "./motivations/glory";
 import knowledgeMotivation from "./motivations/knowledge";
@@ -734,6 +748,22 @@ export const perks: readonly PerkDef[] = [
   ...advancedMilestones,
 ];
 export const alignments: readonly AlignmentDef[] = [goodAlignment, neutralAlignment, evilAlignment];
+/** Where heroes come from (§21). */
+export const backstories: readonly BackstoryDef[] = [
+  minersChildBackstory,
+  deserterBackstory,
+  templeOrphanBackstory,
+  disgracedNobleBackstory,
+  goblinRaisedBackstory,
+  hunterBackstory,
+  scholarBackstory,
+  sellswordBackstory,
+  graveDiggerBackstory,
+  smugglerBackstory,
+  farmhandBackstory,
+  pilgrimBackstory,
+];
+
 export const motivations: readonly MotivationDef[] = [
   goldMotivation,
   gloryMotivation,
@@ -923,6 +953,8 @@ export const library: Library = {
   floors,
   buildings,
   motivations,
+  backstories,
+  surnames,
   alignments,
   town: townRules,
   dungeon: dungeonRules,
@@ -969,4 +1001,4 @@ export const library: Library = {
   ],
 };
 
-export { heroNames } from "./names";
+export { heroNames, surnames } from "./names";

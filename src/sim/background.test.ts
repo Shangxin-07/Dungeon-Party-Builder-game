@@ -103,7 +103,8 @@ describe("a party out in the dungeon", () => {
       expect(trip.result.log).toEqual(r.log);
       expect(after.lastTrip).toEqual(trip);
       expect(after.news.some((n) => /is back after/.test(n.text))).toBe(true);
-      // Nobody else was picked, so they're the party again.
+      // Nobody else was picked, so they're the party again (if nobody was lost or quit).
+      if (!t0.party.every((id) => after.roster.some((h) => h.id === id))) continue;
       expect(after.party).toEqual(t0.party);
       return;
     }

@@ -15,6 +15,7 @@ import type {
   LootTableDef,
   MonsterDef,
   MotivationDef,
+  BackstoryDef,
   AlignmentDef,
   PerkDef,
   PostDef,
@@ -45,6 +46,7 @@ export interface Index {
   event(id: string): EventDef;
   building(id: string): BuildingDef;
   motivation(id: string): MotivationDef;
+  backstory(id: string): BackstoryDef;
   alignment(id: string): AlignmentDef;
   injury(id: string): InjuryDef;
   transform(id: string): TransformDef;
@@ -89,6 +91,7 @@ export function indexLibrary(lib: Library): Index {
       event: table("event", lib.events ?? []),
       building: table("building", lib.buildings),
       motivation: table("motivation", lib.motivations),
+      backstory: table("backstory", lib.backstories),
       alignment: table("alignment", lib.alignments),
       injury: table("injury", lib.injuries),
       transform: table("transform", lib.transforms ?? []),
