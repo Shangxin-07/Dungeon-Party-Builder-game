@@ -18,6 +18,7 @@ import {
   newTown,
   rest,
   sell,
+  settleByRule,
   TOWN_VERSION,
   retainer,
   retainerBill,
@@ -64,7 +65,8 @@ describe("the Market", () => {
     let t = fresh();
     t = buy(ix, t, "bandages");
     t = sell(ix, t, "bandages");
-    t = launchAndWait(ix, t, heroNames);
+    // Settle whatever waits at the debrief (a specimen holds it for the player).
+    t = settleByRule(ix, launchAndWait(ix, t, heroNames));
     const kinds = new Set(t.ledger.map((l) => l.kind));
     // The whole roster went down, so nobody drew a retainer (M7.12); they took shares.
     expect(kinds).toEqual(

@@ -7,5 +7,5 @@ export default defineItem({
   slot: "loot",
   value: 2,
   tags: ["specimen"],
-  research: { points: 6, monsters: ["goblin", "goblin-archer", "goblin-boss"] },
+  research: { points: 6, monsters: ["goblin", "goblin-archer", "goblin-boss", "goblin-sapper"] },
 });

@@ -33,6 +33,7 @@ import {
   upgrade,
   retainer,
   type TownState,
+  settleByRule,
 } from "./town";
 import { stocked } from "./stocked";
 
@@ -225,7 +226,8 @@ describe("launching a party", () => {
 
   it("runs the trip, sells the haul and moves the clock on", () => {
     const t = fresh(3);
-    const after = launchAndWait(ix, t, heroNames);
+    // Settle whatever waits at the debrief (a specimen holds it for the player).
+    const after = settleByRule(ix, launchAndWait(ix, t, heroNames));
     const trip = after.lastTrip!;
     expect(trip.result.outcome).toBe("returned");
     expect(after.day).toBe(t.day + trip.result.days);
