@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "eel-skin",
   name: "Eel Skin",
+  icon: { sheet: "specimens", cell: 9 },
   slot: "loot",
   value: 4,
   tags: ["specimen"],

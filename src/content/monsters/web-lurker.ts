@@ -4,6 +4,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "web-lurker",
   name: "Web Lurker",
+  icon: { sheet: "monsters-3", cell: 3 },
   power: 5,
   stats: { STR: 9, DEX: 14, END: 8, PER: 13, INT: 4, WIL: 8, CHA: 1 },
   overrides: { maxHp: 26 },

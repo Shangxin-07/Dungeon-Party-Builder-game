@@ -11,8 +11,12 @@ import { mainClass } from "../../sim/levels";
 import { ix } from "../game";
 import armour from "./icons/armour.png";
 import classes from "./icons/classes.png";
+import loot2 from "./icons/loot-2.png";
 import monsters1 from "./icons/monsters-1.png";
 import monsters2 from "./icons/monsters-2.png";
+import monsters3 from "./icons/monsters-3.png";
+import monsters4 from "./icons/monsters-4.png";
+import specimens from "./icons/specimens.png";
 import supplies from "./icons/supplies.png";
 import weapons from "./icons/weapons.png";
 
@@ -24,6 +28,10 @@ export const ICON_ART: Partial<Record<IconSheet, { url: string; cell: number }>>
   weapons: { url: weapons, cell: 64 },
   armour: { url: armour, cell: 64 },
   supplies: { url: supplies, cell: 64 },
+  "monsters-3": { url: monsters3, cell: 64 },
+  "monsters-4": { url: monsters4, cell: 64 },
+  "loot-2": { url: loot2, cell: 64 },
+  specimens: { url: specimens, cell: 64 },
 };
 
 /** Icons for people who have no class of their own (cells of the classes sheet). */

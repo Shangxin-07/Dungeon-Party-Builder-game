@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "heart-crystal",
   name: "Heart Crystal",
+  icon: { sheet: "loot-2", cell: 9 },
   slot: "loot",
   value: 40,
   valueRange: [25, 60],

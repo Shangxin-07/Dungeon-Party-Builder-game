@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "ossuary-knight",
   name: "The Ossuary Knight",
+  icon: { sheet: "monsters-4", cell: 2 },
   power: 44,
   stats: { STR: 16, DEX: 10, END: 16, PER: 10, INT: 6, WIL: 15, CHA: 8 },
   overrides: { maxHp: 600 },

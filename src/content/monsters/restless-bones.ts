@@ -6,6 +6,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "restless-bones",
   name: "Restless Bones",
+  icon: { sheet: "monsters-3", cell: 4 },
   power: 4,
   stats: { STR: 10, DEX: 8, END: 9, PER: 8, INT: 3, WIL: 10, CHA: 1 },
   overrides: { maxHp: 24 },

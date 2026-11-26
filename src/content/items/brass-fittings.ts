@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "brass-fittings",
   name: "Brass Fittings",
+  icon: { sheet: "loot-2", cell: 2 },
   slot: "loot",
   value: 14,
   valueRange: [8, 20],

@@ -5,6 +5,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "shed-scale",
   name: "Shed Scale",
+  icon: { sheet: "specimens", cell: 4 },
   slot: "loot",
   value: 25,
   size: 2,

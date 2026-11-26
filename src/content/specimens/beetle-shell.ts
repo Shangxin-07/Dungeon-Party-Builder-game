@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "beetle-shell",
   name: "Rust Beetle Shell",
+  icon: { sheet: "specimens", cell: 6 },
   slot: "loot",
   value: 3,
   tags: ["specimen"],

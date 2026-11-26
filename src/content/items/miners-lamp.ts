@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "miners-lamp",
   name: "Miner's Lamp",
+  icon: { sheet: "loot-2", cell: 0 },
   slot: "offhand",
   value: 30,
   tags: ["tool", "metal"],

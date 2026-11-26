@@ -4,6 +4,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "drowned-miner",
   name: "Drowned Miner",
+  icon: { sheet: "monsters-3", cell: 6 },
   power: 7,
   stats: { STR: 13, DEX: 8, END: 13, PER: 8, INT: 4, WIL: 11, CHA: 1 },
   overrides: { maxHp: 42 },

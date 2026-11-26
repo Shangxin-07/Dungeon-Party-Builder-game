@@ -45,6 +45,10 @@ export const ICON_SHEETS = {
   weapons: { cols: 4, rows: 4 },
   armour: { cols: 4, rows: 4 },
   supplies: { cols: 4, rows: 3 },
+  "monsters-3": { cols: 4, rows: 3 },
+  "monsters-4": { cols: 4, rows: 2 },
+  "loot-2": { cols: 4, rows: 3 },
+  specimens: { cols: 4, rows: 5 },
 } as const;
 export type IconSheet = keyof typeof ICON_SHEETS;
 
