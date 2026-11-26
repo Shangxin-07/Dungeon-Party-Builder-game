@@ -15,6 +15,7 @@ import { an, list } from "./trip";
 import { TripCare } from "./care";
 import { shardPlace } from "../shards";
 import { dueMoment, type MomentTrigger } from "../moments";
+import { bondsFor } from "../ties";
 import type { MomentDef } from "../../content/types";
 import type { TripMoment } from "./report";
 
@@ -331,6 +332,7 @@ export class TripFights extends TripCare {
       ...(lead ? { leader: lead } : {}),
       ...(this.extras.research ? { research: this.extras.research } : {}),
       ...(this.ix.floor(this.depth).ground ? { ground: this.ix.floor(this.depth).ground } : {}),
+      ...(this.ix.lib.ties.length ? { bonds: bondsFor(this.ix, this.conscious()) } : {}),
     });
     const summoned = new Set(result.log.filter((e) => e.kind === "summon").map((e) => e.target));
     const foes = result.fighters.filter((f) => f.side === "monsters" && !summoned.has(f.uid));

@@ -23,6 +23,7 @@ import type {
   MotivationDef,
   BackstoryDef,
   MomentDef,
+  TieDef,
   PerkDef,
   PostDef,
   RoomDef,
@@ -367,6 +368,14 @@ import graveDiggerBackstory from "./backstories/grave-digger";
 import smugglerBackstory from "./backstories/smuggler";
 import farmhandBackstory from "./backstories/farmhand";
 import pilgrimBackstory from "./backstories/pilgrim";
+import siblingsTie from "./ties/siblings";
+import oldComradesTie from "./ties/old-comrades";
+import badBloodTie from "./ties/bad-blood";
+import oldScoreTie from "./ties/old-score";
+import campKidsTie from "./ties/camp-kids";
+import prayerPartnersTie from "./ties/prayer-partners";
+import teacherTie from "./ties/teacher";
+import rivalsTie from "./ties/rivals";
 import burialMarksMoment from "./moments/burial-marks";
 import cantSwimMoment from "./moments/cant-swim";
 import fathersTallyMoment from "./moments/fathers-tally";
@@ -798,6 +807,18 @@ export const moments: readonly MomentDef[] = [
   worthyFoeMoment,
 ];
 
+/** In order: a pair gets the first that fits and rolls. */
+export const ties: readonly TieDef[] = [
+  siblingsTie,
+  oldComradesTie,
+  badBloodTie,
+  oldScoreTie,
+  campKidsTie,
+  prayerPartnersTie,
+  teacherTie,
+  rivalsTie,
+];
+
 export const motivations: readonly MotivationDef[] = [
   goldMotivation,
   gloryMotivation,
@@ -989,6 +1010,7 @@ export const library: Library = {
   motivations,
   backstories,
   moments,
+  ties,
   surnames,
   alignments,
   town: townRules,

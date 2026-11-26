@@ -13,6 +13,7 @@ import { gainXp } from "../levels";
 import type { Index } from "../library";
 import { applyMorale, gearTags, moraleChanges, nudgeMorale, type Facts } from "../morale";
 import { epithet, knownAs } from "../moments";
+import { tiesAmong } from "../ties";
 import {
   type Memorial,
   type Outing,
@@ -326,6 +327,21 @@ export function homecoming(ix: Index, t: TownState, o: Outing): void {
       }
       const now = epithet(ix, h);
       if (now && now !== named) news(t, `${h.name} came home with a new name: ${knownAs(ix, h)}.`);
+    }
+  }
+  // Ties between heroes (M8.32): how it felt to go down with each other.
+  const cameHome = party
+    .map((left) => findHero(t, left.id))
+    .filter((h): h is Hero => !!h && result.party.some((p) => p.id === h.id && p.condition !== "dead"));
+  for (const { tie, a, b } of tiesAmong(ix, cameHome)) {
+    if (!tie.morale) continue;
+    for (const [h, other] of [
+      [a, b],
+      [b, a],
+    ] as const) {
+      const reason = tie.morale.reason.replaceAll("{other}", other.name);
+      const got = nudgeMorale(ix, h, tie.morale.amount, reason, t.day);
+      if (got) (morale[h.id] ??= []).push({ amount: got, reason });
     }
   }
 

@@ -138,6 +138,8 @@ export interface CombatOptions {
   research?: Readonly<Record<string, number>>;
   /** The floor's fighting ground (§21): passives for each side, told at the start. */
   ground?: FloorGround;
+  /** Ties between heroes (M8.32): extra passives by hero id, for the whole fight. */
+  bonds?: Readonly<Record<string, readonly PassiveEffect[]>>;
 }
 
 /** The basic weapon attack every fighter has. Not a content file, so "attack" is a reserved id. */

@@ -730,6 +730,17 @@ export function validateLibrary(lib: Library): string[] {
       if (e.type === "epithet" && !e.name.trim()) err(`${w}: epithet needs a name`);
     }
   }
+  // Ties between heroes (M8.32).
+  ids("tie", lib.ties);
+  for (const x of lib.ties) {
+    const w = `tie "${x.id}"`;
+    if (!(x.chance > 0 && x.chance <= 1)) err(`${w}: chance must be above 0, at most 1`);
+    if (!x.text.includes("{a}") || !x.text.includes("{b}")) err(`${w}: text should name {a} and {b}`);
+    for (const t of x.between.flat()) if (!storyTags.has(t)) err(`${w}: no backstory has the tag "${t}"`);
+    if (!x.morale && !x.passives?.length) err(`${w}: does nothing`);
+    if (x.morale && !x.morale.reason) err(`${w}: morale needs a reason`);
+    passives(w, x.passives ?? []);
+  }
   // Leaders (M7.05): traits and the command table.
   ids("trait", lib.traits ?? []);
   const motivationIds = new Set(lib.motivations.map((m) => m.id));

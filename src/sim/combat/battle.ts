@@ -37,6 +37,7 @@ export function runCombat(
   )
     .useResearch(opts.research)
     .onGround(opts.ground)
+    .withBonds(opts.bonds)
     .run(opts.maxRounds ?? MAX_ROUNDS);
 }
 

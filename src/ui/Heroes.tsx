@@ -7,6 +7,7 @@ import { useState } from "react";
 import { STATS, type PassiveEffect, type Stat } from "../content/types";
 import { backstoryText } from "../sim/backstory";
 import { epithet } from "../sim/moments";
+import { tieBetween, tieText } from "../sim/ties";
 import { abilitiesAtLevel, abilityCost, knownAbilities, upcomingAbilities } from "../sim/abilities";
 import { classDepth, fatigueTier, type Hero } from "../sim/hero";
 import { classOptions, levelIn, xpProgress, type ClassOption } from "../sim/levels";
@@ -81,6 +82,15 @@ export function XpBar({ hero }: { hero: Hero }) {
   );
 }
 
+/** A tie's line, and what it does when they go down together. */
+function tieLine(t: NonNullable<ReturnType<typeof tieBetween>>): string {
+  const parts = [tieText(t)];
+  if (t.tie.passives?.length) parts.push(`Together: ${describePassives(t.tie.passives)} each`);
+  if (t.tie.morale)
+    parts.push(`${t.tie.morale.amount > 0 ? "+" : ""}${t.tie.morale.amount} morale a trip`);
+  return parts.join(". ");
+}
+
 /** Motivation, likes and dislikes, and the favourite building. */
 export function Personality({ hero, town }: { hero: Hero; town?: TownState }) {
   const m = ix.motivation(hero.motivation);
@@ -89,6 +99,12 @@ export function Personality({ hero, town }: { hero: Hero; town?: TownState }) {
   const has = town ? standing(town, hero.favourite) : undefined;
   const story = ix.backstory(hero.backstory);
   const named = epithet(ix, hero);
+  const ties = town
+    ? town.roster
+        .filter((h) => h.id !== hero.id)
+        .map((h) => tieBetween(ix, hero, h))
+        .filter((t) => !!t)
+    : [];
   return (
     <p className="personality small">
       <span title={`${story.name}: ${describePassives(story.passives)}`}>
@@ -113,6 +129,20 @@ export function Personality({ hero, town }: { hero: Hero; town?: TownState }) {
               {ix.moment(id).name}
             </span>
           ))}
+          <br />
+        </>
+      ) : null}
+      {ties.length ? (
+        <>
+          Ties:{" "}
+          {ties.map((t) => {
+            const other = t.a.id === hero.id ? t.b : t.a;
+            return (
+              <span key={other.id} className="perk" title={tieLine(t)}>
+                {t.tie.name} of {other.name}
+              </span>
+            );
+          })}
           <br />
         </>
       ) : null}

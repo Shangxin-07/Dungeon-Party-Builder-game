@@ -259,3 +259,30 @@ export type MomentEffect =
   | { type: "gift"; gold: readonly [number, number]; news: string }
   /** A name they're known by from now on: "the Unflinching" makes "Wren the Unflinching". */
   | { type: "epithet"; name: string };
+
+/**
+ * A tie between two heroes (M8.32, DESIGN.md §21): siblings, old comrades,
+ * sworn rivals, a feud. Worked out from the two heroes' backstories (and
+ * surnames) with a roll from their ids, so it never changes and needs no
+ * saving. It only matters when both go down together.
+ */
+export interface TieDef {
+  id: string;
+  /** What each is to the other, e.g. "sibling", "old comrade". */
+  name: string;
+  /** For the hero sheet and the log. {a} and {b} are the two first names. */
+  text: string;
+  /**
+   * Who it can be between: one hero has a backstory tag from the first list,
+   * the other from the second. An empty list matches anyone.
+   */
+  between: readonly [readonly string[], readonly string[]];
+  /** Only between heroes with the same surname. */
+  sameSurname?: boolean;
+  /** Chance a pair who fit have this tie. The first tie (in content order) to roll wins. */
+  chance: number;
+  /** Morale for each of them after a trip together. {other} is the other's first name. */
+  morale?: { amount: number; reason: string };
+  /** For each of them in every fight the other starts on their feet. */
+  passives?: readonly PassiveEffect[];
+}
