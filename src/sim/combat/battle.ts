@@ -36,6 +36,7 @@ export function runCombat(
     opts.leader,
   )
     .useResearch(opts.research)
+    .onGround(opts.ground)
     .run(opts.maxRounds ?? MAX_ROUNDS);
 }
 
@@ -52,6 +53,7 @@ export class Battle extends BattleEffects {
         .map((f) => f.name)
         .join(", ");
     this.emit({ kind: "start", text: `${names("party")} face ${names("monsters")}.` });
+    if (this.ground) this.emit({ kind: "ground", text: this.ground.text });
     this.checkExposed();
 
     if (this.surprise) this.partySurprise();

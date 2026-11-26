@@ -285,6 +285,7 @@ export class TripFights extends TripCare {
       risen: risen.map((r) => risenHero(this.ix, r)),
       ...(lead ? { leader: lead } : {}),
       ...(this.extras.research ? { research: this.extras.research } : {}),
+      ...(this.ix.floor(this.depth).ground ? { ground: this.ix.floor(this.depth).ground } : {}),
     });
     const summoned = new Set(result.log.filter((e) => e.kind === "summon").map((e) => e.target));
     const foes = result.fighters.filter((f) => f.side === "monsters" && !summoned.has(f.uid));

@@ -4,7 +4,7 @@
  * build on this: effects.ts (what abilities do), battle.ts (turns and the
  * fight from start to finish).
  */
-import type { Derived, PassiveEffect } from "../../content/types";
+import type { Derived, FloorGround, PassiveEffect } from "../../content/types";
 import { knownAbilityIds } from "../abilities";
 import { risenAi, risenSheet } from "../fallen";
 import { heroSheet, type Hero } from "../hero";
@@ -210,6 +210,18 @@ export class BattleBase {
     return this;
   }
 
+  /** The floor's fighting ground (§21): passives on each side for the whole fight. */
+  protected ground?: FloorGround;
+  onGround(ground: FloorGround | undefined): this {
+    this.ground = ground;
+    return this;
+  }
+
+  private groundFor(f: Fighter): readonly PassiveEffect[] {
+    if (!this.ground) return [];
+    return (f.side === "party" ? this.ground.heroes : this.ground.monsters) ?? [];
+  }
+
   /** The guild's research tier on this fighter's kind of monster (0 for anyone else). */
   protected tierOf(f: Fighter): number {
     return f.monsterId ? (this.research[f.monsterId] ?? 0) : 0;
@@ -227,13 +239,19 @@ export class BattleBase {
 
   /** Passives from the creature itself plus its current statuses. */
   protected passives(f: Fighter): PassiveEffect[] {
-    if (!f.statuses.length) return f.passives;
-    return [...f.passives, ...f.statuses.flatMap((s) => this.ix.status(s.id).passives ?? [])];
+    const ground = this.groundFor(f);
+    if (!f.statuses.length && !ground.length) return f.passives;
+    return [
+      ...f.passives,
+      ...ground,
+      ...f.statuses.flatMap((s) => this.ix.status(s.id).passives ?? []),
+    ];
   }
 
   /** A secondary stat including temporary status effects. */
   protected stat(f: Fighter, key: Derived): number {
     let v = f.derived[key];
+    for (const p of this.groundFor(f)) if (p.type === "modifyStat" && p.stat === key) v += p.amount;
     for (const s of f.statuses) {
       for (const p of this.ix.status(s.id).passives ?? []) {
         if (p.type === "modifyStat" && p.stat === key) v += p.amount;

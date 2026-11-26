@@ -3,7 +3,7 @@
  * searching, population, hunting and raids.
  */
 import type { BuildingEffect, MaterialCost } from "./town";
-import type { DamageType, Stat } from "./core";
+import type { DamageType, PassiveEffect, Stat } from "./core";
 import type { MoraleFact } from "./morale";
 
 export interface EncounterDef {
@@ -317,6 +317,24 @@ export interface FloorDef {
    * own depth (M6.21: adding floors 4 and 5 left floors 1-3 as they were).
    */
   evictedLevelDrop?: number;
+  /**
+   * The floor's own rule in a fight (§21): passives on every hero, or every
+   * monster, in each fight here, e.g. the Warrens' tight tunnels. Told once
+   * at the start of each fight.
+   */
+  ground?: FloorGround;
+}
+
+/** A floor's fighting ground (§21). */
+export interface FloorGround {
+  /** Short name, e.g. "Tight tunnels". */
+  name: string;
+  /** What it does, for the floor's description. */
+  description: string;
+  /** Log line at the start of each fight here. */
+  text: string;
+  heroes?: readonly PassiveEffect[];
+  monsters?: readonly PassiveEffect[];
 }
 
 /**

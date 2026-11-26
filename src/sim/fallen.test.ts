@@ -118,7 +118,8 @@ function deathOnTrip(): TownState {
       retreat: { kind: "never" },
     });
     const t = launchAndWait(ix, t0, heroNames);
-    if (t.lastTrip!.result.outcome !== "wiped" && t.bodies.length) return t;
+    if (!t.lastTrip) continue; // given up for lost
+    if (t.lastTrip.result.outcome !== "wiped" && t.bodies.length) return t;
   }
   throw new Error("nobody died on a trip the party came home from");
 }

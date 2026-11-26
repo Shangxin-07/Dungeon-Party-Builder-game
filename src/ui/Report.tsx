@@ -50,6 +50,11 @@ export function ScoutingReport({ town, party }: { town: TownState; party: readon
           Nobody has scouted this floor yet. A scout party would bring back what's on it now.
         </p>
       )}
+      {ix.floor(floor).ground ? (
+        <p className="small report-ground">
+          <strong>{ix.floor(floor).ground!.name}:</strong> {ix.floor(floor).ground!.description}
+        </p>
+      ) : null}
       <ul className="report-monsters small">
         {r.monsters.map((m) => (
           <li key={m.monster}>

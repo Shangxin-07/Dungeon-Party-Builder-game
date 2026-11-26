@@ -7,5 +7,8 @@ export default defineItem({
   slot: "loot",
   value: 3,
   tags: ["specimen"],
-  research: { points: 8, monsters: ["cave-spider", "spiderling", "spider-matriarch"] },
+  research: {
+    points: 8,
+    monsters: ["cave-spider", "web-lurker", "spiderling", "spider-matriarch"],
+  },
 });
