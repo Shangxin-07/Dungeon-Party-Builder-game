@@ -51,8 +51,19 @@ OWN = {
     ("beards", 3): (1.0, 0, 14),
     ("beards", 6): (0.92, 0, 17),  # the braids
     ("beards", 7): (1.0, 0, 12),  # mutton chops
-    ("injuries", 0): (1.0, 0, -10),  # the head bandage goes round the brow
+    # Face details were drawn too low on the head (Mike saw an eyepatch on a
+    # cheek and an earring in one, M8.34): each is moved onto its own spot,
+    # measured against the heads (eyes y~36, nose tip ~51, mouth ~57, earlobe
+    # x~75 y~49).
+    ("extras", 2): (1.0, -2, -14),  # eyepatch over the eye
+    ("extras", 3): (1.0, 1, -6),  # nose ring hangs from the nose, not the chin
+    ("extras", 6): (1.0, 10, 5),  # earring on the earlobe
+    ("extras", 7): (1.0, 3, -5),  # tattoo on the temple
+    ("injuries", 0): (0.94, 0, -20),  # the head bandage goes round the brow
+    ("injuries", 2): (1.0, 1, -15),  # black eye round the eye
+    ("injuries", 3): (1.0, 0, -6),  # cut lip on the lip
     ("injuries", 4): (1.0, 0, 24),  # the sling sits on the shoulder
+    ("injuries", 5): (1.0, 0, -10),  # bloodied cloth on the forehead
     ("hats", 0): (1.22, 0, -11),  # miner's cap
     ("hats", 1): (1.32, 0, -10),  # nasal helm
     ("hats", 2): (1.32, 0, -8),  # helmet and coif
