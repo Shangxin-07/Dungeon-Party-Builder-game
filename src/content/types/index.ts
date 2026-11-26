@@ -80,6 +80,7 @@ export type {
   SealRules,
   TimeRules,
   FloorDef,
+  FloorGround,
   DungeonRules,
   HuntRules,
   RaidRules,

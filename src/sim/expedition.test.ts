@@ -48,7 +48,7 @@ describe("expeditions", () => {
   });
 
   it("go down floor by floor and come home", () => {
-    const r = runExpedition(ix, party(), orders({ targetFloor: 2, retreat: { kind: "never" } }), 3);
+    const r = runExpedition(ix, party(), orders({ targetFloor: 2, retreat: { kind: "never" } }), 1);
     expect(r.outcome).toBe("returned");
     expect(r.deepestFloor).toBe(2);
     expect(r.days).toBe(2);

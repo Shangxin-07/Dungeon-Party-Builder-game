@@ -237,3 +237,26 @@ describe("the back row", () => {
     expect(r.log[1]?.kind).toBe("exposed");
   });
 });
+
+describe("a floor's fighting ground (§21)", () => {
+  it("is told at the start, and its passives count for that side all fight", () => {
+    const ground = ix.floor(2).ground!;
+    expect(ground).toBeDefined();
+    const plain = runCombat(ix, party(), ["giant-rat"], { seed: 3 });
+    const tight = runCombat(ix, party(), ["giant-rat"], { seed: 3, ground });
+    expect(plain.log.some((e) => e.kind === "ground")).toBe(false);
+    expect(tight.log.find((e) => e.kind === "ground")?.text).toBe(ground.text);
+    // A hero with no room to dodge gets hit more often over many fights.
+    const hits = (g?: typeof ground) => {
+      let n = 0;
+      for (let seed = 1; seed <= 200; seed++) {
+        const opts = { seed, ...(g ? { ground: g } : {}) };
+        const r = runCombat(ix, party(), ["giant-rat", "giant-rat"], opts);
+        const rats = r.fighters.filter((f) => f.side === "monsters").map((f) => f.name);
+        n += r.log.filter((e) => e.kind === "hit" && rats.some((x) => e.text.startsWith(x))).length;
+      }
+      return n;
+    };
+    expect(hits(ground)).toBeGreaterThan(hits());
+  });
+});

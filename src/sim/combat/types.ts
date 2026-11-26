@@ -3,6 +3,7 @@
  */
 import type {
   AbilityDef,
+  FloorGround,
   DamageType,
   PassiveEffect,
   Row,
@@ -66,6 +67,8 @@ export type CombatEventKind =
   | "summon"
   /** The party's front row has all fallen: melee can now reach the back row. */
   | "exposed"
+  /** The floor's fighting ground (§21), told at the start. */
+  | "ground"
   | "end";
 
 /** One line of the battle report. `hp` is the affected creature's HP afterwards. */
@@ -133,6 +136,8 @@ export interface CombatOptions {
    * wards break at their tier.
    */
   research?: Readonly<Record<string, number>>;
+  /** The floor's fighting ground (§21): passives for each side, told at the start. */
+  ground?: FloorGround;
 }
 
 /** The basic weapon attack every fighter has. Not a content file, so "attack" is a reserved id. */

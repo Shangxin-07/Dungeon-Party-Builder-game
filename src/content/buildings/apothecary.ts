@@ -10,9 +10,11 @@ export default defineBuilding({
     {
       cost: 180,
       days: 3,
-      summary: "Injuries mend twice as fast. A still with 1 bench: bandages, healing potions",
+      summary:
+        "Injuries mend twice as fast; sells antivenom. A still with 1 bench: bandages, healing potions",
       effects: [
         { type: "healing", amount: 1 },
+        { type: "sells", items: ["antivenom"] },
         { type: "workshop", benches: 1 },
       ],
     },
