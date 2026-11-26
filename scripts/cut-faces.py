@@ -55,15 +55,18 @@ OWN = {
     # cheek and an earring in one, M8.34): each is moved onto its own spot,
     # measured against the heads (eyes y~36, nose tip ~51, mouth ~57, earlobe
     # x~75 y~49).
-    ("extras", 2): (1.0, -2, -14),  # eyepatch over the eye
+    ("extras", 1): (1.0, -4, 0),  # cheek scar kept inside the jaw on narrow heads
+    ("extras", 2): (0.8, 0, -16),  # eyepatch over the eye, sized to it
     ("extras", 3): (1.0, 1, -6),  # nose ring hangs from the nose, not the chin
     ("extras", 6): (1.0, 10, 5),  # earring on the earlobe
-    ("extras", 7): (1.0, 3, -5),  # tattoo on the temple
-    ("injuries", 0): (0.94, 0, -20),  # the head bandage goes round the brow
+    ("extras", 7): (1.0, 1, -5),  # tattoo on the temple
+    ("injuries", 0): (1.06, 0, -19),  # the head bandage goes round the brow
+    ("injuries", 1): (1.0, 0, -15),  # bandage over one eye (flipped, see FLIP)
     ("injuries", 2): (1.0, 1, -15),  # black eye round the eye
     ("injuries", 3): (1.0, 0, -6),  # cut lip on the lip
-    ("injuries", 4): (1.0, 0, 24),  # the sling sits on the shoulder
-    ("injuries", 5): (1.0, 0, -10),  # bloodied cloth on the forehead
+    ("injuries", 4): (1.0, 0, 36),  # the sling sits over the shoulder
+    ("injuries", 5): (1.08, 0, -11),  # bloodied cloth on the forehead
+    ("injuries", 7): (1.0, 3, 6),  # bruised jaw out on the jaw
     ("hats", 0): (1.22, 0, -11),  # miner's cap
     ("hats", 1): (1.32, 0, -10),  # nasal helm
     ("hats", 2): (1.32, 0, -8),  # helmet and coif
@@ -73,6 +76,10 @@ OWN = {
     ("hats", 12): (1.4, 0, 0),  # spellblade's half-helm
     ("hats", 15): (1.22, 0, 30),  # fur collar
 }
+
+# Parts mirrored left to right before fitting: the one-eye bandage covered
+# the eye the other eye details don't (Mike, M8.34).
+FLIP = {("injuries", 1)}
 
 # Parts drawn as two pieces with a gap between, each fitted on its own: the
 # row to cut at, then the fit above it and the fit below it.
@@ -120,6 +127,8 @@ def main(src, dest):
                 sheet.alpha_composite(fitted(top, above), at)
                 sheet.alpha_composite(fitted(bottom, below), at)
                 continue
+            if (layer, i) in FLIP:
+                part = part.transpose(Image.FLIP_LEFT_RIGHT)
             fit = OWN.get((layer, i), FIT[layer])
             sheet.alpha_composite(fitted(part, fit), at)
         out = os.path.join(dest, f"{layer}.png")
