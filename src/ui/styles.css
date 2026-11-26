@@ -2509,3 +2509,15 @@ sup.down {
   vertical-align: middle;
   margin-right: 6px;
 }
+
+/* Item icons in the trip recap (haul table, recovered gear). */
+.haul td .icon,
+.kept-gear .icon,
+.hero-cell .icon {
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.hero-cell {
+  white-space: nowrap;
+}

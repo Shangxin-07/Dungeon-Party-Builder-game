@@ -3,7 +3,7 @@
  * click for the full sheet) and the results card. On a wide screen the log sits
  * beside the fight, so a big fight never pushes it off the page (M8.12). Used by the town's watch screen and by the sandbox expedition demo.
  */
-import { HeroIcon, MonsterIcon } from "./art/Icon";
+import { HeroIcon, ItemIcon, MonsterIcon } from "./art/Icon";
 import { FightTokens } from "./FightTokens";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DERIVED, STATS, type Derived } from "../content/types";
@@ -452,9 +452,14 @@ export function Results({ result, children }: { result: ExpeditionResult; childr
       {kept.length ? (
         <p>
           Heroes' gear recovered:{" "}
-          {kept
-            .map((h) => `${h.owner ? `${h.owner}'s ` : ""}${ix.item(h.item).name.toLowerCase()}`)
-            .join(", ")}
+          {kept.map((h, i) => (
+            <span key={i} className="kept-gear">
+              {i ? ", " : ""}
+              <ItemIcon id={h.item} size={20} />
+              {h.owner ? `${h.owner}'s ` : ""}
+              {ix.item(h.item).name.toLowerCase()}
+            </span>
+          ))}
           .
         </p>
       ) : null}
@@ -476,6 +481,7 @@ export function Results({ result, children }: { result: ExpeditionResult; childr
               {[...counts].map(([id, c]) => (
                 <tr key={id}>
                   <td>
+                    <ItemIcon id={id} size={20} />
                     {ix.item(id).name}
                     {c.n > 1 ? ` ×${c.n}` : ""}
                   </td>
