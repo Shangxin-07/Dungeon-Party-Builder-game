@@ -24,6 +24,22 @@ import {
 import { heroTitle } from "../../sim/hero";
 import { ix } from "../game";
 import { describeItem, type Act } from "./shared";
+import { HeroIcon, ItemIcon } from "../art/Icon";
+import type { MaterialCost } from "../../content/types";
+
+/** Materials as icons with counts, e.g. for a contract or a petition's cost. */
+function MaterialChips({ cost }: { cost: MaterialCost }) {
+  return (
+    <span className="material-chips">
+      {Object.entries(cost).map(([id, n]) => (
+        <span key={id} className="material-chip" title={ix.item(id).name}>
+          <ItemIcon id={id} size={20} />
+          {n} {ix.item(id).name.toLowerCase()}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 const KIND_NAMES = {
   caravan: "caravan",
@@ -81,6 +97,7 @@ function OfferCard({ town, act, o }: { town: TownState; act: Act; o: Offer }) {
   return (
     <div className="card offer">
       <h4>
+        {o.hero ? <HeroIcon hero={o.hero} size={22} /> : null}
         {o.hero ? `${o.hero.name}, passing through` : def.name}{" "}
         <span className={`muted small${left ? "" : " warn"}`}>({when})</span>
       </h4>
@@ -93,6 +110,7 @@ function OfferCard({ town, act, o }: { town: TownState; act: Act; o: Offer }) {
               const have = town.materials[id] ?? 0;
               return (
                 <li key={id}>
+                  <ItemIcon id={id} size={20} />
                   {ix.item(id).name} at {price} gold each (you have {have}){" "}
                   {have ? (
                     <>
@@ -124,6 +142,7 @@ function OfferCard({ town, act, o }: { town: TownState; act: Act; o: Offer }) {
               const sold = o.bought?.includes(i);
               return (
                 <li key={w.item} title={describeItem(ix.item(w.item))}>
+                  <ItemIcon id={w.item} size={20} />
                   {ix.item(w.item).name}, {w.price} gold{" "}
                   {sold ? (
                     <span className="muted">(bought)</span>
@@ -146,6 +165,9 @@ function OfferCard({ town, act, o }: { town: TownState; act: Act; o: Offer }) {
       ) : null}
       {def.kind === "contract" ? (
         <>
+          <p className="small">
+            Wants: <MaterialChips cost={def.wants} />
+          </p>
           <div className="row-buttons">
             {o.taken ? (
               <button
@@ -180,6 +202,21 @@ function OfferCard({ town, act, o }: { town: TownState; act: Act; o: Offer }) {
             {def.materials ? ` and ${materialWords(ix, def.materials)}` : ""}:{" "}
             {petitionWords(ix, def.effect)}.
           </p>
+          {def.materials || def.effect.type === "materials" ? (
+            <p className="small">
+              {def.materials ? (
+                <>
+                  Costs: <MaterialChips cost={def.materials} />
+                  {def.effect.type === "materials" ? " · " : null}
+                </>
+              ) : null}
+              {def.effect.type === "materials" ? (
+                <>
+                  Brings: <MaterialChips cost={def.effect.materials} />
+                </>
+              ) : null}
+            </p>
+          ) : null}
           <div className="row-buttons">
             <button
               type="button"
