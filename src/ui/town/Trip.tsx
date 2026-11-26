@@ -5,6 +5,7 @@
 import { heroSheet } from "../../sim/hero";
 import { materialWords, type TownState, type TripReport } from "../../sim/town";
 import { ix } from "../game";
+import { HeroIcon } from "../art/Icon";
 import { describeRaid } from "../Pit";
 
 /** What a trip changed in town: gold, kills per hero, the fallen. */
@@ -124,7 +125,10 @@ export function TripTown({
             const total = morale.reduce((s, c) => s + c.amount, 0);
             return (
               <tr key={h.id}>
-                <td>{h.name}</td>
+                <td className="hero-cell">
+                  <HeroIcon hero={h} size={20} />
+                  {h.name}
+                </td>
                 <td>{trip.kills[h.id] ?? 0}</td>
                 <td>{h.condition === "ok" ? `${h.hp}/${max}` : h.condition}</td>
                 <td>
