@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "geode-hulk",
   name: "Geode Hulk",
+  icon: { sheet: "glimmering", cell: 2 },
   power: 22,
   stats: { STR: 21, DEX: 6, END: 22, PER: 8, INT: 3, WIL: 14, CHA: 1 },
   overrides: { maxHp: 140 },

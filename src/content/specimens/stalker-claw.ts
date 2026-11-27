@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "stalker-claw",
   name: "Stalker's Glass Claw",
+  icon: { sheet: "glimmering", cell: 8 },
   slot: "loot",
   value: 5,
   tags: ["specimen"],

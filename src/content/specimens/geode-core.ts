@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "geode-core",
   name: "Geode Heart",
+  icon: { sheet: "glimmering", cell: 10 },
   slot: "loot",
   value: 5,
   tags: ["specimen"],

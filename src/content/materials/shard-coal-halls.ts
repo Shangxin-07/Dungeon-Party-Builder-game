@@ -5,6 +5,7 @@ import { defineMaterial } from "../types";
 export default defineMaterial({
   id: "shard-coal-halls",
   name: "Emberstone shard",
+  icon: { sheet: "glimmering", cell: 11 },
   blurb:
     "A shard of the Emberstone, the oldest stone of all: it burns white at the edges. Forge all nine into floor 7's Seal Stone.",
   value: 220,

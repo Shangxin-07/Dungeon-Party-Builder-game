@@ -6,6 +6,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "last-lamplighter",
   name: "The Last Lamplighter",
+  icon: { sheet: "glimmering", cell: 3 },
   power: 86,
   stats: { STR: 12, DEX: 14, END: 18, PER: 18, INT: 22, WIL: 22, CHA: 6 },
   overrides: { maxHp: 700 },

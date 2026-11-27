@@ -6,6 +6,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "ember-moth",
   name: "The Ember Moth",
+  icon: { sheet: "glimmering", cell: 4 },
   power: 84,
   stats: { STR: 14, DEX: 20, END: 16, PER: 18, INT: 6, WIL: 12, CHA: 2 },
   overrides: { maxHp: 650 },

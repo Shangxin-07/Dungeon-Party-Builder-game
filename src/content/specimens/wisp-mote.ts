@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "wisp-mote",
   name: "Bottled Wisp-light",
+  icon: { sheet: "glimmering", cell: 9 },
   slot: "loot",
   value: 5,
   tags: ["specimen"],

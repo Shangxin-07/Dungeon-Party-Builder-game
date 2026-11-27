@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "glimmer-stalker",
   name: "Glimmer Stalker",
+  icon: { sheet: "glimmering", cell: 0 },
   power: 14,
   stats: { STR: 15, DEX: 18, END: 13, PER: 16, INT: 4, WIL: 10, CHA: 1 },
   overrides: { maxHp: 85 },

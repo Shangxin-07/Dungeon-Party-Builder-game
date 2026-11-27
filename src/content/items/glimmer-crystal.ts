@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "glimmer-crystal",
   name: "Glimmer Crystal",
+  icon: { sheet: "glimmering", cell: 6 },
   slot: "loot",
   value: 110,
   tags: ["gem", "valuable"],

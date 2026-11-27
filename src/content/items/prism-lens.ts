@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "prism-lens",
   name: "Prism Lens",
+  icon: { sheet: "glimmering", cell: 7 },
   slot: "offhand",
   value: 160,
   tags: ["tool"],

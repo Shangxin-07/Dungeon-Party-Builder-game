@@ -6,6 +6,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "facet-king",
   name: "The Facet King",
+  icon: { sheet: "glimmering", cell: 5 },
   power: 96,
   stats: { STR: 24, DEX: 7, END: 24, PER: 10, INT: 4, WIL: 18, CHA: 2 },
   overrides: { maxHp: 1000 },

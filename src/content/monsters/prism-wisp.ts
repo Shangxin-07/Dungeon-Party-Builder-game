@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "prism-wisp",
   name: "Prism Wisp",
+  icon: { sheet: "glimmering", cell: 1 },
   power: 10,
   stats: { STR: 4, DEX: 16, END: 9, PER: 15, INT: 16, WIL: 15, CHA: 4 },
   overrides: { maxHp: 42 },
