@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "ashwalker-hammer",
   name: "Ashwalker's Hammer",
+  icon: { sheet: "ember-deeps", cell: 7 },
   slot: "weapon",
   value: 200,
   tags: ["mace", "melee", "heavy"],

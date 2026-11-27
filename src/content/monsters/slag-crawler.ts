@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "slag-crawler",
   name: "Slag Crawler",
+  icon: { sheet: "ember-deeps", cell: 0 },
   power: 18,
   stats: { STR: 19, DEX: 9, END: 20, PER: 10, INT: 3, WIL: 12, CHA: 1 },
   overrides: { maxHp: 120 },

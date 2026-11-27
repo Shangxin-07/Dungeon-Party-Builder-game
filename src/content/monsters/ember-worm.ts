@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "ember-worm",
   name: "Ember Worm",
+  icon: { sheet: "ember-deeps", cell: 2 },
   power: 24,
   stats: { STR: 22, DEX: 10, END: 22, PER: 9, INT: 2, WIL: 12, CHA: 1 },
   overrides: { maxHp: 160 },

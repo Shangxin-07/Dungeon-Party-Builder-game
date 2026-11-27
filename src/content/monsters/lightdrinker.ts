@@ -6,6 +6,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "lightdrinker",
   name: "The Lightdrinker",
+  icon: { sheet: "ember-deeps", cell: 3 },
   power: 90,
   stats: { STR: 20, DEX: 19, END: 18, PER: 20, INT: 6, WIL: 14, CHA: 1 },
   overrides: { maxHp: 650 },

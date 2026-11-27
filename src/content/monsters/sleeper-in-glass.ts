@@ -6,6 +6,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "sleeper-in-glass",
   name: "The Sleeper in Glass",
+  icon: { sheet: "ember-deeps", cell: 4 },
   power: 88,
   stats: { STR: 12, DEX: 10, END: 20, PER: 16, INT: 22, WIL: 24, CHA: 8 },
   overrides: { maxHp: 1000 },

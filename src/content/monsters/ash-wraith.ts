@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "ash-wraith",
   name: "Ash Wraith",
+  icon: { sheet: "ember-deeps", cell: 1 },
   power: 13,
   stats: { STR: 5, DEX: 14, END: 11, PER: 14, INT: 17, WIL: 17, CHA: 3 },
   overrides: { maxHp: 60 },
