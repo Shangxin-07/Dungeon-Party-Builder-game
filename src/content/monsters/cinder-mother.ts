@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "cinder-mother",
   name: "The Cinder Mother",
+  icon: { sheet: "coal-halls", cell: 4 },
   power: 80,
   stats: { STR: 20, DEX: 15, END: 19, PER: 16, INT: 4, WIL: 12, CHA: 2 },
   overrides: { maxHp: 720 },

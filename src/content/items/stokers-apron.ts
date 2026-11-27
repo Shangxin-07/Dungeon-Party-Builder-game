@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "stokers-apron",
   name: "Stoker's Apron",
+  icon: { sheet: "coal-halls", cell: 7 },
   slot: "armor",
   value: 180,
   tags: ["armor", "heavy"],

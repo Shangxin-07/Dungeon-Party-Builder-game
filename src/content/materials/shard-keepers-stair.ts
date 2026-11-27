@@ -4,6 +4,7 @@ import { defineMaterial } from "../types";
 export default defineMaterial({
   id: "shard-keepers-stair",
   name: "Keepers' Stair shard",
+  icon: { sheet: "coal-halls", cell: 11 },
   blurb:
     "A shard of the Coalstone from the Keepers' Stair, too hot to hold for long. Forge them all into floor 6's Seal Stone.",
   value: 200,

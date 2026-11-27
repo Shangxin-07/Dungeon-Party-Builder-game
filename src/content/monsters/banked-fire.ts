@@ -6,6 +6,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "banked-fire",
   name: "The Banked Fire",
+  icon: { sheet: "coal-halls", cell: 3 },
   power: 100,
   stats: { STR: 22, DEX: 14, END: 22, PER: 16, INT: 14, WIL: 22, CHA: 8 },
   overrides: { maxHp: 1600 },
