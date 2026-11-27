@@ -50,6 +50,7 @@ export const ICON_SHEETS = {
   "loot-2": { cols: 4, rows: 3 },
   specimens: { cols: 4, rows: 5 },
   keepers: { cols: 4, rows: 3 },
+  "keepers-2": { cols: 4, rows: 2 },
 } as const;
 export type IconSheet = keyof typeof ICON_SHEETS;
 

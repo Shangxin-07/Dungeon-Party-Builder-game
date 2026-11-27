@@ -427,6 +427,11 @@ export interface ShardSetDef {
   floor: number;
   /** The material a shard of this floor is (content/materials/). */
   item: string;
+  /**
+   * The stone they're shards of (M8.37, DESIGN.md §21): the Hearthstone when
+   * left out. The crack ran down too, so the deep floors hold the Coalstone's.
+   */
+  stone?: string;
   shards: readonly ShardSource[];
   /**
    * Forging this floor's Seal Stone (M8.17), on top of every one of its

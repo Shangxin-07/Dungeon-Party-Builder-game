@@ -66,14 +66,14 @@ describe("shard sets", () => {
   it("check out, one per floor above the bottom", () => {
     expect(validateLibrary(library)).toEqual([]);
     const floors = library.shards.map((s) => s.floor).sort();
-    expect(floors).toEqual([1, 2, 3, 4]);
+    expect(floors).toEqual([1, 2, 3, 4, 5]);
   });
 
   it("need more shards deeper down (Mike: 3 for floors 1-3, 6 from floor 4)", () => {
     for (const f of [1, 2, 3]) expect(shardsNeeded(ix, f)).toBe(3);
-    expect(shardsNeeded(ix, 4)).toBe(6);
-    // The heart's floor: no seal there, the core is the goal.
-    expect(shardsNeeded(ix, library.core.floor)).toBe(0);
+    for (const f of [4, 5]) expect(shardsNeeded(ix, f)).toBe(6);
+    // Floor 5's are the Coalstone's (M8.37), the stone under the Hearthstone.
+    expect(library.shards.find((s) => s.floor === 5)!.stone).toBe("Coalstone");
   });
 
   it("put floor 1's out of a fresh guild's reach: two of its three need floor 2", () => {
@@ -312,6 +312,8 @@ describe("shards in town", () => {
     expect(t.shards).toEqual({});
     expect(openShards(ix, t).sort()).toEqual(
       library.shards
+        // Act Two's sets (M8.37) wait until there are stairs below their floor.
+        .filter((s) => s.floor < t.dungeon.floors.length)
         .flatMap((s) => s.shards)
         .filter((x) => x.kind !== "library")
         .map((x) => x.id)

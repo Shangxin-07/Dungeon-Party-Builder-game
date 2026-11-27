@@ -8,7 +8,7 @@ import type { ShardSetDef, ShardSource } from "../../content/types";
 import type { ExpeditionResult } from "../expedition";
 import type { Index } from "../library";
 import { monsterTier } from "../research";
-import { shardPlace, shardPlaces } from "../shards";
+import { shardPlace, shardPlaces, shardSetOpen, stoneName } from "../shards";
 import type { TownState } from "./state";
 import { gainRenown } from "./renown";
 import { news } from "./internal";
@@ -29,7 +29,8 @@ export const shardTaken = (town: TownState, id: string, below = takenBelow(town)
 export function openShards(ix: Index, town: TownState): string[] {
   const below = takenBelow(town);
   const out: string[] = [];
-  for (const [id, { source }] of shardPlaces(ix)) {
+  for (const [id, { set, source }] of shardPlaces(ix)) {
+    if (!shardSetOpen(town.dungeon.floors.length, set)) continue;
     if (shardTaken(town, id, below)) continue;
     if (source.kind === "library" && town.shards[id]?.lead === undefined) continue;
     out.push(id);
@@ -59,8 +60,8 @@ export function noteShards(ix: Index, t: TownState, result: ExpeditionResult, ho
     news(
       t,
       held >= need
-        ? `A shard of the Hearthstone came home from below. The guild has all ${need} of floor ${set.floor}'s shards: enough to forge its Seal Stone.`
-        : `A shard of the Hearthstone came home from below: ${held} of the ${need} that would seal floor ${set.floor}.`,
+        ? `A shard of the ${stoneName(set)} came home from below. The guild has all ${need} of floor ${set.floor}'s shards: enough to forge its Seal Stone.`
+        : `A shard of the ${stoneName(set)} came home from below: ${held} of the ${need} that would seal floor ${set.floor}.`,
       "good",
     );
   }
@@ -68,8 +69,9 @@ export function noteShards(ix: Index, t: TownState, result: ExpeditionResult, ho
 
 /** A Library shard is open to study: not found, not worked out, and every monster it needs Studied. */
 export function shardStudyOpen(ix: Index, town: TownState, id: string): boolean {
-  const { source } = shardPlace(ix, id);
+  const { set, source } = shardPlace(ix, id);
   if (source.kind !== "library" || shardTaken(town, id)) return false;
+  if (!shardSetOpen(town.dungeon.floors.length, set)) return false;
   if (town.shards[id]?.lead !== undefined) return false;
   return source.monsters.every((m) => monsterTier(ix, town, m) >= 2);
 }
@@ -108,7 +110,8 @@ export function shardProgress(
   town: TownState,
 ): { set: ShardSetDef; held: number; need: number; shards: ShardStatus[] }[] {
   const below = takenBelow(town);
-  return (ix.lib.shards ?? []).map((set) => ({
+  const open = (ix.lib.shards ?? []).filter((set) => shardSetOpen(town.dungeon.floors.length, set));
+  return open.map((set) => ({
     set,
     held: shardsHeld(town, set),
     need: set.shards.length,

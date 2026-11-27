@@ -32,6 +32,16 @@ export function shardPlace(ix: Index, id: string): ShardPlace {
   return p;
 }
 
+/** The stone a set's shards come from (M8.37): "Hearthstone" unless the set says. */
+export const stoneName = (set: ShardSetDef): string => set.stone ?? "Hearthstone";
+
+/**
+ * Can the guild look for this set's shards yet (M8.37)? Only once there are
+ * stairs below its floor to seal: Act Two's sets wait for the heart to be shut.
+ */
+export const shardSetOpen = (floorsOpen: number, set: ShardSetDef): boolean =>
+  set.floor < floorsOpen;
+
 /** The shard set that seals this floor, if there is one. */
 export const shardSetFor = (ix: Index, floor: number): ShardSetDef | undefined =>
   (ix.lib.shards ?? []).find((s) => s.floor === floor);

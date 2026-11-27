@@ -40,7 +40,11 @@ const gate = (stone: string, over: Partial<StoneSeal> = {}): StoneSeal => ({
 
 /** Every floor above the heart held by a stone. */
 const allHeld = (): Record<number, StoneSeal> =>
-  Object.fromEntries(library.shards.map((s) => [s.floor, gate(`seal-stone-${s.id}-cleansed`)]));
+  Object.fromEntries(
+    library.shards
+      .filter((s) => s.floor < library.core.floor)
+      .map((s) => [s.floor, gate(`seal-stone-${s.id}-cleansed`)]),
+  );
 
 function heldTown(): TownState {
   const t = autoStart(ix, newTown(ix, heroNames, 5));
