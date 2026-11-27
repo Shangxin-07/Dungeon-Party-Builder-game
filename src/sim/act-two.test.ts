@@ -6,11 +6,12 @@ import { describe, expect, it } from "vitest";
 import { heroNames, library } from "../content";
 import { addNewFloors, dungeonDay, floorsOpen, newDungeon, spawnRate } from "./dungeon";
 import { DEFAULT_ORDERS, runExpedition } from "./expedition";
-import { createStarterParty } from "./hero";
+import { createStarterParty, heroSheet } from "./hero";
+import { chooseClass, gainXp, spendLevelUp, xpForLevel } from "./levels";
 import { indexLibrary } from "./library";
 import { createRng } from "./rng";
 import { exportSave, importSave } from "./save";
-import { autoStart, newTown, type TownState } from "./town";
+import { autoStart, newTown, openShards, shardProgress, type TownState } from "./town";
 import { coreNews } from "./town/core";
 
 const ix = indexLibrary(library);
@@ -78,5 +79,62 @@ describe("Act Two", () => {
     const opened = { ...structuredClone(d), core: shutHeart };
     addNewFloors(ix, opened);
     expect(floorsSeen(opened.floors)).toContain(6);
+  });
+
+  it("keeps floor 5's shards (the Coalstone's) hidden until there are stairs below it", () => {
+    const t = autoStart(ix, newTown(ix, heroNames, 5));
+    const isOldDelve = (id: string) => id.startsWith("old-delve-");
+    expect(openShards(ix, t).some(isOldDelve)).toBe(false);
+    expect(shardProgress(ix, t).map((p) => p.set.floor)).not.toContain(5);
+    const opened: TownState = structuredClone({ ...t, dungeon: { ...t.dungeon, core: shutHeart } });
+    addNewFloors(ix, opened.dungeon);
+    expect(openShards(ix, opened).filter(isOldDelve).sort()).toEqual([
+      "old-delve-cache",
+      "old-delve-mother",
+      "old-delve-step",
+      "old-delve-warden",
+    ]);
+    expect(shardProgress(ix, opened).find((p) => p.set.floor === 5)?.need).toBe(6);
+  });
+
+  it("lets a seasoned party take the Vein Mother's shard: a shard of the Coalstone", () => {
+    const party = (seed: number) => {
+      const rng = createRng(seed);
+      const heroes = createStarterParty(ix, heroNames, rng, [
+        "fighter",
+        "fighter",
+        "cleric",
+        "mage",
+      ]);
+      for (const h of heroes) {
+        gainXp(ix, h, xpForLevel(ix, 10) - h.xp, rng);
+        while (h.levelUps.length) {
+          const up = h.levelUps[0]!;
+          if (!up.classId) chooseClass(ix, h, h.classId, rng);
+          spendLevelUp(ix, h, up.offers[0], up.freeStat ? "END" : undefined, rng);
+        }
+        const sheet = heroSheet(ix, h);
+        h.hp = sheet.derived.maxHp;
+        h.mana = sheet.derived.mana;
+      }
+      return heroes;
+    };
+    const d = { ...newDungeon(ix), core: shutHeart };
+    addNewFloors(ix, d);
+    const floors = d.floors.map((f) => ({ ...f }));
+    floors[4]!.population = 15;
+    const hunt = { ...DEFAULT_ORDERS, targetFloor: 5, clearPercent: 100 };
+    let taken = 0;
+    for (let seed = 1; seed <= 30 && !taken; seed++) {
+      const r = runExpedition(ix, party(seed), hunt, seed, floors, {
+        shards: ["old-delve-mother"],
+      });
+      if (!r.shards?.includes("old-delve-mother")) continue;
+      taken++;
+      const text = r.log.filter((e) => e.kind === "shard").map((e) => e.text);
+      expect(text.join("\n")).toMatch(/pries a shard of the Coalstone/);
+      expect([...r.haul, ...r.leftBehind].some((h) => h.item === "shard-old-delve")).toBe(true);
+    }
+    expect(taken).toBe(1);
   });
 });

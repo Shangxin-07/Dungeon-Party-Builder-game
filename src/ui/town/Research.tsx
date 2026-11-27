@@ -153,7 +153,7 @@ export function ResearchPanel({ town, act }: { town: TownState; act: Act }) {
                     {x.kind === "shelf"
                       ? "on the shelf"
                       : x.kind === "shard"
-                        ? "the Hearthstone"
+                        ? "a shard"
                         : TIER_NAMES[x.tier ?? 1]!.toLowerCase()}
                   </span>
                 </td>

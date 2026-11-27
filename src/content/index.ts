@@ -103,6 +103,7 @@ import acidSpitAbility from "./abilities/acid-spit";
 import webAbility from "./abilities/web";
 import warCryAbility from "./abilities/war-cry";
 import callTheBroodAbility from "./abilities/call-the-brood";
+import callTheClutchAbility from "./abilities/call-the-clutch";
 import bleedingStatus from "./statuses/bleeding";
 import webbedStatus from "./statuses/webbed";
 import emboldenedStatus from "./statuses/emboldened";
@@ -159,6 +160,7 @@ import floodedShaftsSealed from "./story/flooded-shafts-sealed";
 import theHeart from "./story/the-heart";
 import theHeartStilled from "./story/the-heart-stilled";
 import theStairBelow from "./story/the-stair-below";
+import oldDelveSealed from "./story/old-delve-sealed";
 import forwardCamp from "./digsites/forward-camp";
 import mineSite from "./digsites/mine";
 import shrineSite from "./digsites/shrine";
@@ -188,15 +190,19 @@ import diggingsShards from "./shards/diggings";
 import warrensShards from "./shards/warrens";
 import boneHallsShards from "./shards/bone-halls";
 import floodedShaftsShards from "./shards/flooded-shafts";
+import oldDelveShards from "./shards/old-delve";
 import shardDiggingsMaterial from "./materials/shard-diggings";
 import shardWarrensMaterial from "./materials/shard-warrens";
 import shardBoneHallsMaterial from "./materials/shard-bone-halls";
 import shardFloodedShaftsMaterial from "./materials/shard-flooded-shafts";
+import shardOldDelveMaterial from "./materials/shard-old-delve";
 import skragShardcrownMonster from "./monsters/skrag-shardcrown";
 import broodQueenMonster from "./monsters/brood-queen";
 import ossuaryKnightMonster from "./monsters/ossuary-knight";
 import oldDrownerMonster from "./monsters/old-drowner";
 import hollowSaintMonster from "./monsters/hollow-saint";
+import veinMotherMonster from "./monsters/vein-mother";
+import lastWardenMonster from "./monsters/last-warden";
 import ironBoundGate from "./barricades/iron-bound-gate";
 import planksRecipe from "./recipes/planks";
 import woodenShieldRecipe from "./recipes/wooden-shield";
@@ -533,6 +539,7 @@ export const materials: readonly ItemDef[] = [
   shardWarrensMaterial,
   shardBoneHallsMaterial,
   shardFloodedShaftsMaterial,
+  shardOldDelveMaterial,
 ];
 
 /** Specimens (M7.07, DESIGN.md §17.7): bits of monsters that feed the Library's research on them. */
@@ -585,6 +592,7 @@ export const shards: readonly ShardSetDef[] = [
   diggingsShards,
   warrensShards,
   boneHallsShards,
+  oldDelveShards,
   floodedShaftsShards,
 ];
 
@@ -689,6 +697,7 @@ export const abilities: readonly AbilityDef[] = [
   webAbility,
   warCryAbility,
   callTheBroodAbility,
+  callTheClutchAbility,
   flameBladeAbility,
   arcaneWardAbility,
   holyStrikeAbility,
@@ -759,6 +768,8 @@ export const monsters: readonly MonsterDef[] = [
   broodQueenMonster,
   ossuaryKnightMonster,
   oldDrownerMonster,
+  veinMotherMonster,
+  lastWardenMonster,
   hollowSaintMonster,
 ];
 export const skills: readonly SkillDef[] = [
@@ -1103,6 +1114,7 @@ export const library: Library = {
     floodedShaftsSealed,
     theHeart,
     theHeartStilled,
+    oldDelveSealed,
     theStairBelow,
   ],
 };

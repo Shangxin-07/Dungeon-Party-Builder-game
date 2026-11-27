@@ -52,7 +52,8 @@ export function HearthstonePanel({ town, act }: { town: TownState; act: Act }) {
       {floors.map(({ set, held: have, need: n, shards }) => (
         <div key={set.id} className="shard-floor">
           <h4>
-            Floor {set.floor}: {ix.floor(set.floor).name}{" "}
+            Floor {set.floor}: {ix.floor(set.floor).name}
+            {set.stone ? ` (shards of the ${set.stone})` : ""}{" "}
             <span className={have >= n || shut(town, set.floor) ? "good small" : "muted small"}>
               {town.dungeon.stones[set.floor]
                 ? gateWord(town, set.floor)
@@ -99,7 +100,8 @@ function CoreLine({ town }: { town: TownState }) {
       ))}
       {shut ? (
         <p className="small">
-          {shut.by} shut it off. The bottom floor breeds no more, and the dead lie still.
+          {shut.by} shut it off. Its floor breeds no more and the dead lie still, but the stairs go
+          on down, and the new bottom floor breeds in its place.
         </p>
       ) : blockers.length ? (
         <p className="small muted">

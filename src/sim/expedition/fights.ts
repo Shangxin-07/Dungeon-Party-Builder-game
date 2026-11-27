@@ -13,7 +13,7 @@ import { type RoomContext } from "../rooms";
 import type { CarriedGear } from "./report";
 import { an, list } from "./trip";
 import { TripCare } from "./care";
-import { shardPlace } from "../shards";
+import { shardPlace, stoneName } from "../shards";
 import { dueMoment, type MomentTrigger } from "../moments";
 import { bondsFor } from "../ties";
 import type { MomentDef } from "../../content/types";
@@ -396,7 +396,7 @@ export class TripFights extends TripCare {
         const name = this.ix.monster(bearer.source.monster).name;
         this.emit(
           "shard",
-          `${name} is dead. ${who} pries a shard of the Hearthstone from what's left.`,
+          `${name} is dead. ${who} pries a shard of the ${stoneName(bearer.set)} from what's left.`,
         );
         this.takeShard(bearer.source.id);
       }

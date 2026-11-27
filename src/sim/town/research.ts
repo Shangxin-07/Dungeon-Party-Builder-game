@@ -38,7 +38,7 @@ import { type Desk, type ShelfItem, type TownState, TownError } from "./state";
 import { built, findHero, total } from "./read";
 import { edit, listWords, news, roll } from "./internal";
 import { leaveBench } from "./workshops";
-import { shardPlaces } from "../shards";
+import { shardPlaces, stoneName } from "../shards";
 import { shardStudyOpen, studyShard } from "./shards";
 
 /** Research desks the Library has (0 until it's built). */
@@ -125,7 +125,7 @@ export function researchTopics(ix: Index, town: TownState): Topic[] {
       kind: "shard",
       points: town.shards[id]?.points ?? 0,
       need: source.points,
-      unlocks: `Find where a shard of the Hearthstone lies, so a party on floor ${source.floor} can dig it out`,
+      unlocks: `Find where a shard of the ${stoneName(set)} lies, so a party on floor ${source.floor} can dig it out`,
       done: false,
     });
   }
