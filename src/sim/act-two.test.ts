@@ -217,9 +217,10 @@ describe("the Coalstone (M8.38)", () => {
     expect(s.dungeon.hearts.hearthstone!.shut).not.toBeNull();
     expect(s.news.map((n) => n.text).join("\n")).toMatch(/shut off the heart of the Coalstone/);
     expect(actsOpen(ix, s.dungeon)).toBe(3);
-    // Act Three opens below (M8.39): the Glimmering, which breeds now.
+    // Act Three opens below (M8.39, M8.40): the Glimmering and the Ember Deeps, which breed now.
     expect(s.dungeon.floors.map((_, i) => ix.floor(i + 1).name).slice(7)).toEqual([
       "The Glimmering",
+      "The Ember Deeps",
     ]);
     expect(spawnRate(ix, s.dungeon)).toBeGreaterThan(0);
     const after = rest(ix, s, heroNames);
@@ -263,12 +264,34 @@ describe("the Glimmering (M8.39)", () => {
     };
     addNewFloors(ix, banked.dungeon);
     expect(ix.floor(8).name).toBe("The Glimmering");
-    expect(banked.dungeon.floors).toHaveLength(8);
+    expect(banked.dungeon.floors).toHaveLength(9);
     const seven = shardProgress(ix, banked).find((p) => p.set.floor === 7)!;
     expect(seven.set.stone).toBe("Emberstone");
     expect(seven.need).toBe(9);
     expect(openShards(ix, banked)).toEqual(
       expect.arrayContaining(["coal-halls-lamplighter", "coal-halls-moth", "coal-halls-king"]),
     );
+  });
+});
+
+describe("the Ember Deeps (M8.40)", () => {
+  it("opens with the Glimmering, and with it floor 8's nine shards (the Emberstone's)", () => {
+    const t = actTwo();
+    const banked: TownState = structuredClone(t);
+    banked.dungeon.hearts = {
+      ...banked.dungeon.hearts,
+      coalstone: { reached: 1, shut: { day: 1, by: "x" } },
+    };
+    addNewFloors(ix, banked.dungeon);
+    expect(ix.floor(9).name).toBe("The Ember Deeps");
+    expect(ix.floor(9).ground?.name).toBe("Choking ash");
+    const eight = shardProgress(ix, banked).find((p) => p.set.floor === 8)!;
+    expect(eight.set.stone).toBe("Emberstone");
+    expect(eight.need).toBe(9);
+    expect(openShards(ix, banked)).toEqual(
+      expect.arrayContaining(["glimmering-drinker", "glimmering-sleeper", "glimmering-colossus"]),
+    );
+    // Floor 9's own shards come with the Kiln below it.
+    expect(shardProgress(ix, banked).map((p) => p.set.floor)).not.toContain(9);
   });
 });
