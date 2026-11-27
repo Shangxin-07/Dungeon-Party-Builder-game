@@ -23,8 +23,10 @@ function idle(n: number) {
 describe("the dungeon over time", () => {
   it("starts from the floors' content", () => {
     const d = newDungeon(ix);
-    expect(d.floors.map((f) => f.population)).toEqual(library.floors.map((f) => f.startPopulation));
-    expect(d.floors.map((f) => f.level)).toEqual(library.floors.map((f) => f.depth));
+    // Act One only (§21): the floors under the heart open once it's shut.
+    const actOne = library.floors.filter((f) => (f.act ?? 1) === 1);
+    expect(d.floors.map((f) => f.population)).toEqual(actOne.map((f) => f.startPopulation));
+    expect(d.floors.map((f) => f.level)).toEqual(actOne.map((f) => f.depth));
     expect(spawnRate(ix, d)).toBe(rules.spawnPerDay);
   });
 

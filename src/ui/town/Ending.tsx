@@ -38,8 +38,8 @@ export function EndingPanel({ town }: { town: TownState }) {
     <section className="ending" aria-label="The ending">
       <h2>The heart is still</h2>
       <p>
-        On day {shut.day}, {shut.by} shut off the heart of the Hearthstone. The pit has gone quiet:
-        nothing new will breed down there, and the dead will lie where they fall.
+        On day {shut.day}, {shut.by} shut off the heart of the Hearthstone. The Hearthstone breeds
+        no more, and its dead will lie where they fall. Under it, the stairs go on down.
       </p>
       <ul className="small">
         <li>

@@ -4,7 +4,7 @@ export default defineRoom({
   id: "falling-rocks",
   name: "Cracked gallery",
   behaviour: "trap",
-  floors: [1, 5],
+  floors: [1, 10],
   weight: 1,
   descriptions: ["An old mine gallery. The roof props are rotten through."],
   trap: {

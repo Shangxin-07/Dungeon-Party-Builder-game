@@ -135,7 +135,8 @@ export class TripBase {
       pack: [...h.pack],
     }));
     this.fighters = this.party.filter((h) => h.condition === "ok").length;
-    const deepest = Math.max(...ix.lib.floors.map((f) => f.depth));
+    // The bottom of the open floors (§21: Act Two's open once the heart is still).
+    const deepest = floors?.length ?? Math.max(...ix.lib.floors.map((f) => f.depth));
     this.orders = {
       ...orders,
       targetFloor: Math.max(1, Math.min(deepest, orders.targetFloor)),
@@ -145,6 +146,9 @@ export class TripBase {
   // -------------------------------------------------------------------------
   // The party
   // -------------------------------------------------------------------------
+
+  /** The bottom open floor (§21: Act Two's floors open once the heart is still). */
+  protected bottom = () => this.floors?.length ?? this.ix.lib.floors.length;
 
   protected conscious = () => this.party.filter((h) => h.condition === "ok");
   protected alive = () => this.party.filter((h) => h.condition !== "dead");

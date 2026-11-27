@@ -27,7 +27,7 @@ const tough = (seed = 1): Hero[] =>
 
 describe("the deep floors", () => {
   it("go down to floor 5", () => {
-    expect(library.floors.map((f) => f.depth)).toEqual([1, 2, 3, 4, 5]);
+    expect(library.floors.map((f) => f.depth).slice(0, 5)).toEqual([1, 2, 3, 4, 5]);
     const r = runExpedition(ix, tough(), orders({ targetFloor: 5 }), 7);
     expect(r.log.filter((e) => e.kind === "floor").map((e) => e.floor)).toEqual([1, 2, 3, 4, 5]);
   });

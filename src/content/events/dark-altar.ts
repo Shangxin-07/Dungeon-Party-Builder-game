@@ -4,7 +4,7 @@ import { defineEvent } from "../types";
 export default defineEvent({
   id: "dark-altar",
   name: "A dark altar",
-  floors: [3, 5],
+  floors: [3, 10],
   weight: 2,
   intro: "A slab of black stone, sticky with old blood. Something on it is waiting to be fed.",
   outcomes: {

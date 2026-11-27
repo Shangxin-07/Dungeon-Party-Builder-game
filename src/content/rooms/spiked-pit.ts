@@ -4,7 +4,7 @@ export default defineRoom({
   id: "spiked-pit",
   name: "Dusty hall",
   behaviour: "trap",
-  floors: [2, 5],
+  floors: [2, 10],
   weight: 1,
   descriptions: ["A wide hall with a suspiciously even floor."],
   trap: {

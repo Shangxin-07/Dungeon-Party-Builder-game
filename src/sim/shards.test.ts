@@ -72,8 +72,8 @@ describe("shard sets", () => {
   it("need more shards deeper down (Mike: 3 for floors 1-3, 6 from floor 4)", () => {
     for (const f of [1, 2, 3]) expect(shardsNeeded(ix, f)).toBe(3);
     expect(shardsNeeded(ix, 4)).toBe(6);
-    // The bottom floor holds the core: there are no stairs below it to seal.
-    expect(shardsNeeded(ix, library.floors.length)).toBe(0);
+    // The heart's floor: no seal there, the core is the goal.
+    expect(shardsNeeded(ix, library.core.floor)).toBe(0);
   });
 
   it("put floor 1's out of a fresh guild's reach: two of its three need floor 2", () => {
@@ -87,7 +87,7 @@ describe("shard sets", () => {
   it("are refused when broken", () => {
     const bad: ShardSetDef = {
       id: "bad",
-      floor: 5,
+      floor: Math.max(...library.floors.map((f) => f.depth)),
       item: "iron-ore",
       shards: [
         {
