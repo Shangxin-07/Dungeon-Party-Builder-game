@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "clinker-golem",
   name: "Clinker Golem",
+  icon: { sheet: "kiln", cell: 0 },
   power: 30,
   stats: { STR: 23, DEX: 6, END: 24, PER: 8, INT: 2, WIL: 14, CHA: 1 },
   overrides: { maxHp: 210 },

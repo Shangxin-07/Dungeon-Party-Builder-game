@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "kiln-fired-shield",
   name: "Kiln-Fired Shield",
+  icon: { sheet: "kiln", cell: 8 },
   slot: "offhand",
   value: 220,
   tags: ["shield"],

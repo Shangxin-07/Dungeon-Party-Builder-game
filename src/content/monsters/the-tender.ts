@@ -6,6 +6,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "the-tender",
   name: "The Tender",
+  icon: { sheet: "kiln", cell: 6 },
   power: 150,
   stats: { STR: 24, DEX: 10, END: 28, PER: 18, INT: 24, WIL: 28, CHA: 8 },
   overrides: { maxHp: 1800 },

@@ -6,6 +6,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "ash-choir",
   name: "The Ash Choir",
+  icon: { sheet: "kiln", cell: 4 },
   power: 100,
   stats: { STR: 6, DEX: 16, END: 20, PER: 18, INT: 24, WIL: 24, CHA: 6 },
   overrides: { maxHp: 1000 },

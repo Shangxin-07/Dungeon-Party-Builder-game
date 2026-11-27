@@ -54,6 +54,7 @@ export const ICON_SHEETS = {
   "coal-halls": { cols: 4, rows: 3 },
   glimmering: { cols: 4, rows: 3 },
   "ember-deeps": { cols: 4, rows: 3 },
+  kiln: { cols: 4, rows: 4 },
 } as const;
 export type IconSheet = keyof typeof ICON_SHEETS;
 

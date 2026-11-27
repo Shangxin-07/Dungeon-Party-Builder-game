@@ -5,6 +5,7 @@ import { defineMaterial } from "../types";
 export default defineMaterial({
   id: "shard-ember-deeps",
   name: "Emberstone shard",
+  icon: { sheet: "kiln", cell: 12 },
   blurb:
     "A shard of the Emberstone, still hot after all this time, ash caught in its cracks. Forge all nine into floor 9's Seal Stone.",
   value: 260,

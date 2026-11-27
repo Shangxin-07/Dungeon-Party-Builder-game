@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "flame-dancer",
   name: "Flame Dancer",
+  icon: { sheet: "kiln", cell: 1 },
   power: 18,
   stats: { STR: 5, DEX: 18, END: 12, PER: 15, INT: 15, WIL: 15, CHA: 5 },
   overrides: { maxHp: 85 },

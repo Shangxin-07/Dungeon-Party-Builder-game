@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "clinker-brick",
   name: "Clinker Golem's Brick",
+  icon: { sheet: "kiln", cell: 9 },
   slot: "loot",
   value: 5,
   tags: ["specimen"],
