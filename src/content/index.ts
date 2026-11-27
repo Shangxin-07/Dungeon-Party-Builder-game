@@ -507,6 +507,37 @@ import coalstoneHeart from "./hearts/coalstone";
 import keepersStairSealed from "./story/keepers-stair-sealed";
 import theCoalstone from "./story/the-coalstone";
 import coalstoneStilled from "./story/coalstone-stilled";
+// Act Three (§21): the Glimmering (M8.39).
+import glimmeringFloor from "./floors/glimmering";
+import glimmerStalkerMonster from "./monsters/glimmer-stalker";
+import prismWispMonster from "./monsters/prism-wisp";
+import geodeHulkMonster from "./monsters/geode-hulk";
+import lastLamplighterMonster from "./monsters/last-lamplighter";
+import emberMothMonster from "./monsters/ember-moth";
+import facetKingMonster from "./monsters/facet-king";
+import stalkerPackEncounter from "./encounters/stalker-pack";
+import wispCloudEncounter from "./encounters/wisp-cloud";
+import geodeAndWispsEncounter from "./encounters/geode-and-wisps";
+import loneHulkEncounter from "./encounters/lone-hulk";
+import glassGardenRoom from "./rooms/glass-garden";
+import geodeVaultRoom from "./rooms/geode-vault";
+import grownKeeperEvent from "./events/grown-keeper";
+import glimmerCrystalItem from "./items/glimmer-crystal";
+import prismLensItem from "./items/prism-lens";
+import stalkerClawSpecimen from "./specimens/stalker-claw";
+import wispMoteSpecimen from "./specimens/wisp-mote";
+import geodeCoreSpecimen from "./specimens/geode-core";
+import glimmerLootLoot from "./loot/glimmer-loot";
+import wispLootLoot from "./loot/wisp-loot";
+import geodeLootLoot from "./loot/geode-loot";
+import geodeVaultLoot from "./loot/geode-vault";
+import grownKeeperLoot from "./loot/grown-keeper";
+import refractionAbility from "./abilities/refraction";
+import callTheSwarmAbility from "./abilities/call-the-swarm";
+import glassStormAbility from "./abilities/glass-storm";
+import coalHallsShards from "./shards/coal-halls";
+import coalHallsSealed from "./story/coal-halls-sealed";
+import shardCoalHallsMaterial from "./materials/shard-coal-halls";
 import ghoulMonster from "./monsters/ghoul";
 import ghastMonster from "./monsters/ghast";
 import caveTrollMonster from "./monsters/cave-troll";
@@ -573,6 +604,7 @@ export const materials: readonly ItemDef[] = [
   shardWarrensMaterial,
   shardBoneHallsMaterial,
   shardFloodedShaftsMaterial,
+  shardCoalHallsMaterial,
   shardKeepersStairMaterial,
   shardOldDelveMaterial,
 ];
@@ -585,6 +617,9 @@ export const specimens: readonly ItemDef[] = [
   cinderFangSpecimen,
   stokersTagSpecimen,
   mothDustSpecimen,
+  stalkerClawSpecimen,
+  wispMoteSpecimen,
+  geodeCoreSpecimen,
   lampWickSpecimen,
   echoAshSpecimen,
   crystalChipSpecimen,
@@ -630,6 +665,7 @@ export const shards: readonly ShardSetDef[] = [
   diggingsShards,
   warrensShards,
   boneHallsShards,
+  coalHallsShards,
   keepersStairShards,
   oldDelveShards,
   floodedShaftsShards,
@@ -678,6 +714,8 @@ export const items: readonly ItemDef[] = [
   keepersLampItem,
   wardCloakItem,
   bankedCoalItem,
+  glimmerCrystalItem,
+  prismLensItem,
   stokersApronItem,
   wardenMaulItem,
   harpoonItem,
@@ -740,6 +778,9 @@ export const abilities: readonly AbilityDef[] = [
   callTheBroodAbility,
   chokingAshAbility,
   callTheLitterAbility,
+  refractionAbility,
+  callTheSwarmAbility,
+  glassStormAbility,
   heatBlastAbility,
   callTheClutchAbility,
   flameBladeAbility,
@@ -785,6 +826,12 @@ export const monsters: readonly MonsterDef[] = [
   lamplighterMonster,
   bankedFireMonster,
   cinderMotherMonster,
+  glimmerStalkerMonster,
+  prismWispMonster,
+  geodeHulkMonster,
+  lastLamplighterMonster,
+  emberMothMonster,
+  facetKingMonster,
   oldBellowsMonster,
   keepersEchoMonster,
   crystalCrawlerMonster,
@@ -931,6 +978,10 @@ export const encounters: readonly EncounterDef[] = [
   stokerGangEncounter,
   mothSwarmEncounter,
   lamplightersEncounter,
+  stalkerPackEncounter,
+  wispCloudEncounter,
+  geodeAndWispsEncounter,
+  loneHulkEncounter,
   loneStokerEncounter,
   keepersEchoesEncounter,
   crystalBroodEncounter,
@@ -966,6 +1017,11 @@ export const lootTables: readonly LootTableDef[] = [
   mothLootLoot,
   lamplighterLootLoot,
   keepersHallLoot,
+  glimmerLootLoot,
+  wispLootLoot,
+  geodeLootLoot,
+  geodeVaultLoot,
+  grownKeeperLoot,
   bankedHearthLoot,
   tendedFlameLoot,
   crawlerLoot,
@@ -1011,6 +1067,8 @@ export const rooms: readonly RoomDef[] = [
   crystalGrottoRoom,
   wardLineRoom,
   coalChuteRoom,
+  glassGardenRoom,
+  geodeVaultRoom,
   keepersHallRoom,
   keepersAlcoveRoom,
   floodedLockerRoom,
@@ -1037,6 +1095,7 @@ export const floors: readonly FloorDef[] = [
   boneHallsFloor,
   floodedShaftsFloor,
   oldDelveFloor,
+  glimmeringFloor,
   coalHallsFloor,
   keepersStairFloor,
 ];
@@ -1105,6 +1164,7 @@ export const events: readonly EventDef[] = [
   woundedStrangerEvent,
   corneredGoblinEvent,
   singingCrystalEvent,
+  grownKeeperEvent,
   bankedHearthEvent,
   tendedFlameEvent,
   strandedDelverEvent,
@@ -1180,6 +1240,7 @@ export const library: Library = {
     keepersStairSealed,
     theCoalstone,
     coalstoneStilled,
+    coalHallsSealed,
     oldDelveSealed,
     theStairBelow,
   ],
