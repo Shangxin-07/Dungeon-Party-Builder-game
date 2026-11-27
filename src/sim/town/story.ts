@@ -27,6 +27,8 @@ export function storyDue(ix: Index, town: TownState, when: StoryTrigger): boolea
       const s = heartState(town.dungeon, when.heart ?? ix.lib.hearts[0]!.id);
       return when.shut ? !!s.shut : s.reached > 0;
     }
+    case "way":
+      return heartState(town.dungeon, when.heart).way?.id === when.way;
   }
 }
 

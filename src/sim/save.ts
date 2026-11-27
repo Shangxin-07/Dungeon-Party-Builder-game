@@ -259,8 +259,8 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
     const t = { ...old, story: {} } as unknown as TownState;
     const story = Object.fromEntries(
       ix.lib.story
-        // Nobody could reach the heart before M8.22 (and the save has no record of it yet).
-        .filter((c) => c.when.kind !== "core" && storyDue(ix, t, c.when))
+        // Nobody could reach a heart before M8.22 (and the save has no record of it yet).
+        .filter((c) => c.when.kind !== "core" && c.when.kind !== "way" && storyDue(ix, t, c.when))
         .map((c) => [c.id, t.day]),
     );
     return { ...old, version: 24, story };

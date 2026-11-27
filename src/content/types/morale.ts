@@ -115,6 +115,13 @@ export const MORALE_FACTS = [
    * everyone at home every day. Good heroes feel their hunger.
    */
   "boundSeals",
+  /**
+   * The last stone (M8.41, DESIGN.md §21): 1 for everyone at home every day
+   * once the guild has mended it...
+   */
+  "heartMended",
+  /** ...or bound it. Good heroes never like it; Evil ones like what it pays. */
+  "heartBound",
 ] as const;
 
 export type MoraleFact = (typeof MORALE_FACTS)[number];

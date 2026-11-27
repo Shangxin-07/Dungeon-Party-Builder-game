@@ -609,7 +609,9 @@ export type StoryTrigger =
    * A party reached a heart (M8.22): `shut`, and shut it off. `heart` names
    * it (content/hearts/); left out, the first, the Hearthstone's.
    */
-  | { kind: "core"; shut: boolean; heart?: string };
+  | { kind: "core"; shut: boolean; heart?: string }
+  /** The guild chose this way for a heart's stone (M8.41): mended or bound. */
+  | { kind: "way"; heart: string; way: string };
 
 /** How often offers turn up (M7.17, content/offers.ts). */
 export interface OfferRules {

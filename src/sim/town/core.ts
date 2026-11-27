@@ -13,13 +13,15 @@
  *   and the new bottom floor breeds and pushes its extras up as before.
  * - Leaving it beating is fine too: it's never forced.
  */
-import type { CoreRules } from "../../content/types";
+import type { BuildingEffect, CoreRules, HeartWay } from "../../content/types";
 import { addNewFloors, heartOn, heartState, nextHeart } from "../dungeon";
 import { coreOrder, type StandingOrders } from "../expedition";
 import type { Index } from "../library";
-import { type Outing, type TownState } from "./state";
-import { edit, news } from "./internal";
+import { type Outing, type TownState, TownError } from "./state";
+import { book, edit, news, useMaterials } from "./internal";
+import { materialsShort, standing } from "./read";
 import { gainRenown } from "./renown";
+import { storyDay } from "./story";
 
 /** The heart the guild is working towards now: the first still beating, else the last. */
 export const currentHeart = (ix: Index, town: TownState): CoreRules =>
@@ -122,4 +124,66 @@ export function coreNews(ix: Index, t: TownState, o: Outing): void {
       "bad",
     );
   }
+}
+
+/**
+ * The last stone (M8.41, DESIGN.md §21): once its heart is still, the guild
+ * mends it (at the Temple) or binds it (at the Black Market), once and for
+ * good. Mending makes every floor safe: the pit empties and nothing breeds.
+ * Binding puts the stone to work for the guild, and its floor never quite
+ * sleeps. Either way the town keeps the way's blessing.
+ */
+export function heartWay(town: TownState, heart: CoreRules): HeartWay | undefined {
+  const id = heartState(town.dungeon, heart.id).way?.id;
+  return id ? heart.ways?.find((w) => w.id === id) : undefined;
+}
+
+/** Why the guild can't take this way with the heart's stone now, or undefined. */
+export function cantChooseWay(
+  ix: Index,
+  town: TownState,
+  heart: CoreRules,
+  wayId: string,
+): string | undefined {
+  const way = heart.ways?.find((w) => w.id === wayId);
+  if (!way) return "That can't be done with this stone.";
+  const s = heartState(town.dungeon, heart.id);
+  if (!s.shut) return `The heart of the ${heart.stone} has to be still first.`;
+  if (s.way) return "The guild has already chosen.";
+  if (!standing(town, way.workshop)) return `It needs the ${ix.building(way.workshop).name}.`;
+  if (town.gold < way.gold) return "Not enough gold.";
+  const short = materialsShort(ix, town, way.materials);
+  return short ? `Short of ${short}.` : undefined;
+}
+
+/** Mend or bind the last stone (M8.41). */
+export function chooseWay(ix: Index, town: TownState, heart: CoreRules, wayId: string): TownState {
+  const why = cantChooseWay(ix, town, heart, wayId);
+  if (why) throw new TownError(why);
+  const way = heart.ways!.find((w) => w.id === wayId)!;
+  const t = edit(town);
+  useMaterials(t, way.materials);
+  book(t, "built", -way.gold);
+  const d = structuredClone(t.dungeon);
+  d.hearts[heart.id] = { ...heartState(d, heart.id), way: { id: way.id, day: t.day } };
+  // Mended, every floor is safe: what's down there now lies still for good.
+  if (way.safe) for (const f of d.floors) f.population = 0;
+  t.dungeon = d;
+  news(t, way.news, "story");
+  // Its last chapter opens at once, for the ending card.
+  storyDay(ix, t);
+  return t;
+}
+
+/** The blessings of the hearts' chosen ways, for the town's effects. */
+export const wayEffects = (ix: Index, town: TownState): BuildingEffect[] =>
+  ix.lib.hearts.flatMap((h) => heartWay(town, h)?.blessing.effects ?? []);
+
+/** Stones mended and bound, for everyone's morale at home (facts heartMended, heartBound). */
+export function wayFacts(ix: Index, town: TownState): { heartMended: number; heartBound: number } {
+  const ways = ix.lib.hearts.map((h) => heartWay(town, h)).filter((w) => !!w);
+  return {
+    heartMended: ways.filter((w) => w.fact === "heartMended").length,
+    heartBound: ways.filter((w) => w.fact === "heartBound").length,
+  };
 }

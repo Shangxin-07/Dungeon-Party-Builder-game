@@ -568,6 +568,40 @@ import drinkTheLightAbility from "./abilities/drink-the-light";
 import glimmeringShards from "./shards/glimmering";
 import glimmeringSealed from "./story/glimmering-sealed";
 import shardGlimmeringMaterial from "./materials/shard-glimmering";
+// Act Three (§21): the Kiln and the Emberstone (M8.41).
+import kilnFloor from "./floors/kiln";
+import clinkerGolemMonster from "./monsters/clinker-golem";
+import flameDancerMonster from "./monsters/flame-dancer";
+import kilnDrakeMonster from "./monsters/kiln-drake";
+import oldWormMonster from "./monsters/old-worm";
+import ashChoirMonster from "./monsters/ash-choir";
+import clinkerKingMonster from "./monsters/clinker-king";
+import theTenderMonster from "./monsters/the-tender";
+import clinkerWallEncounter from "./encounters/clinker-wall";
+import flameDanceEncounter from "./encounters/flame-dance";
+import drakeAndDancersEncounter from "./encounters/drake-and-dancers";
+import golemAndDancerEncounter from "./encounters/golem-and-dancer";
+import kilnFlueRoom from "./rooms/kiln-flue";
+import kilnStoreRoom from "./rooms/kiln-store";
+import lastCampEvent from "./events/last-camp";
+import kilnGlassItem from "./items/kiln-glass";
+import kilnFiredShieldItem from "./items/kiln-fired-shield";
+import clinkerBrickSpecimen from "./specimens/clinker-brick";
+import dancerCinderSpecimen from "./specimens/dancer-cinder";
+import drakeScaleSpecimen from "./specimens/drake-scale";
+import clinkerLootLoot from "./loot/clinker-loot";
+import dancerLootLoot from "./loot/dancer-loot";
+import drakeLootLoot from "./loot/drake-loot";
+import kilnStoreLoot from "./loot/kiln-store";
+import lastCampLoot from "./loot/last-camp";
+import emberDeepsShards from "./shards/ember-deeps";
+import shardEmberDeepsMaterial from "./materials/shard-ember-deeps";
+import emberstoneHeart from "./hearts/emberstone";
+import emberDeepsSealed from "./story/ember-deeps-sealed";
+import theEmberstone from "./story/the-emberstone";
+import emberstoneStilled from "./story/emberstone-stilled";
+import emberstoneMended from "./story/emberstone-mended";
+import emberstoneBound from "./story/emberstone-bound";
 import ghoulMonster from "./monsters/ghoul";
 import ghastMonster from "./monsters/ghast";
 import caveTrollMonster from "./monsters/cave-troll";
@@ -636,6 +670,7 @@ export const materials: readonly ItemDef[] = [
   shardFloodedShaftsMaterial,
   shardCoalHallsMaterial,
   shardGlimmeringMaterial,
+  shardEmberDeepsMaterial,
   shardKeepersStairMaterial,
   shardOldDelveMaterial,
 ];
@@ -654,6 +689,9 @@ export const specimens: readonly ItemDef[] = [
   slagScaleSpecimen,
   wraithAshSpecimen,
   wormToothSpecimen,
+  clinkerBrickSpecimen,
+  dancerCinderSpecimen,
+  drakeScaleSpecimen,
   lampWickSpecimen,
   echoAshSpecimen,
   crystalChipSpecimen,
@@ -701,6 +739,7 @@ export const shards: readonly ShardSetDef[] = [
   boneHallsShards,
   coalHallsShards,
   glimmeringShards,
+  emberDeepsShards,
   keepersStairShards,
   oldDelveShards,
   floodedShaftsShards,
@@ -753,6 +792,8 @@ export const items: readonly ItemDef[] = [
   prismLensItem,
   slagIronItem,
   ashwalkerHammerItem,
+  kilnGlassItem,
+  kilnFiredShieldItem,
   stokersApronItem,
   wardenMaulItem,
   harpoonItem,
@@ -877,6 +918,13 @@ export const monsters: readonly MonsterDef[] = [
   lightdrinkerMonster,
   sleeperInGlassMonster,
   ashColossusMonster,
+  clinkerGolemMonster,
+  flameDancerMonster,
+  kilnDrakeMonster,
+  oldWormMonster,
+  ashChoirMonster,
+  clinkerKingMonster,
+  theTenderMonster,
   oldBellowsMonster,
   keepersEchoMonster,
   crystalCrawlerMonster,
@@ -1031,6 +1079,10 @@ export const encounters: readonly EncounterDef[] = [
   ashWraithsEncounter,
   wormAndWraithsEncounter,
   crawlerAndWraithEncounter,
+  clinkerWallEncounter,
+  flameDanceEncounter,
+  drakeAndDancersEncounter,
+  golemAndDancerEncounter,
   loneStokerEncounter,
   keepersEchoesEncounter,
   crystalBroodEncounter,
@@ -1076,6 +1128,11 @@ export const lootTables: readonly LootTableDef[] = [
   wormLootLoot,
   slagHeapLoot,
   coldForgeLoot,
+  clinkerLootLoot,
+  dancerLootLoot,
+  drakeLootLoot,
+  kilnStoreLoot,
+  lastCampLoot,
   bankedHearthLoot,
   tendedFlameLoot,
   crawlerLoot,
@@ -1125,6 +1182,8 @@ export const rooms: readonly RoomDef[] = [
   geodeVaultRoom,
   emberCrackRoom,
   slagHeapRoom,
+  kilnFlueRoom,
+  kilnStoreRoom,
   keepersHallRoom,
   keepersAlcoveRoom,
   floodedLockerRoom,
@@ -1153,6 +1212,7 @@ export const floors: readonly FloorDef[] = [
   oldDelveFloor,
   glimmeringFloor,
   emberDeepsFloor,
+  kilnFloor,
   coalHallsFloor,
   keepersStairFloor,
 ];
@@ -1223,6 +1283,7 @@ export const events: readonly EventDef[] = [
   singingCrystalEvent,
   grownKeeperEvent,
   coldForgeEvent,
+  lastCampEvent,
   bankedHearthEvent,
   tendedFlameEvent,
   strandedDelverEvent,
@@ -1268,7 +1329,7 @@ export const library: Library = {
   barricades,
   shards,
   sealing: sealingRules,
-  hearts: [hearthstoneHeart, coalstoneHeart],
+  hearts: [hearthstoneHeart, coalstoneHeart, emberstoneHeart],
   time: timeRules,
   fallen: fallenRules,
   transforms,
@@ -1300,6 +1361,11 @@ export const library: Library = {
     coalstoneStilled,
     coalHallsSealed,
     glimmeringSealed,
+    emberDeepsSealed,
+    theEmberstone,
+    emberstoneStilled,
+    emberstoneMended,
+    emberstoneBound,
     oldDelveSealed,
     theStairBelow,
   ],

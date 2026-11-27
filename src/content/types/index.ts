@@ -84,6 +84,7 @@ export type {
   SealWay,
   SealingRules,
   CoreRules,
+  HeartWay,
   GatewayLevel,
   GatewayRules,
   GatewaySetting,

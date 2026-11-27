@@ -196,7 +196,15 @@ export { barricadeChoices, sealsNow, sealWord, setSeal } from "./seals";
 export { resurrectQuote, resurrect, burialCost, bury } from "./bodies";
 export { launch, outingView } from "./launch";
 export { cantStone, setStone, stoneSealed } from "./stones";
-export { cantCore, cantReachCore, coreBlockers, setCore } from "./core";
+export {
+  cantChooseWay,
+  cantCore,
+  cantReachCore,
+  chooseWay,
+  coreBlockers,
+  heartWay,
+  setCore,
+} from "./core";
 export {
   cantMendGateway,
   cantRaiseGateway,

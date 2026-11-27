@@ -21,6 +21,7 @@ import keepers2 from "./icons/keepers-2.png";
 import coalHalls from "./icons/coal-halls.png";
 import glimmering from "./icons/glimmering.png";
 import emberDeeps from "./icons/ember-deeps.png";
+import kiln from "./icons/kiln.png";
 import specimens from "./icons/specimens.png";
 import supplies from "./icons/supplies.png";
 import weapons from "./icons/weapons.png";
@@ -42,6 +43,7 @@ export const ICON_ART: Partial<Record<IconSheet, { url: string; cell: number }>>
   "coal-halls": { url: coalHalls, cell: 64 },
   glimmering: { url: glimmering, cell: 64 },
   "ember-deeps": { url: emberDeeps, cell: 64 },
+  kiln: { url: kiln, cell: 64 },
 };
 
 /** Icons for people who have no class of their own (cells of the classes sheet). */
