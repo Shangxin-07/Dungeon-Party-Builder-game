@@ -1,7 +1,7 @@
 /**
  * A day passing in town: the pit at night, morale, quitting, pay (pay.ts) and raises.
  */
-import { applyKills, dungeonDay } from "../dungeon";
+import { applyKills, dungeonDay, heartState } from "../dungeon";
 import { breakOut, holedNight } from "../expedition";
 import { EQUIP_SLOTS, type Hero } from "../hero";
 import { gainXp } from "../levels";
@@ -256,9 +256,10 @@ export function sitesNight(ix: Index, t: TownState): void {
     // The dead who lie too long get up again: riseDays after they died, and
     // the town always gets that long after it hears to fetch them (M7.02).
     const since = (b: { died: number }) => t.day - Math.max(b.died, site.heard ?? 0);
-    // With the heart shut off (M8.22), nothing pushes life into them: they lie still.
+    // With the Hearthstone's heart shut off (M8.22), nothing pushes life into them: they lie still.
+    const still = !!heartState(t.dungeon, ix.lib.hearts[0]!.id).shut;
     for (const b of [...site.bodies]) {
-      if (hidden || b.risen || t.dungeon.core.shut || since(b) < riseDays(ix, t)) continue;
+      if (hidden || b.risen || still || since(b) < riseDays(ix, t)) continue;
       site.bodies = site.bodies.filter((x) => x !== b);
       rise(ix, t, site, b);
     }

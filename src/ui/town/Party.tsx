@@ -41,6 +41,7 @@ import { ix } from "../game";
 import { HeroBars } from "../Watch";
 import { ScoutingReport } from "../Report";
 import { stoneOf } from "../../sim/shards";
+import { heartOn, heartState } from "../../sim/dungeon";
 import { type Act, describeKit } from "./shared";
 
 export function PartyPanel({
@@ -78,15 +79,16 @@ export function PartyPanel({
     (id) => (town.materials[id] ?? 0) > 0 && stoneOf(ix, id)?.set.floor === floor,
   );
   if (town.orders.stone && !stones.includes(town.orders.stone)) stones.push(town.orders.stone);
-  // The heart of the Hearthstone (M8.22): on its floor, an ordinary delve only.
+  // A heart (M8.22): on its floor, an ordinary delve only, once the guild knows of it.
+  const heart = heartOn(ix, floor);
   const coreHere =
     !scouting &&
     !sneaking &&
     !target &&
-    floor === ix.lib.core.floor &&
-    !town.dungeon.core.shut &&
-    !!town.story["flooded-shafts-sealed"];
-  const coreWhy = cantReachCore(ix, town);
+    !!heart &&
+    !heartState(town.dungeon, heart.id).shut &&
+    !!town.story[heart.revealedBy];
+  const coreWhy = heart ? cantReachCore(ix, town, heart) : undefined;
   const lairBeast = lairDef ? ix.monster(lairDef.monster) : undefined;
   const quiet = partyStealth(ix, party);
   const bestScout = party
@@ -352,7 +354,7 @@ export function PartyPanel({
           <label
             title={
               coreWhy ??
-              "Walk the floor, follow the Foreman's Shade down to the heart, fight what guards it, and shut it off for good."
+              `Walk the floor, follow ${heart?.guide} down to the heart, fight what guards it, and shut it off for good.`
             }
           >
             The heart{" "}
@@ -373,10 +375,10 @@ export function PartyPanel({
       </div>
       {coreHere && town.orders.core ? (
         <p className="mission small">
-          Going for the heart: after floor {floor} is walked, the Foreman's Shade leads the party
-          down to the heart of the Hearthstone. What guards it rises with the Delve's crew round it,
-          and there's no slipping away: send the best the guild has, rested. Win, and they shut it
-          off for good; the pit breeds no more.
+          Going for the heart: after floor {floor} is walked, {heart?.guide} leads the party down
+          to the heart of the {heart?.stone}. What guards it rises with the floor's own crew round
+          it, and there's no slipping away: send the best the guild has, rested. Win, and they shut
+          it off for good; its floor breeds no more.
         </p>
       ) : coreHere && coreWhy ? (
         <p className="small muted">{coreWhy}</p>

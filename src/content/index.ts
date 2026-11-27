@@ -184,7 +184,7 @@ import ironBandsMaterial from "./materials/iron-bands";
 import ironBandsRecipe from "./recipes/iron-bands";
 import plankBarricade from "./barricades/plank-barricade";
 import sealingRules from "./sealing";
-import coreRules from "./core";
+import hearthstoneHeart from "./hearts/hearthstone";
 import { sealStones } from "./sealstones";
 import diggingsShards from "./shards/diggings";
 import warrensShards from "./shards/warrens";
@@ -1087,7 +1087,7 @@ export const library: Library = {
   barricades,
   shards,
   sealing: sealingRules,
-  core: coreRules,
+  hearts: [hearthstoneHeart],
   time: timeRules,
   fallen: fallenRules,
   transforms,

@@ -138,10 +138,10 @@ export interface ExpeditionResult {
   /** The Seal Stone the party set (M8.17): on the stairs below `floor`, on trip day `day`. */
   stoneSet?: { floor: number; stone: string; day: number };
   /**
-   * The party reached the Hearthstone's heart (M8.22) on this trip day, and
+   * The party reached a heart (M8.22; which, M8.38) on this trip day, and
    * whether it shut it off.
    */
-  core?: { day: number; shut: boolean };
+  core?: { heart: string; day: number; shut: boolean };
   log: ExpeditionEvent[];
   /** Where the party fell, if it was wiped. */
   wipeSite?: { floor: number; room: number };

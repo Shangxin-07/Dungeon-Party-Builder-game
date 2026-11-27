@@ -21,7 +21,8 @@ import {
   type ShardStatus,
   type TownState,
 } from "../../sim/town";
-import type { GatewaySetting } from "../../content/types";
+import type { CoreRules, GatewaySetting } from "../../content/types";
+import { heartState } from "../../sim/dungeon";
 import { ix } from "../game";
 import { stoneOf } from "../../sim/shards";
 import type { Act } from "./shared";
@@ -75,20 +76,25 @@ export function HearthstonePanel({ town, act }: { town: TownState; act: Act }) {
           </ul>
         </div>
       ))}
-      <CoreLine town={town} />
+      {ix.lib.hearts
+        .filter((h, i) => i === 0 || town.story[h.revealedBy] !== undefined)
+        .map((h) => (
+          <CoreLine key={h.id} town={town} heart={h} />
+        ))}
     </Fold>
   );
 }
 
-/** The heart of the Hearthstone (M8.22): beating or shut, and what stands in the way. */
-function CoreLine({ town }: { town: TownState }) {
-  const floor = ix.lib.core.floor;
-  const { shut, reached } = town.dungeon.core;
-  const blockers = coreBlockers(ix, town);
+/** A heart (M8.22, M8.38): beating or shut, and what stands in the way. */
+function CoreLine({ town, heart }: { town: TownState; heart: CoreRules }) {
+  const floor = heart.floor;
+  const { shut, reached } = heartState(town.dungeon, heart.id);
+  const blockers = coreBlockers(ix, town, heart);
+  const below = town.dungeon.floors.length > floor;
   return (
     <div className="shard-floor">
       <h4>
-        The heart, floor {floor}: {ix.floor(floor).name}{" "}
+        The heart of the {heart.stone}, floor {floor}: {ix.floor(floor).name}{" "}
         <span className={shut ? "good small" : "warn small"}>
           {shut ? `shut off on day ${shut.day}` : "beating"}
         </span>
@@ -100,13 +106,12 @@ function CoreLine({ town }: { town: TownState }) {
       ))}
       {shut ? (
         <p className="small">
-          {shut.by} shut it off. Its floor breeds no more and the dead lie still, but the stairs go
-          on down, and the new bottom floor breeds in its place.
+          {shut.by} shut it off. Its floor breeds no more
+          {below ? ", but the stairs go on down, and the new bottom floor breeds in its place" : ""}.
         </p>
       ) : blockers.length ? (
         <p className="small muted">
-          What's left of the Hearthstone beats at the bottom of the pit, and everything down there
-          came out of it. Every floor above it has to be held before a party can reach it:{" "}
+          {heart.text.panel} Every floor above it has to be held before a party can reach it:{" "}
           {blockers.map((b) => b.why).join("; ")}.
         </p>
       ) : (
@@ -116,7 +121,7 @@ function CoreLine({ town }: { town: TownState }) {
           {reached
             ? `${reached} ${reached === 1 ? "party has" : "parties have"} reached it so far.`
             : "Whatever guards it will fight with nowhere to run."}{" "}
-          Shut, the pit breeds no more; leaving it beating is fine too.
+          Shut, its floor breeds no more; leaving it beating is fine too.
         </p>
       )}
     </div>

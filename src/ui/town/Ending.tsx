@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { renownRank, storySoFar, type TownState } from "../../sim/town";
 import { ix } from "../game";
+import { heartState } from "../../sim/dungeon";
 
 const KEY = "dpb-ending-closed";
 
@@ -19,7 +20,8 @@ const closedFor = (): string[] => {
 };
 
 export function EndingPanel({ town }: { town: TownState }) {
-  const shut = town.dungeon.core.shut;
+  // Act One's ending: the Hearthstone's heart (M8.22).
+  const shut = heartState(town.dungeon, ix.lib.hearts[0]!.id).shut;
   // One game's ending: the town's own seed and the day it was shut.
   const id = shut ? `${town.seed}:${shut.day}` : "";
   const [closed, setClosed] = useState(() => closedFor().includes(id));
