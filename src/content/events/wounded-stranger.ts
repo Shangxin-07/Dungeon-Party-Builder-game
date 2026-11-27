@@ -5,7 +5,7 @@ import { defineEvent } from "../types";
 export default defineEvent({
   id: "wounded-stranger",
   name: "A wounded stranger",
-  floors: [1, 5],
+  floors: [1, 10],
   weight: 3,
   intro: "A miner from another crew sits against the wall, bleeding, a purse at their belt.",
   outcomes: {

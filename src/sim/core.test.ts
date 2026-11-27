@@ -174,7 +174,10 @@ describe("shut off", () => {
     expect(t.dungeon.core.shut).toEqual({ day: beaten.day - 3 + 2, by: "Brannoc's party" });
     expect(t.renown).toBe(beaten.renown + library.renown.deeds.core);
     t = rest(ix, t, heroNames);
-    expect(storySoFar(ix, t).at(-1)!.chapter.id).toBe("the-heart-stilled");
+    expect(storySoFar(ix, t).map((s) => s.chapter.id).slice(-2)).toEqual([
+      "the-heart-stilled",
+      "the-stair-below",
+    ]);
     expect(cantReachCore(ix, t)).toMatch(/already shut off/);
     // Shut once is shut: a later party there changes nothing.
     expect(hears(t).dungeon.core.shut).toEqual(t.dungeon.core.shut);

@@ -2,7 +2,6 @@
  * Party, formation and orders, and the saved parties A and B.
  */
 import { Fold } from "../Fold";
-import { library } from "../../content";
 import type { Row } from "../../content/types";
 import { describeParty, partyAlignment } from "../../sim/alignment";
 import { tiesAmong, tieText } from "../../sim/ties";
@@ -71,7 +70,7 @@ export function PartyPanel({
   const lairName = lairDef?.name.replace(/^The /, "the ");
   // Sealing the stairs below the target floor (M7.16): an ordinary delve only.
   const floor = town.orders.targetFloor;
-  const canSeal = !scouting && !sneaking && !target && floor < ix.lib.floors.length;
+  const canSeal = !scouting && !sneaking && !target && floor < town.dungeon.floors.length;
   const sealHere = sealsNow(ix, town).find((x) => x.floor === floor);
   // Seal Stones (M8.17): shut for good already, or stones in the store for this floor.
   const shut = town.dungeon.stones[floor];
@@ -246,9 +245,9 @@ export function PartyPanel({
               act((t) => setOrders(ix, t, { ...t.orders, targetFloor: Number(e.target.value) }))
             }
           >
-            {library.floors.map((f) => (
-              <option key={f.depth} value={f.depth}>
-                {f.depth}: {f.name}
+            {town.dungeon.floors.map((_, i) => (
+              <option key={i} value={i + 1}>
+                {i + 1}: {ix.floor(i + 1).name}
               </option>
             ))}
           </select>

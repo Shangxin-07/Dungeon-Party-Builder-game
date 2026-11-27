@@ -5,7 +5,7 @@ export default defineRoom({
   id: "monster-lair",
   name: "Occupied chamber",
   behaviour: "fight",
-  floors: [1, 5],
+  floors: [1, 10],
   // 7 since M6.23, so event rooms (strange-meeting) don't thin out the fighting.
   weight: 7,
   descriptions: [

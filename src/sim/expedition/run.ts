@@ -438,7 +438,7 @@ export class Expedition extends TripRescue {
   /** The barricade the party carries down to seal the stairs with (M7.16), if it can. */
   protected sealing() {
     const id = sealOf(this.orders);
-    if (!id || this.orders.targetFloor >= this.ix.lib.floors.length) return undefined;
+    if (!id || this.orders.targetFloor >= this.bottom()) return undefined;
     return this.ix.barricade(id);
   }
 

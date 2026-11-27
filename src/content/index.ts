@@ -158,6 +158,7 @@ import boneHallsSealed from "./story/bone-halls-sealed";
 import floodedShaftsSealed from "./story/flooded-shafts-sealed";
 import theHeart from "./story/the-heart";
 import theHeartStilled from "./story/the-heart-stilled";
+import theStairBelow from "./story/the-stair-below";
 import forwardCamp from "./digsites/forward-camp";
 import mineSite from "./digsites/mine";
 import shrineSite from "./digsites/shrine";
@@ -442,6 +443,30 @@ import concussionInjury from "./injuries/concussion";
 import deepGashInjury from "./injuries/deep-gash";
 import floodedShaftsFloor from "./floors/flooded-shafts";
 import oldDelveFloor from "./floors/old-delve";
+// Act Two (§21): the Keepers' Stair.
+import keepersStairFloor from "./floors/keepers-stair";
+import stairWardenMonster from "./monsters/stair-warden";
+import cinderHoundMonster from "./monsters/cinder-hound";
+import keepersEchoMonster from "./monsters/keepers-echo";
+import stairWardensEncounter from "./encounters/stair-wardens";
+import loneWardenEncounter from "./encounters/lone-warden";
+import cinderPackEncounter from "./encounters/cinder-pack";
+import keepersEchoesEncounter from "./encounters/keepers-echoes";
+import wardLineRoom from "./rooms/ward-line";
+import keepersAlcoveRoom from "./rooms/keepers-alcove";
+import tendedFlameEvent from "./events/tended-flame";
+import emberStoneItem from "./items/ember-stone";
+import keepersLampItem from "./items/keepers-lamp";
+import wardCloakItem from "./items/ward-cloak";
+import wardenMaulItem from "./items/warden-maul";
+import wardenCoreSpecimen from "./specimens/warden-core";
+import cinderFangSpecimen from "./specimens/cinder-fang";
+import echoAshSpecimen from "./specimens/echo-ash";
+import wardenLootLoot from "./loot/warden-loot";
+import cinderLootLoot from "./loot/cinder-loot";
+import echoLootLoot from "./loot/echo-loot";
+import keepersAlcoveLoot from "./loot/keepers-alcove";
+import tendedFlameLoot from "./loot/tended-flame";
 import ghoulMonster from "./monsters/ghoul";
 import ghastMonster from "./monsters/ghast";
 import caveTrollMonster from "./monsters/cave-troll";
@@ -514,6 +539,9 @@ export const materials: readonly ItemDef[] = [
 export const specimens: readonly ItemDef[] = [
   goblinEarSpecimen,
   golemRuneSpecimen,
+  wardenCoreSpecimen,
+  cinderFangSpecimen,
+  echoAshSpecimen,
   crystalChipSpecimen,
   minersTagSpecimen,
   eelSkinSpecimen,
@@ -599,6 +627,10 @@ export const items: readonly ItemDef[] = [
   slingItem,
   runeplateItem,
   heartCrystalItem,
+  emberStoneItem,
+  keepersLampItem,
+  wardCloakItem,
+  wardenMaulItem,
   harpoonItem,
   oilskinsItem,
   silveredMaceItem,
@@ -693,6 +725,9 @@ export const monsters: readonly MonsterDef[] = [
   goblinMonster,
   goblinArcherMonster,
   oreGolemMonster,
+  stairWardenMonster,
+  cinderHoundMonster,
+  keepersEchoMonster,
   crystalCrawlerMonster,
   leechMonster,
   shaftEelMonster,
@@ -829,6 +864,10 @@ export const encounters: readonly EncounterDef[] = [
   goblinBandEncounter,
   ratSwarmEncounter,
   oreGolemEncounter,
+  stairWardensEncounter,
+  loneWardenEncounter,
+  cinderPackEncounter,
+  keepersEchoesEncounter,
   crystalBroodEncounter,
   eelRunEncounter,
   drownedCrewEncounter,
@@ -854,6 +893,11 @@ export const lootTables: readonly LootTableDef[] = [
   goblinLoot,
   crystalGrottoLoot,
   golemLoot,
+  wardenLootLoot,
+  cinderLootLoot,
+  echoLootLoot,
+  keepersAlcoveLoot,
+  tendedFlameLoot,
   crawlerLoot,
   floodedLockerLoot,
   eelLoot,
@@ -895,6 +939,8 @@ export const rooms: readonly RoomDef[] = [
   oldChestRoom,
   crystalBurstRoom,
   crystalGrottoRoom,
+  wardLineRoom,
+  keepersAlcoveRoom,
   floodedLockerRoom,
   sumpRoom,
   ossuaryNicheRoom,
@@ -919,6 +965,7 @@ export const floors: readonly FloorDef[] = [
   boneHallsFloor,
   floodedShaftsFloor,
   oldDelveFloor,
+  keepersStairFloor,
 ];
 export const buildings: readonly BuildingDef[] = [
   guildHallBuilding,
@@ -985,6 +1032,7 @@ export const events: readonly EventDef[] = [
   woundedStrangerEvent,
   corneredGoblinEvent,
   singingCrystalEvent,
+  tendedFlameEvent,
   strandedDelverEvent,
   mourningGhostEvent,
   webbedGoblinEvent,
@@ -1055,6 +1103,7 @@ export const library: Library = {
     floodedShaftsSealed,
     theHeart,
     theHeartStilled,
+    theStairBelow,
   ],
 };
 

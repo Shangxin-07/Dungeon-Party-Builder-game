@@ -323,6 +323,12 @@ export interface FloorDef {
    * at the start of each fight.
    */
   ground?: FloorGround;
+  /**
+   * Which act it belongs to (§21, default 1). Act Two's floors lie below the
+   * Hearthstone's heart: they open, and the new bottom starts breeding, once
+   * the heart is shut off.
+   */
+  act?: number;
 }
 
 /** A floor's fighting ground (§21). */

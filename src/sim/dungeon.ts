@@ -14,8 +14,10 @@
  * the floor below strains the gateway, and past its limit it breaches: open
  * until the town mends it.
  *
- * Once the Hearthstone's heart is shut off (M8.22), step 1 stops for good:
- * what's down there is all there will ever be.
+ * Once the Hearthstone's heart is shut off (M8.22), the floors below it open
+ * (Act Two, §21): the stairs under the Delve are found, and the new bottom
+ * floor breeds instead, starting afresh. With no floors below the heart (or
+ * none open yet), step 1 stops for good.
  *
  * Every floor also settles a little way back towards its usual level each day,
  * so killing monsters (which makes room and stops the push-up) lets it calm down.
@@ -112,8 +114,16 @@ export interface DungeonDay {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+/** The acts open in this dungeon (§21): Act Two once the heart is shut off. */
+export const actsOpen = (d: Pick<DungeonState, "core">): number => (d.core.shut ? 2 : 1);
+
+/** The floor definitions open in an act, top down. */
+export function floorsOpen(ix: Index, acts: number) {
+  return [...ix.lib.floors].filter((f) => (f.act ?? 1) <= acts).sort((a, b) => a.depth - b.depth);
+}
+
 export function newDungeon(ix: Index): DungeonState {
-  const floors = [...ix.lib.floors].sort((a, b) => a.depth - b.depth);
+  const floors = floorsOpen(ix, 1);
   return {
     floors: floors.map((f) => ({ population: f.startPopulation, level: f.depth })),
     days: 0,
@@ -124,22 +134,28 @@ export function newDungeon(ix: Index): DungeonState {
 }
 
 /**
- * Give a dungeon from an older game the floors added since (M6.21: floors 4
- * and 5), as a new game would start them. Changes `d`. Returns whether it did.
+ * Give a dungeon the floors it should have and doesn't yet, as a new game
+ * would start them: floors added to the game since (M6.21: floors 4 and 5),
+ * and an act's floors when it opens (§21). Changes `d`. Returns whether it did.
  */
 export function addNewFloors(ix: Index, d: DungeonState): boolean {
-  const floors = [...ix.lib.floors].sort((a, b) => a.depth - b.depth);
+  const floors = floorsOpen(ix, actsOpen(d));
   if (d.floors.length >= floors.length) return false;
   for (const f of floors.slice(d.floors.length))
     d.floors.push({ population: f.startPopulation, level: f.depth });
   return true;
 }
 
-/** Monsters the bottom floor breeds per day right now. */
+/**
+ * Monsters the bottom floor breeds per day right now. Below a stilled heart
+ * (§21) the new bottom starts again from the day the heart went still.
+ */
 export function spawnRate(ix: Index, d: DungeonState): number {
-  if (d.core.shut) return 0;
   const r = ix.lib.dungeon;
-  return r.spawnPerDay + r.spawnGrowthPerDay * d.days;
+  const shut = d.core.shut;
+  if (!shut) return r.spawnPerDay + r.spawnGrowthPerDay * d.days;
+  if (d.floors.length <= ix.lib.core.floor) return 0;
+  return r.spawnPerDay + r.spawnGrowthPerDay * Math.max(0, d.days - shut.day);
 }
 
 /** The weakest-to-strongest monster levels on a floor, for showing in town. */
@@ -176,12 +192,13 @@ function evict(f: FloorPressure, n: number, drop: number): number {
 /** Run one day. Returns the new state and what happened. */
 export function dungeonDay(ix: Index, d: DungeonState): { dungeon: DungeonState; day: DungeonDay } {
   const rules = ix.lib.dungeon;
-  const defs = [...ix.lib.floors].sort((a, b) => a.depth - b.depth);
+  const defs = floorsOpen(ix, actsOpen(d));
   const caps = defs.map((f) => f.capacity);
   const out = structuredClone(d);
   const bottom = out.floors.length - 1;
 
-  // 1. The bottom floor breeds, at its own depth, until its heart is shut off (M8.22).
+  // 1. The bottom floor breeds, at its own depth: the heart's floor until it's shut off
+  // (M8.22), then the bottom of the floors below it (§21).
   const due = spawnRate(ix, out) + out.spawnCarry;
   const spawned = Math.floor(due);
   out.spawnCarry = round2(due - spawned);

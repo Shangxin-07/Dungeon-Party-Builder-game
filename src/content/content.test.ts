@@ -90,7 +90,7 @@ describe("validateLibrary", () => {
         ...library.floors,
         {
           id: "deep",
-          depth: 9,
+          depth: 12,
           name: "Deep",
           rooms: [3, 3],
           fixedRooms: ["nowhere"],
@@ -106,9 +106,9 @@ describe("validateLibrary", () => {
         'room "bad-chest": unknown loot table "nope"',
         'loot table "bad-loot": unknown item "laser-sword"',
         'floor "deep": unknown room "nowhere"',
-        'floor "deep": no rooms can appear at depth 9',
+        'floor "deep": no rooms can appear at depth 12',
         'floor "deep": startPopulation must be between 0 and capacity',
-        "floors: depth 6 is missing",
+        "floors: depth 7 is missing",
       ]),
     );
   });

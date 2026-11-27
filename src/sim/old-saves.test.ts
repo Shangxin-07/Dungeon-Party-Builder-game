@@ -33,7 +33,7 @@ describe("saves from earlier versions", () => {
     expect(t.day).toBe(old.day);
     expect(t.gold).toBe(old.gold);
     // Floors added since (M6.21: floors 4 and 5) are there, as a new game starts them.
-    expect(t.dungeon.floors).toHaveLength(library.floors.length);
+    expect(t.dungeon.floors).toHaveLength(library.core.floor);
     // Every hero has the fields today's game expects.
     for (const h of t.roster) {
       expect(Array.isArray(h.injuries)).toBe(true);

@@ -5,7 +5,7 @@ export default defineRoom({
   id: "rest-spot",
   name: "Safe nook",
   behaviour: "rest",
-  floors: [1, 5],
+  floors: [1, 10],
   weight: 1,
   descriptions: [
     "A dry alcove with one way in. A good place to rest.",

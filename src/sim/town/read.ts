@@ -513,7 +513,7 @@ export function usualHours(
   }
   // Sealing the stairs (M7.16).
   const seal = sealOf(orders);
-  if (seal && target < ix.lib.floors.length) hours += ix.barricade(seal).hours;
+  if (seal) hours += ix.barricade(seal).hours; // cantSeal keeps it off the bottom floor
   return hours;
 }
 
@@ -593,7 +593,7 @@ export function cantSeal(ix: Index, town: TownState, orders: StandingOrders): st
   const id = sealOf(orders);
   if (!id) return undefined;
   const b = ix.barricade(id);
-  if (orders.targetFloor >= ix.lib.floors.length)
+  if (orders.targetFloor >= town.dungeon.floors.length)
     return `Floor ${orders.targetFloor} is the bottom: there are no stairs below it to seal.`;
   if (town.dungeon.stones[orders.targetFloor])
     return `The stairs below floor ${orders.targetFloor} are held by a Seal Stone's gateway.`;

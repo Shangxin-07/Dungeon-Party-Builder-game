@@ -7,10 +7,12 @@
  * - The town learns what happened at the heart when it hears of the trip:
  *   the party is home, or lost (the heart stays shut even if they fall on
  *   the way back up).
- * - Shut, the bottom floor breeds no more (dungeon.ts) and the dead no longer
- *   rise. Nothing else changes: the town plays on with what's left below.
+ * - Shut, the Hearthstone's floor breeds no more (dungeon.ts) and the dead no
+ *   longer rise. Act Two (§21) opens: the floors below the heart are added,
+ *   and the new bottom floor breeds and pushes its extras up as before.
  * - Leaving it beating is fine too: it's never forced.
  */
+import { addNewFloors } from "../dungeon";
 import { coreOrder, type StandingOrders } from "../expedition";
 import type { Index } from "../library";
 import { type Outing, type TownState } from "./state";
@@ -74,6 +76,20 @@ export function coreNews(ix: Index, t: TownState, o: Outing): void {
   if (shut && !core.shut) {
     news(t, `${o.name} shut off the heart of the Hearthstone. The pit has gone quiet.`, "good");
     gainRenown(ix, t, "core");
+    // Act Two (§21): under the still heart, the way down is found.
+    const before = t.dungeon.floors.length;
+    t.dungeon = structuredClone(t.dungeon);
+    if (addNewFloors(ix, t.dungeon)) {
+      const names = t.dungeon.floors
+        .slice(before)
+        .map((_, i) => ix.floor(before + i + 1).name)
+        .join(", ");
+      news(
+        t,
+        `Under the still heart, the floor of the Delve has given way. Stairs go down: ${names}. Something down there is breeding.`,
+        "bad",
+      );
+    }
   } else if (!c.shut) {
     news(
       t,

@@ -32,7 +32,7 @@ export function setSeal(ix: Index, town: TownState, barricade: string | undefine
 /** The party sets off with its barricade: pay for it (changes `t`). */
 export function carrySeal(ix: Index, t: TownState, orders: StandingOrders): void {
   const id = sealOf(orders);
-  if (!id || orders.targetFloor >= ix.lib.floors.length) return;
+  if (!id || orders.targetFloor >= t.dungeon.floors.length) return;
   const b = ix.barricade(id);
   useMaterials(t, b.materials);
   if (b.gold) book(t, "built", -b.gold);
@@ -77,7 +77,7 @@ export function sealHome(ix: Index, t: TownState, o: Outing): void {
     return;
   }
   const id = sealOf(o.result.orders);
-  if (!id || o.result.orders.targetFloor >= ix.lib.floors.length) return;
+  if (!id || o.result.orders.targetFloor >= t.dungeon.floors.length) return;
   const b = ix.barricade(id);
   addMaterials(t, b.materials);
   news(

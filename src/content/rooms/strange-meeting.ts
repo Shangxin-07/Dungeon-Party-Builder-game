@@ -6,7 +6,7 @@ export default defineRoom({
   id: "strange-meeting",
   name: "Side passage",
   behaviour: "event",
-  floors: [1, 5],
+  floors: [1, 10],
   weight: 1.5,
   descriptions: [
     "Something up ahead isn't a monster.",
