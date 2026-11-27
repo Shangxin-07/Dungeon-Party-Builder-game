@@ -53,6 +53,7 @@ export const ICON_SHEETS = {
   "keepers-2": { cols: 4, rows: 2 },
   "coal-halls": { cols: 4, rows: 3 },
   glimmering: { cols: 4, rows: 3 },
+  "ember-deeps": { cols: 4, rows: 3 },
 } as const;
 export type IconSheet = keyof typeof ICON_SHEETS;
 

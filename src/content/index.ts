@@ -538,6 +538,36 @@ import glassStormAbility from "./abilities/glass-storm";
 import coalHallsShards from "./shards/coal-halls";
 import coalHallsSealed from "./story/coal-halls-sealed";
 import shardCoalHallsMaterial from "./materials/shard-coal-halls";
+// Act Three (§21): the Ember Deeps (M8.40).
+import emberDeepsFloor from "./floors/ember-deeps";
+import slagCrawlerMonster from "./monsters/slag-crawler";
+import ashWraithMonster from "./monsters/ash-wraith";
+import emberWormMonster from "./monsters/ember-worm";
+import lightdrinkerMonster from "./monsters/lightdrinker";
+import sleeperInGlassMonster from "./monsters/sleeper-in-glass";
+import ashColossusMonster from "./monsters/ash-colossus";
+import crawlerBroodEncounter from "./encounters/crawler-brood";
+import ashWraithsEncounter from "./encounters/ash-wraiths";
+import wormAndWraithsEncounter from "./encounters/worm-and-wraiths";
+import crawlerAndWraithEncounter from "./encounters/crawler-and-wraith";
+import emberCrackRoom from "./rooms/ember-crack";
+import slagHeapRoom from "./rooms/slag-heap";
+import coldForgeEvent from "./events/cold-forge";
+import slagIronItem from "./items/slag-iron";
+import ashwalkerHammerItem from "./items/ashwalker-hammer";
+import slagScaleSpecimen from "./specimens/slag-scale";
+import wraithAshSpecimen from "./specimens/wraith-ash";
+import wormToothSpecimen from "./specimens/worm-tooth";
+import slagLootLoot from "./loot/slag-loot";
+import wraithLootLoot from "./loot/wraith-loot";
+import wormLootLoot from "./loot/worm-loot";
+import slagHeapLoot from "./loot/slag-heap";
+import coldForgeLoot from "./loot/cold-forge";
+import slagSpitAbility from "./abilities/slag-spit";
+import drinkTheLightAbility from "./abilities/drink-the-light";
+import glimmeringShards from "./shards/glimmering";
+import glimmeringSealed from "./story/glimmering-sealed";
+import shardGlimmeringMaterial from "./materials/shard-glimmering";
 import ghoulMonster from "./monsters/ghoul";
 import ghastMonster from "./monsters/ghast";
 import caveTrollMonster from "./monsters/cave-troll";
@@ -605,6 +635,7 @@ export const materials: readonly ItemDef[] = [
   shardBoneHallsMaterial,
   shardFloodedShaftsMaterial,
   shardCoalHallsMaterial,
+  shardGlimmeringMaterial,
   shardKeepersStairMaterial,
   shardOldDelveMaterial,
 ];
@@ -620,6 +651,9 @@ export const specimens: readonly ItemDef[] = [
   stalkerClawSpecimen,
   wispMoteSpecimen,
   geodeCoreSpecimen,
+  slagScaleSpecimen,
+  wraithAshSpecimen,
+  wormToothSpecimen,
   lampWickSpecimen,
   echoAshSpecimen,
   crystalChipSpecimen,
@@ -666,6 +700,7 @@ export const shards: readonly ShardSetDef[] = [
   warrensShards,
   boneHallsShards,
   coalHallsShards,
+  glimmeringShards,
   keepersStairShards,
   oldDelveShards,
   floodedShaftsShards,
@@ -716,6 +751,8 @@ export const items: readonly ItemDef[] = [
   bankedCoalItem,
   glimmerCrystalItem,
   prismLensItem,
+  slagIronItem,
+  ashwalkerHammerItem,
   stokersApronItem,
   wardenMaulItem,
   harpoonItem,
@@ -781,6 +818,8 @@ export const abilities: readonly AbilityDef[] = [
   refractionAbility,
   callTheSwarmAbility,
   glassStormAbility,
+  slagSpitAbility,
+  drinkTheLightAbility,
   heatBlastAbility,
   callTheClutchAbility,
   flameBladeAbility,
@@ -832,6 +871,12 @@ export const monsters: readonly MonsterDef[] = [
   lastLamplighterMonster,
   emberMothMonster,
   facetKingMonster,
+  slagCrawlerMonster,
+  ashWraithMonster,
+  emberWormMonster,
+  lightdrinkerMonster,
+  sleeperInGlassMonster,
+  ashColossusMonster,
   oldBellowsMonster,
   keepersEchoMonster,
   crystalCrawlerMonster,
@@ -982,6 +1027,10 @@ export const encounters: readonly EncounterDef[] = [
   wispCloudEncounter,
   geodeAndWispsEncounter,
   loneHulkEncounter,
+  crawlerBroodEncounter,
+  ashWraithsEncounter,
+  wormAndWraithsEncounter,
+  crawlerAndWraithEncounter,
   loneStokerEncounter,
   keepersEchoesEncounter,
   crystalBroodEncounter,
@@ -1022,6 +1071,11 @@ export const lootTables: readonly LootTableDef[] = [
   geodeLootLoot,
   geodeVaultLoot,
   grownKeeperLoot,
+  slagLootLoot,
+  wraithLootLoot,
+  wormLootLoot,
+  slagHeapLoot,
+  coldForgeLoot,
   bankedHearthLoot,
   tendedFlameLoot,
   crawlerLoot,
@@ -1069,6 +1123,8 @@ export const rooms: readonly RoomDef[] = [
   coalChuteRoom,
   glassGardenRoom,
   geodeVaultRoom,
+  emberCrackRoom,
+  slagHeapRoom,
   keepersHallRoom,
   keepersAlcoveRoom,
   floodedLockerRoom,
@@ -1096,6 +1152,7 @@ export const floors: readonly FloorDef[] = [
   floodedShaftsFloor,
   oldDelveFloor,
   glimmeringFloor,
+  emberDeepsFloor,
   coalHallsFloor,
   keepersStairFloor,
 ];
@@ -1165,6 +1222,7 @@ export const events: readonly EventDef[] = [
   corneredGoblinEvent,
   singingCrystalEvent,
   grownKeeperEvent,
+  coldForgeEvent,
   bankedHearthEvent,
   tendedFlameEvent,
   strandedDelverEvent,
@@ -1241,6 +1299,7 @@ export const library: Library = {
     theCoalstone,
     coalstoneStilled,
     coalHallsSealed,
+    glimmeringSealed,
     oldDelveSealed,
     theStairBelow,
   ],
