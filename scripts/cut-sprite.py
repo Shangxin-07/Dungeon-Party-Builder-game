@@ -12,14 +12,21 @@ trimmed, scaled to fit and centred in a square cell of the given size, so a
 slightly uneven grid from the generator still comes out even.
 
     python3 scripts/cut-sprite.py in.png src/ui/art/icons/<sheet>.png --grid 4x3 64
+
+Light purples are turned grey, because smoke the generator paints over magenta
+comes out lavender. For icons that really are purple or violet (crystal), list
+their cells (numbered from 0) to keep their colour, or say all:
+
+    python3 scripts/cut-sprite.py in.png out.png --grid 4x3 64 --keep-purple 4,11
 """
 import sys
 
 import numpy as np
 from PIL import Image
 
-def key_out(path):
-    """Load a picture on magenta and return it as RGBA with the magenta keyed out."""
+def key_out(path, keep=None):
+    """Load a picture on magenta and return it as RGBA with the magenta keyed out.
+    keep: a mask of pixels whose light purples stay purple (see --keep-purple)."""
     im = np.asarray(Image.open(path).convert("RGB")).astype(float)
     r, g, b = im[..., 0], im[..., 1], im[..., 2]
     magenta = np.minimum(r, b) - g  # how magenta a pixel is
@@ -37,6 +44,8 @@ def key_out(path):
     # light pinkish-purple pixels plain grey (real purples are darker and stay).
     tint = np.minimum(rgb[..., 0], rgb[..., 2]) - rgb[..., 1]
     lavender = (tint > 12) & (rgb[..., 1] > 90)
+    if keep is not None:
+        lavender &= ~keep
     grey = rgb.mean(axis=2)
     for c in range(3):
         rgb[..., c] = np.where(lavender, grey, rgb[..., c])
@@ -103,10 +112,16 @@ def blobs(img):
     return label, found
 
 
-def grid(src, out, cols, rows, cell):
+def grid(src, out, cols, rows, cell, purple=()):
     import numpy as np
 
-    img, _ = key_out(src)
+    size = Image.open(src).size
+    keep = np.zeros((size[1], size[0]), dtype=bool)
+    cw, ch = size[0] / cols, size[1] / rows
+    for i in purple:
+        c, r = i % cols, i // cols
+        keep[round(r * ch) : round((r + 1) * ch), round(c * cw) : round((c + 1) * cw)] = True
+    img, _ = key_out(src, keep)
     sheet = Image.new("RGBA", (cols * cell, rows * cell), (0, 0, 0, 0))
     cw, ch = img.width / cols, img.height / rows
     pad = max(1, cell // 16)
@@ -145,8 +160,12 @@ if __name__ == "__main__":
     if "--grid" in args:
         i = args.index("--grid")
         cols, rows = (int(n) for n in args[i + 1].split("x"))
-        cell = int(args[i + 2]) if len(args) > i + 2 else 64
-        grid(args[0], args[1], cols, rows, cell)
+        cell = int(args[i + 2]) if len(args) > i + 2 and args[i + 2].isdigit() else 64
+        purple = ()
+        if "--keep-purple" in args:
+            which = args[args.index("--keep-purple") + 1]
+            purple = range(cols * rows) if which == "all" else [int(n) for n in which.split(",")]
+        grid(args[0], args[1], cols, rows, cell, purple)
     else:
         # Third argument: a scale (0.36) or a frame width in pixels (260px).
         strip(args[0], args[1], args[2] if len(args) > 2 else "0.36")
