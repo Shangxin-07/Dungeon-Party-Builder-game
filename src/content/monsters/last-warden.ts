@@ -6,6 +6,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "last-warden",
   name: "The Last Warden",
+  icon: { sheet: "keepers-2", cell: 1 },
   power: 74,
   stats: { STR: 22, DEX: 7, END: 22, PER: 12, INT: 6, WIL: 20, CHA: 2 },
   overrides: { maxHp: 900 },

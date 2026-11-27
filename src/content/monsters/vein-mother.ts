@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "vein-mother",
   name: "The Vein Mother",
+  icon: { sheet: "keepers-2", cell: 0 },
   power: 70,
   stats: { STR: 20, DEX: 9, END: 21, PER: 10, INT: 3, WIL: 14, CHA: 2 },
   overrides: { maxHp: 800 },

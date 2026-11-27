@@ -5,6 +5,7 @@ import { defineMaterial } from "../types";
 export default defineMaterial({
   id: "shard-old-delve",
   name: "Coalstone shard",
+  icon: { sheet: "keepers-2", cell: 2 },
   blurb:
     "A shard of the Coalstone, older and hotter than the Hearthstone's. Forge them all into floor 5's Seal Stone.",
   value: 180,
