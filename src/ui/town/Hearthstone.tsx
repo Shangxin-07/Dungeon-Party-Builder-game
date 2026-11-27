@@ -107,7 +107,8 @@ function CoreLine({ town, heart }: { town: TownState; heart: CoreRules }) {
       {shut ? (
         <p className="small">
           {shut.by} shut it off. Its floor breeds no more
-          {below ? ", but the stairs go on down, and the new bottom floor breeds in its place" : ""}.
+          {below ? ", but the stairs go on down, and the new bottom floor breeds in its place" : ""}
+          .
         </p>
       ) : blockers.length ? (
         <p className="small muted">

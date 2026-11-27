@@ -375,10 +375,10 @@ export function PartyPanel({
       </div>
       {coreHere && town.orders.core ? (
         <p className="mission small">
-          Going for the heart: after floor {floor} is walked, {heart?.guide} leads the party down
-          to the heart of the {heart?.stone}. What guards it rises with the floor's own crew round
-          it, and there's no slipping away: send the best the guild has, rested. Win, and they shut
-          it off for good; its floor breeds no more.
+          Going for the heart: after floor {floor} is walked, {heart?.guide} leads the party down to
+          the heart of the {heart?.stone}. What guards it rises with the floor's own crew round it,
+          and there's no slipping away: send the best the guild has, rested. Win, and they shut it
+          off for good; its floor breeds no more.
         </p>
       ) : coreHere && coreWhy ? (
         <p className="small muted">{coreWhy}</p>
