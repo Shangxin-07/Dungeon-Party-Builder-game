@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "warden-core",
   name: "Warden's Ward-stone",
+  icon: { sheet: "keepers", cell: 7 },
   slot: "loot",
   value: 8,
   tags: ["specimen"],

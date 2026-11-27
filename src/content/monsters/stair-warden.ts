@@ -4,6 +4,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "stair-warden",
   name: "Stair Warden",
+  icon: { sheet: "keepers", cell: 0 },
   power: 14,
   stats: { STR: 18, DEX: 7, END: 18, PER: 10, INT: 4, WIL: 16, CHA: 1 },
   overrides: { maxHp: 95 },

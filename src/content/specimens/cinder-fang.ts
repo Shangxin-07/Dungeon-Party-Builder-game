@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "cinder-fang",
   name: "Cinder Fang",
+  icon: { sheet: "keepers", cell: 8 },
   slot: "loot",
   value: 5,
   tags: ["specimen"],

@@ -5,6 +5,7 @@ import { defineMonster } from "../types";
 export default defineMonster({
   id: "keepers-echo",
   name: "Keeper's Echo",
+  icon: { sheet: "keepers", cell: 2 },
   power: 9,
   stats: { STR: 7, DEX: 12, END: 10, PER: 14, INT: 15, WIL: 16, CHA: 6 },
   overrides: { maxHp: 40 },

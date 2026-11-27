@@ -4,6 +4,7 @@ import { defineItem } from "../types";
 export default defineItem({
   id: "echo-ash",
   name: "Echo's Ash",
+  icon: { sheet: "keepers", cell: 9 },
   slot: "loot",
   value: 6,
   tags: ["specimen"],
