@@ -183,7 +183,7 @@ describe("shut off", () => {
       "the-heart-stilled",
       "the-stair-below",
     ]);
-    expect(cantReachCore(ix, t)).toMatch(/already shut off/);
+    expect(cantReachCore(ix, t, HEART)).toMatch(/already shut off/);
     // Shut once is shut: a later party there changes nothing.
     expect(hears(t).dungeon.hearts.hearthstone!.shut).toEqual(t.dungeon.hearts.hearthstone!.shut);
   });

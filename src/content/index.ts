@@ -473,6 +473,40 @@ import cinderLootLoot from "./loot/cinder-loot";
 import echoLootLoot from "./loot/echo-loot";
 import keepersAlcoveLoot from "./loot/keepers-alcove";
 import tendedFlameLoot from "./loot/tended-flame";
+// Act Two (§21): the Coal Halls and the Coalstone (M8.38).
+import coalHallsFloor from "./floors/coal-halls";
+import stokerMonster from "./monsters/stoker";
+import ashMothMonster from "./monsters/ash-moth";
+import lamplighterMonster from "./monsters/lamplighter";
+import bankedFireMonster from "./monsters/banked-fire";
+import cinderMotherMonster from "./monsters/cinder-mother";
+import oldBellowsMonster from "./monsters/old-bellows";
+import stokerGangEncounter from "./encounters/stoker-gang";
+import mothSwarmEncounter from "./encounters/moth-swarm";
+import lamplightersEncounter from "./encounters/lamplighters";
+import loneStokerEncounter from "./encounters/lone-stoker";
+import coalChuteRoom from "./rooms/coal-chute";
+import keepersHallRoom from "./rooms/keepers-hall";
+import bankedHearthEvent from "./events/banked-hearth";
+import bankedCoalItem from "./items/banked-coal";
+import stokersApronItem from "./items/stokers-apron";
+import stokersTagSpecimen from "./specimens/stokers-tag";
+import mothDustSpecimen from "./specimens/moth-dust";
+import lampWickSpecimen from "./specimens/lamp-wick";
+import stokerLootLoot from "./loot/stoker-loot";
+import mothLootLoot from "./loot/moth-loot";
+import lamplighterLootLoot from "./loot/lamplighter-loot";
+import keepersHallLoot from "./loot/keepers-hall";
+import bankedHearthLoot from "./loot/banked-hearth";
+import chokingAshAbility from "./abilities/choking-ash";
+import callTheLitterAbility from "./abilities/call-the-litter";
+import heatBlastAbility from "./abilities/heat-blast";
+import keepersStairShards from "./shards/keepers-stair";
+import shardKeepersStairMaterial from "./materials/shard-keepers-stair";
+import coalstoneHeart from "./hearts/coalstone";
+import keepersStairSealed from "./story/keepers-stair-sealed";
+import theCoalstone from "./story/the-coalstone";
+import coalstoneStilled from "./story/coalstone-stilled";
 import ghoulMonster from "./monsters/ghoul";
 import ghastMonster from "./monsters/ghast";
 import caveTrollMonster from "./monsters/cave-troll";
@@ -539,6 +573,7 @@ export const materials: readonly ItemDef[] = [
   shardWarrensMaterial,
   shardBoneHallsMaterial,
   shardFloodedShaftsMaterial,
+  shardKeepersStairMaterial,
   shardOldDelveMaterial,
 ];
 
@@ -548,6 +583,9 @@ export const specimens: readonly ItemDef[] = [
   golemRuneSpecimen,
   wardenCoreSpecimen,
   cinderFangSpecimen,
+  stokersTagSpecimen,
+  mothDustSpecimen,
+  lampWickSpecimen,
   echoAshSpecimen,
   crystalChipSpecimen,
   minersTagSpecimen,
@@ -592,6 +630,7 @@ export const shards: readonly ShardSetDef[] = [
   diggingsShards,
   warrensShards,
   boneHallsShards,
+  keepersStairShards,
   oldDelveShards,
   floodedShaftsShards,
 ];
@@ -638,6 +677,8 @@ export const items: readonly ItemDef[] = [
   emberStoneItem,
   keepersLampItem,
   wardCloakItem,
+  bankedCoalItem,
+  stokersApronItem,
   wardenMaulItem,
   harpoonItem,
   oilskinsItem,
@@ -697,6 +738,9 @@ export const abilities: readonly AbilityDef[] = [
   webAbility,
   warCryAbility,
   callTheBroodAbility,
+  chokingAshAbility,
+  callTheLitterAbility,
+  heatBlastAbility,
   callTheClutchAbility,
   flameBladeAbility,
   arcaneWardAbility,
@@ -736,6 +780,12 @@ export const monsters: readonly MonsterDef[] = [
   oreGolemMonster,
   stairWardenMonster,
   cinderHoundMonster,
+  stokerMonster,
+  ashMothMonster,
+  lamplighterMonster,
+  bankedFireMonster,
+  cinderMotherMonster,
+  oldBellowsMonster,
   keepersEchoMonster,
   crystalCrawlerMonster,
   leechMonster,
@@ -878,6 +928,10 @@ export const encounters: readonly EncounterDef[] = [
   stairWardensEncounter,
   loneWardenEncounter,
   cinderPackEncounter,
+  stokerGangEncounter,
+  mothSwarmEncounter,
+  lamplightersEncounter,
+  loneStokerEncounter,
   keepersEchoesEncounter,
   crystalBroodEncounter,
   eelRunEncounter,
@@ -908,6 +962,11 @@ export const lootTables: readonly LootTableDef[] = [
   cinderLootLoot,
   echoLootLoot,
   keepersAlcoveLoot,
+  stokerLootLoot,
+  mothLootLoot,
+  lamplighterLootLoot,
+  keepersHallLoot,
+  bankedHearthLoot,
   tendedFlameLoot,
   crawlerLoot,
   floodedLockerLoot,
@@ -951,6 +1010,8 @@ export const rooms: readonly RoomDef[] = [
   crystalBurstRoom,
   crystalGrottoRoom,
   wardLineRoom,
+  coalChuteRoom,
+  keepersHallRoom,
   keepersAlcoveRoom,
   floodedLockerRoom,
   sumpRoom,
@@ -976,6 +1037,7 @@ export const floors: readonly FloorDef[] = [
   boneHallsFloor,
   floodedShaftsFloor,
   oldDelveFloor,
+  coalHallsFloor,
   keepersStairFloor,
 ];
 export const buildings: readonly BuildingDef[] = [
@@ -1043,6 +1105,7 @@ export const events: readonly EventDef[] = [
   woundedStrangerEvent,
   corneredGoblinEvent,
   singingCrystalEvent,
+  bankedHearthEvent,
   tendedFlameEvent,
   strandedDelverEvent,
   mourningGhostEvent,
@@ -1087,7 +1150,7 @@ export const library: Library = {
   barricades,
   shards,
   sealing: sealingRules,
-  hearts: [hearthstoneHeart],
+  hearts: [hearthstoneHeart, coalstoneHeart],
   time: timeRules,
   fallen: fallenRules,
   transforms,
@@ -1114,6 +1177,9 @@ export const library: Library = {
     floodedShaftsSealed,
     theHeart,
     theHeartStilled,
+    keepersStairSealed,
+    theCoalstone,
+    coalstoneStilled,
     oldDelveSealed,
     theStairBelow,
   ],
