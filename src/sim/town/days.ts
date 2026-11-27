@@ -42,6 +42,7 @@ import { payDay } from "./pay";
 import { sealsBroke } from "./seals";
 import { gatewayNews } from "./gateways";
 import { boundSeals } from "./renown";
+import { wayFacts } from "./core";
 import { digDay } from "./digs";
 import { storyDay } from "./story";
 import { offersDay } from "./offers";
@@ -178,6 +179,7 @@ export function dayInTown(ix: Index, t: TownState, h: Hero): void {
       favouriteMissing: fav ? 0 : 1,
       restMorale: restMorale(ix, t),
       boundSeals: boundSeals(ix, t),
+      ...wayFacts(ix, t),
     },
     t.day,
   );

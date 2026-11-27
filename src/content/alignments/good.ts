@@ -19,5 +19,8 @@ export default defineAlignment({
     { fact: "unholyGear", amount: -3, reason: "carried cursed gear" },
     // Bound Seal Stones (M8.19): a small daily weight, however many there are.
     { fact: "boundSeals", amount: -1, cap: 2, reason: "feels the bound stones' hunger" },
+    // The last stone (M8.41): mended, the deep sleeps whole; bound, it never sleeps.
+    { fact: "heartMended", amount: 1, cap: 1, reason: "the deep sleeps, whole" },
+    { fact: "heartBound", amount: -1, cap: 1, reason: "the bound Emberstone never sleeps" },
   ],
 });

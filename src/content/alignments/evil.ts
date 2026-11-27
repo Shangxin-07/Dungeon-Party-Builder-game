@@ -15,5 +15,7 @@ export default defineAlignment({
     { fact: "evilDeeds", amount: 1, cap: 2, reason: "had some fun" },
     { fact: "goodDeeds", amount: -1, cap: 2, reason: "wasted time being kind" },
     { fact: "unholyGear", amount: 1, reason: "likes the dark gear" },
+    // The last stone bound (M8.41): it works for the guild, and pays.
+    { fact: "heartBound", amount: 1, cap: 1, reason: "likes what the bound stone pays" },
   ],
 });

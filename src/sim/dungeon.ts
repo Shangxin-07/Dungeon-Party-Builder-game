@@ -67,6 +67,11 @@ export interface CoreState {
   reached: number;
   /** Shut off for good: the town day, and who did it. Its floor breeds no more. */
   shut: { day: number; by: string } | null;
+  /**
+   * The last heart only (M8.41): what the guild did with its stone once it was
+   * still, and on what day. Not chosen yet while it's left out.
+   */
+  way?: { id: string; day: number };
 }
 
 /** A Seal Stone set on a flight of stairs (M8.17): a gateway (M8.18). */
@@ -189,7 +194,11 @@ export function addNewFloors(ix: Index, d: DungeonState): boolean {
 export function spawnRate(ix: Index, d: DungeonState): number {
   const r = ix.lib.dungeon;
   const bottom = heartOn(ix, d.floors.length);
-  if (bottom && heartState(d, bottom.id).shut) return 0;
+  if (bottom && heartState(d, bottom.id).shut) {
+    // A bound stone (M8.41) works for the guild, and its floor never quite sleeps.
+    const way = bottom.ways?.find((w) => w.id === heartState(d, bottom.id).way?.id);
+    return way?.breeds ?? 0;
+  }
   const since = Math.max(0, ...ix.lib.hearts.map((h) => heartState(d, h.id).shut?.day ?? 0));
   return r.spawnPerDay + r.spawnGrowthPerDay * Math.max(0, d.days - since);
 }

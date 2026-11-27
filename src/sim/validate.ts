@@ -450,10 +450,23 @@ export function validateLibrary(lib: Library): string[] {
     }
   });
   for (const c of lib.story) {
-    const heart = c.when.kind === "core" ? c.when.heart : undefined;
-    if (heart && !(lib.hearts ?? []).some((h) => h.id === heart))
-      err(`chapter "${c.id}": unknown heart "${heart}"`);
+    const heart = c.when.kind === "core" || c.when.kind === "way" ? c.when.heart : undefined;
+    const h = (lib.hearts ?? []).find((x) => x.id === heart);
+    if (heart && !h) err(`chapter "${c.id}": unknown heart "${heart}"`);
+    if (c.when.kind === "way" && h && !h.ways?.some((w) => w.id === (c.when as { way: string }).way))
+      err(`chapter "${c.id}": heart "${heart}" has no way "${c.when.way}"`);
   }
+  // The last stone's ways (M8.41): a real building does each, with real materials.
+  for (const h of lib.hearts ?? [])
+    for (const way of h.ways ?? []) {
+      const w = `heart "${h.id}" way "${way.id}"`;
+      if (!lib.buildings.some((b) => b.id === way.workshop))
+        err(`${w}: unknown building "${way.workshop}"`);
+      for (const id of Object.keys(way.materials))
+        if (!lib.items.some((i) => i.id === id && i.slot === "material"))
+          err(`${w}: "${id}" isn't a material`);
+      if (!(way.gold >= 0) || !((way.breeds ?? 0) >= 0)) err(`${w}: gold and breeds can't be negative`);
+    }
   // Renown (M8.19): ranks from 0 upwards; building levels that wait for it.
   const ranks = lib.renown?.ranks ?? [];
   if (lib.renown && ranks[0]?.at !== 0) err("renown: the first rank must be at 0");

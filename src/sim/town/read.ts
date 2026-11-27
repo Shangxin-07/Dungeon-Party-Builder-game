@@ -2,7 +2,7 @@
  * Reading the town: building effects, prices, wages, warnings. Nothing here changes state.
  */
 import { cantStone } from "./stones";
-import { cantCore } from "./core";
+import { cantCore, wayEffects } from "./core";
 import { blessingEffects, renownEffects } from "./renown";
 import { digEffects } from "./digging";
 import type { BuildingEffect, ItemDef, MaterialCost, PostEffect } from "../../content/types";
@@ -28,6 +28,8 @@ export function effects(ix: Index, town: TownState): BuildingEffect[] {
   const out: BuildingEffect[] = [];
   for (const b of ix.lib.buildings) out.push(...buildingEffects(ix, town, b.id));
   out.push(...renownEffects(ix, town), ...blessingEffects(ix, town), ...digEffects(ix, town));
+  // The last stone's way, mended or bound, blesses the town for good (M8.41).
+  out.push(...wayEffects(ix, town));
   return out;
 }
 

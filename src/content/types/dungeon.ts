@@ -509,6 +509,38 @@ export interface CoreRules {
    * and failing; `panel`, what the town knows of it while it beats.
    */
   text: { reach: string; guardian: string; shut: string; beaten: string; panel: string };
+  /**
+   * The last heart's choice (M8.41, DESIGN.md §21): once it's still, the
+   * guild mends the stone or binds it, once and for good. Left out, the
+   * heart is only shut.
+   */
+  ways?: readonly HeartWay[];
+}
+
+/** One thing the guild can do with the last stone once its heart is still (M8.41). */
+export interface HeartWay {
+  /** "mended" or "bound": the way's id in the heart's state, and its story chapter's trigger. */
+  id: string;
+  /** The button: "Mend it". */
+  name: string;
+  /** The building that does it (Temple, Black Market), which has to be standing. */
+  workshop: string;
+  gold: number;
+  materials: Readonly<Record<string, number>>;
+  /** What it means, before choosing. */
+  blurb: string;
+  /** The town hears it's done. */
+  news: string;
+  /** Mending: every floor is made safe, its monsters gone, and nothing breeds again. */
+  safe?: boolean;
+  /** Binding: the heart's floor still breeds this many a day; the deep never quite sleeps. */
+  breeds?: number;
+  /** What it gives the town for good, like a gateway's blessing. */
+  blessing: { name: string; text: string; effects: readonly BuildingEffect[] };
+  /** The morale fact it sets for everyone at home every day (Good and Evil feel it differently). */
+  fact: "heartMended" | "heartBound";
+  /** The ending card. */
+  ending: { title: string; text: string };
 }
 
 /** How a gateway lets the floor below up (M8.18, DESIGN.md §20). */

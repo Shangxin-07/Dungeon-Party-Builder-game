@@ -6,7 +6,9 @@
  */
 import { Fold } from "../Fold";
 import {
+  cantChooseWay,
   cantMendGateway,
+  chooseWay,
   coreBlockers,
   cantRaiseGateway,
   gatewayCostWords,
@@ -17,6 +19,7 @@ import {
   raiseGateway,
   setGateway,
   floorReveals,
+  heartWay,
   shardProgress,
   type ShardStatus,
   type TownState,
@@ -79,14 +82,14 @@ export function HearthstonePanel({ town, act }: { town: TownState; act: Act }) {
       {ix.lib.hearts
         .filter((h, i) => i === 0 || town.story[h.revealedBy] !== undefined)
         .map((h) => (
-          <CoreLine key={h.id} town={town} heart={h} />
+          <CoreLine key={h.id} town={town} heart={h} act={act} />
         ))}
     </Fold>
   );
 }
 
 /** A heart (M8.22, M8.38): beating or shut, and what stands in the way. */
-function CoreLine({ town, heart }: { town: TownState; heart: CoreRules }) {
+function CoreLine({ town, heart, act }: { town: TownState; heart: CoreRules; act: Act }) {
   const floor = heart.floor;
   const { shut, reached } = heartState(town.dungeon, heart.id);
   const blockers = coreBlockers(ix, town, heart);
@@ -104,7 +107,9 @@ function CoreLine({ town, heart }: { town: TownState; heart: CoreRules }) {
           From the Foreman's pages: {text}
         </p>
       ))}
-      {shut ? (
+      {shut && heart.ways ? (
+        <WayLine town={town} heart={heart} act={act} />
+      ) : shut ? (
         <p className="small">
           {shut.by} shut it off. Its floor breeds no more
           {below ? ", but the stairs go on down, and the new bottom floor breeds in its place" : ""}
@@ -126,6 +131,51 @@ function CoreLine({ town, heart }: { town: TownState; heart: CoreRules }) {
         </p>
       )}
     </div>
+  );
+}
+
+/** The last stone, still (M8.41): mend it or bind it, once, or what the guild chose. */
+function WayLine({ town, heart, act }: { town: TownState; heart: CoreRules; act: Act }) {
+  const { shut } = heartState(town.dungeon, heart.id);
+  const chosen = heartWay(town, heart);
+  if (chosen)
+    return (
+      <p className="small">
+        {shut?.by} stilled it, and on day {heartState(town.dungeon, heart.id).way?.day} the guild
+        chose: <strong>{chosen.blessing.name}</strong>. {chosen.blessing.text}
+      </p>
+    );
+  return (
+    <>
+      <p className="small">
+        {shut?.by} stilled it. Its floor breeds no more, and the guild has to decide what becomes of
+        the stone. Whichever it chooses is for good.
+      </p>
+      {heart.ways!.map((way) => {
+        const why = cantChooseWay(ix, town, heart, way.id);
+        return (
+          <div key={way.id} className="small">
+            <p>
+              <strong>{way.name}</strong> ({ix.building(way.workshop).name},{" "}
+              {gatewayCostWords(ix, way)}): {way.blurb} <em>{way.blessing.name}</em>:{" "}
+              {way.blessing.text}
+            </p>
+            <button
+              type="button"
+              className="btn"
+              disabled={!!why}
+              title={why}
+              onClick={() => {
+                if (confirm(`${way.name}? The ${heart.stone} stays that way for good.`))
+                  act((t) => chooseWay(ix, t, heart, way.id));
+              }}
+            >
+              {way.name}
+            </button>
+          </div>
+        );
+      })}
+    </>
   );
 }
 

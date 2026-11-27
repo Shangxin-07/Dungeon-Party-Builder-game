@@ -13,7 +13,10 @@ import { createRng } from "./rng";
 import { exportSave, importSave } from "./save";
 import {
   autoStart,
+  cantChooseWay,
   cantReachCore,
+  chooseWay,
+  heartWay,
   newTown,
   openShards,
   rest,
@@ -21,6 +24,7 @@ import {
   type TownState,
 } from "./town";
 import { coreNews } from "./town/core";
+import { effects } from "./town/read";
 
 const ix = indexLibrary(library);
 /** Every heart's state, with the Hearthstone's shut off. */
@@ -217,10 +221,11 @@ describe("the Coalstone (M8.38)", () => {
     expect(s.dungeon.hearts.hearthstone!.shut).not.toBeNull();
     expect(s.news.map((n) => n.text).join("\n")).toMatch(/shut off the heart of the Coalstone/);
     expect(actsOpen(ix, s.dungeon)).toBe(3);
-    // Act Three opens below (M8.39, M8.40): the Glimmering and the Ember Deeps, which breed now.
+    // Act Three opens below (M8.39-M8.41): the Glimmering, the Ember Deeps and the Kiln, which breed now.
     expect(s.dungeon.floors.map((_, i) => ix.floor(i + 1).name).slice(7)).toEqual([
       "The Glimmering",
       "The Ember Deeps",
+      "The Kiln",
     ]);
     expect(spawnRate(ix, s.dungeon)).toBeGreaterThan(0);
     const after = rest(ix, s, heroNames);
@@ -264,7 +269,7 @@ describe("the Glimmering (M8.39)", () => {
     };
     addNewFloors(ix, banked.dungeon);
     expect(ix.floor(8).name).toBe("The Glimmering");
-    expect(banked.dungeon.floors).toHaveLength(9);
+    expect(banked.dungeon.floors).toHaveLength(10);
     const seven = shardProgress(ix, banked).find((p) => p.set.floor === 7)!;
     expect(seven.set.stone).toBe("Emberstone");
     expect(seven.need).toBe(9);
@@ -291,7 +296,112 @@ describe("the Ember Deeps (M8.40)", () => {
     expect(openShards(ix, banked)).toEqual(
       expect.arrayContaining(["glimmering-drinker", "glimmering-sleeper", "glimmering-colossus"]),
     );
-    // Floor 9's own shards come with the Kiln below it.
-    expect(shardProgress(ix, banked).map((p) => p.set.floor)).not.toContain(9);
+    // Floor 9's own shards come with the Kiln below it (M8.41).
+    expect(shardProgress(ix, banked).map((p) => p.set.floor)).toContain(9);
+  });
+});
+
+const EMBERSTONE = ix.lib.hearts.find((h) => h.id === "emberstone")!;
+
+/** A town with the Hearthstone and Coalstone still, Act Three's floors open. */
+function actThree(): TownState {
+  const t = actTwo();
+  t.dungeon.hearts = { ...t.dungeon.hearts, coalstone: { reached: 1, shut: { day: 1, by: "x" } } };
+  addNewFloors(ix, t.dungeon);
+  return t;
+}
+
+/** Act Three with the Emberstone still too, and gold and both buildings to choose with. */
+function stilled(): TownState {
+  const t = actThree();
+  const o = {
+    id: "o1",
+    name: "Isolde's party",
+    left: t.day - 3,
+    result: { core: { heart: "emberstone", day: 2, shut: true } },
+  } as unknown as Parameters<typeof coreNews>[2];
+  coreNews(ix, t, o);
+  t.gold = 5000;
+  t.buildings = { ...t.buildings, temple: 1, "black-market": 1 };
+  t.materials = {
+    ...t.materials,
+    glowcap: 20,
+    "deep-silver": 20,
+    "spider-silk": 20,
+    "iron-bands": 20,
+    "bone-dust": 20,
+  };
+  return t;
+}
+
+describe("the Kiln and the Emberstone (M8.41)", () => {
+  it("opens the Kiln with Act Three, floor 9's nine shards, and the Emberstone out of reach until every floor is held", () => {
+    const t = actThree();
+    expect(t.dungeon.floors).toHaveLength(10);
+    expect(ix.floor(10).name).toBe("The Kiln");
+    const nine = shardProgress(ix, t).find((p) => p.set.floor === 9)!;
+    expect(nine.set.stone).toBe("Emberstone");
+    expect(nine.need).toBe(9);
+    expect(openShards(ix, t)).toEqual(
+      expect.arrayContaining(["ember-deeps-worm", "ember-deeps-choir", "ember-deeps-king"]),
+    );
+    expect(EMBERSTONE.floor).toBe(10);
+    expect(cantReachCore(ix, t, EMBERSTONE)).toMatch(/below floor 1 have no Seal Stone/);
+    // Nothing lies below the Kiln: the pit ends here.
+    expect(floorsOpen(ix, 4)).toHaveLength(10);
+  });
+
+  it("stilled: the Kiln breeds no more, no floors open below, and the guild is asked to decide", () => {
+    const t = stilled();
+    expect(t.dungeon.floors).toHaveLength(10);
+    expect(spawnRate(ix, t.dungeon)).toBe(0);
+    const after = rest(ix, t, heroNames);
+    expect(after.story["emberstone-stilled"]).toBeDefined();
+    expect(after.story["emberstone-mended"]).toBeUndefined();
+    expect(heartWay(after, EMBERSTONE)).toBeUndefined();
+  });
+
+  it("can only be mended or bound once it's still, with the building, gold and materials", () => {
+    expect(cantChooseWay(ix, actThree(), EMBERSTONE, "mended")).toMatch(/has to be still first/);
+    const t = stilled();
+    expect(
+      cantChooseWay(ix, { ...t, buildings: { ...t.buildings, temple: 0 } }, EMBERSTONE, "mended"),
+    ).toMatch(/needs the Temple/);
+    expect(cantChooseWay(ix, { ...t, gold: 10 }, EMBERSTONE, "bound")).toMatch(/Not enough gold/);
+    expect(cantChooseWay(ix, { ...t, materials: {} }, EMBERSTONE, "bound")).toMatch(/Short of/);
+    expect(cantChooseWay(ix, t, EMBERSTONE, "mended")).toBeUndefined();
+    expect(cantChooseWay(ix, t, EMBERSTONE, "nonsense")).toMatch(/can't be done/);
+  });
+
+  it("mended: every floor is made safe, nothing breeds, the town is blessed and Good heroes are glad", () => {
+    const t = stilled();
+    t.dungeon.floors.forEach((f) => (f.population = 40));
+    const m = chooseWay(ix, t, EMBERSTONE, "mended");
+    expect(m.gold).toBe(t.gold - 2000);
+    expect(m.materials.glowcap).toBe(t.materials.glowcap! - 12);
+    expect(m.dungeon.floors.every((f) => f.population === 0)).toBe(true);
+    expect(spawnRate(ix, m.dungeon)).toBe(0);
+    expect(dungeonDay(ix, m.dungeon).dungeon.floors.every((f) => f.population === 0)).toBe(true);
+    expect(effects(ix, m)).toContainEqual({ type: "restMorale", amount: 2 });
+    expect(heartWay(m, EMBERSTONE)?.id).toBe("mended");
+    expect(() => chooseWay(ix, m, EMBERSTONE, "bound")).toThrow(/already chosen/);
+    // Its last chapter opens at once, for the ending card.
+    expect(m.story["emberstone-mended"]).toBe(m.day);
+    expect(rest(ix, m, heroNames).story["emberstone-bound"]).toBeUndefined();
+    // The town before is untouched.
+    expect(t.dungeon.floors[0]!.population).toBe(40);
+  });
+
+  it("bound: the stone works for the guild, and the Kiln never quite sleeps", () => {
+    const t = stilled();
+    const b = chooseWay(ix, t, EMBERSTONE, "bound");
+    expect(spawnRate(ix, b.dungeon)).toBe(2);
+    expect(effects(ix, b)).toEqual(
+      expect.arrayContaining([
+        { type: "fence", amount: 10 },
+        { type: "xpPercent", amount: 25 },
+      ]),
+    );
+    expect(b.story["emberstone-bound"]).toBe(b.day);
   });
 });
