@@ -1,4 +1,4 @@
-import { defineCoreRules } from "./types";
+import { defineCoreRules } from "../types";
 
 /**
  * The Hearthstone's core (M8.22, DESIGN.md §20): the end goal, and hard on
@@ -9,7 +9,12 @@ import { defineCoreRules } from "./types";
  * shut off for good: the bottom floor stops breeding and the dead lie still.
  */
 export default defineCoreRules({
+  id: "hearthstone",
+  stone: "Hearthstone",
   floor: 5,
+  guide: "the Foreman's Shade",
+  // The Foreman's last page says where he'll be waiting.
+  revealedBy: "flooded-shafts-sealed",
   guardian: "hearthborn",
   escort: 0.5,
   walkHours: 2,
@@ -20,6 +25,8 @@ export default defineCoreRules({
     guardian:
       "Something stands up out of the light. The heart has been growing it for a hundred years: the last thing it made, and the strongest. The Delve's crew come up behind it, and there's nowhere to go.",
     shut: "The Shade lays a hand on the crack where the pick went in, a hundred years ago. The party works until the light runs out of it. The beat slows, and stops, and the Old Delve goes quiet.",
+    panel:
+      "What's left of the Hearthstone beats at the bottom of the Old Delve, and everything above it came out of it.",
     beaten:
       "The party can't get near the heart. It beats on behind them as they fall back up the gallery.",
   },

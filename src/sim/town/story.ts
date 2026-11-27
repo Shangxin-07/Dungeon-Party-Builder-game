@@ -12,9 +12,10 @@ import type { ChapterDef, StoryTrigger } from "../../content/types";
 import type { Index } from "../library";
 import type { TownState } from "./state";
 import { news } from "./internal";
+import { heartState } from "../dungeon";
 
 /** Has the guild done what this trigger asks? */
-export function storyDue(town: TownState, when: StoryTrigger): boolean {
+export function storyDue(ix: Index, town: TownState, when: StoryTrigger): boolean {
   switch (when.kind) {
     case "start":
       return !town.camp;
@@ -22,15 +23,17 @@ export function storyDue(town: TownState, when: StoryTrigger): boolean {
       return Object.values(town.shards).filter((s) => s.found !== undefined).length >= when.count;
     case "sealed":
       return !!town.dungeon.stones[when.floor];
-    case "core":
-      return when.shut ? !!town.dungeon.core.shut : town.dungeon.core.reached > 0;
+    case "core": {
+      const s = heartState(town.dungeon, when.heart ?? ix.lib.hearts[0]!.id);
+      return when.shut ? !!s.shut : s.reached > 0;
+    }
   }
 }
 
 /** Open every chapter now due, in order, with its news (changes `t`). */
 export function storyDay(ix: Index, t: TownState): void {
   for (const c of chapters(ix)) {
-    if (t.story[c.id] !== undefined || !storyDue(t, c.when)) continue;
+    if (t.story[c.id] !== undefined || !storyDue(ix, t, c.when)) continue;
     t.story = { ...t.story, [c.id]: t.day };
     news(t, c.news, "story");
   }

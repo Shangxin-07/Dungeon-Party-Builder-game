@@ -10,7 +10,7 @@
  */
 import { rollAlignment } from "./alignment";
 import { rollBackstory } from "./backstory";
-import { addNewFloors, newDungeon } from "./dungeon";
+import { addNewFloors, addNewHearts, newDungeon } from "./dungeon";
 import { rollPersonality, type Hero } from "./hero";
 import type { Index } from "./library";
 import { TOWN_VERSION, tidyFreeHires, type TownState } from "./town";
@@ -260,7 +260,7 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
     const story = Object.fromEntries(
       ix.lib.story
         // Nobody could reach the heart before M8.22 (and the save has no record of it yet).
-        .filter((c) => c.when.kind !== "core" && storyDue(t, c.when))
+        .filter((c) => c.when.kind !== "core" && storyDue(ix, t, c.when))
         .map((c) => [c.id, t.day]),
     );
     return { ...old, version: 24, story };
@@ -282,7 +282,28 @@ const MIGRATIONS: Record<number, (ix: Index, old: Raw) => Raw> = {
     forEachHero(old, (h) => (h.moments = []));
     return { ...old, version: 27 };
   },
+  // M8.38: more than one heart (DESIGN.md §21). The one there was is the
+  // Hearthstone's, and every trip that went to a heart went to that one.
+  27: (_ix, old) => {
+    const { core, ...dungeon } = old.dungeon as { core: unknown };
+    forEachCoreVisit(old, (v) => (v.heart = "hearthstone"));
+    return { ...old, version: 28, dungeon: { ...dungeon, hearts: { hearthstone: core } } };
+  },
 };
+
+/** Every trip result's visit to a heart (`result.core`), anywhere in a save. */
+function forEachCoreVisit(raw: unknown, fn: (v: { heart?: string }) => void): void {
+  if (!raw || typeof raw !== "object") return;
+  if (Array.isArray(raw)) {
+    for (const x of raw) forEachCoreVisit(x, fn);
+    return;
+  }
+  const o = raw as Record<string, unknown>;
+  const v = o.core as Record<string, unknown> | undefined;
+  if (v && typeof v === "object" && typeof v.day === "number" && typeof v.shut === "boolean")
+    fn(v as { heart?: string });
+  for (const x of Object.values(o)) forEachCoreVisit(x, fn);
+}
 
 /**
  * Every hero anywhere in a save (the roster, trips, sites, bodies, raids,
@@ -325,7 +346,10 @@ export function migrateTown(ix: Index, raw: unknown): TownState | undefined {
   tidyFreeHires(t);
   // New floors are content, not a change of shape: older dungeons get them as
   // a new game would start them.
-  if (t.dungeon) addNewFloors(ix, t.dungeon);
+  if (t.dungeon) {
+    addNewHearts(ix, t.dungeon);
+    addNewFloors(ix, t.dungeon);
+  }
   return t;
 }
 

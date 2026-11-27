@@ -26,7 +26,8 @@ import {
 import { coreNews } from "./town/core";
 
 const ix = indexLibrary(library);
-const CORE = library.core.floor;
+const HEART = library.hearts[0]!;
+const CORE = HEART.floor;
 
 const gate = (stone: string, over: Partial<StoneSeal> = {}): StoneSeal => ({
   stone,
@@ -42,7 +43,7 @@ const gate = (stone: string, over: Partial<StoneSeal> = {}): StoneSeal => ({
 const allHeld = (): Record<number, StoneSeal> =>
   Object.fromEntries(
     library.shards
-      .filter((s) => s.floor < library.core.floor)
+      .filter((s) => s.floor < CORE)
       .map((s) => [s.floor, gate(`seal-stone-${s.id}-cleansed`)]),
   );
 
@@ -120,10 +121,10 @@ describe("at the heart", () => {
       reached++;
       const text = r.log.map((e) => e.text).join("\n");
       expect(text).toMatch(/Foreman's Shade is waiting/);
-      expect(r.seen).toContain(library.core.guardian);
+      expect(r.seen).toContain(HEART.guardian);
       if (r.core.shut) {
         shut++;
-        expect(r.kills).toContain(library.core.guardian);
+        expect(r.kills).toContain(HEART.guardian);
         expect(text).toMatch(/the Old Delve goes quiet/);
       }
     }
@@ -154,7 +155,7 @@ describe("shut off", () => {
       id: "o1",
       name: "Brannoc's party",
       left: t.day - 3,
-      result: { core: { day: 2, shut: shutIt } },
+      result: { core: { heart: "hearthstone", day: 2, shut: shutIt } },
     } as unknown as Parameters<typeof coreNews>[2];
     const s = structuredClone(t);
     coreNews(ix, s, o);
@@ -164,27 +165,27 @@ describe("shut off", () => {
   it("the bottom floor breeds no more", () => {
     const d = newDungeon(ix);
     expect(dungeonDay(ix, d).day.spawned).toBeGreaterThan(0);
-    const quiet = { ...d, core: { reached: 1, shut: { day: 1, by: "x" } } };
+    const quiet = { ...d, hearts: { ...d.hearts, hearthstone: { reached: 1, shut: { day: 1, by: "x" } } } };
     expect(dungeonDay(ix, quiet).day.spawned).toBe(0);
   });
 
   it("brings the news, renown and the last pages", () => {
     const t0 = heldTown();
     const beaten = rest(ix, hears(t0, false), heroNames);
-    expect(beaten.dungeon.core).toEqual({ reached: 1, shut: null });
+    expect(beaten.dungeon.hearts.hearthstone).toEqual({ reached: 1, shut: null });
     expect(beaten.story["the-heart"]).toBeDefined();
     expect(beaten.story["the-heart-stilled"]).toBeUndefined();
     let t = hears(beaten);
-    expect(t.dungeon.core.shut).toEqual({ day: beaten.day - 3 + 2, by: "Brannoc's party" });
+    expect(t.dungeon.hearts.hearthstone!.shut).toEqual({ day: beaten.day - 3 + 2, by: "Brannoc's party" });
     expect(t.renown).toBe(beaten.renown + library.renown.deeds.core);
     t = rest(ix, t, heroNames);
     expect(storySoFar(ix, t).map((s) => s.chapter.id).slice(-2)).toEqual([
       "the-heart-stilled",
       "the-stair-below",
     ]);
-    expect(cantReachCore(ix, t)).toMatch(/already shut off/);
+    expect(cantReachCore(ix, t, HEART)).toMatch(/already shut off/);
     // Shut once is shut: a later party there changes nothing.
-    expect(hears(t).dungeon.core.shut).toEqual(t.dungeon.core.shut);
+    expect(hears(t).dungeon.hearts.hearthstone!.shut).toEqual(t.dungeon.hearts.hearthstone!.shut);
   });
 
   it("the dead lie still", () => {
@@ -195,7 +196,10 @@ describe("shut off", () => {
         ...t,
         dungeon: {
           ...t.dungeon,
-          core: { reached: 1, shut: shut ? { day: 1, by: "x" } : null },
+          hearts: {
+            ...t.dungeon.hearts,
+            hearthstone: { reached: 1, shut: shut ? { day: 1, by: "x" } : null },
+          },
         },
         sites: [
           {
@@ -220,13 +224,13 @@ describe("shut off", () => {
     const t = autoStart(ix, newTown(ix, heroNames, 5));
     const old = structuredClone(t) as unknown as Record<string, unknown>;
     const dungeon = { ...(old.dungeon as Record<string, unknown>) };
-    delete dungeon.core;
+    delete dungeon.hearts;
     old.dungeon = dungeon;
     old.version = 24;
     const back = importSave(
       ix,
       JSON.stringify({ game: "dungeon-party-builder", version: 24, savedAt: "", town: old }),
     );
-    expect(back.dungeon.core).toEqual({ reached: 0, shut: null });
+    expect(back.dungeon.hearts.hearthstone).toEqual({ reached: 0, shut: null });
   });
 });

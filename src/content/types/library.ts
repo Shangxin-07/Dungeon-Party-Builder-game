@@ -108,8 +108,11 @@ export interface Library {
   shards: readonly ShardSetDef[];
   /** Forging Seal Stones (M8.17): cleansed or bound. */
   sealing: SealingRules;
-  /** The Hearthstone's core and how it's shut off (M8.22). */
-  core: CoreRules;
+  /**
+   * The pit's hearts and how each is shut off (M8.22, M8.38), top down: the
+   * Hearthstone ends Act One, the Coalstone Act Two (DESIGN.md §21).
+   */
+  hearts: readonly CoreRules[];
   /** The trip clock (M7.01): hours below. */
   time: TimeRules;
   fallen: FallenRules;

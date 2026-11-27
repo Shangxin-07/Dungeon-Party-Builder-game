@@ -431,12 +431,28 @@ export function validateLibrary(lib: Library): string[] {
     if (c.when.kind === "shards" && !(c.when.count >= 1)) err(`${w}: count must be at least 1`);
     if (c.reveal && !depthsKnown.has(c.reveal.floor)) err(`${w}: reveals unknown floor`);
   }
-  // The Hearthstone's heart (M8.22): on a real floor, guarded by a real monster.
-  if (lib.core) {
-    if (!depthsKnown.has(lib.core.floor)) err(`core: no floor ${lib.core.floor}`);
-    if (!monsterIds.has(lib.core.guardian)) err(`core: unknown guardian "${lib.core.guardian}"`);
-    if (!(lib.core.escort >= 0) || !(lib.core.walkHours >= 0) || !(lib.core.shutHours >= 0))
-      err("core: escort and hours can't be negative");
+  // The hearts (M8.22, M8.38): each at the bottom of its act, on a real floor,
+  // guarded by a real monster, told of by a real chapter.
+  ids("heart", lib.hearts ?? []);
+  (lib.hearts ?? []).forEach((h, i) => {
+    const w = `heart "${h.id}"`;
+    if (!depthsKnown.has(h.floor)) err(`${w}: no floor ${h.floor}`);
+    if (!monsterIds.has(h.guardian)) err(`${w}: unknown guardian "${h.guardian}"`);
+    if (!(h.escort >= 0) || !(h.walkHours >= 0) || !(h.shutHours >= 0))
+      err(`${w}: escort and hours can't be negative`);
+    if (!lib.story.some((c) => c.id === h.revealedBy))
+      err(`${w}: unknown chapter "${h.revealedBy}"`);
+    // Act i+1's floors lie above or on its heart, and the next act's below it.
+    for (const f of lib.floors) {
+      const act = f.act ?? 1;
+      if (act === i + 1 && f.depth > h.floor) err(`${w}: floor ${f.depth} of its act lies below it`);
+      if (act === i + 2 && f.depth <= h.floor) err(`${w}: floor ${f.depth} of the next act lies above it`);
+    }
+  });
+  for (const c of lib.story) {
+    const heart = c.when.kind === "core" ? c.when.heart : undefined;
+    if (heart && !(lib.hearts ?? []).some((h) => h.id === heart))
+      err(`chapter "${c.id}": unknown heart "${heart}"`);
   }
   // Renown (M8.19): ranks from 0 upwards; building levels that wait for it.
   const ranks = lib.renown?.ranks ?? [];

@@ -484,7 +484,14 @@ export interface SealingRules {
  * what guards it; win, and they can shut it off for good.
  */
 export interface CoreRules {
-  /** The floor the heart lies on (the bottom floor). */
+  /** Unique kebab-case id: the key of its state in the dungeon (dungeon.hearts). */
+  id: string;
+  /** The stone it's the heart of, for the town's words: "the heart of the Hearthstone". */
+  stone: string;
+  /**
+   * The floor the heart lies on: the bottom of its act (§21). Shut, its act
+   * is done and the next act's floors open below it.
+   */
   floor: number;
   /** What guards it (a monster id): the strongest thing in the pit. */
   guardian: string;
@@ -493,8 +500,15 @@ export interface CoreRules {
   /** Hours to walk down to the heart after the floor, and to shut it off. */
   walkHours: number;
   shutHours: number;
-  /** What the log says: reaching the heart, the guardian rising, shutting it, and failing. */
-  text: { reach: string; guardian: string; shut: string; beaten: string };
+  /** Who shows a party the way down to it, once its floor is walked: "the Foreman's Shade". */
+  guide: string;
+  /** The story chapter that tells the guild where it is: until then, no party can go for it. */
+  revealedBy: string;
+  /**
+   * What the log says: reaching the heart, the guardian rising, shutting it,
+   * and failing; `panel`, what the town knows of it while it beats.
+   */
+  text: { reach: string; guardian: string; shut: string; beaten: string; panel: string };
 }
 
 /** How a gateway lets the floor below up (M8.18, DESIGN.md §20). */

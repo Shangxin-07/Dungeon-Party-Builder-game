@@ -18,6 +18,7 @@ import monsters3 from "./icons/monsters-3.png";
 import monsters4 from "./icons/monsters-4.png";
 import keepers from "./icons/keepers.png";
 import keepers2 from "./icons/keepers-2.png";
+import coalHalls from "./icons/coal-halls.png";
 import specimens from "./icons/specimens.png";
 import supplies from "./icons/supplies.png";
 import weapons from "./icons/weapons.png";
@@ -36,6 +37,7 @@ export const ICON_ART: Partial<Record<IconSheet, { url: string; cell: number }>>
   specimens: { url: specimens, cell: 64 },
   keepers: { url: keepers, cell: 64 },
   "keepers-2": { url: keepers2, cell: 64 },
+  "coal-halls": { url: coalHalls, cell: 64 },
 };
 
 /** Icons for people who have no class of their own (cells of the classes sheet). */

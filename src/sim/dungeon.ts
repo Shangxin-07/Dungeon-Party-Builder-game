@@ -27,7 +27,7 @@
  * No randomness here: the same dungeon and the same kills give the same day,
  * which is what lets a watchtower see the next night coming.
  */
-import type { GatewaySetting } from "../content/types";
+import type { CoreRules, GatewaySetting } from "../content/types";
 import type { Index } from "./library";
 
 export interface FloorPressure {
@@ -54,15 +54,18 @@ export interface DungeonState {
    * same way: nothing comes up them again, and nothing wears them down.
    */
   stones: Record<number, StoneSeal>;
-  /** The Hearthstone's heart (M8.22, DESIGN.md §20): beating, or shut off for good. */
-  core: CoreState;
+  /**
+   * The pit's hearts (M8.22, M8.38, DESIGN.md §20-21), by id
+   * (content/hearts/): each beating, or shut off for good.
+   */
+  hearts: Record<string, CoreState>;
 }
 
-/** The heart on the bottom floor (M8.22). */
+/** A heart at the bottom of its act (M8.22). */
 export interface CoreState {
   /** Parties that have reached it. */
   reached: number;
-  /** Shut off for good: the town day, and who did it. The bottom floor breeds no more. */
+  /** Shut off for good: the town day, and who did it. Its floor breeds no more. */
   shut: { day: number; by: string } | null;
 }
 
@@ -114,8 +117,33 @@ export interface DungeonDay {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-/** The acts open in this dungeon (§21): Act Two once the heart is shut off. */
-export const actsOpen = (d: Pick<DungeonState, "core">): number => (d.core.shut ? 2 : 1);
+/** One heart's state (M8.38). Every heart in the content has one (newDungeon, addNewHearts). */
+export function heartState(d: Pick<DungeonState, "hearts">, id: string): CoreState {
+  const s = d.hearts[id];
+  if (!s) throw new Error(`No state for heart "${id}"`);
+  return s;
+}
+
+/** The heart on this floor, if there is one (M8.38). */
+export const heartOn = (ix: Index, floor: number): CoreRules | undefined =>
+  ix.lib.hearts.find((h) => h.floor === floor);
+
+/**
+ * The acts open in this dungeon (§21): Act One, then one more for each heart
+ * shut off in order (the Hearthstone opens Act Two, the Coalstone Act Three).
+ */
+export function actsOpen(ix: Index, d: Pick<DungeonState, "hearts">): number {
+  let acts = 1;
+  for (const h of ix.lib.hearts) {
+    if (!heartState(d, h.id).shut) break;
+    acts++;
+  }
+  return acts;
+}
+
+/** The heart the guild is working towards: the first still beating, if any (M8.38). */
+export const nextHeart = (ix: Index, d: Pick<DungeonState, "hearts">): CoreRules | undefined =>
+  ix.lib.hearts.find((h) => !heartState(d, h.id).shut);
 
 /** The floor definitions open in an act, top down. */
 export function floorsOpen(ix: Index, acts: number) {
@@ -129,8 +157,15 @@ export function newDungeon(ix: Index): DungeonState {
     days: 0,
     spawnCarry: 0,
     stones: {},
-    core: { reached: 0, shut: null },
+    hearts: Object.fromEntries(ix.lib.hearts.map((h) => [h.id, { reached: 0, shut: null }])),
   };
+}
+
+/** Give a dungeon a state for every heart added to the game since (M8.38). Changes `d`. */
+export function addNewHearts(ix: Index, d: DungeonState): boolean {
+  const missing = ix.lib.hearts.filter((h) => !d.hearts[h.id]);
+  for (const h of missing) d.hearts = { ...d.hearts, [h.id]: { reached: 0, shut: null } };
+  return missing.length > 0;
 }
 
 /**
@@ -139,7 +174,7 @@ export function newDungeon(ix: Index): DungeonState {
  * and an act's floors when it opens (§21). Changes `d`. Returns whether it did.
  */
 export function addNewFloors(ix: Index, d: DungeonState): boolean {
-  const floors = floorsOpen(ix, actsOpen(d));
+  const floors = floorsOpen(ix, actsOpen(ix, d));
   if (d.floors.length >= floors.length) return false;
   for (const f of floors.slice(d.floors.length))
     d.floors.push({ population: f.startPopulation, level: f.depth });
@@ -147,15 +182,16 @@ export function addNewFloors(ix: Index, d: DungeonState): boolean {
 }
 
 /**
- * Monsters the bottom floor breeds per day right now. Below a stilled heart
- * (§21) the new bottom starts again from the day the heart went still.
+ * Monsters the bottom floor breeds per day right now. A stilled heart's floor
+ * breeds nothing; below it (§21) the new bottom starts again from the day the
+ * last heart went still.
  */
 export function spawnRate(ix: Index, d: DungeonState): number {
   const r = ix.lib.dungeon;
-  const shut = d.core.shut;
-  if (!shut) return r.spawnPerDay + r.spawnGrowthPerDay * d.days;
-  if (d.floors.length <= ix.lib.core.floor) return 0;
-  return r.spawnPerDay + r.spawnGrowthPerDay * Math.max(0, d.days - shut.day);
+  const bottom = heartOn(ix, d.floors.length);
+  if (bottom && heartState(d, bottom.id).shut) return 0;
+  const since = Math.max(0, ...ix.lib.hearts.map((h) => heartState(d, h.id).shut?.day ?? 0));
+  return r.spawnPerDay + r.spawnGrowthPerDay * Math.max(0, d.days - since);
 }
 
 /** The weakest-to-strongest monster levels on a floor, for showing in town. */
@@ -192,7 +228,7 @@ function evict(f: FloorPressure, n: number, drop: number): number {
 /** Run one day. Returns the new state and what happened. */
 export function dungeonDay(ix: Index, d: DungeonState): { dungeon: DungeonState; day: DungeonDay } {
   const rules = ix.lib.dungeon;
-  const defs = floorsOpen(ix, actsOpen(d));
+  const defs = floorsOpen(ix, actsOpen(ix, d));
   const caps = defs.map((f) => f.capacity);
   const out = structuredClone(d);
   const bottom = out.floors.length - 1;

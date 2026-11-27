@@ -3,7 +3,8 @@
  * check orders, come home. Tuning numbers are in tuning.ts.
  */
 import { theName } from "../research";
-import type { FloorPressure } from "../dungeon";
+import { heartOn, type FloorPressure } from "../dungeon";
+import type { CoreRules } from "../../content/types";
 import { heroSheet, type Hero } from "../hero";
 import type { Index } from "../library";
 import { type HaulItem } from "../loot";
@@ -191,7 +192,7 @@ export class Expedition extends TripRescue {
         `${loot === "everything" ? "carry everything" : "leave the junk"}` +
         `${this.sealing() ? `; seal the stairs below floor ${targetFloor} with ${aOrAn(this.sealing()!.name)}` : ""}` +
         `${this.stone() ? `; set the ${this.ix.item(this.stone()!).name} on the stairs below floor ${targetFloor}` : ""}` +
-        `${this.goingForCore() ? "; go down to the heart of the Hearthstone and shut it off" : ""}` +
+        `${this.goingForCore() ? `; go down to the heart of the ${this.goingForCore()!.stone} and shut it off` : ""}` +
         `${this.huntGoal() ? `; thin out floor ${targetFloor} by ${this.orders.clearPercent}%` : ""}.`,
     );
 
@@ -388,28 +389,28 @@ export class Expedition extends TripRescue {
     this.betweenRooms();
   }
 
-  /** Is the party going for the Hearthstone's heart (M8.22), on its floor? */
-  protected goingForCore(): boolean {
-    return coreOrder(this.orders) && this.orders.targetFloor === this.ix.lib.core.floor;
+  /** The heart the party is going for (M8.22), on its floor, if it is. */
+  protected goingForCore(): CoreRules | undefined {
+    return coreOrder(this.orders) ? heartOn(this.ix, this.orders.targetFloor) : undefined;
   }
 
   /**
-   * Down to the Hearthstone's heart (M8.22, DESIGN.md §20), once its floor is
-   * walked. The Foreman's Shade shows the way; the heart's guardian rises
+   * Down to a heart (M8.22, DESIGN.md §20-21), once its floor is walked.
+   * Someone or something shows the way; the heart's guardian rises
    * with the floor's crew round it, and there's no slipping away. Win, and
    * the party shuts the heart off for good.
    */
   protected reachCore(): void {
     const up = this.conscious();
-    if (!this.goingForCore() || !up.length) return;
-    const core = this.ix.lib.core;
+    const core = this.goingForCore();
+    if (!core || !up.length) return;
     const floor = core.floor;
     this.campIfTired();
     this.roomNo++;
     this.roomsVisited++;
     this.pass(core.walkHours);
     this.emit("core", core.text.reach);
-    this.coreVisit = { day: this.tripDay(), shut: false };
+    this.coreVisit = { heart: core.id, day: this.tripDay(), shut: false };
     this.emit("core", core.text.guardian);
     const here = this.floors?.[floor - 1];
     const level = here?.level ?? floor;
@@ -431,7 +432,7 @@ export class Expedition extends TripRescue {
     }
     this.betweenRooms();
     this.pass(core.shutHours);
-    this.coreVisit = { day: this.tripDay(), shut: true };
+    this.coreVisit = { heart: core.id, day: this.tripDay(), shut: true };
     this.emit("core", core.text.shut);
   }
 
