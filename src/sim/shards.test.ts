@@ -66,7 +66,7 @@ describe("shard sets", () => {
   it("check out, one per floor above the bottom", () => {
     expect(validateLibrary(library)).toEqual([]);
     const floors = library.shards.map((s) => s.floor).sort();
-    expect(floors).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(floors).toEqual([1, 2, 3, 4, 5, 6, 7]);
   });
 
   it("need more shards deeper down (Mike: 3 for floors 1-3, 6 from floor 4)", () => {

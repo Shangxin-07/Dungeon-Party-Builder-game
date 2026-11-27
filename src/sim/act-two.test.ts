@@ -203,7 +203,7 @@ describe("the Coalstone (M8.38)", () => {
     expect(openShards(ix, opened)).toContain("keepers-stair-mother");
   });
 
-  it("banked down: the Coal Halls breed no more, Act Three is open, and the Keepers' last slate turns up", () => {
+  it("banked down: the Coal Halls breed no more, Act Three opens below, and the Keepers' last slate turns up", () => {
     const t = actTwo();
     const o = {
       id: "o1",
@@ -217,9 +217,11 @@ describe("the Coalstone (M8.38)", () => {
     expect(s.dungeon.hearts.hearthstone!.shut).not.toBeNull();
     expect(s.news.map((n) => n.text).join("\n")).toMatch(/shut off the heart of the Coalstone/);
     expect(actsOpen(ix, s.dungeon)).toBe(3);
-    // Nothing is built below the Coal Halls yet: the pit goes quiet.
-    expect(s.dungeon.floors).toHaveLength(7);
-    expect(spawnRate(ix, s.dungeon)).toBe(0);
+    // Act Three opens below (M8.39): the Glimmering, which breeds now.
+    expect(s.dungeon.floors.map((_, i) => ix.floor(i + 1).name).slice(7)).toEqual([
+      "The Glimmering",
+    ]);
+    expect(spawnRate(ix, s.dungeon)).toBeGreaterThan(0);
     const after = rest(ix, s, heroNames);
     expect(after.story["coalstone-stilled"]).toBeDefined();
     expect(cantReachCore(ix, after, COALSTONE)).toMatch(/already shut off/);
@@ -247,5 +249,26 @@ describe("the Coalstone (M8.38)", () => {
     };
     expect(tally(14)).toBeGreaterThan(0.5);
     expect(tally(12)).toBeLessThan(0.7);
+  });
+});
+
+describe("the Glimmering (M8.39)", () => {
+  it("opens below the banked Coalstone, and with it floor 7's nine shards (the Emberstone's)", () => {
+    const t = actTwo();
+    expect(shardProgress(ix, t).map((p) => p.set.floor)).not.toContain(7);
+    const banked: TownState = structuredClone(t);
+    banked.dungeon.hearts = {
+      ...banked.dungeon.hearts,
+      coalstone: { reached: 1, shut: { day: 1, by: "x" } },
+    };
+    addNewFloors(ix, banked.dungeon);
+    expect(ix.floor(8).name).toBe("The Glimmering");
+    expect(banked.dungeon.floors).toHaveLength(8);
+    const seven = shardProgress(ix, banked).find((p) => p.set.floor === 7)!;
+    expect(seven.set.stone).toBe("Emberstone");
+    expect(seven.need).toBe(9);
+    expect(openShards(ix, banked)).toEqual(
+      expect.arrayContaining(["coal-halls-lamplighter", "coal-halls-moth", "coal-halls-king"]),
+    );
   });
 });

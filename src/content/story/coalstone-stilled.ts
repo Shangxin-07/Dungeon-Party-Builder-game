@@ -1,12 +1,12 @@
 import { defineChapter } from "../types";
 
-// The Coalstone banked down (M8.38): the way to the Emberstone waits for a later PR.
+// The Coalstone banked down (M8.38): the stair down to the Glimmering (M8.39) and the Emberstone.
 export default defineChapter({
   id: "coalstone-stilled",
   order: 13,
   title: "Banked",
   when: { kind: "core", heart: "coalstone", shut: true },
-  news: "The Coalstone sleeps, banked under its ash. The Coal Halls are cooling. In the round room where it lay, the floor has a second ring cut in it, smaller, and a stair goes down through the middle, blocked with fallen stone.",
+  news: "The Coalstone sleeps, banked under its ash. The Coal Halls are cooling. In the round room where it lay, the floor has a second ring cut in it, smaller, and a stair goes down through the middle. Light comes up it, cold and many-coloured.",
   page: `(A last slate, found under the Coalstone when the ash had settled.)
 
 WE WENT DOWN.
@@ -17,5 +17,5 @@ IF YOU COME AFTER US, BRING WHAT YOU HAVE LEARNED. A STONE THAT BREAKS CAN BE MA
 
 WE NEVER DECIDED. YOU WILL HAVE TO.
 
-(The smith's note: "Emberstone, they call it. The stair's blocked. It'll take some clearing.")`,
+(The smith's note: "Emberstone, they call it. Whatever's down that stair, it glitters.")`,
 });
