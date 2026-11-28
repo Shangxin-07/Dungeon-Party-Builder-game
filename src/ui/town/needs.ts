@@ -7,30 +7,59 @@ import type { Index } from "../../sim/library";
 import { isLow } from "../../sim/morale";
 import { awaySet, outingStatus, restockPlan, type TownState } from "../../sim/town";
 
-export type TabId = "guild" | "town" | "pit" | "news" | "books";
+/**
+ * Where a panel lives (M8.42). On a wide screen the town is three panes: the
+ * guild (roster, recruits, buildings) on the left, the parties on the right,
+ * and the centre's tabs between them. On a phone every one of them is a tab.
+ */
+export type TabId = "guild" | "town" | "pit" | "debrief" | "news" | "books" | "parties";
 
-export const TABS: { id: TabId; name: string; holds: string }[] = [
-  { id: "guild", name: "Guild", holds: "The party, the roster and recruits" },
-  { id: "town", name: "Town", holds: "The map, buildings, market, workshops and townsfolk" },
-  { id: "pit", name: "The Pit", holds: "The pit, posts, research, and the lost and fallen" },
-  { id: "news", name: "News", holds: "What needs you, debriefs, parties below, and offers" },
-  { id: "books", name: "Books", holds: "The accounts, the memorial and saves" },
-];
+/** The centre pane's tabs. */
+export type CentreTab = Exclude<TabId, "guild" | "parties">;
+
+export const TABS: { id: TabId; name: string; holds: string; pane: "left" | "centre" | "right" }[] =
+  [
+    { id: "guild", name: "Guild", holds: "The roster, recruits and buildings", pane: "left" },
+    {
+      id: "town",
+      name: "Town",
+      holds: "The map, the market, workshops and townsfolk",
+      pane: "centre",
+    },
+    {
+      id: "pit",
+      name: "The Pit",
+      holds: "The pit, posts, research, and the lost and fallen",
+      pane: "centre",
+    },
+    { id: "debrief", name: "Debrief", holds: "Parties back from below", pane: "centre" },
+    { id: "news", name: "News", holds: "What needs you, offers and talk", pane: "centre" },
+    { id: "books", name: "Books", holds: "The accounts, the memorial and saves", pane: "centre" },
+    {
+      id: "parties",
+      name: "Parties",
+      holds: "The next party, its orders, parties on file, and parties below",
+      pane: "right",
+    },
+  ];
+
+export const isCentre = (t: TabId): t is CentreTab =>
+  TABS.find((x) => x.id === t)?.pane === "centre";
 
 /**
  * Which tab each folding panel lives on, so opening one from elsewhere (the
  * town map, the needs-you list) can switch to it first.
  */
 export const FOLD_TAB: Record<string, TabId> = {
-  camp: "guild",
+  camp: "parties",
   recruits: "guild",
-  restock: "guild",
-  party: "guild",
-  "parties-on-file": "guild",
-  scouting: "guild",
+  restock: "parties",
+  party: "parties",
+  "parties-on-file": "parties",
+  scouting: "parties",
   roster: "guild",
+  buildings: "guild",
   townmap: "town",
-  buildings: "town",
   market: "town",
   workshops: "town",
   folk: "town",
@@ -39,8 +68,8 @@ export const FOLD_TAB: Record<string, TabId> = {
   research: "pit",
   lost: "pit",
   fallen: "pit",
-  back: "news",
-  away: "news",
+  back: "debrief",
+  away: "parties",
   offers: "news",
   talk: "news",
   accounts: "books",
@@ -48,9 +77,9 @@ export const FOLD_TAB: Record<string, TabId> = {
   saves: "books",
 };
 
-/** At the camp the posts are the game, so they sit with the guild. */
+/** At the camp the posts are the game, so they sit with the parties. */
 export const foldTab = (town: TownState, fold: string): TabId | undefined =>
-  fold === "posts" ? (town.camp ? "guild" : "pit") : FOLD_TAB[fold];
+  fold === "posts" ? (town.camp ? "parties" : "pit") : FOLD_TAB[fold];
 
 export type Need = {
   key: string;

@@ -1,8 +1,9 @@
 /**
  * The town game: load or start a save, then lay out the town's panels.
  */
-import { useEffect, useState } from "react";
-import { heroNames } from "../../content";
+import { useEffect, useRef, useState } from "react";
+import { heroNames, materials } from "../../content";
+import { ItemIcon } from "../art/Icon";
 import {
   awaySet,
   defence,
@@ -58,10 +59,33 @@ import { WorkshopsPanel } from "./Workshops";
 import { FolkPanel } from "./Folk";
 import { OffersPanel } from "./Offers";
 import { NeedsYou } from "./NeedsYou";
-import { foldTab, needsByTab, needsYou, TABS, type TabId } from "./needs";
+import { foldTab, isCentre, needsByTab, needsYou, TABS, type CentreTab, type TabId } from "./needs";
 import { onOpenFold } from "../Fold";
 
 const TAB_KEY = "dpb-ui-tab";
+const CENTRE_KEY = "dpb-ui-centre";
+
+/** The centre pane's tab this browser was last on (never in the save). */
+function rememberedCentre(): CentreTab {
+  try {
+    const t = localStorage.getItem(CENTRE_KEY);
+    if (t && TABS.some((x) => x.id === t && isCentre(x.id))) return t as CentreTab;
+  } catch {
+    // Blocked storage: start on the town.
+  }
+  return "town";
+}
+
+function rememberCentre(t: CentreTab) {
+  try {
+    localStorage.setItem(CENTRE_KEY, t);
+  } catch {
+    // Private windows: the tab just isn't remembered.
+  }
+}
+
+/** A deserter's account shares its trip's seed: tell them apart. */
+const tripId = (t: TripReport) => `${t.seed}:${t.account?.by ?? ""}`;
 
 /** The tab this browser was last on (never in the save). */
 function rememberedTab(): TabId {
@@ -69,9 +93,9 @@ function rememberedTab(): TabId {
     const t = localStorage.getItem(TAB_KEY);
     if (TABS.some((x) => x.id === t)) return t as TabId;
   } catch {
-    // Blocked storage: start on the guild.
+    // Blocked storage: start on the town.
   }
-  return "guild";
+  return "town";
 }
 
 function rememberTab(t: TabId) {
@@ -180,10 +204,17 @@ export function TownPlay({ initial }: { initial: Game }) {
   const setTown = (t: TownState) => setGame((g) => ({ ...g, town: t }));
   const [watching, setWatching] = useState<false | { trip: TripReport } | RaidReport>(false);
   const [error, setError] = useState<string>();
+  // The tab picked on a phone, and the centre pane's tab on a wide screen.
   const [tab, setTab] = useState<TabId>(rememberedTab);
+  const [centre, setCentre] = useState<CentreTab>(rememberedCentre);
+  const centreRef = useRef<HTMLDivElement>(null);
   const pickTab = (t: TabId) => {
     setTab(t);
     rememberTab(t);
+    if (isCentre(t)) {
+      setCentre(t);
+      rememberCentre(t);
+    }
   };
   const needs = needsYou(ix, town);
   // Opening a panel from elsewhere (the map, the needs-you list) goes to its tab.
@@ -195,6 +226,18 @@ export function TownPlay({ initial }: { initial: Game }) {
       }),
     [town],
   );
+  // A party back from below debriefs in the centre pane (M9.00).
+  const heard = town.trips.length ? tripId(town.trips.at(-1)!) : "";
+  const lastHeard = useRef({ slot, heard });
+  useEffect(() => {
+    const was = lastHeard.current;
+    if (heard && was.slot === slot && heard !== was.heard) pickTab("debrief");
+    lastHeard.current = { slot, heard };
+  }, [slot, heard]);
+  const toTop = () => {
+    centreRef.current?.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0 });
+  };
 
   useEffect(() => {
     writeSlot(slot, town);
@@ -211,76 +254,67 @@ export function TownPlay({ initial }: { initial: Game }) {
     }
   };
 
-  if (watching && "trip" in watching) {
-    const trip = watching.trip;
-    return (
-      <section className="town" aria-labelledby="watch-heading">
-        <h2 id="watch-heading">
-          Day {trip.day}:{" "}
-          {trip.name
-            ? `${trip.name} sets off`
-            : `${trip.party.map((h) => h.name).join(", ")} go down`}
-        </h2>
-        <p className="muted">
-          {trip.party.map((h) => h.name).join(", ")}. This is how it went, from the day they set
-          off.
-        </p>
-        <TripPlayer
-          heroes={trip.party}
-          log={trip.result.log}
-          results={
-            trip.account ? (
-              // A deserter's account (M7.05): it ends where they ran.
-              <div className="results">
-                <h3>{trip.account.by} ran</h3>
-                <p>
-                  That's all {trip.account.by} saw. Nothing more is known of{" "}
-                  {trip.name ?? "the party"} until someone comes back or finds them.{" "}
-                  {trip.account.blame}
-                </p>
-                <button type="button" className="btn btn-main" onClick={() => setWatching(false)}>
-                  Back to town
-                </button>
-              </div>
-            ) : (
-              <Results result={trip.result}>
-                <TripTown town={town} trip={trip} />
-                <button type="button" className="btn btn-main" onClick={() => setWatching(false)}>
-                  Back to town
-                </button>
-              </Results>
-            )
-          }
-        />
-      </section>
-    );
-  }
-  if (watching) {
-    const raid = watching;
-    return (
-      <section className="town" aria-labelledby="watch-heading">
-        <h2 id="watch-heading">Night of day {raid.day}: raiders at the pit</h2>
-        <p className="muted">
-          {raid.climbed} monsters climbed out (strength {raid.strength}). The defences held back{" "}
-          {raid.defence}, so {raid.raiders.length} raiders reached the town.
-        </p>
-        <TripPlayer
-          heroes={raid.defenders}
-          log={raid.log}
-          results={
-            <div
-              className={`results results-${raid.outcome === "repelled" ? "returned" : "wiped"}`}
-            >
-              <p>{describeRaid(raid)}</p>
+  const watchTrip = (trip: TripReport) => (
+    <section className="town" aria-labelledby="watch-heading">
+      <h2 id="watch-heading">
+        Day {trip.day}:{" "}
+        {trip.name
+          ? `${trip.name} sets off`
+          : `${trip.party.map((h) => h.name).join(", ")} go down`}
+      </h2>
+      <p className="muted">
+        {trip.party.map((h) => h.name).join(", ")}. This is how it went, from the day they set off.
+      </p>
+      <TripPlayer
+        heroes={trip.party}
+        log={trip.result.log}
+        results={
+          trip.account ? (
+            // A deserter's account (M7.05): it ends where they ran.
+            <div className="results">
+              <h3>{trip.account.by} ran</h3>
+              <p>
+                That's all {trip.account.by} saw. Nothing more is known of{" "}
+                {trip.name ?? "the party"} until someone comes back or finds them.{" "}
+                {trip.account.blame}
+              </p>
               <button type="button" className="btn btn-main" onClick={() => setWatching(false)}>
                 Back to town
               </button>
             </div>
-          }
-        />
-      </section>
-    );
-  }
+          ) : (
+            <Results result={trip.result}>
+              <TripTown town={town} trip={trip} />
+              <button type="button" className="btn btn-main" onClick={() => setWatching(false)}>
+                Back to town
+              </button>
+            </Results>
+          )
+        }
+      />
+    </section>
+  );
+  const watchRaid = (raid: RaidReport) => (
+    <section className="town" aria-labelledby="watch-heading">
+      <h2 id="watch-heading">Night of day {raid.day}: raiders at the pit</h2>
+      <p className="muted">
+        {raid.climbed} monsters climbed out (strength {raid.strength}). The defences held back{" "}
+        {raid.defence}, so {raid.raiders.length} raiders reached the town.
+      </p>
+      <TripPlayer
+        heroes={raid.defenders}
+        log={raid.log}
+        results={
+          <div className={`results results-${raid.outcome === "repelled" ? "returned" : "wiped"}`}>
+            <p>{describeRaid(raid)}</p>
+            <button type="button" className="btn btn-main" onClick={() => setWatching(false)}>
+              Back to town
+            </button>
+          </div>
+        }
+      />
+    </section>
+  );
 
   const launchParty = (prep?: (t: TownState) => TownState) => {
     try {
@@ -293,71 +327,63 @@ export function TownPlay({ initial }: { initial: Game }) {
   };
   const onWatchTrip = (trip: TripReport) => {
     setWatching({ trip });
-    window.scrollTo({ top: 0 });
+    toTop();
   };
   const counts = needsByTab(town, needs);
+  const count = (id: TabId) => (id === "news" ? needs.length : (counts[id] ?? 0));
+  const tabButton = (t: (typeof TABS)[number], on: boolean, className = "") => {
+    // News holds the needs-you list, so its count is everything waiting.
+    const n = count(t.id);
+    return (
+      <button
+        key={t.id}
+        type="button"
+        className={`${on ? "on" : ""} ${className}`.trim() || undefined}
+        aria-current={on ? "page" : undefined}
+        title={t.holds}
+        onClick={() => {
+          if (watching) setWatching(false);
+          pickTab(t.id);
+        }}
+      >
+        {t.name}
+        {n ? (
+          <span className="tab-count" aria-label={`, ${n} waiting`}>
+            {n}
+          </span>
+        ) : null}
+      </button>
+    );
+  };
+  // On a phone only the picked tab's pane shows (or the centre, while watching).
+  const shown = (pane: "left" | "centre" | "right") =>
+    watching ? pane === "centre" : TABS.find((t) => t.id === tab)?.pane === pane;
+  const paneClass = (pane: "left" | "centre" | "right") =>
+    `town-pane town-${pane}${shown(pane) ? " pane-shown" : ""}`;
 
-  return (
-    <section className="town" aria-label="Town">
-      <div className="town-top">
-        <TownBar town={town} act={act} />
-        <nav className="tabs town-tabs" aria-label="Town">
-          {TABS.map((t) => {
-            // News holds the needs-you list, so its count is everything waiting.
-            const n = t.id === "news" ? needs.length : (counts[t.id] ?? 0);
-            return (
-              <button
-                key={t.id}
-                type="button"
-                className={tab === t.id ? "on" : ""}
-                aria-current={tab === t.id ? "page" : undefined}
-                title={t.holds}
-                onClick={() => pickTab(t.id)}
-              >
-                {t.name}
-                {n ? (
-                  <span className="tab-count" aria-label={`, ${n} waiting`}>
-                    {n}
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-      <EndingPanel town={town} />
-      {error ? (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      ) : null}
-      {tab === "guild" ? (
-        <>
-          <CampPanel town={town} act={act} />
-          {town.camp ? <PostsPanel town={town} act={act} /> : null}
-          {town.freeHires > 0 ? <Recruits town={town} act={act} /> : null}
-          <RestockPanel town={town} act={act} />
-          {town.camp ? null : <PartyPanel town={town} act={act} onLaunch={launchParty} />}
-          <Roster town={town} act={act} />
-          {town.freeHires > 0 ? null : <Recruits town={town} act={act} />}
-        </>
-      ) : null}
-      {tab === "town" ? (
+  const centreBody = watching ? (
+    "trip" in watching ? (
+      watchTrip(watching.trip)
+    ) : (
+      watchRaid(watching)
+    )
+  ) : (
+    <>
+      {centre === "town" ? (
         <>
           <TownMap town={town} />
-          <Buildings town={town} act={act} />
           <Market town={town} act={act} />
           {town.camp ? null : <WorkshopsPanel town={town} act={act} />}
           {town.camp ? null : <FolkPanel town={town} act={act} />}
         </>
       ) : null}
-      {tab === "pit" ? (
+      {centre === "pit" ? (
         <>
           <PitPanel
             town={town}
             onWatchRaid={(r) => {
               setWatching(r);
-              window.scrollTo({ top: 0 });
+              toTop();
             }}
           />
           {town.camp ? null : <PostsPanel town={town} act={act} />}
@@ -369,16 +395,23 @@ export function TownPlay({ initial }: { initial: Game }) {
           <FallenPanel town={town} act={act} />
         </>
       ) : null}
-      {tab === "news" ? (
+      {centre === "debrief" ? (
+        town.trips.length || town.haul.length ? (
+          <DebriefPanel town={town} act={act} onWatch={onWatchTrip} />
+        ) : (
+          <p className="muted pane-empty">
+            No party has come back yet. When one does, its debrief opens here.
+          </p>
+        )
+      ) : null}
+      {centre === "news" ? (
         <>
           <NeedsYou needs={needs} />
-          <DebriefPanel town={town} act={act} onWatch={onWatchTrip} />
-          <AwayPanel town={town} act={act} />
           {town.camp ? null : <OffersPanel town={town} act={act} />}
           <TalkPanel town={town} />
         </>
       ) : null}
-      {tab === "books" ? (
+      {centre === "books" ? (
         <>
           <Accounts town={town} />
           <Memorial town={town} />
@@ -394,7 +427,73 @@ export function TownPlay({ initial }: { initial: Game }) {
           />
         </>
       ) : null}
+    </>
+  );
+
+  return (
+    <section className="town town-panes" aria-label="Town">
+      <div className="town-top">
+        <TownBar town={town} act={act} />
+      </div>
+      <nav className="tabs town-tabs phone-tabs" aria-label="Town">
+        {TABS.map((t) => tabButton(t, !watching && tab === t.id))}
+      </nav>
+      <EndingPanel town={town} />
+      {error ? (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <div className="town-grid">
+        <div className={paneClass("left")} aria-label="The guild">
+          <Roster town={town} act={act} />
+          <Recruits town={town} act={act} />
+          <Buildings town={town} act={act} />
+        </div>
+        <div className={paneClass("centre")} ref={centreRef}>
+          <nav className="tabs town-tabs centre-tabs" aria-label="Centre">
+            {TABS.filter((t) => t.pane === "centre").map((t) =>
+              tabButton(t, !watching && centre === t.id),
+            )}
+          </nav>
+          {centreBody}
+        </div>
+        <div className={paneClass("right")} aria-label="Parties">
+          <CampPanel town={town} act={act} />
+          {town.camp ? <PostsPanel town={town} act={act} /> : null}
+          <RestockPanel town={town} act={act} />
+          {town.camp ? null : <PartyPanel town={town} act={act} onLaunch={launchParty} />}
+          <AwayPanel town={town} act={act} />
+        </div>
+      </div>
     </section>
+  );
+}
+
+/**
+ * The guild's store of materials (DESIGN.md §8) in the town bar (M9.00): an
+ * icon and a count each, the name and what it's for on hover. Every material
+ * is shown, so players learn what exists; shards only once one is found.
+ */
+function StoreChips({ town }: { town: TownState }) {
+  const shown = materials.filter((m) => !m.id.startsWith("shard-") || town.materials[m.id]);
+  return (
+    <span className="store-chips" aria-label="The guild's store">
+      {shown.map((m) => {
+        const n = town.materials[m.id] ?? 0;
+        return (
+          <span
+            key={m.id}
+            className={`material-chip${n ? "" : " none"}`}
+            title={`${m.name}: ${m.blurb}`}
+          >
+            <ItemIcon id={m.id} size={20} />
+            <strong>{n}</strong>
+            <span className="sr-only"> {m.name.toLowerCase()}</span>
+          </span>
+        );
+      })}
+    </span>
   );
 }
 
@@ -457,6 +556,7 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
       {town.damaged.length ? (
         <span className="damaged-note">{town.damaged.length} damaged</span>
       ) : null}
+      <StoreChips town={town} />
       {town.outings.map((o) => {
         const line = awayLine(town, o);
         return (
