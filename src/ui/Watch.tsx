@@ -17,9 +17,9 @@ import {
 } from "../sim/expedition";
 import { fatigueTier, heroSheet, heroTitle, type Hero } from "../sim/hero";
 import { ix } from "./game";
+import { SPEEDS, setWatchSpeed, watchSpeed, type Speed } from "./settings";
 
-export const SPEEDS = { slow: 450, normal: 200, fast: 40 } as const;
-export type Speed = keyof typeof SPEEDS;
+export { SPEEDS, type Speed };
 
 export const DERIVED_LABELS: Record<Derived, string> = {
   maxHp: "HP",
@@ -519,7 +519,8 @@ export function TripPlayer({
   controls?: ReactNode;
   results: ReactNode;
 }) {
-  const [speed, setSpeed] = useState<Speed>("normal");
+  // Starts at the speed picked last (here or in the menu), M9.23.
+  const [speed, setSpeed] = useState<Speed>(watchSpeed);
   const [shown, setShown] = useState(0);
 
   useEffect(() => setShown(0), [log]);
@@ -554,7 +555,14 @@ export function TripPlayer({
         {controls}
         <label>
           Speed{" "}
-          <select value={speed} onChange={(e) => setSpeed(e.target.value as Speed)}>
+          <select
+            value={speed}
+            onChange={(e) => {
+              const s = e.target.value as Speed;
+              setSpeed(s);
+              setWatchSpeed(s);
+            }}
+          >
             {Object.keys(SPEEDS).map((s) => (
               <option key={s} value={s}>
                 {s}

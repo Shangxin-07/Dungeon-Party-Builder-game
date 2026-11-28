@@ -43,7 +43,7 @@ export const TABS: { id: TabId; name: string; holds: string; pane: "left" | "cen
       holds: "Everything waiting on you, offers in town and talk",
       pane: "centre",
     },
-    { id: "books", name: "Books", holds: "The accounts, the memorial and saves", pane: "centre" },
+    { id: "books", name: "Books", holds: "The accounts and the memorial", pane: "centre" },
     {
       id: "works",
       name: "Buildings",
@@ -83,7 +83,6 @@ export const FOLD_TAB: Record<string, TabId> = {
   talk: "news",
   accounts: "books",
   memorial: "books",
-  saves: "books",
 };
 
 /** At the camp the posts are the game, so they sit with the guild. */
