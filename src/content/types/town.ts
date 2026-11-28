@@ -289,6 +289,15 @@ export interface TownRules {
    * guild's gold, anything else to the store room.
    */
   raidSpoils?: string;
+  /**
+   * Monsters the defences hold back die at the walls (M9.15). Each one is
+   * found at the foot of the wall `percent`% of the time (the rest fall back
+   * into the pit), and a body that's found rolls `raidSpoils` like a raider
+   * killed by the defenders. Every body, at the walls or in a raid, also
+   * rolls its own loot table, keeping only materials and specimens: the
+   * pickings are hides, bones and bits, never purses or gear.
+   */
+  wallSpoils?: { percent: number };
 }
 
 /**

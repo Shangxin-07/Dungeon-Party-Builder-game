@@ -71,4 +71,6 @@ export default defineTownRules({
   helpers: { perHero: 0.2, perStr: 0.05, maxPerDay: 1 },
   // Fallen raiders drop materials (DESIGN.md §8).
   raidSpoils: "pit-spoils",
+  // Monsters held at the walls die there too (M9.15); most fall back into the pit.
+  wallSpoils: { percent: 20 },
 });

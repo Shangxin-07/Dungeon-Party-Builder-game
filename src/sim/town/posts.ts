@@ -5,13 +5,15 @@
  * and gold. At the mining camp the posts are all there is, until the camp is
  * held and parties can go down.
  */
+import { rollEncounter } from "../encounter";
 import { rollLootTable } from "../loot";
 import type { Index } from "../library";
 import type { RaidReport } from "../raid";
+import { createRng, type Rng } from "../rng";
 import { type TownState, TownError } from "./state";
 import { campNeeds, findHero, haulPrice, openPosts, postFolk, postWorkers } from "./read";
 import { addMaterials, book, edit, listWords, news, roll, useMaterials } from "./internal";
-import { materialWords, materialsShort } from "./read";
+import { materialsShort } from "./read";
 import { leaveBench } from "./workshops";
 
 /**
@@ -87,16 +89,79 @@ export function workPosts(ix: Index, t: TownState, away: ReadonlySet<string>): v
 /** Fallen raiders drop materials (DESIGN.md §8): roll the spoils for each one killed. */
 export function raidSpoils(ix: Index, t: TownState, raid: RaidReport): void {
   const table = ix.lib.town.raidSpoils;
-  if (!table || !raid.kills) return;
-  const found: string[] = [];
-  for (let i = 0; i < raid.kills; i++)
-    found.push(...roll(t, (rng) => rollLootTable(ix, table, rng)));
+  if (!raid.kills) return;
+  // Which raiders fell isn't kept; the first ones in the list stand in for them.
+  const dead = raid.raiders.slice(0, raid.kills);
+  const found = roll(t, (rng) => dead.flatMap((id) => bodySpoils(ix, id, table, rng)));
   const got = bank(ix, t, found, "spoils");
-  const words = [
-    ...(Object.keys(got.materials).length ? [materialWords(ix, got.materials)] : []),
+  const words = spoilsWords(ix, got, found);
+  if (words.length) news(t, `Picked off the dead raiders: ${listWords(words)}.`, "good");
+}
+
+/**
+ * Monsters the defences held back die at the walls (M9.15). Most fall back
+ * into the pit; the ones found at the foot of the wall are picked over like
+ * dead raiders. `held` is how many the walls held; their kinds are rolled
+ * from the overflow's level, as a raid's are. The rolls use their own stream
+ * off the town's seed, so the rest of the night is unchanged.
+ */
+export function wallSpoils(ix: Index, t: TownState, held: number, level: number): void {
+  const rules = ix.lib.town.wallSpoils;
+  if (!rules || held <= 0) return;
+  const rng = createRng((t.seed ^ Math.imul(t.day + 1, 0x9e3779b1) ^ 0x3a11b0d1) >>> 0);
+  let bodies = 0;
+  for (let i = 0; i < held; i++) if (rng.int(1, 100) <= rules.percent) bodies++;
+  if (!bodies) return;
+  const kinds: string[] = [];
+  while (kinds.length < bodies) {
+    const more = rollEncounter(ix, 1, rng, { level: Math.max(1, level) });
+    if (!more.length) break;
+    kinds.push(...more);
+  }
+  const dead = kinds.slice(0, bodies);
+  const found = dead.flatMap((id) => bodySpoils(ix, id, ix.lib.town.raidSpoils, rng));
+  const got = bank(ix, t, found, "spoils");
+  const words = spoilsWords(ix, got, found);
+  if (!words.length) return;
+  const what =
+    dead.length === 1 ? `a ${ix.monster(dead[0]!).name.toLowerCase()}` : `${dead.length} bodies`;
+  news(t, `Found at the foot of the walls: ${what}, picked over for ${listWords(words)}.`, "good");
+}
+
+/**
+ * What a dead monster leaves at the pit: a roll on the pit's spoils table,
+ * and a roll on its own loot table keeping only materials and specimens.
+ */
+function bodySpoils(ix: Index, monsterId: string, table: string | undefined, rng: Rng): string[] {
+  const out = table ? rollLootTable(ix, table, rng) : [];
+  const own = ix.monster(monsterId).loot;
+  if (own)
+    for (const id of rollLootTable(ix, own, rng)) {
+      const def = ix.item(id);
+      if (def.slot === "material" || def.tags.includes("specimen")) out.push(id);
+    }
+  return out;
+}
+
+function spoilsWords(
+  ix: Index,
+  got: { materials: Record<string, number>; gold: number },
+  found: readonly string[],
+): string[] {
+  const kept = found.filter((id) => {
+    const def = ix.item(id);
+    return def.slot !== "material" && !def.tags.includes("coins");
+  });
+  const counts = new Map<string, number>();
+  for (const id of kept) counts.set(id, (counts.get(id) ?? 0) + 1);
+  return [
+    ...Object.entries(got.materials).map(([id, n]) => `${n} ${ix.item(id).name.toLowerCase()}`),
+    ...[...counts].map(([id, n]) => {
+      const name = ix.item(id).name.toLowerCase();
+      return n > 1 ? `${n} × ${name}` : `${/^[aeiou]/.test(name) ? "an" : "a"} ${name}`;
+    }),
     ...(got.gold ? [`${got.gold} gold`] : []),
   ];
-  if (words.length) news(t, `Picked off the dead raiders: ${listWords(words)}.`, "good");
 }
 
 /**

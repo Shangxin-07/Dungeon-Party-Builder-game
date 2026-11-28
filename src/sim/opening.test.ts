@@ -29,7 +29,7 @@ import {
   warningDays,
   type TownState,
 } from "./town";
-import { raidSpoils } from "./town/posts";
+import { raidSpoils, wallSpoils } from "./town/posts";
 import { makeRecruit } from "./town/start";
 import { baseClasses, bestClass } from "./hero";
 import { classOptions, openClasses } from "./levels";
@@ -270,10 +270,50 @@ describe("raid spoils", () => {
   it("dead raiders leave materials, never gold", () => {
     const t = camp();
     const gold = t.gold;
-    raidSpoils(ix, t, { kills: 40 } as RaidReport);
+    const raiders = Array.from({ length: 40 }, () => "goblin");
+    raidSpoils(ix, t, { kills: 40, raiders } as unknown as RaidReport);
     expect(t.materials.timber ?? 0).toBeGreaterThan(5);
     expect(t.gold).toBe(gold);
     expect(t.news.some((n) => /dead raiders/.test(n.text))).toBe(true);
+  });
+
+  it("bodies keep only materials and specimens from their own loot", () => {
+    const t = camp();
+    const gold = t.gold;
+    const stash = t.stash.length;
+    const raiders = Array.from({ length: 200 }, () => "goblin");
+    raidSpoils(ix, t, { kills: 200, raiders } as unknown as RaidReport);
+    // Goblins drop ears (a specimen) and ore, never their coins or helmets.
+    expect(t.gold).toBe(gold);
+    const added = t.stash.slice(stash);
+    expect(added.length).toBeGreaterThan(0);
+    expect(added.every((id) => ix.item(id).tags.includes("specimen"))).toBe(true);
+  });
+});
+
+describe("wall spoils (M9.15)", () => {
+  it("monsters held at the walls are now and then found and picked over", () => {
+    const t = camp();
+    const gold = t.gold;
+    const before = Object.values(t.materials).reduce((a, b) => a + b, 0) + t.stash.length;
+    const seed = t.seed;
+    for (let d = 0; d < 30; d++) {
+      t.day++;
+      wallSpoils(ix, t, 10, 1);
+    }
+    const after = Object.values(t.materials).reduce((a, b) => a + b, 0) + t.stash.length;
+    expect(after).toBeGreaterThan(before);
+    expect(t.gold).toBe(gold);
+    expect(t.news.some((n) => /foot of the walls/.test(n.text))).toBe(true);
+    // Its own stream: the town's main rolls are untouched.
+    expect(t.seed).toBe(seed);
+  });
+
+  it("leaves nothing when nothing was held", () => {
+    const t = camp();
+    const news = t.news.length;
+    wallSpoils(ix, t, 0, 1);
+    expect(t.news.length).toBe(news);
   });
 });
 
