@@ -83,7 +83,7 @@ export function XpBar({ hero }: { hero: Hero }) {
 }
 
 /** A tie's line, and what it does when they go down together. */
-function tieLine(t: NonNullable<ReturnType<typeof tieBetween>>): string {
+export function tieLine(t: NonNullable<ReturnType<typeof tieBetween>>): string {
   const parts = [tieText(t)];
   if (t.tie.passives?.length) parts.push(`Together: ${describePassives(t.tie.passives)} each`);
   if (t.tie.morale)
@@ -162,7 +162,7 @@ export function Personality({ hero, town }: { hero: Hero; town?: TownState }) {
   );
 }
 
-const plural = (tag: string) =>
+export const plural = (tag: string) =>
   ({ fire: "fire magic", staff: "staves", heavy: "heavy gear", axe: "axes" })[tag] ?? `${tag}s`;
 
 export function PerkList({ hero }: { hero: Hero }) {
@@ -213,7 +213,7 @@ export function AbilityList({ hero }: { hero: Hero }) {
 const signedNum = (n: number) => (n > 0 ? `+${n}` : `${n}`);
 
 /** "+4 attack, +10 max HP", from a list of passives. */
-function describePassives(list: readonly PassiveEffect[]): string {
+export function describePassives(list: readonly PassiveEffect[]): string {
   const label: Record<string, string> = {
     maxHp: "max HP",
     spellPower: "spell power",

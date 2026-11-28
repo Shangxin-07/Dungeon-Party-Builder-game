@@ -901,7 +901,7 @@ sup.down {
   margin: 4px 0 0;
 }
 
-.recruit .btn {
+.recruit > .btn {
   margin-top: auto;
 }
 
@@ -3240,4 +3240,130 @@ sup.down {
 
 .party-orders select.mission-pick {
   width: 7.5em;
+}
+
+/* Recruit cards (M9.09): class picker as buttons, two equal ways to sign, a confirm step. */
+.recruit-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.recruit-classes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.recruit-classes .btn,
+.recruit-choice .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.recruit-classes .btn {
+  font-size: 0.8rem;
+  padding: 2px 8px;
+}
+
+.recruit-kit {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.recruit .personality p {
+  margin: 0 0 2px;
+}
+
+.recruit-more summary {
+  cursor: pointer;
+}
+
+.recruit-choice {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-top: auto;
+}
+
+.recruit-choice .btn {
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+  padding: 6px 10px;
+}
+
+.recruit-choice .btn .sub {
+  flex-basis: 100%;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.recruit-confirm {
+  margin-top: auto;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.recruit-confirm p {
+  margin: 0 0 6px;
+}
+
+/* Training points (M9.10): − / + under each stat, the class's gates marked. */
+.training-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.training-grid .gate-mark {
+  font-size: 0.6rem;
+}
+
+.training-grid .gate.met dt {
+  color: var(--good, #7fbf6a);
+}
+
+.training-grid .gate.short dt {
+  color: var(--bad, #d9776a);
+}
+
+.training-grid .steppers {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+
+.training-grid .steppers button {
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.training-grid .steppers button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.train-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.train-box > .btn {
+  align-self: flex-start;
 }

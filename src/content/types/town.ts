@@ -227,6 +227,12 @@ export interface TownRules {
   /** Gold to sign an untrained recruit (no class, no gear). */
   hireCost: number;
   /**
+   * Training (M9.10): points a recruit, porter or miner places on their own
+   * stats when they take their first class, at most `maxPerStat` on one stat.
+   * The class's gates are checked after.
+   */
+  training: { points: number; maxPerStat: number };
+  /**
    * The Market pays more for a haul, and for anything sold, the better the
    * guild's best haggler: (Appraisal − 50) × perAppraisal + (CHA − 10) × perCha
    * on top of the usual rate, never above `max` (M6).

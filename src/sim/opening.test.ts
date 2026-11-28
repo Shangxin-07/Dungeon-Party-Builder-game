@@ -31,7 +31,7 @@ import {
 } from "./town";
 import { raidSpoils } from "./town/posts";
 import { makeRecruit } from "./town/start";
-import { baseClasses } from "./hero";
+import { baseClasses, bestClass } from "./hero";
 import { classOptions, openClasses } from "./levels";
 import { validateLibrary } from "./validate";
 
@@ -87,7 +87,7 @@ describe("the mining camp", () => {
     expect(cantLaunch(ix, t)).toMatch(/Pick at least one/);
     // ...once the miners have picked their classes.
     expect(cantLaunch(ix, { ...t, party: ids(t).slice(0, 3) })).toMatch(/still a miner/);
-    for (const id of ids(t)) t = trainMiner(ix, t, id, "fighter");
+    for (const id of ids(t)) t = trainMiner(ix, t, id, bestClass(ix, t.roster.find((h) => h.id === id)!.stats));
     expect(cantLaunch(ix, { ...t, party: ids(t).slice(0, 3) })).toBeUndefined();
   });
 });
@@ -127,16 +127,17 @@ describe("miners", () => {
     const id = ids(t)[0]!;
     expect(() => trainMiner(ix, t, id, "fighter")).toThrow(/camp is held/);
     const h0 = t.roster[0]!;
-    const levelled = { ...h0, level: 3, classes: { miner: 3 }, stats: { ...h0.stats, END: 13 } };
+    const levelled = { ...h0, level: 3, classes: { miner: 3 }, stats: { ...h0.stats, END: 13, STR: 11 } };
     t = { ...t, camp: undefined, roster: [levelled, ...t.roster.slice(1)] };
     expect(() => trainMiner(ix, t, id, "spellblade")).toThrow(/base class/);
-    t = trainMiner(ix, t, id, "fighter");
+    // Training points (M9.10): STR to the fighter's gate and up, END from 13.
+    const spend = { STR: 3, END: 1 };
+    t = trainMiner(ix, t, id, "fighter", spend);
     const h = t.roster[0]!;
-    const fighter = ix.cls("fighter").baseStats!;
     expect(h.classId).toBe("fighter");
     expect(h.classes).toEqual({ fighter: 3 });
-    expect(h.stats.END).toBe(Math.min(30, 13 + fighter.END - 10));
-    expect(h.stats.STR).toBe(h0.stats.STR + fighter.STR - 10);
+    expect(h.stats.END).toBe(14);
+    expect(h.stats.STR).toBe(14);
     expect(h.row).toBe("front");
     expect(() => trainMiner(ix, t, id, "mage")).toThrow(/already/);
   });

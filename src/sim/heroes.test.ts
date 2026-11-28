@@ -3,7 +3,7 @@ import { heroNames, library } from "../content";
 import type { Library } from "../content/types";
 import { DEFAULT_ORDERS, runExpedition, type StandingOrders } from "./expedition";
 import { createHero, createStarterParty, rollPersonality, type Hero } from "./hero";
-import { badChoice, gainXp, perkPool, spendLevelUp, xpForLevel, xpProgress } from "./levels";
+import { badChoice, chooseClass, gainXp, perkPool, spendLevelUp, xpForLevel, xpProgress } from "./levels";
 import { indexLibrary } from "./library";
 import { applyMorale, lossFactor, moraleChanges, mood } from "./morale";
 import { createRng } from "./rng";
@@ -162,6 +162,8 @@ describe("levelling up", () => {
     const h = t.roster[0]!;
     h.morale = 50;
     gainXp(ix, h, xpForLevel(ix, 2), rng());
+    // Untouched by dump stats (M9.10), they may qualify for a second class: stay in their own.
+    if (!h.levelUps[0]!.classId) chooseClass(ix, h, h.classId, rng());
     h.levelUps[0]!.wants = h.levelUps[0]!.offers[1];
     const after = chooseLevelUp(ix, t, id, h.levelUps[0]!.offers[1]);
     const got = after.roster[0]!;

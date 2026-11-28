@@ -28,6 +28,7 @@ export default defineTownRules({
   ],
   recruitsOnOffer: 3,
   hireCost: 60,
+  training: { points: 10, maxPerStat: 4 },
   sellRate: 0.5,
   // M6 balance pass: the Market takes a cut of loot (coins excepted).
   haulRate: 0.7,
