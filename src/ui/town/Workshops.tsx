@@ -91,8 +91,14 @@ function Shop({
   const isStone = (r: RecipeDef) => ix.item(r.makes).tags?.includes("seal-stone") ?? false;
   const plain = all.filter((x) => !isStone(x.recipe));
   // Seal stones by floor, whatever order the shard sets were written in.
+  // A floor's stone shows only once one of its shards has been found (M9.02).
+  const found = (r: RecipeDef) =>
+    (ix.lib.shards ?? []).some(
+      (set) =>
+        r.materials?.[set.item] !== undefined && set.shards.some((x) => town.shards[x.id]?.found),
+    );
   const stones = all
-    .filter((x) => isStone(x.recipe))
+    .filter((x) => isStone(x.recipe) && found(x.recipe))
     .sort((a, b) => stoneFloor(a.recipe) - stoneFloor(b.recipe));
   return (
     <section className="workshop">
