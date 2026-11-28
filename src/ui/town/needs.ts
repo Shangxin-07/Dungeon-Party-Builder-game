@@ -33,7 +33,7 @@ export const TABS: { id: TabId; name: string; holds: string; pane: "left" | "cen
     {
       id: "pit",
       name: "The Pit",
-      holds: "The pit, posts, research, and the lost and fallen",
+      holds: "The pit, posts, and the lost and fallen",
       pane: "centre",
     },
     { id: "debrief", name: "Debrief", holds: "Parties back from below", pane: "centre" },
@@ -44,7 +44,12 @@ export const TABS: { id: TabId; name: string; holds: string; pane: "left" | "cen
       pane: "centre",
     },
     { id: "books", name: "Books", holds: "The accounts, the memorial and saves", pane: "centre" },
-    { id: "works", name: "Buildings", holds: "The market, buildings and workshops", pane: "right" },
+    {
+      id: "works",
+      name: "Buildings",
+      holds: "The market, buildings, research and workshops",
+      pane: "right",
+    },
   ];
 
 export const isCentre = (t: TabId): t is CentreTab =>
@@ -68,9 +73,9 @@ export const FOLD_TAB: Record<string, TabId> = {
   market: "works",
   buildings: "works",
   workshops: "works",
+  research: "works",
   pit: "pit",
   "pit-floors": "pit",
-  research: "pit",
   lost: "pit",
   fallen: "pit",
   back: "debrief",
