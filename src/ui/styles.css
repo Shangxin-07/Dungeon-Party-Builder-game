@@ -3537,3 +3537,101 @@ sup.down {
 .tut-restart + .about {
   margin-left: 0;
 }
+
+/* M9.16: the roster card, slimmed: five slim bars with labels, and the open
+   sheet split into subscreens (Stats, Gear, Backstory, Growth). */
+.slim-bars.slim-more {
+  flex: 0 0 auto;
+  max-width: none;
+  margin: 4px 0 2px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 2px 14px;
+}
+
+.slim-more .slim {
+  grid-template-columns: 3.6em minmax(0, 1fr) 3.8em;
+}
+
+.slim-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.slim-fill.fatigue {
+  background: #8a7f6a;
+}
+
+.slim-fill.fatigue.tired {
+  background: var(--bad);
+}
+
+.slim-fill.xp {
+  background: #9a7fd0;
+}
+
+.hero-body-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.hero-tabs {
+  align-self: flex-start;
+}
+
+.hero-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.hero-tab .personality,
+.hero-tab .perks,
+.hero-tab .classes p,
+.hero-tab .leader-record p {
+  margin: 0;
+}
+
+.hero-body-tabs .record {
+  margin: 0;
+}
+
+.gear-slots.gear-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 2px 0 6px;
+}
+
+.gear-slots.gear-rows li {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+
+.gear-rows .gear-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.gear-rows .gear-actions {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.gear-rows select {
+  max-width: 9em;
+}
+
+.pack-compact {
+  gap: 3px;
+}
+
+.pack-compact .pack-slot {
+  width: auto;
+}

@@ -23,7 +23,6 @@ const signed = (n: number) => (n > 0 ? `+${n}` : `${n}`);
 export function MoraleBar({ hero, log = false }: { hero: Hero; log?: boolean }) {
   const word = mood(ix, hero);
   const low = hero.morale < ix.lib.morale.low;
-  const steady = Math.round((1 - lossFactor(ix, hero)) * 100);
   return (
     <div className="morale">
       <div className="meter" title={`Morale ${hero.morale}/100`}>
@@ -38,27 +37,34 @@ export function MoraleBar({ hero, log = false }: { hero: Hero; log?: boolean }) 
           {hero.morale} <span className="muted">{word}</span>
         </span>
       </div>
-      {log && hero.moraleLog.length ? (
-        <details className="morale-log small">
-          <summary>
-            Why?{" "}
-            <span className="muted">
-              (WIL {steady >= 0 ? `takes ${steady}% off` : `adds ${-steady}% to`} every knock)
-            </span>
-          </summary>
-          <ul>
-            {[...hero.moraleLog].reverse().map((n, i) => (
-              <li key={i}>
-                <span className={n.amount > 0 ? "up" : "down"}>{signed(n.amount)}</span> {n.reason}{" "}
-                <span className="muted">
-                  day {n.since && n.since !== n.day ? `${n.since}–${n.day}` : n.day}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </details>
-      ) : null}
+      {log ? <MoraleLog hero={hero} /> : null}
     </div>
+  );
+}
+
+/** Why morale moved lately, and how much WIL softens each knock (M9.16: its own piece). */
+export function MoraleLog({ hero }: { hero: Hero }) {
+  if (!hero.moraleLog.length) return null;
+  const steady = Math.round((1 - lossFactor(ix, hero)) * 100);
+  return (
+    <details className="morale-log small">
+      <summary>
+        Why morale moved{" "}
+        <span className="muted">
+          (WIL {steady >= 0 ? `takes ${steady}% off` : `adds ${-steady}% to`} every knock)
+        </span>
+      </summary>
+      <ul>
+        {[...hero.moraleLog].reverse().map((n, i) => (
+          <li key={i}>
+            <span className={n.amount > 0 ? "up" : "down"}>{signed(n.amount)}</span> {n.reason}{" "}
+            <span className="muted">
+              day {n.since && n.since !== n.day ? `${n.since}–${n.day}` : n.day}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 

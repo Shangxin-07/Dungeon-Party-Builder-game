@@ -40,9 +40,8 @@ import {
 import { RETREATS } from "../Expedition";
 import { Portrait } from "../art/Portrait";
 import { KitStrip } from "./Roster";
-import { isLow } from "../../sim/morale";
+import { SlimBars } from "./SlimBars";
 import { ix } from "../game";
-import { usesMana } from "../Watch";
 import type { Hero } from "../../sim/hero";
 import { ScoutingReport } from "../Report";
 import { stoneOf } from "../../sim/shards";
@@ -816,52 +815,6 @@ function LeaderLine({ town, act }: { town: TownState; act: Act }) {
       ) : (
         <span className="muted"> · within command.</span>
       )}
-    </div>
-  );
-}
-
-/**
- * HP, mana (for casters) and morale as slim bars with the numbers at the end
- * (M9.02): the party card at a glance.
- */
-function SlimBars({ hero: h }: { hero: Hero }) {
-  const d = heroSheet(ix, h).derived;
-  const bars: { kind: string; label: string; now: number; max: number; text: string }[] = [
-    { kind: "hp", label: "HP", now: h.hp, max: d.maxHp, text: `${h.hp}/${d.maxHp}` },
-  ];
-  if (usesMana(h))
-    bars.push({
-      kind: "mana",
-      label: "Mana",
-      now: h.mana,
-      max: d.mana,
-      text: `${h.mana}/${d.mana}`,
-    });
-  bars.push({
-    kind: isLow(ix, h) ? "morale low" : "morale",
-    label: "Morale",
-    now: h.morale,
-    max: 100,
-    text: `${h.morale}`,
-  });
-  return (
-    <div className="slim-bars">
-      {bars.map((b) => (
-        <span key={b.kind} className="slim" title={`${b.label} ${b.text}`}>
-          <span className="slim-track" aria-hidden="true">
-            <span
-              className={`slim-fill ${b.kind}`}
-              style={{
-                width: `${Math.max(0, Math.min(100, (b.now / Math.max(1, b.max)) * 100))}%`,
-              }}
-            />
-          </span>
-          <span className="slim-num">
-            <span className="sr-only">{b.label} </span>
-            {b.text}
-          </span>
-        </span>
-      ))}
     </div>
   );
 }
