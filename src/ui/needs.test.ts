@@ -8,11 +8,11 @@ const ix = indexLibrary(library);
 const fresh = (): TownState => autoStart(ix, newTown(ix, heroNames, 1));
 
 describe("the town tabs and the needs-you list", () => {
-  it("puts every panel on a real tab, and the posts with the guild only at the camp", () => {
+  it("puts every panel on a real tab, and the posts with the parties only at the camp", () => {
     const ids = new Set(TABS.map((t) => t.id));
     for (const tab of Object.values(FOLD_TAB)) expect(ids.has(tab)).toBe(true);
     const camp = newTown(ix, heroNames, 1, { camp: true });
-    expect(foldTab(camp, "posts")).toBe("guild");
+    expect(foldTab(camp, "posts")).toBe("parties");
     expect(foldTab(fresh(), "posts")).toBe("pit");
   });
 
@@ -35,8 +35,8 @@ describe("the town tabs and the needs-you list", () => {
     expect(raise.text).toContain(hero.name);
     expect(raise.target).toBe(`hero-card-${hero.id}`);
     const counts = needsByTab(t, needs);
-    expect(counts.guild).toBe(2);
-    expect(counts.town).toBe(1);
+    expect(counts.guild).toBe(3);
+    expect(counts.town).toBeUndefined();
   });
 
   it("has nothing to say about a quiet town", () => {

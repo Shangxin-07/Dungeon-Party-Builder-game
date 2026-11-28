@@ -2,7 +2,7 @@
  * Buildings: upgrades, repairs, works in progress and the helpers on site.
  */
 import { Fold } from "../Fold";
-import { library, materials } from "../../content";
+import { library } from "../../content";
 import {
   builderHands,
   materialWords,
@@ -37,7 +37,6 @@ function buildingSummary(town: TownState): string {
 export function Buildings({ town, act }: { town: TownState; act: Act }) {
   return (
     <Fold id="buildings" title="Buildings" summary={buildingSummary(town)}>
-      <Store town={town} />
       <Helpers town={town} />
       <ul className="cards">
         {library.buildings.map((b) => {
@@ -125,26 +124,6 @@ export function Buildings({ town, act }: { town: TownState; act: Act }) {
         })}
       </ul>
     </Fold>
-  );
-}
-
-/**
- * The guild's store of materials (DESIGN.md §8): what parties have carried
- * home to build with. Every material is listed, so players learn what exists.
- */
-export function Store({ town }: { town: TownState }) {
-  return (
-    <div className="store">
-      <h3 className="small">The guild's store</h3>
-      <ul className="store-list small">
-        {materials.map((m) => (
-          <li key={m.id} title={m.blurb}>
-            <strong>{town.materials[m.id] ?? 0}</strong> {m.name.toLowerCase()}{" "}
-            <span className="muted">({m.blurb})</span>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
 

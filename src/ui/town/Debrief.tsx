@@ -5,7 +5,6 @@
  * each with its own debrief and a replay.
  */
 import { useState } from "react";
-import { Fold } from "../Fold";
 import { timeBelow } from "../../sim/expedition";
 import {
   HAUL_RULES,
@@ -72,7 +71,7 @@ const hoursWord = (h: number) => {
 
 /**
  * Parties back from below: the newest trip's debrief (or one picked from the
- * list), and the haul waiting in town. While haul waits, the panel stays open.
+ * list), and the haul waiting in town.
  */
 export function DebriefPanel({
   town,
@@ -118,29 +117,23 @@ export function DebriefPanel({
       Watch the trip
     </button>
   ) : null;
-  if (waiting.length)
-    return (
-      <section className="panel debrief" aria-labelledby="debrief-heading">
-        <div className="fold-head">
-          <h2 id="debrief-heading">Debrief{trip?.name ? `: ${trip.name}` : ""}</h2>
-          <span className="fold-summary">
-            {waiting.length} {waiting.length === 1 ? "piece" : "pieces"} of haul waiting
-          </span>
-          <span className="fold-actions">{watch}</span>
-        </div>
-        {body}
-      </section>
-    );
+  // The debrief has the centre pane's tab to itself (M8.42), so it is never folded away.
   return (
-    <Fold
-      id="back"
-      title="Back from below"
-      defaultOpen={trip!.back === town.day}
-      summary={summary(trip!)}
-      actions={watch}
-    >
+    <section className="panel debrief" aria-labelledby="debrief-heading">
+      <div className="fold-head">
+        <h2 id="debrief-heading">
+          {waiting.length ? "Debrief" : "Back from below"}
+          {trip?.name ? `: ${trip.name}` : ""}
+        </h2>
+        <span className="fold-summary">
+          {waiting.length
+            ? `${waiting.length} ${waiting.length === 1 ? "piece" : "pieces"} of haul waiting`
+            : summary(trip!)}
+        </span>
+        <span className="fold-actions">{watch}</span>
+      </div>
       {body}
-    </Fold>
+    </section>
   );
 }
 

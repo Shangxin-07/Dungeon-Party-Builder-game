@@ -10,19 +10,15 @@ type Tab = "town" | "sandbox";
 export function App() {
   const [tab, setTab] = useState<Tab>("town");
   return (
-    <main className="page">
-      <header>
-        <p className="eyebrow">
+    <main className={`page${tab === "town" ? " page-town" : ""}`}>
+      <header className="masthead">
+        <h1>Dungeon Party Builder</h1>
+        <span className="eyebrow">
           Work in progress{" "}
           <span className="version" title={`Build ${BUILD_COMMIT}`}>
             ({GAME_VERSION})
           </span>
-        </p>
-        <h1>Dungeon Party Builder</h1>
-        <p className="lede">
-          Recruit a party, gear them up, and send them into the dungeon. Once they leave town,
-          they're on their own: you'll hear how it went when they're back.
-        </p>
+        </span>
         <nav className="tabs" aria-label="Sections">
           <button
             type="button"
@@ -41,6 +37,20 @@ export function App() {
             Sandbox
           </button>
         </nav>
+        {/* What the game is, out of the way until asked for (M9.00). */}
+        <details className="about">
+          <summary>About</summary>
+          <div className="about-body">
+            <p className="lede">
+              Recruit a party, gear them up, and send them into the dungeon. Once they leave town,
+              they're on their own: you'll hear how it went when they're back.
+            </p>
+            <p className="small muted">
+              The guild is on the left, the parties on the right, and the town, the pit and the
+              debriefs in the middle. On a phone each of them is a tab.
+            </p>
+          </div>
+        </details>
       </header>
 
       {tab === "town" ? (
@@ -56,14 +66,6 @@ export function App() {
           <TestFight />
         </>
       )}
-
-      <footer>
-        <p>
-          New: floors 4 and 5 (the Flooded Shafts and the Old Delve) with ghouls, cave trolls,
-          sporecallers and the Lost Delvers; glowcap and deep silver to dig up; and the Apothecary,
-          the Mine Cage and a silver forge at the Blacksmith.
-        </p>
-      </footer>
     </main>
   );
 }
