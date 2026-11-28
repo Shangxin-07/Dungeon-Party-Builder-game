@@ -2999,3 +2999,16 @@ sup.down {
 .formation-hero {
   align-items: flex-start;
 }
+
+/* The leader's command: room to spare, exactly full, over. */
+.cmd-under {
+  color: var(--good);
+}
+
+.cmd-full {
+  color: #e2c65a;
+}
+
+.cmd-over {
+  color: var(--bad);
+}

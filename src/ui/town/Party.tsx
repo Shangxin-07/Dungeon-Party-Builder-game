@@ -153,10 +153,15 @@ export function PartyPanel({
                       <span className="muted small">{heroTitle(ix, h, true)}</span>
                       {cmd.leader?.id === h.id ? (
                         <strong
-                          className={`leader-mark small${cmd.over > 0 ? " warn" : ""}`}
+                          className="leader-mark small"
                           title="Command used by the party / this leader's command"
                         >
-                          Leader ({fmtCommand(cmd.used)}/{cmd.command})
+                          Leader{" "}
+                          <span
+                            className={`cmd-${cmd.used < cmd.command ? "under" : cmd.used === cmd.command ? "full" : "over"}`}
+                          >
+                            ({fmtCommand(cmd.used)}/{cmd.command})
+                          </span>
                         </strong>
                       ) : null}
                       {cmd.leader && cmd.leader.id !== h.id ? (
