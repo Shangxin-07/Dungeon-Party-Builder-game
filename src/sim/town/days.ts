@@ -36,7 +36,7 @@ import { cancelRescue } from "./parties";
 import { buildersWork } from "./buildings";
 import { restHero, healInjuries, wasDowned, maybeInjure } from "./wounds";
 import { newBody, rise, risenClimb } from "./bodies";
-import { checkCamp, raidSpoils, tidyPosts, workPosts } from "./posts";
+import { checkCamp, raidSpoils, tidyPosts, wallSpoils, workPosts } from "./posts";
 import { researchTiers, studyDay, tidyDesks } from "./research";
 import { payDay } from "./pay";
 import { sealsBroke } from "./seals";
@@ -99,6 +99,12 @@ export function nightfall(
       outcome: raid.outcome,
     },
   ].slice(-PIT_HISTORY);
+  // What the defences held back died at the walls (M9.15).
+  const held =
+    raid.outcome === "held"
+      ? raid.climbed
+      : Math.floor((raid.climbed * Math.min(raid.defence, raid.strength)) / raid.strength);
+  wallSpoils(ix, t, held, raid.level);
   if (raid.outcome === "held") return undefined;
   folkScared(ix, t, raid);
 

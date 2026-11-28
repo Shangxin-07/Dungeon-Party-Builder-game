@@ -569,6 +569,9 @@ export function validateLibrary(lib: Library): string[] {
   }
   if (lib.town.raidSpoils && !lootIds.has(lib.town.raidSpoils))
     err(`town: unknown raidSpoils loot table "${lib.town.raidSpoils}"`);
+  const wallSp = lib.town.wallSpoils;
+  if (wallSp && !(wallSp.percent >= 0 && wallSp.percent <= 100))
+    err(`town: wallSpoils percent must be 0-100, not ${wallSp.percent}`);
   const op = lib.opening;
   if (op) {
     for (const id of [...op.startingStash, ...op.heldStash])

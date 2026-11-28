@@ -287,6 +287,8 @@ In town, a simple **pit gauge** shows the overflow climbing out against your def
 
 Defences are ordinary buildings in `content/buildings/` with a `defence` (or `raidWarning`) effect, so new kinds of defence are just new data.
 
+**As built in M9.15: what the walls hold back dies there.** The monsters the defences soak up were always gone for good (they leave floor 1 and never come back), but they left nothing. Now each one is found at the foot of the wall 1 time in 5 (`town.wallSpoils.percent`, 20); the rest fall back into the pit. A body that's found is picked over like a raider the defenders killed: a roll on `pit-spoils` (timber, some ore) plus a roll on the monster's own loot table, keeping only materials and specimens (ears, fangs, silk, bone dust), never coins or gear, so the walls never pay the wages. Raiders the defenders kill now roll their own loot the same way. The kinds of monster are rolled from the overflow's level, as a raid's are. The rolls use their own stream off the town's seed, so nothing else about the night changes, and there's no save change. The morning news says what was found. Days bot, 40 towns each: `--policy 2 --build` 4 bodies a town in 40 days; camp, policy 1, `--seal` 5 bodies, 4 things; `--policy climb --build --days 120` (deep parties, floor 1 left to overflow) 116 bodies, about 70 things, mostly timber, against about 140 materials from trips; an idle guild at the camp 57 bodies and 42 things in 80 days and is still broke. Flag `--no-wall-spoils` turns it off for comparison.
+
 ### Later: the opening, holding the pit
 
 > Added 2026-11-20. Built in M6.16: see the note below the list.

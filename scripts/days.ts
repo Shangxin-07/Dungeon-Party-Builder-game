@@ -118,16 +118,21 @@ if (errors.length) {
 // --unlucky: the camp's posts and raid spoils never turn up timber, only ore,
 // so the camp can only be held by trading ore for timber with the miners.
 const unlucky = process.argv.includes("--unlucky");
+// --no-wall-spoils: monsters held at the walls leave nothing (as before M9.15).
+const noWallSpoils = process.argv.includes("--no-wall-spoils");
+const lib0 = noWallSpoils
+  ? { ...library, town: { ...library.town, wallSpoils: undefined } }
+  : library;
 const ix = indexLibrary(
   unlucky
     ? {
-        ...library,
-        lootTables: library.lootTables.map((l) => ({
+        ...lib0,
+        lootTables: lib0.lootTables.map((l) => ({
           ...l,
           entries: l.entries.map((e) => (e.item === "timber" ? { ...e, item: "iron-ore" } : e)),
         })),
       }
-    : library,
+    : lib0,
 );
 const days = Number(arg("days") ?? 40);
 const policy = arg("policy") ?? "1";
@@ -549,6 +554,10 @@ const tally = {
   resurrected: 0,
   buried: 0,
   rose: 0,
+  /** Nights the walls left something to pick over, and bodies found (M9.15). */
+  wallNights: 0,
+  wallBodies: 0,
+  wallItems: 0,
   putDown: 0,
   /** --camp: the day each town held the camp, and who died before it did. */
   campHeld: [] as number[],
@@ -577,6 +586,7 @@ function play(seed: number, print: boolean) {
   const launched = new Set<string>();
   const unpaidDays = new Set<number>();
   const roseNews = new Set<string>();
+  const wallNews = new Map<number, string>();
   // Ledger lines by day and kind; a day's line grows until the day is over.
   const books = new Map<string, { day: number; kind: string; amount: number }>();
   if (print) {
@@ -608,6 +618,8 @@ function play(seed: number, print: boolean) {
     for (const n of t.news) if (n.text.startsWith("The guild couldn't pay")) unpaidDays.add(n.day);
     for (const n of t.news)
       if (/never brought home/.test(n.text)) roseNews.add(`${n.day}${n.text}`);
+    for (const n of t.news)
+      if (n.text.startsWith("Found at the foot of the walls")) wallNews.set(n.day, n.text);
     for (const trip of t.trips.filter((x) => !heard.has(key(x)))) {
       // A deserter's account (M7.05): the trip itself is counted when it's heard of.
       if (trip.account) continue;
@@ -647,6 +659,13 @@ function play(seed: number, print: boolean) {
   }
   tally.unpaid += unpaidDays.size;
   tally.rose += roseNews.size;
+  for (const text of wallNews.values()) {
+    tally.wallNights++;
+    tally.wallBodies += Number(/: (\d+) bodies/.exec(text)?.[1] ?? 1);
+    const got = text.slice(text.indexOf("picked over for ") + 16);
+    for (const m of got.matchAll(/(?:^|, | and )(\d+|an?) ([^,]+?)(?=, | and |\.$)/g))
+      tally.wallItems += /^\d+$/.test(m[1]!) ? Number(m[1]) : 1;
+  }
   for (const l of books.values()) {
     tally.ledger[l.kind] = (tally.ledger[l.kind] ?? 0) + l.amount;
     if (l.day <= EARLY) tally.early[l.kind] = (tally.early[l.kind] ?? 0) + l.amount;
@@ -774,6 +793,8 @@ if (runs === 1) {
           .map(([id, n]) => `${(n / runs).toFixed(1)} ${ix.item(id).name.toLowerCase()}`)
           .join(", ") || "none"
       }\n` +
+      `  picked over at the walls per town: ${(tally.wallBodies / runs).toFixed(1)} bodies on ` +
+      `${(tally.wallNights / runs).toFixed(1)} nights, ${(tally.wallItems / runs).toFixed(1)} things\n` +
       `  salvaged per town: ${
         Object.entries(tally.salvaged)
           .map(([id, n]) => `${(n / runs).toFixed(1)} ${ix.item(id).name.toLowerCase()}`)

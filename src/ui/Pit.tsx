@@ -85,7 +85,9 @@ export function PitPanel({
     >
       <p className="muted small">
         Whatever the dungeon can't hold climbs out at night. Strength = monsters × their level. Your
-        defences hold back their total; anything over that raids the town.
+        defences hold back their total; anything over that raids the town. What the walls hold back
+        dies there: most of it falls back into the pit, but now and then a body is found at the foot
+        of the wall and picked over for materials.
       </p>
 
       <div className="gauges">
