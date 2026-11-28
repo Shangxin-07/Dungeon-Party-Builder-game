@@ -70,15 +70,19 @@ describe("dual-wielding daggers (M9.04)", () => {
 
   it("daggers hit from DEX or STR, whichever is higher (finesse)", () => {
     const s = hero("scout");
-    s.stats = { ...s.stats, STR: 9, DEX: 15 };
     s.equipment = { weapon: "dagger" };
-    expect(heroSheet(ix, s).derived.attack).toBe(15 + 2);
-    s.stats = { ...s.stats, STR: 16, DEX: 15 };
-    expect(heroSheet(ix, s).derived.attack).toBe(16 + 2);
+    const atk = (STR: number, DEX: number) => {
+      s.stats = { ...s.stats, STR, DEX };
+      return heroSheet(ix, s).derived.attack;
+    };
+    expect(atk(9, 15) - atk(9, 10)).toBe(5);
+    // Whichever is higher counts, and only that one.
+    expect(atk(10, 18) - atk(14, 18)).toBe(0);
+    expect(atk(18, 10) - atk(18, 14)).toBe(0);
+    expect(atk(20, 10) - atk(10, 10)).toBe(10);
     // A sword still hits from STR alone.
-    s.stats = { ...s.stats, STR: 9, DEX: 15 };
     s.equipment = { weapon: "sword" };
-    expect(heroSheet(ix, s).derived.attack).toBeLessThan(15);
+    expect(atk(9, 15) - atk(9, 10)).toBe(0);
   });
 
   it("a plain attack is followed by a blow from the other hand", () => {
