@@ -61,6 +61,7 @@ import { NeedsYou } from "./NeedsYou";
 import { OffersPanel } from "./Offers";
 import { foldTab, isCentre, needsByTab, needsYou, TABS, type CentreTab, type TabId } from "./needs";
 import { onOpenFold } from "../Fold";
+import { Tutorial } from "../tutorial/Tutorial";
 
 const TAB_KEY = "dpb-ui-tab";
 const CENTRE_KEY = "dpb-ui-centre";
@@ -473,6 +474,7 @@ export function TownPlay({ initial }: { initial: Game }) {
         {TABS.map((t) => tabButton(t, !watching && tab === t.id))}
       </nav>
       <EndingPanel town={town} />
+      {watching ? null : <Tutorial town={town} />}
       {error ? (
         <p className="error" role="alert">
           {error}

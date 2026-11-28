@@ -4,6 +4,7 @@ import { ExpeditionView } from "./Expedition";
 import { TestFight } from "./TestFight";
 import { TownGame } from "./town";
 import { BUILD_COMMIT, GAME_VERSION } from "../version";
+import { restartTutorial } from "./tutorial/progress";
 
 type Tab = "town" | "sandbox";
 
@@ -37,6 +38,17 @@ export function App() {
             Sandbox
           </button>
         </nav>
+        <button
+          type="button"
+          className="tut-restart"
+          title="Start the tutorial again from the top"
+          onClick={() => {
+            setTab("town");
+            restartTutorial();
+          }}
+        >
+          Tutorial
+        </button>
         {/* What the game is, out of the way until asked for (M9.00). */}
         <details className="about">
           <summary>About</summary>
