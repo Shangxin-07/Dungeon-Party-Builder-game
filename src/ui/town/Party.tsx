@@ -163,13 +163,15 @@ export function PartyPanel({
                         </span>
                       ) : null}
                     </div>
-                    <SlimBars hero={h} />
-                    <KitStrip
-                      hero={h}
-                      slots={heroSheet(ix, h).derived.carrySlots}
-                      size={18}
-                      loot={false}
-                    />
+                    <div className="fh-body">
+                      <KitStrip
+                        hero={h}
+                        slots={heroSheet(ix, h).derived.carrySlots}
+                        size={18}
+                        loot={false}
+                      />
+                      <SlimBars hero={h} />
+                    </div>
                   </div>
                 </div>
               ))

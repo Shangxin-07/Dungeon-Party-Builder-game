@@ -2939,17 +2939,28 @@ sup.down {
   margin-left: auto;
 }
 
+/* Kit icons first, then the short bars beside them; they wrap under on a narrow card. */
+.fh-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 2px;
+}
+
 .slim-bars {
   display: grid;
   gap: 1px;
-  margin: 2px 0 4px;
+  flex: 1 1 110px;
+  max-width: 160px;
+  margin-left: auto;
 }
 
 .slim {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 4.5em;
+  grid-template-columns: minmax(0, 1fr) 4.2em;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .slim-track {
