@@ -3841,3 +3841,21 @@ sup.down {
   display: block;
   margin-bottom: 4px;
 }
+
+/* M9.25: on a very wide screen the guild pane is wide too, so the roster (and
+   the recruits) sit side by side in columns, and an opened hero card keeps to
+   its own column instead of stretching across the whole pane. Narrower panes
+   are unchanged. */
+.town-left {
+  container: left / inline-size;
+}
+
+@container left (min-width: 860px) {
+  .hero-cards {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  }
+
+  .hero-card.open {
+    grid-column: auto;
+  }
+}
