@@ -84,6 +84,26 @@ function rememberCentre(t: CentreTab) {
   }
 }
 
+const IDLE_WARN_KEY = "dpb-ui-idle-warn";
+
+/** Whether to ask before a second Next day with nothing done in between (M9.13). */
+function idleWarnOn(): boolean {
+  try {
+    return localStorage.getItem(IDLE_WARN_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+function setIdleWarn(on: boolean) {
+  try {
+    if (on) localStorage.removeItem(IDLE_WARN_KEY);
+    else localStorage.setItem(IDLE_WARN_KEY, "off");
+  } catch {
+    // Private windows: the choice just isn't remembered.
+  }
+}
+
 /** A deserter's account shares its trip's seed: tell them apart. */
 const tripId = (t: TripReport) => `${t.seed}:${t.account?.by ?? ""}`;
 
@@ -204,6 +224,12 @@ export function TownPlay({ initial }: { initial: Game }) {
   const setTown = (t: TownState) => setGame((g) => ({ ...g, town: t }));
   const [watching, setWatching] = useState<false | { trip: TripReport } | RaidReport>(false);
   const [error, setError] = useState<string>();
+  // Nothing clicked since the last Next day (M9.13): the button goes red.
+  const [idle, setIdle] = useState(false);
+  // Anything clicked or typed but Next day (or its warning) counts as doing something.
+  const busy = (target: EventTarget) => {
+    if (idle && !(target as HTMLElement).closest?.(".next-day")) setIdle(false);
+  };
   // The tab picked on a phone, and the centre pane's tab on a wide screen.
   const [tab, setTab] = useState<TabId>(rememberedTab);
   const [centre, setCentre] = useState<CentreTab>(rememberedCentre);
@@ -426,9 +452,22 @@ export function TownPlay({ initial }: { initial: Game }) {
   );
 
   return (
-    <section className="town town-panes" aria-label="Town">
+    <section
+      className="town town-panes"
+      aria-label="Town"
+      onPointerDownCapture={(e) => busy(e.target)}
+      onKeyDownCapture={(e) => busy(e.target)}
+    >
       <div className="town-top">
-        <TownBar town={town} act={act} />
+        <TownBar
+          town={town}
+          act={act}
+          idle={idle}
+          onNextDay={() => {
+            act((t) => rest(ix, t, heroNames));
+            setIdle(true);
+          }}
+        />
       </div>
       <nav className="tabs town-tabs phone-tabs" aria-label="Town">
         {TABS.map((t) => tabButton(t, !watching && tab === t.id))}
@@ -528,7 +567,16 @@ function RenownBadge({ town }: { town: TownState }) {
   );
 }
 
-export function TownBar({ town, act }: { town: TownState; act: Act }) {
+export function TownBar({
+  town,
+  idle,
+  onNextDay,
+}: {
+  town: TownState;
+  act: Act;
+  idle?: boolean;
+  onNextDay: () => void;
+}) {
   return (
     <div className="townbar">
       <span>
@@ -578,14 +626,60 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
           </span>
         );
       })}
+      <NextDay idle={!!idle} onNextDay={onNextDay} />
+    </div>
+  );
+}
+
+/**
+ * The Next day button (M9.13). Red when nothing has been clicked since the
+ * last one; pressing it then asks first, unless the player switched that off.
+ */
+function NextDay({ idle, onNextDay }: { idle: boolean; onNextDay: () => void }) {
+  const [asking, setAsking] = useState(false);
+  const [warn, setWarn] = useState(idleWarnOn);
+  const go = () => {
+    setAsking(false);
+    onNextDay();
+  };
+  return (
+    <span className="next-day">
       <button
         type="button"
-        className="btn"
-        title="Everyone at home heals, parties below carry on, night falls at the pit, and new recruits turn up"
-        onClick={() => act((t) => rest(ix, t, heroNames))}
+        className={`btn${idle ? " btn-idle" : ""}`}
+        title={
+          idle
+            ? "Nothing done since the last day passed"
+            : "Everyone at home heals, parties below carry on, night falls at the pit, and new recruits turn up"
+        }
+        onClick={() => (idle && warn ? setAsking(true) : go())}
       >
         Next day
       </button>
-    </div>
+      {asking ? (
+        <div className="next-day-ask" role="alertdialog" aria-label="Advance a day?">
+          <p>You've done nothing for this day, are you sure you want to advance a day?</p>
+          <label className="small">
+            <input
+              type="checkbox"
+              checked={!warn}
+              onChange={(e) => {
+                setWarn(!e.target.checked);
+                setIdleWarn(!e.target.checked);
+              }}
+            />{" "}
+            Don't warn me again
+          </label>
+          <div className="row-buttons">
+            <button type="button" className="btn btn-main" onClick={go}>
+              Next day
+            </button>
+            <button type="button" className="btn" onClick={() => setAsking(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </span>
   );
 }
