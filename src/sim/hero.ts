@@ -18,6 +18,15 @@ import { rollBackstory } from "./backstory";
 import type { Index } from "./library";
 import { createRng, type Rng } from "./rng";
 import { computeDerived, effectiveStats, skillValue, type DerivedBlock } from "./stats";
+import {
+  applySpend,
+  autoSpend,
+  baseClasses,
+  checkSpend,
+  openClasses,
+  trainingCost,
+  type Spend,
+} from "./training";
 
 export type EquipSlot = Extract<ItemSlot, "weapon" | "offhand" | "armor">;
 export const EQUIP_SLOTS: readonly EquipSlot[] = ["weapon", "offhand", "armor"];
@@ -455,19 +464,26 @@ export function rollPersonality(
 export const classFit = (ix: Index, stats: StatBlock, classId: string) =>
   ix.cls(classId).mainStats.reduce((s, st) => s + stats[st], 0);
 
-/** Classes a recruit can be trained in: the base ones. */
-export const baseClasses = (ix: Index) =>
-  ix.lib.classes.filter((c) => (c.kind ?? "base") === "base");
+export { baseClasses };
 
 /** Whether a hero is still in a camp class (the opening's Miner) and has to pick a real one. */
 export const inCampClass = (ix: Index, h: Hero) => ix.cls(h.classId).kind === "camp";
 
-/** The class a recruit's own stats suit best. */
+/**
+ * The class a recruit's own stats suit best (M9.10): of the classes whose
+ * gates they can reach, the one costing fewest training points, then the one
+ * with the higher main stats.
+ */
 export function bestClass(ix: Index, stats: StatBlock): string {
-  let best = baseClasses(ix)[0]!.id;
-  for (const c of baseClasses(ix))
-    if (classFit(ix, stats, c.id) > classFit(ix, stats, best)) best = c.id;
-  return best;
+  const open = openClasses(ix, stats);
+  const cost = (id: string) =>
+    trainingCost(ix, stats, id) === Infinity ? 99 : trainingCost(ix, stats, id);
+  return open.reduce((best, id) =>
+    cost(id) < cost(best) ||
+    (cost(id) === cost(best) && classFit(ix, stats, id) > classFit(ix, stats, best))
+      ? id
+      : best,
+  );
 }
 
 /**
@@ -528,15 +544,20 @@ export function rollRecruit(
 }
 
 /**
- * Train a recruit in a class: the class's training moves their stats
- * (class base stats − 10 on each), they take its row, and they pick up its
- * likes. Their motivation and favourite building stay their own. No gear.
+ * Train a recruit in a class (M9.10): they place their training points
+ * (`spend`, or where they'd put them themselves), must reach the class's
+ * gates, take its row and pick up its likes. Their motivation and favourite
+ * building stay their own. No gear. The camp class takes no training.
  */
-export function trainRecruit(ix: Index, recruit: Hero, classId: string): Hero {
+export function trainRecruit(ix: Index, recruit: Hero, classId: string, spend?: Spend): Hero {
   const cls = ix.cls(classId);
-  const stats = {} as Record<Stat, number>;
-  for (const s of STATS)
-    stats[s] = Math.max(1, Math.min(20, recruit.stats[s] + (cls.baseStats?.[s] ?? 10) - 10));
+  let stats = { ...recruit.stats } as Record<Stat, number>;
+  if (cls.kind !== "camp") {
+    const place = spend ?? autoSpend(ix, recruit.stats, classId);
+    const wrong = checkSpend(ix, recruit.stats, classId, place);
+    if (wrong) throw new Error(wrong);
+    stats = applySpend(recruit.stats, place);
+  }
   const p = rollPersonality(ix, recruit.id, recruit.name, recruit.stats, classId);
   const hero: Hero = {
     ...recruit,

@@ -13,6 +13,7 @@ import {
   classFit,
   type Hero,
 } from "../hero";
+import { applySpend, autoSpend, checkSpend, openClasses, type Spend } from "../training";
 import { chooseClass, gainXp, spendLevelUp } from "../levels";
 import type { Index } from "../library";
 import { applyMorale } from "../morale";
@@ -42,7 +43,14 @@ export function hirePrice(ix: Index, town: TownState, recruit: Hero): number {
  * class their stats suit best) and joins with no gear; kit them out from the
  * store room or the Market. A trained one (the Tavern) comes with their kit.
  */
-export function hire(ix: Index, town: TownState, recruitId: string, classId?: string): TownState {
+export function hire(
+  ix: Index,
+  town: TownState,
+  recruitId: string,
+  classId?: string,
+  /** Where an untrained recruit's training points go (M9.10); left out, where they'd put them. */
+  spend?: Spend,
+): TownState {
   const t = edit(town);
   const i = t.recruits.findIndex((r) => r.id === recruitId);
   if (i < 0) throw new TownError("That recruit has moved on.");
@@ -54,8 +62,10 @@ export function hire(ix: Index, town: TownState, recruitId: string, classId?: st
   if (t.camp) classId = ix.lib.opening.campClass;
   else if (classId && !baseClasses(ix).some((c) => c.id === classId))
     throw new TownError("Recruits can only start in a base class.");
-  const [recruit] = t.recruits.splice(i, 1);
-  const h = recruit!.untrained ? trainRecruit(ix, recruit!, classId ?? recruit!.classId) : recruit!;
+  const h = t.recruits[i]!.untrained
+    ? train(ix, t.recruits[i]!, classId ?? t.recruits[i]!.classId, spend)
+    : t.recruits[i]!;
+  t.recruits.splice(i, 1);
   if (t.freeHires > 0) t.freeHires -= 1;
   else book(t, "hired", -price);
   t.roster.push(h);
@@ -91,6 +101,15 @@ export function hirePorter(ix: Index, town: TownState, recruitId: string): TownS
   return t;
 }
 
+/** trainRecruit, with its complaints as town errors. */
+function train(ix: Index, h: Hero, classId: string, spend?: Spend): Hero {
+  try {
+    return trainRecruit(ix, h, classId, spend);
+  } catch (e) {
+    throw new TownError(`${h.name}: ${(e as Error).message}`);
+  }
+}
+
 /** Fights a porter still has to watch before they can be trained (0: ready). */
 export const fightsToTrain = (ix: Index, h: Hero) =>
   h.porter ? Math.max(0, ix.lib.town.porters.trainAfterFights - h.porter.watched) : 0;
@@ -104,6 +123,7 @@ export function trainPorter(
   town: TownState,
   heroId: string,
   classId: string,
+  spend?: Spend,
 ): TownState {
   const t = edit(town);
   const h = hero(t, heroId);
@@ -116,7 +136,7 @@ export function trainPorter(
   if (!baseClasses(ix).some((c) => c.id === classId))
     throw new TownError("Porters can only train in a base class.");
   const banked = h.porter.xp;
-  const trained = trainRecruit(ix, h, classId);
+  const trained = train(ix, h, classId, spend);
   delete trained.porter;
   roll(t, (rng) => gainXp(ix, trained, banked, rng, built(t)));
   t.roster[t.roster.findIndex((x) => x.id === heroId)] = trained;
@@ -129,10 +149,17 @@ export function trainPorter(
 
 /**
  * Train a miner (the opening's camp class, DESIGN.md §8) in a base class once
- * the camp is held. Their stats move by the class's training as a recruit's
- * would, and every level they earned at the camp moves over to the new class.
+ * the camp is held. They place training points as a recruit would (M9.10),
+ * gates checked against their stats now, and every level they earned at the
+ * camp moves over to the new class.
  */
-export function trainMiner(ix: Index, town: TownState, heroId: string, classId: string): TownState {
+export function trainMiner(
+  ix: Index,
+  town: TownState,
+  heroId: string,
+  classId: string,
+  spend?: Spend,
+): TownState {
   const t = edit(town);
   const h = hero(t, heroId);
   if (!inCampClass(ix, h)) throw new TownError(`${h.name} already has a trade.`);
@@ -140,13 +167,10 @@ export function trainMiner(ix: Index, town: TownState, heroId: string, classId: 
   const cls = baseClasses(ix).find((c) => c.id === classId);
   if (!cls) throw new TownError("Miners can only train in a base class.");
   const from = ix.cls(h.classId);
-  const stats = { ...h.stats } as Record<Stat, number>;
-  for (const s of Object.keys(stats) as Stat[])
-    stats[s] = Math.max(
-      1,
-      Math.min(30, stats[s] + (cls.baseStats?.[s] ?? 10) - (from.baseStats?.[s] ?? 10)),
-    );
-  h.stats = stats;
+  const place = spend ?? autoSpend(ix, h.stats, classId);
+  const wrong = checkSpend(ix, h.stats, classId, place);
+  if (wrong) throw new TownError(`${h.name}: ${wrong}`);
+  h.stats = applySpend(h.stats, place);
   const levels = Object.values(h.classes).reduce((a, b) => a + b, 0) || 1;
   h.classes = { [classId]: levels };
   for (const up of h.levelUps) if (up.classId === from.id) up.classId = classId;
@@ -182,8 +206,9 @@ export function trainMiners(
   let t = town;
   const miners = () => t.roster.filter((h) => !h.porter && inCampClass(ix, h));
   for (const classId of wanted) {
-    const open = miners();
-    if (!open.length) break;
+    if (!miners().length) break;
+    const open = miners().filter((h) => openClasses(ix, h.stats).includes(classId));
+    if (!open.length) continue;
     const best = open.reduce((a, b) =>
       classFit(ix, b.stats, classId) > classFit(ix, a.stats, classId) ? b : a,
     );
@@ -215,8 +240,12 @@ export function autoStart(
     t = kitOut(ix, t, t.roster.at(-1)!.id, false);
   };
   for (const classId of wanted) {
-    const open = t.recruits.filter((r) => r.untrained);
-    if (!(t.freeHires > 0) || !open.length) break;
+    if (!(t.freeHires > 0) || !t.recruits.some((r) => r.untrained)) break;
+    // At the camp everyone signs as a miner, so any recruit will do.
+    const open = t.recruits.filter(
+      (r) => r.untrained && (t.camp || openClasses(ix, r.stats).includes(classId)),
+    );
+    if (!open.length) continue;
     const best = open.reduce((a, b) =>
       classFit(ix, b.stats, classId) > classFit(ix, a.stats, classId) ? b : a,
     );

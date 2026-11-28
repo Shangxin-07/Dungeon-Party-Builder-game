@@ -16,6 +16,7 @@ import {
   type IconRef,
   type Library,
   type PassiveEffect,
+  type Stat,
   type StatBlock,
 } from "../content/types";
 import { hasAi } from "./ai";
@@ -96,6 +97,8 @@ export function validateLibrary(lib: Library): string[] {
     if (kind === "base" || kind === "camp") {
       if (c.baseStats) stats(w, c.baseStats, 20);
       else err(`${w}: base and camp classes need baseStats`);
+      for (const [s, n] of Object.entries(c.gates ?? {}))
+        if (!STATS.includes(s as Stat) || !(n >= 1 && n <= 20)) err(`${w}: bad gate ${s} ${n}`);
     } else {
       if (c.baseStats) err(`${w}: only base classes have baseStats`);
       const need = Object.keys(c.requires?.classLevels ?? {}).length;

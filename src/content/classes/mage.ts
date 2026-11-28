@@ -8,6 +8,7 @@ export default defineClass({
   blurb: "Back row. Burns groups of monsters and patches up wounds.",
   mainStats: ["INT", "WIL"],
   baseStats: { STR: 7, DEX: 10, END: 9, PER: 11, INT: 14, WIL: 13, CHA: 10 },
+  gates: { INT: 14, WIL: 12 },
   likes: ["staff", "fire"],
   row: "back",
   ai: "caster",

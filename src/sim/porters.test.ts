@@ -4,6 +4,7 @@ import { heroNames, library } from "../content";
 import { indexLibrary } from "./library";
 import { fitDefenders } from "./raid";
 import { migrateTown } from "./save";
+import { bestClass } from "./hero";
 import {
   autoStart,
   cantLaunch,
@@ -149,11 +150,12 @@ describe("porters", () => {
     expect(() => trainPorter(ix, t, p.id, "fighter")).toThrow(/watch/);
     const ready = structuredClone(t);
     ready.roster.at(-1)!.porter = { watched: rules.trainAfterFights, xp: 500 };
-    const after = trainPorter(ix, ready, p.id, "fighter");
+    const cls = bestClass(ix, p.stats);
+    const after = trainPorter(ix, ready, p.id, cls);
     const h = after.roster.find((x) => x.id === p.id)!;
     expect(h.porter).toBeUndefined();
     expect(h.untrained).toBeUndefined();
-    expect(h.classId).toBe("fighter");
+    expect(h.classId).toBe(cls);
     expect(h.xp).toBe(500);
     expect(h.level).toBeGreaterThan(1);
     expect(after.porters).not.toContain(p.id);

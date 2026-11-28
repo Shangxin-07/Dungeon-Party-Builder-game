@@ -38,6 +38,7 @@ import {
   settleByRule,
 } from "./town";
 import { stocked } from "./stocked";
+import { autoSpend, openClasses } from "./training";
 
 const ix = indexLibrary(library);
 const fresh = (seed = 1) => autoStart(ix, newTown(ix, heroNames, seed));
@@ -55,7 +56,12 @@ describe("a new town", () => {
     const t = fresh();
     expect(t.day).toBe(1);
     expect(t.gold).toBe(rules.startingGold);
-    expect(t.roster.map((h) => h.classId)).toEqual(rules.startingRoster);
+    // Pick for me: the starting roster's classes where the recruits can reach their gates.
+    expect(t.roster).toHaveLength(rules.startingRoster.length);
+    for (const h of t.roster) expect(openClasses(ix, h.stats)).toContain(h.classId);
+    expect(
+      t.roster.filter((h) => rules.startingRoster.includes(h.classId)).length,
+    ).toBeGreaterThanOrEqual(3);
     expect(t.freeHires).toBe(0);
     expect(partySlots(ix, t)).toBe(4);
     expect(rosterSize(ix, t)).toBe(8);
@@ -75,17 +81,19 @@ describe("a new town", () => {
       expect(Object.values(r.equipment).filter(Boolean)).toHaveLength(0);
       expect(hirePrice(ix, t, r)).toBe(0);
     }
-    // The player picks the class.
-    const r0 = t.recruits[0]!;
+    // The player picks the class (one whose gates the recruit can reach).
+    const r0 = t.recruits.find((r) => openClasses(ix, r.stats).includes("mage"))!;
     const after = hire(ix, t, r0.id, "mage");
     const h = after.roster[0]!;
     expect(h.classId).toBe("mage");
     expect(h.untrained).toBeUndefined();
     expect(after.gold).toBe(t.gold);
     expect(after.freeHires).toBe(t.freeHires - 1);
-    // Mage training: INT goes up by the mage's (base - 10) offset.
-    const off = ix.cls("mage").baseStats!.INT - 10;
-    expect(h.stats.INT).toBe(Math.max(1, Math.min(20, r0.stats.INT + off)));
+    // Training points (M9.10): placed as they'd place them, gates met.
+    const spend = autoSpend(ix, r0.stats, "mage");
+    expect(h.stats.INT).toBe(r0.stats.INT + (spend.INT ?? 0));
+    expect(h.stats.INT).toBeGreaterThanOrEqual(14);
+    expect(h.stats.WIL).toBeGreaterThanOrEqual(12);
     // Kit comes from the store room.
     const kitted = kitOut(ix, after, h.id, false);
     expect(kitted.roster[0]!.equipment.weapon).toBe("staff");
@@ -187,7 +195,7 @@ describe("town actions", () => {
 
   it("fill the party up to the Guild Hall's planned size, but never cap it", () => {
     let t = { ...rest(ix, fresh(), heroNames), gold: 1000 };
-    t = hire(ix, t, t.recruits[0]!.id, "fighter");
+    t = hire(ix, t, t.recruits[0]!.id);
     const fifth = t.roster[4]!;
     // Hired past the planned size, so not added on their own...
     expect(t.party).toHaveLength(4);
@@ -322,7 +330,7 @@ describe("parties on file", () => {
     let t = { ...fresh(), gold: 1000 };
     while (t.roster.length < 8) {
       if (!t.recruits.length) t = rest(ix, t, heroNames);
-      t = hire(ix, t, t.recruits[0]!.id, "fighter");
+      t = hire(ix, t, t.recruits[0]!.id);
       t = kitOut(ix, t, t.roster.at(-1)!.id);
     }
     return t;

@@ -3312,3 +3312,58 @@ sup.down {
 .recruit-confirm p {
   margin: 0 0 6px;
 }
+
+/* Training points (M9.10): − / + under each stat, the class's gates marked. */
+.training-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.training-grid .gate-mark {
+  font-size: 0.6rem;
+}
+
+.training-grid .gate.met dt {
+  color: var(--good, #7fbf6a);
+}
+
+.training-grid .gate.short dt {
+  color: var(--bad, #d9776a);
+}
+
+.training-grid .steppers {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+
+.training-grid .steppers button {
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.training-grid .steppers button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.train-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.train-box > .btn {
+  align-self: flex-start;
+}

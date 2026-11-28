@@ -623,7 +623,7 @@ Saves stay at version 6 (this all landed before version 6 shipped): heroes get f
 
 > Added 2026-11-21 from Mike's notes after M6 part 2: "the starting gear that heroes get feels like choice removal... you hire them and they have stats, but no gear or class. You have to pick. Tavern upgrades change this." Also: the best hero's Appraisal/CHA should cut the Market's take; scouting should find hidden treasure, enough to notice over time; and a "clear the level by %" order.
 
-- **Untrained recruits.** Recruits turn up with stats and a personality, but no class and no gear. Raw stats are 10 ± 2 each, one of them +2, and the Tavern's picks favour recruits whose two best stats are high. On signing, the player picks the class (the card marks the best fit and previews the trained stats). Training adds the class's offset (its base stat − 10) to each raw stat, so a born fighter makes a better fighter than a born mage does. They join empty-handed.
+- **Untrained recruits.** Recruits turn up with stats and a personality, but no class and no gear. Raw stats are 10 ± 2 each, one of them +2, and the Tavern's picks favour recruits whose two best stats are high. On signing, the player picks the class (the card marks the best fit and previews the trained stats). ~~Training adds the class's offset (its base stat − 10) to each raw stat, so a born fighter makes a better fighter than a born mage does.~~ Replaced in M9.10 by training points and class gates (see below). They join empty-handed.
 - **A new game** starts with no heroes, 4 free recruits (`town.startingRecruits`) and a store room of basic kit: 2 swords, a short bow, a staff, a mace, chainmail, 2 leather armours, 2 wooden shields, 3 potions and 3 bandages. **Kit out** on a hero card fills in their class's usual kit from the store room first, then buys the rest. **Pick for me** signs all the free recruits as fighter, scout, mage and fighter (`town.startingRoster`), each class going to the recruit who suits it best, and kits them out from the store room.
 - **The Tavern** at level 2 sends one recruit a day already trained and kitted, for the hire fee plus the value of their kit.
 - **Haggling.** The guild's best haggler raises what the Market pays: +0.2% per point of Appraisal above 50, and +1% per point of CHA above 10, never above 90% (`town.haggle`). A typical starting guild gets 74% for loot instead of 70%; a CHA 16, Appraisal 70 haggler gets 80%. The Market panel says who haggles and the rates; trip results say who haggled.
@@ -747,6 +747,23 @@ Three fights in a row with no rest, 1,000 runs (fighter/scout/mage; then fighter
 | Two daggers, front | 74% | 58% | 13% | 89% | 88% / 39% |
 
 So the back row is no longer free: a dagger rogue there hits harder while hidden (floor 3 wins up from 16% to 22%), but once found they're in the thick of it and die more often (2% to 10% on floor 2). It's still far safer than standing in the front row from the start, and the bow is still the safe choice.
+
+### M9.10: training points and class gates
+
+**Why (Mike, 2026-11-28).** Swapping "Train as" barely seemed to matter, and a recruit's own stats didn't either. Checked on 5,000 rolled recruits: training added the class's offset (base stat − 10: a Mage got INT +4, WIL +3, STR −3...), and nothing checked the recruit could do the job, so an INT 8 recruit made an INT 12 mage. The class decided most of the hero (spell power 7 as a Fighter, 14 as a Mage, same recruit); the recruit's own stats moved the numbers about ±15% (Mage spell power 12 to 17, 5th to 95th percentile).
+
+**The rule.**
+- Training gives **10 points** to place on the recruit's own stats, at most **+4 on any one stat** (and no stat over 20). There are no penalties any more: nothing goes down.
+- Each base class has **gates** on its two main stats, checked after the points are placed: the first main stat **14**, the second **12**. Fighter STR 14 / END 12, Scout DEX 14 / PER 12, Mage INT 14 / WIL 12, Cleric WIL 14 / CHA 12. Classes whose gates the recruit can't reach are shut to them.
+- Points left over after the gates go anywhere (a born mage, INT 13 WIL 12, needs 1 point to qualify and has 9 to spend).
+- **No dead ends:** a recruit who can't reach any gate (about 1 in 100) may still train in the class they are closest to, without its gates. They can always sign as a porter too.
+- The same applies to **porters** who have watched enough fights and to **miners** picking a class once the camp is held (gates checked against their stats as they are then, levels and all).
+- **Tavern recruits** who arrive trained are unchanged: they come already made from the class template.
+- The card's default placement ("as they'd train themselves"): meet the gates, then the class's main stats up to +4, then END, then whatever else is highest. The player can move every point by hand before signing, and the confirm step shows the result.
+
+**Numbers (20,000 rolled recruits).** A recruit can reach 2.6 of the 4 classes on average; 18% can reach all four, 1% none. After the gates about 5 points are left on average. Trained heroes come out a little stronger than before (no −3 dump stats), so the days bot is compared before and after.
+
+**Data.** `ClassDef.gates` (base classes), `town.training: { points, maxPerStat }`. Rules in `sim/training.ts`: `trainingCost`, `openClasses`, `autoSpend`, `checkSpend`; `trainRecruit(ix, hero, classId, spend?)`; `hire`, `trainPorter`, `trainMiner` take the spend. No save change: heroes already signed keep their stats.
 
 ### As built in M6: materials
 

@@ -7,6 +7,7 @@ import { heroNames, library } from "../content";
 import type { Library } from "../content/types";
 import { runExpedition, DEFAULT_ORDERS, tripDays } from "./expedition";
 import { bestClass, createHero, heroSheet, trainRecruit } from "./hero";
+import { openClasses } from "./training";
 import { indexLibrary } from "./library";
 import { createRng } from "./rng";
 import { migrateTown } from "./save";
@@ -40,7 +41,8 @@ const party = (classes: string[], seed = 1) =>
 describe("untrained recruits", () => {
   it("are trained in the class the player picks, from their raw stats", () => {
     const r = newTown(ix, heroNames, 4).recruits[0]!;
-    for (const c of library.classes) {
+    for (const id of openClasses(ix, r.stats)) {
+      const c = ix.cls(id);
       const h = trainRecruit(ix, r, c.id);
       expect(h.classId).toBe(c.id);
       expect(h.untrained).toBeUndefined();
@@ -62,23 +64,32 @@ describe("untrained recruits", () => {
       gold: 1000,
       stash: [],
     };
-    t = hire(ix, t, t.recruits[0]!.id, "fighter");
+    t = hire(ix, t, t.recruits[0]!.id);
     const h = t.roster.at(-1)!;
     expect(Object.values(h.equipment).filter(Boolean)).toEqual([]);
     expect(kitOut(ix, t, h.id, false).roster.at(-1)!.equipment).toEqual({});
     const gold = t.gold;
     t = kitOut(ix, t, h.id);
-    expect(t.roster.at(-1)!.equipment.weapon).toBe("sword");
+    expect(t.roster.at(-1)!.equipment.weapon).toBe(ix.cls(h.classId).startingKit[0]);
     expect(t.gold).toBeLessThan(gold);
   });
 
   it("'pick for me' gives each starting class to the recruit who suits it best", () => {
     const t0 = newTown(ix, heroNames, 2);
     const t = autoStart(ix, t0);
-    expect(t.roster.map((h) => h.classId)).toEqual(rules.startingRoster);
+    // Seed 2: nobody left can reach the second fighter's gates, so the last
+    // recruit takes the class that suits them (M9.10).
+    expect(t.roster.map((h) => h.classId)).toEqual(["fighter", "scout", "mage", "scout"]);
     expect(t.freeHires).toBe(0);
+    for (const c of ["fighter", "scout", "mage"]) {
+      const h = t.roster.find((x) => x.classId === c)!;
+      const r = t0.recruits.find((x) => x.id === h.id)!;
+      const fits = t0.recruits.filter((x) => openClasses(ix, x.stats).includes(c));
+      expect(fits.map((x) => x.id)).toContain(r.id);
+    }
     // Starting heroes signed by hand count towards the classes.
-    const mage = hire(ix, t0, t0.recruits[0]!.id, "mage");
+    const who = t0.recruits.find((r) => openClasses(ix, r.stats).includes("mage"))!;
+    const mage = hire(ix, t0, who.id, "mage");
     const rest_ = autoStart(ix, mage);
     expect(rest_.roster.filter((h) => h.classId === "mage")).toHaveLength(1);
   });

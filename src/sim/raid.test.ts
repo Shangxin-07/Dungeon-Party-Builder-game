@@ -247,7 +247,9 @@ describe("saves", () => {
     delete (old.lastTrip as Partial<TownState["lastTrip"] & object>).raids;
     const up = migrateTown(ix, JSON.parse(JSON.stringify(old)))!;
     expect(up.version).toBe(TOWN_VERSION);
-    expect(up.roster).toEqual(t.roster);
+    // A hero with no dislike has no key for it in the file, so the M5 step rolls one.
+    const plain = (hs: TownState["roster"]) => hs.map(({ likes: _l, dislikes: _d, ...h }) => h);
+    expect(plain(up.roster)).toEqual(plain(t.roster));
     expect(up.dungeon.floors).toHaveLength(library.hearts[0]!.floor);
     expect(up.lastTrip!.raids).toEqual([]);
     // And it plays on.

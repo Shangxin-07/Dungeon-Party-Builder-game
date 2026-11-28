@@ -84,11 +84,16 @@ export interface ClassDef {
   /** The stats this class grows fastest in. */
   mainStats: readonly Stat[];
   /**
-   * Base classes: typical recruit stats, and training moves a recruit's stats
-   * by (base − 10). Advanced and combo classes can't be recruited into, so
-   * they leave it out.
+   * Base classes: typical stats of a hero made straight into the class (the
+   * Tavern's trained recruits, demos and tests). Advanced and combo classes
+   * can't be recruited into, so they leave it out.
    */
   baseStats?: StatBlock;
+  /**
+   * Base classes (M9.10): the stats a recruit must reach, after placing their
+   * training points, to train in this class (town.training).
+   */
+  gates?: Partial<Record<Stat, number>>;
   /** Tags of gear this class likes using (affects morale later). */
   likes: readonly string[];
   /** Default row in the formation. */

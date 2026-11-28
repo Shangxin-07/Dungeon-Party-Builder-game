@@ -4,7 +4,8 @@
 import { Fold } from "../Fold";
 import { useState } from "react";
 import { library } from "../../content";
-import { baseClasses, bestClass, heroSheet, trainRecruit, type Hero } from "../../sim/hero";
+import { heroSheet, trainRecruit, type Hero } from "../../sim/hero";
+import { applySpend } from "../../sim/training";
 import {
   autoStart,
   hire,
@@ -25,6 +26,7 @@ import { backstoryText } from "../../sim/backstory";
 import { tieBetween } from "../../sim/ties";
 import { mood } from "../../sim/morale";
 import { type Act } from "./shared";
+import { ClassPicker, PointsGrid, useTraining } from "./Training";
 
 export function Recruits({ town, act }: { town: TownState; act: Act }) {
   const full = town.roster.length >= rosterSize(ix, town);
@@ -86,24 +88,24 @@ export function RecruitCard({
   act: Act;
   full: boolean;
 }) {
-  const fit = h.untrained ? bestClass(ix, h.stats) : h.classId;
-  const [picked, setClassId] = useState(fit);
+  const tr = useTraining(h.stats);
   /** The deal waiting on "Yes" (M9.09): hiring is for good, so it takes two clicks. */
   const [asking, setAsking] = useState<"hire" | "porter" | null>(null);
   // At the mining camp everyone signs as a miner and picks a class once it's held.
-  const classId = town.camp ? ix.lib.opening.campClass : picked;
+  const training = h.untrained && !town.camp;
+  const classId = town.camp ? ix.lib.opening.campClass : h.untrained ? tr.classId : h.classId;
   const cls = ix.cls(classId);
-  const hero = h.untrained ? trainRecruit(ix, h, classId) : h;
+  const hero = !h.untrained
+    ? h
+    : !training || !tr.wrong
+      ? trainRecruit(ix, h, classId, training ? tr.spend : undefined)
+      : { ...trainRecruit(ix, h, classId), stats: applySpend(h.stats, tr.spend) };
   const price = hirePrice(ix, town, h);
   const porter = porterPrice(ix, town);
-  const canHire = !full && town.gold >= price;
+  const canHire = !full && town.gold >= price && !(training && tr.wrong);
   const canPorter = h.untrained && !town.camp && !full && town.gold >= porter;
   const kit = h.untrained ? cls.startingKit : [...Object.values(h.equipment), ...h.pack];
   const gold = (n: number) => (n ? `${n} gold` : "free");
-  const pick = (id: string) => {
-    setClassId(id);
-    setAsking(null);
-  };
   return (
     <li className="hero-card recruit">
       <div className="recruit-head">
@@ -118,26 +120,21 @@ export function RecruitCard({
           </span>
         </span>
       </div>
-      {h.untrained && !town.camp ? (
-        <div className="recruit-classes" role="group" aria-label="Train as">
-          <span className="small muted">Train as</span>
-          {baseClasses(ix).map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={`btn small${c.id === classId ? " btn-on" : ""}`}
-              aria-pressed={c.id === classId}
-              title={`${c.blurb} Main stats ${c.mainStats.join(" + ")}.${c.id === fit ? " Their best fit." : ""}`}
-              onClick={() => pick(c.id)}
-            >
-              <Icon icon={c.icon} name={c.name} size={18} /> {c.name}
-              {c.id === fit ? " ★" : ""}
-            </button>
-          ))}
-        </div>
+      {training ? (
+        <ClassPicker
+          stats={h.stats}
+          training={{
+            ...tr,
+            pick: (id) => {
+              tr.pick(id);
+              setAsking(null);
+            },
+          }}
+        />
       ) : null}
       <p className="muted small quiet">{cls.blurb}</p>
-      <RecruitStats recruit={h} hero={hero} />
+      {training ? <PointsGrid stats={h.stats} training={tr} /> : <PlainStats hero={hero} />}
+      <MoreNumbers hero={hero} />
       <RecruitPersonality hero={hero} town={town} />
       <p className="small quiet recruit-kit">
         <span className="muted">{h.untrained ? "Comes with nothing. Usual kit" : "Brings"}</span>
@@ -151,7 +148,17 @@ export function RecruitCard({
             {asking === "hire" ? (
               <>
                 Sign <strong>{h.name}</strong> as a <strong>{cls.name.toLowerCase()}</strong> for{" "}
-                {gold(price)}?{h.untrained && !town.camp ? " Their first class is for good." : ""}
+                {gold(price)}?
+                {training ? (
+                  <>
+                    {" "}
+                    Training:{" "}
+                    {Object.entries(tr.spend)
+                      .map(([k, n]) => `${k} +${n}`)
+                      .join(", ") || "none"}
+                    . Their class and training are for good.
+                  </>
+                ) : null}
               </>
             ) : (
               <>
@@ -168,7 +175,13 @@ export function RecruitCard({
               onClick={() =>
                 act((t) =>
                   asking === "hire"
-                    ? hire(ix, t, h.id, h.untrained ? classId : undefined)
+                    ? hire(
+                        ix,
+                        t,
+                        h.id,
+                        h.untrained ? classId : undefined,
+                        training ? tr.spend : undefined,
+                      )
                     : hirePorter(ix, t, h.id),
                 )
               }
@@ -209,54 +222,33 @@ export function RecruitCard({
   );
 }
 
-/**
- * The seven stats after training, each with what training did to the
- * recruit's own number (M9.09), then the numbers they make, folded away.
- */
-function RecruitStats({ recruit: h, hero }: { recruit: Hero; hero: Hero }) {
+/** The seven stats, for someone who isn't placing training points. */
+function PlainStats({ hero }: { hero: Hero }) {
   const sheet = heroSheet(ix, hero);
   return (
-    <>
-      <dl className="stat-grid">
-        {STATS.map((s) => {
-          const drill = h.untrained ? hero.stats[s] - h.stats[s] : 0;
-          const gear = sheet.stats[s] - hero.stats[s];
-          return (
-            <div
-              key={s}
-              title={[
-                `${h.stats[s]} their own`,
-                drill
-                  ? `${drill > 0 ? "+" : ""}${drill} from ${ix.cls(hero.classId).name} training`
-                  : "",
-                gear ? `${gear > 0 ? "+" : ""}${gear} from gear and perks` : "",
-              ]
-                .filter(Boolean)
-                .join(", ")}
-            >
-              <dt>{s}</dt>
-              <dd>
-                {sheet.stats[s]}
-                {drill ? (
-                  <sup className={drill > 0 ? "up" : "down"}>
-                    {drill > 0 ? "+" : "−"}
-                    {Math.abs(drill)}
-                  </sup>
-                ) : null}
-              </dd>
-            </div>
-          );
-        })}
-      </dl>
-      <details className="recruit-more small">
-        <summary className="muted">
-          HP {sheet.derived.maxHp}
-          {usesMana(hero) ? ` · Mana ${sheet.derived.mana}` : ""} · Attack {sheet.derived.attack} ·
-          Spell {sheet.derived.spellPower}
-        </summary>
-        <StatSheet hero={hero} full />
-      </details>
-    </>
+    <dl className="stat-grid">
+      {STATS.map((s) => (
+        <div key={s}>
+          <dt>{s}</dt>
+          <dd>{sheet.stats[s]}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** The numbers the stats make, on one line that opens to the full sheet. */
+function MoreNumbers({ hero }: { hero: Hero }) {
+  const sheet = heroSheet(ix, hero);
+  return (
+    <details className="recruit-more small">
+      <summary className="muted">
+        HP {sheet.derived.maxHp}
+        {usesMana(hero) ? ` · Mana ${sheet.derived.mana}` : ""} · Attack {sheet.derived.attack} ·
+        Spell {sheet.derived.spellPower}
+      </summary>
+      <StatSheet hero={hero} full />
+    </details>
   );
 }
 

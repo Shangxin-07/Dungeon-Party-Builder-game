@@ -119,7 +119,7 @@ describe("a party out in the dungeon", () => {
     while (t.roster.length < Math.min(6, rosterSize(ix, t))) {
       if (!t.recruits.length) t = rest(ix, t, heroNames);
       if (!t.recruits.length) continue;
-      t = hire(ix, t, t.recruits[0]!.id, "fighter");
+      t = hire(ix, t, t.recruits[0]!.id);
       t = kitOut(ix, t, t.roster.at(-1)!.id);
     }
     const home = t.roster.filter((h) => !awaySet(t).has(h.id));
@@ -158,7 +158,7 @@ describe("overdue and possibly lost", () => {
       t = rest(ix, t, heroNames);
     }
     expect(outingStatus(ix, t, t.outings[0]!)).toBe("overdue");
-    expect(t.news.at(-1)!.text).toMatch(/overdue/);
+    expect(t.news.some((n) => n.day === t.day && /overdue/.test(n.text))).toBe(true);
     t = rest(ix, t, heroNames);
     expect(outingStatus(ix, t, t.outings[0]!)).toBe("lost");
     expect(t.news.some((n) => /may be lost/.test(n.text))).toBe(true);

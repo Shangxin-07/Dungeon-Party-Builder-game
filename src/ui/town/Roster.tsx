@@ -5,9 +5,9 @@ import { ItemIcon } from "../art/Icon";
 import { Portrait } from "../art/Portrait";
 import { Fold } from "../Fold";
 import { useState } from "react";
+import type { Spend } from "../../sim/training";
+import { ClassPicker, PointsGrid, useTraining } from "./Training";
 import {
-  baseClasses,
-  bestClass,
   EQUIP_SLOTS,
   fatigueTier,
   heroSheet,
@@ -104,8 +104,6 @@ export function Roster({ town, act }: { town: TownState; act: Act }) {
 /** A porter's progress towards training, and the class picker once they're ready. */
 export function PorterTraining({ hero: h, act }: { hero: Hero; act: Act }) {
   const left = fightsToTrain(ix, h);
-  const fit = bestClass(ix, h.stats);
-  const [classId, setClassId] = useState(fit);
   const need = ix.lib.town.porters.trainAfterFights;
   return (
     <div className="small">
@@ -117,26 +115,10 @@ export function PorterTraining({ hero: h, act }: { hero: Hero; act: Act }) {
       {left ? (
         <progress max={need} value={need - left} aria-label="Watched fights" />
       ) : (
-        <p>
-          <label>
-            Train as{" "}
-            <select value={classId} onChange={(e) => setClassId(e.target.value)}>
-              {baseClasses(ix).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                  {c.id === fit ? " (best fit)" : ""}
-                </option>
-              ))}
-            </select>
-          </label>{" "}
-          <button
-            type="button"
-            className="btn"
-            onClick={() => act((t) => trainPorter(ix, t, h.id, classId))}
-          >
-            Train
-          </button>
-        </p>
+        <TrainBox
+          hero={h}
+          onTrain={(classId, spend) => act((t) => trainPorter(ix, t, h.id, classId, spend))}
+        />
       )}
     </div>
   );
@@ -144,8 +126,6 @@ export function PorterTraining({ hero: h, act }: { hero: Hero; act: Act }) {
 
 /** A miner's class picker, once the camp is held (DESIGN.md §8). */
 export function MinerTraining({ town, hero: h, act }: { town: TownState; hero: Hero; act: Act }) {
-  const fit = bestClass(ix, h.stats);
-  const [classId, setClassId] = useState(fit);
   if (town.camp)
     return (
       <p className="small quiet">
@@ -153,27 +133,56 @@ export function MinerTraining({ town, hero: h, act }: { town: TownState; hero: H
       </p>
     );
   return (
-    <p className="small">
-      <label>
-        Train as{" "}
-        <select value={classId} onChange={(e) => setClassId(e.target.value)}>
-          {baseClasses(ix).map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-              {c.id === fit ? " (best fit)" : ""}
-            </option>
-          ))}
-        </select>
-      </label>{" "}
-      <button
-        type="button"
-        className="btn"
-        onClick={() => act((t) => trainMiner(ix, t, h.id, classId))}
-      >
-        Train
-      </button>{" "}
-      <span className="muted">The camp is held: pick the class they'll delve as.</span>
-    </p>
+    <div className="small">
+      <p className="quiet muted">The camp is held: pick the class they'll delve as.</p>
+      <TrainBox
+        hero={h}
+        onTrain={(classId, spend) => act((t) => trainMiner(ix, t, h.id, classId, spend))}
+      />
+    </div>
+  );
+}
+
+/** Class buttons, training points and a Train button with one "are you sure" (M9.10). */
+function TrainBox({
+  hero: h,
+  onTrain,
+}: {
+  hero: Hero;
+  onTrain: (classId: string, spend: Spend) => void;
+}) {
+  const tr = useTraining(h.stats);
+  const [asking, setAsking] = useState(false);
+  const name = ix.cls(tr.classId).name;
+  return (
+    <div className="train-box">
+      <ClassPicker stats={h.stats} training={tr} />
+      <PointsGrid stats={h.stats} training={tr} />
+      {asking ? (
+        <div className="recruit-confirm">
+          <p className="small">
+            Train <strong>{h.name}</strong> as a <strong>{name.toLowerCase()}</strong>? It's for
+            good.
+          </p>
+          <div className="hero-actions">
+            <button
+              type="button"
+              className="btn btn-on"
+              onClick={() => onTrain(tr.classId, tr.spend)}
+            >
+              Yes, train {h.name}
+            </button>
+            <button type="button" className="btn" onClick={() => setAsking(false)}>
+              Not yet
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button type="button" className="btn" disabled={!!tr.wrong} onClick={() => setAsking(true)}>
+          Train as {name.toLowerCase()}
+        </button>
+      )}
+    </div>
   );
 }
 
