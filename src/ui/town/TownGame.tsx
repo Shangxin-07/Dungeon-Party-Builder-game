@@ -12,7 +12,6 @@ import {
   rest,
   rosterSize,
   TownError,
-  waitUntilBack,
   renownRank,
   retainerBill,
   foodGrown,
@@ -587,16 +586,6 @@ export function TownBar({ town, act }: { town: TownState; act: Act }) {
       >
         Next day
       </button>
-      {town.outings.length ? (
-        <button
-          type="button"
-          className="btn"
-          title="Pass the days until a party is back or heard of, or something else happens"
-          onClick={() => act((t) => waitUntilBack(ix, t, heroNames))}
-        >
-          Wait until someone's back
-        </button>
-      ) : null}
     </div>
   );
 }

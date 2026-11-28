@@ -10,11 +10,9 @@ import {
   outingStatus,
   planRescue,
   rescueTarget,
-  waitUntilBack,
   type Outing,
   type TownState,
 } from "../../sim/town";
-import { heroNames } from "../../content";
 import { ix } from "../game";
 import { Portrait } from "../art/Portrait";
 import { partyOutline } from "./Party";
@@ -43,16 +41,6 @@ export function AwayPanel({ town, act }: { town: TownState; act: Act }) {
       title="Down below"
       defaultOpen
       summary={outings.map((o) => `${o.name}: ${awayLine(town, o).text}`).join("; ")}
-      actions={
-        <button
-          type="button"
-          className="btn"
-          title="Pass the days until a party is back or heard of, or something else happens"
-          onClick={() => act((t) => waitUntilBack(ix, t, heroNames))}
-        >
-          Wait until someone's back
-        </button>
-      }
     >
       <ul className="sites">
         {outings.map((o) => {
