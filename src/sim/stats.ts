@@ -29,12 +29,17 @@ export function effectiveStats(base: StatBlock, passives: readonly PassiveEffect
 }
 
 /** The DESIGN.md §5 formulas, before gear and perks. */
-export function baseDerived(s: StatBlock, ranged: boolean): DerivedBlock {
+export function baseDerived(s: StatBlock, ranged: boolean, finesse = false): DerivedBlock {
   return {
     maxHp: 10 + s.END * 3 + s.STR,
     mana: s.INT * 2 + s.WIL,
-    // Melee hits come from muscle; bows and slings from a steady eye.
-    attack: ranged ? Math.round((s.DEX + s.PER) / 2) : s.STR,
+    // Melee hits come from muscle; bows and slings from a steady eye. Finesse
+    // weapons (daggers, M9.04) from muscle or quick hands, whichever is better.
+    attack: ranged
+      ? Math.round((s.DEX + s.PER) / 2)
+      : finesse
+        ? Math.max(s.STR, s.DEX)
+        : s.STR,
     accuracy: s.DEX + Math.floor(s.PER / 2),
     evasion: s.DEX + Math.floor(s.PER / 2),
     initiative: s.DEX + s.PER,
@@ -52,9 +57,9 @@ export function baseDerived(s: StatBlock, ranged: boolean): DerivedBlock {
 export function computeDerived(
   stats: StatBlock,
   passives: readonly PassiveEffect[],
-  opts: { ranged?: boolean; overrides?: Partial<DerivedBlock> } = {},
+  opts: { ranged?: boolean; finesse?: boolean; overrides?: Partial<DerivedBlock> } = {},
 ): DerivedBlock {
-  const d = { ...baseDerived(stats, opts.ranged ?? false), ...opts.overrides };
+  const d = { ...baseDerived(stats, opts.ranged ?? false, opts.finesse), ...opts.overrides };
   for (const p of passives) {
     if (p.type === "modifyStat" && !isPrimary(p.stat)) d[p.stat] += p.amount;
   }

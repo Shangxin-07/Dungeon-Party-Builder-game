@@ -68,6 +68,19 @@ describe("dual-wielding daggers (M9.04)", () => {
     expect(() => equip(ix, c, id, "dagger", "offhand")).toThrow(/both hands/);
   });
 
+  it("daggers hit from DEX or STR, whichever is higher (finesse)", () => {
+    const s = hero("scout");
+    s.stats = { ...s.stats, STR: 9, DEX: 15 };
+    s.equipment = { weapon: "dagger" };
+    expect(heroSheet(ix, s).derived.attack).toBe(15 + 2);
+    s.stats = { ...s.stats, STR: 16, DEX: 15 };
+    expect(heroSheet(ix, s).derived.attack).toBe(16 + 2);
+    // A sword still hits from STR alone.
+    s.stats = { ...s.stats, STR: 9, DEX: 15 };
+    s.equipment = { weapon: "sword" };
+    expect(heroSheet(ix, s).derived.attack).toBeLessThan(15);
+  });
+
   it("a plain attack is followed by a blow from the other hand", () => {
     const s = hero("scout");
     s.row = "front";

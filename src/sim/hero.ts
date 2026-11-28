@@ -335,6 +335,7 @@ export function heroSheet(ix: Index, hero: Hero): HeroSheet {
   const weapon = hero.equipment.weapon ? ix.item(hero.equipment.weapon) : undefined;
   const derived = computeDerived(stats, passives, {
     ranged: weapon?.ranged ?? false,
+    finesse: weapon?.tags.includes("finesse") ?? false,
   });
   const skills: Record<string, number> = {};
   for (const s of ix.lib.skills) skills[s.id] = skillValue(s, stats, passives);
