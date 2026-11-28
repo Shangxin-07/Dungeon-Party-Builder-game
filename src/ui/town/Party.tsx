@@ -105,10 +105,26 @@ export function PartyPanel({
     Math.max(0, ((bestScout?.value ?? 0) + sr.slipBase) / 100),
   );
 
+  // The party's outline (M9.07): its alignment's colour, purple when divided.
+  const align = party.length ? partyAlignment(ix, party) : undefined;
+  const outline = align ? (align.alignment?.frame ?? "#9a6fd0") : undefined;
+  const alignTrouble = align && (align.divided || align.mismatched.length || align.friction);
+  // Tired heroes in one line instead of one each.
+  const TIRED = /^(.+) is tired \(fatigue (\d+)\) and will fight worse\.$/;
+  const tired = warnings.flatMap((w) => {
+    const m = TIRED.exec(w);
+    return m ? [`${m[1]} ${m[2]}`] : [];
+  });
+  // The alignment line above already says what's wrong with the mix.
+  const alignText = align ? describeParty(ix, party) : "";
+  const otherWarnings = warnings.filter((w) => !TIRED.test(w) && !alignText.includes(w));
+
   return (
     <Fold
       id="party"
       defaultOpen
+      className={outline ? "party-outlined" : ""}
+      style={outline ? { borderColor: outline } : undefined}
       actions={
         <button
           type="button"
@@ -124,7 +140,16 @@ export function PartyPanel({
         <>
           The party{" "}
           <span className="muted">
-            ({party.length} {party.length === 1 ? "hero" : "heroes"})
+            ({party.length} {party.length === 1 ? "hero" : "heroes"}
+            {align ? (
+              <>
+                ,{" "}
+                <span style={{ color: outline }}>
+                  {align.alignment ? align.alignment.name : "divided"}
+                </span>
+              </>
+            ) : null}
+            )
           </span>
         </>
       }
@@ -195,19 +220,25 @@ export function PartyPanel({
         ))}
       </div>
       {party.length ? <LeaderLine town={town} act={act} /> : null}
-      {party.length ? (
+      {alignTrouble ? (
         <p
-          className={`small${partyAlignment(ix, party).divided || partyAlignment(ix, party).mismatched.length ? " warn" : " muted"}`}
+          className="small warn"
           title="Two-thirds of the party set its alignment; everyone else should be within one step (Good and Evil are two apart). Clashes cost morale every day down there."
         >
-          {describeParty(ix, party)}
+          {alignText.replace(/^Party alignment: [^.]*\.\s*/, "")}
         </p>
       ) : null}
-      {tiesAmong(ix, party).map((t) => (
-        <p key={`${t.a.id}-${t.b.id}`} className="small muted" title={t.tie.name}>
-          {tieText(t)}
+      {tiesAmong(ix, party).length ? (
+        <p className="small muted party-ties">
+          Ties:{" "}
+          {tiesAmong(ix, party).map((t, i) => (
+            <span key={`${t.a.id}-${t.b.id}`} title={`${t.tie.name}: ${tieText(t)}`}>
+              {i ? ", " : ""}
+              {t.a.name} &amp; {t.b.name}
+            </span>
+          ))}
         </p>
-      ))}
+      ) : null}
       {party.length ? null : (
         <p className="muted small">
           Add heroes from the roster below. There's no limit: the leader's command says how many go
@@ -215,11 +246,12 @@ export function PartyPanel({
         </p>
       )}
 
-      <div className="controls">
+      <div className="controls party-orders">
         {target ? null : (
           <label title="Scouts slip past fights where their best scout can and bring home what they saw. A sneak party creeps to a lair the scouts found and back, as quiet as its loudest member, to fetch what it can without waking the beast.">
             Mission{" "}
             <select
+              className="mission-pick"
               value={sneaking ? "sneak" : scouting ? "scout" : "delve"}
               onChange={(e) =>
                 act((t) => {
@@ -242,7 +274,7 @@ export function PartyPanel({
               <option value="delve">delve</option>
               <option value="scout">scout</option>
               <option value="sneak" disabled={!openLairs.length}>
-                sneak{openLairs.length ? "" : " (scouts haven't found a lair yet)"}
+                sneak{openLairs.length ? "" : " (no lair yet)"}
               </option>
             </select>
           </label>
@@ -271,7 +303,7 @@ export function PartyPanel({
           </label>
         )}
         <label>
-          {scouting ? "Scout down to floor" : "Go to floor"}{" "}
+          {scouting ? "Scout to" : "Floor"}{" "}
           <select
             value={town.orders.targetFloor}
             onChange={(e) =>
@@ -285,8 +317,8 @@ export function PartyPanel({
             ))}
           </select>
         </label>
-        <label>
-          Orders{" "}
+        <label className="wide" title="When the party turns back">
+          Retreat{" "}
           <select
             value={retreatId}
             onChange={(e) => {
@@ -317,7 +349,7 @@ export function PartyPanel({
           <label
             title={`After walking floor ${town.orders.targetFloor}, stay and hunt until this share of its monsters are dead. Each extra room takes about ${ix.lib.time.hunt} hours plus any fight; retreat orders still apply.`}
           >
-            Hunting{" "}
+            Hunt{" "}
             <select
               value={town.orders.clearPercent ?? 0}
               onChange={(e) =>
@@ -329,10 +361,10 @@ export function PartyPanel({
                 )
               }
             >
-              <option value={0}>just walk the floor</option>
+              <option value={0}>just walk it</option>
               {[25, 50, 75, 100].map((p) => (
                 <option key={p} value={p}>
-                  thin floor {town.orders.targetFloor} out by {p}%
+                  thin it out {p}%
                 </option>
               ))}
             </select>
@@ -340,6 +372,7 @@ export function PartyPanel({
         )}
         {canSeal && !shut ? (
           <label
+            className="wide"
             title={`Carry a barricade down and seal the stairs below floor ${floor}: nothing comes up them until the floor below wears it down. Built after the floor is walked, before any hunting. A party that turns back first brings the materials home.`}
           >
             Stairs{" "}
@@ -354,7 +387,7 @@ export function PartyPanel({
                 );
               }}
             >
-              <option value="">leave the stairs open</option>
+              <option value="">leave them open</option>
               {stones.map((id) => (
                 <option
                   key={id}
@@ -469,36 +502,36 @@ export function PartyPanel({
         </p>
       ) : null}
 
-      <p className="small">
-        Porters{" "}
-        <span className="muted">
-          ({town.porters.length}/{ix.lib.town.porters.slots})
-        </span>
-        :{" "}
-        {town.porters.length ? (
-          town.porters.map((id) => town.roster.find((x) => x.id === id)?.name).join(", ") +
-          ` ${town.porters.length === 1 ? "carries" : "carry"} ${town.porters.reduce((s, id) => {
-            const p = town.roster.find((x) => x.id === id);
-            return s + (p ? heroSheet(ix, p).derived.carrySlots : 0);
-          }, 0)} more slots of loot.`
-        ) : (
-          <span className="muted">
-            none. Porters carry loot, don't fight, and run for home if the party falls.
-          </span>
-        )}
+      <p
+        className="small muted party-porters"
+        title="Porters carry loot, don't fight, and run for home if the party falls. Add them from the roster."
+      >
+        Porters {town.porters.length}/{ix.lib.town.porters.slots}
+        {town.porters.length
+          ? `: ${town.porters.map((id) => town.roster.find((x) => x.id === id)?.name).join(", ")}, +${town.porters.reduce(
+              (s, id) => {
+                const p = town.roster.find((x) => x.id === id);
+                return s + (p ? heroSheet(ix, p).derived.carrySlots : 0);
+              },
+              0,
+            )} loot slots`
+          : ""}
       </p>
       <ScoutingReport town={town} party={party} />
-      {warnings.length ? (
+      {tired.length ? (
+        <p className="small warn" title={warnings.filter((w) => TIRED.test(w)).join(" ")}>
+          Tired, will fight worse: {tired.join(", ")}
+        </p>
+      ) : null}
+      {otherWarnings.length ? (
         <ul className="warnings">
-          {warnings.map((w) => (
+          {otherWarnings.map((w) => (
             <li key={w}>{w}</li>
           ))}
         </ul>
       ) : null}
-      <button type="button" className="btn btn-main" disabled={!!why} onClick={() => onLaunch()}>
-        Send them down
-      </button>
-      {why ? <span className="muted small"> {why}</span> : null}
+      {/* The send button is on the panel's heading (M9.07); here, only why it can't go. */}
+      {why ? <p className="muted small">{why}</p> : null}
     </Fold>
   );
 }
