@@ -1752,6 +1752,30 @@ sup.down {
   grid-column: 1 / -1;
 }
 
+/* M9.26: headings between the roster's groups when it is sorted by party or alignment. */
+.roster-group-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #3a3426;
+}
+
+.roster-group-head:first-child {
+  margin-top: 0;
+}
+
+.roster-group-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.roster-sort select {
+  font-size: inherit;
+}
+
 .hero-toggle {
   display: flex;
   align-items: center;

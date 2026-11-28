@@ -48,15 +48,46 @@ import { useFold } from "../Fold";
 import { commandOf, leadershipOf } from "../../sim/leadership";
 import { AbilityList, ClassList, LevelUpPicker, MoraleLog, PerkList, Personality } from "../Heroes";
 import { SLOT_NAMES, describeItem, tally, type Act } from "./shared";
+import { rosterSortSetting, setRosterSortSetting } from "../settings";
+import { ROSTER_SORTS, sortRoster, type RosterSort } from "./rosterSort";
+
+/** The roster's sort, remembered in this browser (M9.26). */
+function useRosterSort(): [RosterSort, (s: RosterSort) => void] {
+  const [sort, setSort] = useState<RosterSort>(() => {
+    const s = rosterSortSetting();
+    return s in ROSTER_SORTS ? (s as RosterSort) : "hired";
+  });
+  const pick = (s: RosterSort) => {
+    setSort(s);
+    setRosterSortSetting(s);
+  };
+  return [sort, pick];
+}
 
 export function Roster({ town, act }: { town: TownState; act: Act }) {
   const home = town.roster.filter((h) => !outingOf(town, h.id));
   const away = town.roster.length - home.length;
+  const [sort, setSort] = useRosterSort();
+  const groups = sortRoster(ix, town, home, sort);
+  // A hero listed twice (in two parties) keeps the page id on their first card only.
+  const seen = new Set<string>();
   return (
     <Fold
       id="roster"
       title="Roster"
       defaultOpen
+      actions={
+        <label className="roster-sort small">
+          Sort{" "}
+          <select value={sort} onChange={(e) => setSort(e.target.value as RosterSort)}>
+            {Object.entries(ROSTER_SORTS).map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
+      }
       summary={`${town.roster.length} in the guild${away ? `, ${away} away below` : ""}`}
     >
       {!town.camp && town.roster.some((h) => !h.porter && inCampClass(ix, h)) ? (
@@ -71,9 +102,21 @@ export function Roster({ town, act }: { town: TownState; act: Act }) {
       ) : null}
       {home.length ? (
         <ul className="hero-cards">
-          {home.map((h) => (
-            <HeroCard key={h.id} town={town} hero={h} act={act} />
-          ))}
+          {groups.map((g) => [
+            g.heading ? (
+              <li key={`${g.key}-head`} className="roster-group-head">
+                <h3>{g.heading}</h3>
+                <span className="muted small">{g.heroes.length}</span>
+              </li>
+            ) : null,
+            ...g.heroes.map((h) => {
+              const first = !seen.has(h.id);
+              seen.add(h.id);
+              return (
+                <HeroCard key={`${g.key}-${h.id}`} town={town} hero={h} act={act} pageId={first} />
+              );
+            }),
+          ])}
         </ul>
       ) : away ? (
         <p className="muted">Everyone is down below.</p>
@@ -214,7 +257,18 @@ function useHeroTab(): [HeroTab, (t: HeroTab) => void] {
  * A hero on the roster: a compact card (name, bars, anything that needs an
  * answer, party and row buttons) that opens into the full sheet on click.
  */
-export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; act: Act }) {
+export function HeroCard({
+  town,
+  hero: h,
+  act,
+  pageId = true,
+}: {
+  town: TownState;
+  hero: Hero;
+  act: Act;
+  /** False on a hero's second card (sorted by party), so the page id stays unique. */
+  pageId?: boolean;
+}) {
   const inParty = town.party.includes(h.id) || town.porters.includes(h.id);
   const rec = town.records[h.id];
   const sheet = heroSheet(ix, h);
@@ -233,7 +287,7 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
 
   return (
     <li
-      id={`hero-card-${h.id}`}
+      id={pageId ? `hero-card-${h.id}` : undefined}
       className={`hero-card compact${inParty ? " in-party" : ""}${open ? " open" : ""}`}
     >
       <button

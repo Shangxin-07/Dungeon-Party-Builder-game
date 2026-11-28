@@ -76,3 +76,10 @@ export function setPageWidth(w: PageWidth) {
   set(WIDTH_KEY, w === "full" ? w : null);
   applyPageWidth(w);
 }
+
+const ROSTER_SORT_KEY = "dpb-ui-roster-sort";
+
+/** How the roster is sorted (M9.26), as one of ROSTER_SORTS' keys; "hired" when unset. */
+export const rosterSortSetting = (): string => get(ROSTER_SORT_KEY) ?? "hired";
+
+export const setRosterSortSetting = (s: string) => set(ROSTER_SORT_KEY, s === "hired" ? null : s);
