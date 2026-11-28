@@ -3,9 +3,19 @@
  * summary (and optional buttons) that stay visible while it's closed. Which
  * panels are open is remembered in this browser only, never in the save.
  */
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 
 const KEY = "dpb-ui-open";
+/** M9.22: the one open panel of each side pane, by pane. */
+const GROUP_KEY = "dpb-ui-pane-open";
+const GROUP_EVENT = "dpb-group-open";
 const OPEN_EVENT = "dpb-open-fold";
 const TARGET_EVENT = "dpb-show-target";
 
@@ -70,23 +80,72 @@ function remember(id: string, open: boolean) {
   }
 }
 
+/**
+ * One panel open at a time (M9.22, #122): the side panes are accordions. Each
+ * pane is a group; opening a panel in it closes the others. Which one is open
+ * is remembered per pane ("" for none). Panels inside a panel aren't grouped.
+ */
+const FoldGroupContext = createContext<string | undefined>(undefined);
+
+export function FoldGroup({ name, children }: { name: string; children: ReactNode }) {
+  return <FoldGroupContext.Provider value={name}>{children}</FoldGroupContext.Provider>;
+}
+
+function groupsStored(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(GROUP_KEY) ?? "{}") ?? {};
+  } catch {
+    return {};
+  }
+}
+
+/** The open panel of each group this visit, starting from what was remembered. */
+let groupOpen: Record<string, string> | undefined;
+const groups = () => (groupOpen ??= groupsStored());
+
+function setGroupOpen(group: string, id: string) {
+  groups()[group] = id;
+  try {
+    localStorage.setItem(GROUP_KEY, JSON.stringify(groups()));
+  } catch {
+    // Blocked storage: the pane just forgets.
+  }
+  window.dispatchEvent(new CustomEvent(GROUP_EVENT, { detail: { group, id } }));
+}
+
 /** Open/closed state for `id`, remembered across visits. */
-export function useFold(id: string, defaultOpen: boolean) {
-  const [open, setOpen] = useState(() => remembered()[id] ?? defaultOpen);
+export function useFold(id: string, defaultOpen: boolean, group?: string) {
+  const [open, setOpen] = useState(() => {
+    if (!group) return remembered()[id] ?? defaultOpen;
+    const g = groups();
+    // Nothing chosen in this pane yet: the first panel that would be open claims it.
+    if (g[group] === undefined && (remembered()[id] ?? defaultOpen)) g[group] = id;
+    return g[group] === id;
+  });
   useEffect(() => {
     const onOpen = (e: Event) => {
       if ((e as CustomEvent<string>).detail !== id) return;
-      remember(id, true);
+      if (group) setGroupOpen(group, id);
+      else remember(id, true);
       setOpen(true);
     };
+    const onGroup = (e: Event) => {
+      const d = (e as CustomEvent<{ group: string; id: string }>).detail;
+      if (d.group === group && d.id !== id) setOpen(false);
+    };
     window.addEventListener(OPEN_EVENT, onOpen);
-    return () => window.removeEventListener(OPEN_EVENT, onOpen);
-  }, [id]);
-  const toggle = () =>
-    setOpen((o) => {
-      remember(id, !o);
-      return !o;
-    });
+    if (group) window.addEventListener(GROUP_EVENT, onGroup);
+    return () => {
+      window.removeEventListener(OPEN_EVENT, onOpen);
+      if (group) window.removeEventListener(GROUP_EVENT, onGroup);
+    };
+  }, [id, group]);
+  const toggle = () => {
+    const next = !open;
+    if (group) setGroupOpen(group, next ? id : "");
+    else remember(id, next);
+    setOpen(next);
+  };
   return [open, toggle] as const;
 }
 
@@ -115,7 +174,8 @@ export function Fold({
   style?: CSSProperties;
   children: ReactNode;
 }) {
-  const [open, toggle] = useFold(id, defaultOpen);
+  const group = useContext(FoldGroupContext);
+  const [open, toggle] = useFold(id, defaultOpen, level === 2 ? group : undefined);
   const H = level === 2 ? "h2" : "h3";
   return (
     <section
@@ -143,7 +203,7 @@ export function Fold({
       </div>
       {open ? (
         <div id={`${id}-body`} className="fold-body">
-          {children}
+          <FoldGroupContext.Provider value={undefined}>{children}</FoldGroupContext.Provider>
         </div>
       ) : null}
     </section>

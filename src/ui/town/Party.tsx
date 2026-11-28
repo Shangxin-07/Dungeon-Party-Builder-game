@@ -74,7 +74,11 @@ function retreatShort(r: RetreatRule): string {
 /** Open the Roster and that hero's card, and bring it into view. */
 function showHeroCard(id: string) {
   openFold("roster");
-  showFold(`hero-${id}`, `hero-card-${id}`);
+  // The Roster may have been closed (M9.22: opening it closes the party), so
+  // its cards only exist once it has drawn.
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => showFold(`hero-${id}`, `hero-card-${id}`)),
+  );
 }
 
 export function partyOutline(heroes: readonly Hero[]): string | undefined {
