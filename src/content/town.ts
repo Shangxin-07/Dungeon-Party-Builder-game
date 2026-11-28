@@ -66,8 +66,6 @@ export default defineTownRules({
   // Every 3 levels a hero asks for 1 more gold a day on their retainer; Gold
   // heroes ask for half a share more of every haul instead.
   raises: { everyLevels: 3, amount: 1, share: 0.5, patienceDays: 3 },
-  // Two parties on file, so one can rest while the other goes down.
-  savedParties: 2,
   // Five average heroes resting in town double the builders' pace; never more.
   helpers: { perHero: 0.2, perStr: 0.05, maxPerDay: 1 },
   // Fallen raiders drop materials (DESIGN.md §8).

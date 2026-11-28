@@ -265,8 +265,6 @@ export interface TownRules {
    * every haul. Unanswered after `patienceDays`, it counts as a no.
    */
   raises: { everyLevels: number; amount: number; share: number; patienceDays: number };
-  /** How many parties the guild can keep on file (name, heroes, porters, orders). */
-  savedParties: number;
   /**
    * Heroes resting in town lend the builders a hand (M6). Each fit hero at
    * home (not away, not injured) adds `perHero` days of work a day, more or

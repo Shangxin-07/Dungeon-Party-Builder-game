@@ -18,6 +18,8 @@ import {
   partyOnFile,
   pickParty,
   renameParty,
+  addParty,
+  removeParty,
   sameOrders,
   saveParty,
   savedParty,
@@ -517,9 +519,10 @@ export const sameIds = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && a.every((id) => b.includes(id));
 
 /**
- * Parties on file (M6): keep two parties and alternate them, so one rests
- * while the other is down there. Pick one to make it the party, or pick and
- * send it in one go.
+ * Parties on file (M6; any number since M9.03): keep a few crews and swap a
+ * rested one in when another comes home hurt. One row each: name, faces,
+ * orders, how they are, and Pick / Send / Save / Remove. "Add party" keeps
+ * the current party as a new one.
  */
 export function PartiesOnFile({
   town,
@@ -530,11 +533,11 @@ export function PartiesOnFile({
   act: Act;
   onLaunch: (prep?: (t: TownState) => TownState) => void;
 }) {
-  const slots = Array.from({ length: ix.lib.town.savedParties }, (_, i) => i);
+  const slots = town.parties.map((_, i) => i);
   // One-click sends, usable with the list folded away.
   const quick = slots.flatMap((slot) => {
-    const p = savedParty(town, slot);
-    if (!p || !partyOnFile(town, slot).heroes.length) return [];
+    const p = savedParty(town, slot)!;
+    if (!partyOnFile(town, slot).heroes.length) return [];
     let why: string | undefined;
     try {
       why = cantLaunch(ix, pickParty(ix, town, slot));
@@ -554,24 +557,28 @@ export function PartiesOnFile({
       </button>,
     ];
   });
+  // The party being picked is already on file: adding it again would just copy it.
+  const onFileAlready = town.parties.some(
+    (p) => sameIds(p.heroes, town.party) && sameOrders(p.orders, town.orders),
+  );
   return (
     <Fold
       id="parties-on-file"
       level={3}
       className="parties-on-file"
       title="Parties on file"
-      summary={quick.length ? undefined : "none kept yet"}
+      summary={town.parties.length ? `${town.parties.length} kept` : "none kept yet"}
       actions={quick.length ? quick : undefined}
     >
-      <ul className="cards">
+      <ul className="party-rows">
         {slots.map((slot) => {
-          const p = savedParty(town, slot);
+          const p = savedParty(town, slot)!;
           const { heroes, porters } = partyOnFile(town, slot);
           let why: string | undefined;
           let tired: string[] = [];
           const out = heroes.map((h) => outingOf(town, h.id)).find(Boolean);
           if (out) why = `Away below with ${out.name}.`;
-          else if (p && heroes.length) {
+          else if (heroes.length) {
             try {
               const picked = pickParty(ix, town, slot);
               why = cantLaunch(ix, picked);
@@ -581,7 +588,6 @@ export function PartiesOnFile({
             }
           }
           const sameCrew =
-            !!p &&
             heroes.length > 0 &&
             sameIds(
               town.party,
@@ -590,112 +596,130 @@ export function PartiesOnFile({
           // Same heroes but other orders: launching now would not follow the card.
           const drifted = sameCrew && !sameOrders(p.orders, town.orders);
           const current = sameCrew && !drifted;
+          const status = why ? (
+            <span className="warn">{why}</span>
+          ) : tired.length ? (
+            <span className="warn" title={tired.join(" ")}>
+              {tired.length === 1 ? tired[0] : `${tired.length} of them are worn out`}
+            </span>
+          ) : heroes.length ? (
+            <span className="good">Rested and ready.</span>
+          ) : (
+            <span className="muted">Nobody from it is left in the guild.</span>
+          );
           return (
-            <li key={slot} className={`card party-card${current ? " in-party" : ""}`}>
-              {p ? (
-                <>
-                  <h4>
-                    <input
-                      key={p.name}
-                      className="party-name"
-                      aria-label={`Name of party ${slot + 1}`}
-                      defaultValue={p.name}
-                      maxLength={24}
-                      onBlur={(e) => {
-                        if (e.target.value.trim() !== p.name)
-                          act((t) => renameParty(ix, t, slot, e.target.value));
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                      }}
-                    />
-                    {current ? <span className="muted small"> (picked)</span> : null}
-                    {drifted ? (
-                      <span className="muted small"> (picked, with other orders)</span>
-                    ) : null}
-                  </h4>
-                  <p className="small">
-                    {heroes.length
-                      ? heroes.map((h) => `${h.name} (${heroTitle(ix, h, true)})`).join(", ")
-                      : "Nobody from it is left in the guild."}
-                    {porters.length
-                      ? `, carried for by ${porters.map((h) => h.name).join(", ")}`
-                      : ""}
-                  </p>
-                  <p className="small muted">
-                    {isScouting(p.orders)
-                      ? "Scouting down to floor"
-                      : isSneaking(p.orders)
-                        ? "Sneaking down to floor"
-                        : "Floor"}{" "}
-                    {p.orders.targetFloor}, {describeRetreat(p.orders.retreat)}
-                    {p.orders.clearPercent ? `, thinning it out by ${p.orders.clearPercent}%` : ""}.
-                  </p>
-                  {drifted ? (
-                    <p className="small warn">
-                      The party below has these heroes but not these orders: floor{" "}
-                      {town.orders.targetFloor}
-                      {town.orders.clearPercent
-                        ? `, thinning it out by ${town.orders.clearPercent}%`
-                        : ", no hunting"}
-                      . Pick to use the orders on file, or save the changes.
-                    </p>
-                  ) : null}
-                  {why ? (
-                    <p className="small warn">{why}</p>
-                  ) : tired.length ? (
-                    <p className="small warn">{tired.join(" ")}</p>
-                  ) : heroes.length ? (
-                    <p className="small good">Rested and ready.</p>
-                  ) : null}
-                  <div className="row-buttons">
-                    <button
-                      type="button"
-                      className="btn"
-                      disabled={!heroes.length || current}
-                      onClick={() => act((t) => pickParty(ix, t, slot))}
-                    >
-                      Pick
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-main"
-                      disabled={!!why || !heroes.length}
-                      onClick={() => onLaunch((t) => pickParty(ix, t, slot))}
-                    >
-                      Send {p.name}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn"
-                      disabled={!town.party.length}
-                      title="Keep the party below, its porters and orders, in this slot"
-                      onClick={() => act((t) => saveParty(ix, t, slot))}
-                    >
-                      {sameCrew ? "Save changes" : "Replace with current"}
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h4>{`Party ${String.fromCharCode(65 + slot)}`}</h4>
-                  <p className="small muted">
-                    Empty. Pick heroes and orders below, then keep them here.
-                  </p>
+            <li key={slot} className={`party-row${current ? " in-party" : ""}`}>
+              <div className="party-row-head">
+                <input
+                  key={p.name}
+                  className="party-name"
+                  aria-label={`Name of party ${slot + 1}`}
+                  defaultValue={p.name}
+                  maxLength={24}
+                  onBlur={(e) => {
+                    if (e.target.value.trim() !== p.name)
+                      act((t) => renameParty(ix, t, slot, e.target.value));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                  }}
+                />
+                {current ? <span className="muted small">picked</span> : null}
+                {drifted ? <span className="muted small">picked, other orders</span> : null}
+                <span className="row-buttons">
                   <button
                     type="button"
-                    className="btn"
+                    className="btn small"
+                    disabled={!heroes.length || current}
+                    onClick={() => act((t) => pickParty(ix, t, slot))}
+                  >
+                    Pick
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-main small"
+                    disabled={!!why || !heroes.length}
+                    title={why}
+                    onClick={() => onLaunch((t) => pickParty(ix, t, slot))}
+                  >
+                    Send
+                  </button>
+                </span>
+              </div>
+              <div className="party-row-faces">
+                {heroes.map((h) => (
+                  <span key={h.id} title={`${h.name}, ${heroTitle(ix, h, true)}`}>
+                    <Portrait hero={h} size={30} />
+                  </span>
+                ))}
+                {porters.map((h) => (
+                  <span key={h.id} className="porter-face" title={`${h.name}, porter`}>
+                    <Portrait hero={h} size={24} />
+                  </span>
+                ))}
+                <span className="small muted party-row-orders">
+                  {isScouting(p.orders) ? "Scout to " : isSneaking(p.orders) ? "Sneak to " : ""}
+                  floor {p.orders.targetFloor}
+                  {p.orders.clearPercent ? `, thin ${p.orders.clearPercent}%` : ""}
+                </span>
+              </div>
+              <div className="party-row-foot small" title={`${describeRetreat(p.orders.retreat)}`}>
+                {drifted ? (
+                  <span className="warn">
+                    These heroes are picked with other orders (floor {town.orders.targetFloor}).
+                    Pick to use the orders on file, or save the changes.
+                  </span>
+                ) : (
+                  status
+                )}
+                <span className="row-links">
+                  <button
+                    type="button"
+                    className="link small"
                     disabled={!town.party.length}
+                    title="Keep the party being picked, its porters and orders, here instead"
                     onClick={() => act((t) => saveParty(ix, t, slot))}
                   >
-                    Keep the current party here
+                    {sameCrew ? "save changes" : "replace with current"}
                   </button>
-                </>
-              )}
+                  <button
+                    type="button"
+                    className="link danger small"
+                    onClick={() => {
+                      if (confirm(`Take ${p.name} off file? Its heroes stay in the guild.`))
+                        act((t) => removeParty(ix, t, slot));
+                    }}
+                  >
+                    remove
+                  </button>
+                </span>
+              </div>
             </li>
           );
         })}
       </ul>
+      <p className="small party-add">
+        <button
+          type="button"
+          className="btn"
+          disabled={!town.party.length || onFileAlready}
+          title={
+            !town.party.length
+              ? "Pick some heroes first"
+              : onFileAlready
+                ? "This party is already on file"
+                : "Keep the party being picked, its porters and orders, as a new party on file"
+          }
+          onClick={() => act((t) => addParty(ix, t))}
+        >
+          + Add party
+        </button>{" "}
+        <span className="muted">
+          {town.parties.length
+            ? "Keep a few crews, so a rested one can go while another heals."
+            : "Pick heroes and orders, then keep them here to send again with one click."}
+        </span>
+      </p>
     </Fold>
   );
 }

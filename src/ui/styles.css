@@ -3012,3 +3012,70 @@ sup.down {
 .cmd-over {
   color: var(--bad);
 }
+
+/* M9.03: parties on file as rows, any number of them. */
+.party-rows {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.party-row {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.party-row.in-party {
+  border-color: var(--accent);
+}
+
+.party-row-head,
+.party-row-faces,
+.party-row-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.party-row-head .row-buttons {
+  margin-left: auto;
+  gap: 6px;
+}
+
+.party-row .btn.small {
+  padding: 2px 10px;
+  font-size: 0.85rem;
+}
+
+.party-row-faces {
+  gap: 3px;
+  margin: 2px 0;
+}
+
+.party-row-faces .porter-face {
+  opacity: 0.85;
+}
+
+.party-row-orders {
+  margin-left: auto;
+}
+
+.party-row-foot .row-links {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 10px;
+}
+
+.party-row-foot .link:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.party-add {
+  margin: 8px 0 4px;
+}
