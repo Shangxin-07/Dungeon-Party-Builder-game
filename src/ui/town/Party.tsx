@@ -49,6 +49,12 @@ import { stoneOf } from "../../sim/shards";
 import { heartOn, heartState } from "../../sim/dungeon";
 import type { Act } from "./shared";
 
+/** A party's outline colour (M9.07): its alignment's colour, purple when divided. */
+export function partyOutline(heroes: readonly Hero[]): string | undefined {
+  if (!heroes.length) return undefined;
+  return partyAlignment(ix, [...heroes]).alignment?.frame ?? "#9a6fd0";
+}
+
 export function PartyPanel({
   town,
   act,
@@ -107,7 +113,7 @@ export function PartyPanel({
 
   // The party's outline (M9.07): its alignment's colour, purple when divided.
   const align = party.length ? partyAlignment(ix, party) : undefined;
-  const outline = align ? (align.alignment?.frame ?? "#9a6fd0") : undefined;
+  const outline = partyOutline(party);
   const alignTrouble = align && (align.divided || align.mismatched.length || align.friction);
   // Tired heroes in one line instead of one each.
   const TIRED = /^(.+) is tired \(fatigue (\d+)\) and will fight worse\.$/;
@@ -642,7 +648,11 @@ export function PartiesOnFile({
             <span className="muted">Nobody from it is left in the guild.</span>
           );
           return (
-            <li key={slot} className={`party-row${current ? " in-party" : ""}`}>
+            <li
+              key={slot}
+              className={`party-row${current ? " in-party" : ""}${heroes.length ? " party-outlined" : ""}`}
+              style={heroes.length ? { borderColor: partyOutline(heroes) } : undefined}
+            >
               <div className="party-row-head">
                 <input
                   key={p.name}
