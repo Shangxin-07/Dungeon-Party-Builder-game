@@ -186,6 +186,12 @@ export interface BuildingArt {
    * the frame for that level; levels past the list use the last one.
    */
   sprite?: { sheet: string; frames: readonly number[] };
+  /**
+   * Picture art for the building's card only, when the map draws it another
+   * way (the palisade's ring). Same shape as `sprite`; until its sheet is
+   * registered the card shows a drawn stand-in.
+   */
+  card?: { sheet: string; frames: readonly number[] };
 }
 
 /** Where things stand on the town map (M8, DESIGN.md §19). Coordinates are map units. */
