@@ -46,8 +46,9 @@ export function App() {
               they're on their own: you'll hear how it went when they're back.
             </p>
             <p className="small muted">
-              The guild is on the left, the parties on the right, and the town, the pit and the
-              debriefs in the middle. On a phone each of them is a tab.
+              The guild and its parties are on the left, the market, buildings and workshops on the
+              right, and the town, the pit and the debriefs in the middle, with the news above and
+              the townsfolk below. On a phone each of them is a tab.
             </p>
           </div>
         </details>

@@ -57,8 +57,9 @@ import { CampPanel, PostsPanel } from "./Posts";
 import { ResearchPanel } from "./Research";
 import { WorkshopsPanel } from "./Workshops";
 import { FolkPanel } from "./Folk";
-import { OffersPanel } from "./Offers";
+import { NewsStrip } from "./NewsStrip";
 import { NeedsYou } from "./NeedsYou";
+import { OffersPanel } from "./Offers";
 import { foldTab, isCentre, needsByTab, needsYou, TABS, type CentreTab, type TabId } from "./needs";
 import { onOpenFold } from "../Fold";
 
@@ -330,9 +331,8 @@ export function TownPlay({ initial }: { initial: Game }) {
     toTop();
   };
   const counts = needsByTab(town, needs);
-  const count = (id: TabId) => (id === "news" ? needs.length : (counts[id] ?? 0));
+  const count = (id: TabId) => counts[id] ?? 0;
   const tabButton = (t: (typeof TABS)[number], on: boolean, className = "") => {
-    // News holds the needs-you list, so its count is everything waiting.
     const n = count(t.id);
     return (
       <button
@@ -372,9 +372,6 @@ export function TownPlay({ initial }: { initial: Game }) {
       {centre === "town" ? (
         <>
           <TownMap town={town} />
-          <Market town={town} act={act} />
-          {town.camp ? null : <WorkshopsPanel town={town} act={act} />}
-          {town.camp ? null : <FolkPanel town={town} act={act} />}
         </>
       ) : null}
       {centre === "pit" ? (
@@ -446,24 +443,41 @@ export function TownPlay({ initial }: { initial: Game }) {
       ) : null}
       <div className="town-grid">
         <div className={paneClass("left")} aria-label="The guild">
-          <Roster town={town} act={act} />
-          <Recruits town={town} act={act} />
-          <Buildings town={town} act={act} />
-        </div>
-        <div className={paneClass("centre")} ref={centreRef}>
-          <nav className="tabs town-tabs centre-tabs" aria-label="Centre">
-            {TABS.filter((t) => t.pane === "centre").map((t) =>
-              tabButton(t, !watching && centre === t.id),
-            )}
-          </nav>
-          {centreBody}
-        </div>
-        <div className={paneClass("right")} aria-label="Parties">
           <CampPanel town={town} act={act} />
           {town.camp ? <PostsPanel town={town} act={act} /> : null}
           <RestockPanel town={town} act={act} />
           {town.camp ? null : <PartyPanel town={town} act={act} onLaunch={launchParty} />}
           <AwayPanel town={town} act={act} />
+          <Roster town={town} act={act} />
+          <Recruits town={town} act={act} />
+        </div>
+        <div className="town-middle">
+          <NewsStrip
+            town={town}
+            needs={needs}
+            onAll={() => {
+              if (watching) setWatching(false);
+              pickTab("news");
+            }}
+          />
+          <div className={paneClass("centre")} ref={centreRef}>
+            <nav className="tabs town-tabs centre-tabs" aria-label="Centre">
+              {TABS.filter((t) => t.pane === "centre").map((t) =>
+                tabButton(t, !watching && centre === t.id),
+              )}
+            </nav>
+            {centreBody}
+          </div>
+          {town.camp ? null : (
+            <div className={`town-folk${!watching && tab === "town" ? " pane-shown" : ""}`}>
+              <FolkPanel town={town} act={act} />
+            </div>
+          )}
+        </div>
+        <div className={paneClass("right")} aria-label="The town's works">
+          <Market town={town} act={act} />
+          <Buildings town={town} act={act} />
+          {town.camp ? null : <WorkshopsPanel town={town} act={act} />}
         </div>
       </div>
     </section>
