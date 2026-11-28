@@ -901,7 +901,7 @@ sup.down {
   margin: 4px 0 0;
 }
 
-.recruit .btn {
+.recruit > .btn {
   margin-top: auto;
 }
 
@@ -3240,4 +3240,75 @@ sup.down {
 
 .party-orders select.mission-pick {
   width: 7.5em;
+}
+
+/* Recruit cards (M9.09): class picker as buttons, two equal ways to sign, a confirm step. */
+.recruit-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.recruit-classes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.recruit-classes .btn,
+.recruit-choice .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.recruit-classes .btn {
+  font-size: 0.8rem;
+  padding: 2px 8px;
+}
+
+.recruit-kit {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.recruit .personality p {
+  margin: 0 0 2px;
+}
+
+.recruit-more summary {
+  cursor: pointer;
+}
+
+.recruit-choice {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-top: auto;
+}
+
+.recruit-choice .btn {
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+  padding: 6px 10px;
+}
+
+.recruit-choice .btn .sub {
+  flex-basis: 100%;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.recruit-confirm {
+  margin-top: auto;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.recruit-confirm p {
+  margin: 0 0 6px;
 }
