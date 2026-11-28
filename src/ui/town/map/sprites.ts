@@ -22,6 +22,7 @@ import cottages from "./sprites/cottages.png";
 import gate from "./sprites/gate.png";
 import watchtower from "./sprites/watchtower.png";
 import mineCage from "./sprites/mine-cage.png";
+import palisade from "./sprites/palisade.png";
 
 export interface SpriteSheet {
   url: string;
@@ -52,6 +53,8 @@ export const SPRITES: Record<string, SpriteSheet> = {
   gate: { url: gate, frameWidth: 260, frameHeight: 222, count: 2, width: 74 }, // DPBG-0015-PitGate
   watchtower: { url: watchtower, frameWidth: 110, frameHeight: 257, count: 1, width: 32 }, // DPBG-0016-WatchTower
   "mine-cage": { url: mineCage, frameWidth: 260, frameHeight: 233, count: 2, width: 118 }, // DPBG-0017-MineCage
+  // Card only (art.card): the map draws the palisade as a ring round the pit.
+  palisade: { url: palisade, frameWidth: 260, frameHeight: 182, count: 3, width: 124 }, // DPBG-0041-ThePalisade
 };
 
 /** The frame of `sheet` for a building at `level` (1+): levels past the list use the last. */

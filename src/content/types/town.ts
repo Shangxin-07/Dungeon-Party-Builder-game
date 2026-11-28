@@ -188,8 +188,7 @@ export interface BuildingArt {
   sprite?: { sheet: string; frames: readonly number[] };
   /**
    * Picture art for the building's card only, when the map draws it another
-   * way (the palisade's ring). Same shape as `sprite`; until its sheet is
-   * registered the card shows a drawn stand-in.
+   * way (the palisade's ring). Same shape as `sprite`.
    */
   card?: { sheet: string; frames: readonly number[] };
 }

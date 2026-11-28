@@ -30,6 +30,6 @@ export default defineBuilding({
     },
   ],
   // Its look on the town map (M8, DESIGN.md §19); the card gets a picture of
-  // one stretch of wall per level (sheet DPBG-0041, art/building-prompts.md).
+  // one stretch of wall per level (sheet DPBG-0041).
   art: { shape: "wall", card: { sheet: "palisade", frames: [0, 1, 2] } },
 });
