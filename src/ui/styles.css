@@ -3079,3 +3079,120 @@ sup.down {
 .party-add {
   margin: 8px 0 4px;
 }
+
+/*
+ * M9.06: the formation as two bands (front above back), each row's heroes side
+ * by side as tiles: face, name and slim bars beside it, kit icons underneath.
+ */
+.formation.formation-bands {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.formation-bands .formation-row {
+  padding: 6px 10px 8px;
+}
+
+.formation-bands .formation-row > h3 {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.formation-heroes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px 12px;
+}
+
+.formation-bands .formation-hero + .formation-hero {
+  margin-top: 0;
+}
+
+.hero-tile {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-areas:
+    "face top"
+    "kit kit";
+  gap: 3px 8px;
+  align-items: start;
+}
+
+.tile-face {
+  grid-area: face;
+}
+
+.tile-top {
+  grid-area: top;
+  min-width: 0;
+}
+
+.tile-top .fh-head {
+  flex-wrap: nowrap;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.tile-top .slim-bars {
+  margin: 1px 0 0;
+  max-width: none;
+}
+
+.tile-top .slim {
+  grid-template-columns: minmax(0, 1fr) 3.6em;
+  gap: 4px;
+}
+
+.tile-top .slim-track {
+  height: 4px;
+}
+
+.tile-top .slim-num {
+  font-size: 0.66rem;
+}
+
+.tile-kit {
+  grid-area: kit;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+}
+
+.tile-kit .kit-strip {
+  gap: 2px;
+}
+
+.tile-kit .kit-gap {
+  width: 4px;
+}
+
+.tile-kit .fh-cost,
+.tile-kit .leader-mark {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* The leader's badge across the foot of their face. */
+.tile-face {
+  position: relative;
+  display: inline-flex;
+}
+
+.lead-badge {
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  transform: translateX(-50%);
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #1a140b;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+}
