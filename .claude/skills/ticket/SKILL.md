@@ -33,11 +33,12 @@ The user's request: $ARGUMENTS
 The setting lives in `~/.claude/ticket-settings.json`, for example `{"autoFile": true}`. If the
 file is missing or unreadable, auto-file is **off**, so every ticket is reviewed first.
 
-- **The request is just `auto on`, `auto off` or `auto`:** turn auto-file on or off by writing
+- **The request is just `auto on`, `auto off` or `auto`, with or without dashes** (`--auto on`,
+  `--auto off`, `--auto`, `-auto on`), and nothing else: turn auto-file on or off by writing
   that file, or report its current state for a bare `auto`. Say in one line what it now does,
   then stop. Don't file anything.
-- **The request starts with `--auto`:** auto-file this ticket, whatever the setting says. Remove
-  the flag from the request.
+- **The request starts with `--auto` followed by a description:** auto-file this ticket,
+  whatever the setting says. Remove the flag from the request.
 - **The request starts with `--review`:** review this ticket first, whatever the setting says.
   Remove the flag from the request.
 - **Otherwise:** follow the setting.
