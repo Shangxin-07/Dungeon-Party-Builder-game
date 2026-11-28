@@ -139,34 +139,44 @@ export function PartyPanel({
         </p>
       ) : null}
       <PartiesOnFile town={town} act={act} onLaunch={onLaunch} />
-      <div className="formation">
+      {/* M9.06: each row a band, its heroes side by side as small tiles. */}
+      <div className="formation formation-bands">
         {(["front", "back"] as const).map((r) => (
           <div key={r} className="formation-row">
-            <h3>{r === "front" ? "Front row" : "Back row"}</h3>
+            <h3>{r === "front" ? "Front" : "Back"}</h3>
             {row(r).length ? (
-              row(r).map((h) => (
-                <div key={h.id} className="formation-hero">
-                  <span title={`${h.name}: ${ix.alignment(h.alignment).name}`}>
-                    <Portrait hero={h} size={44} />
-                  </span>
-                  <div className="formation-info">
-                    <div className="fh-head">
-                      <strong>{h.name}</strong>
-                      <span className="muted small">{heroTitle(ix, h, true)}</span>
+              <div className="formation-heroes">
+                {row(r).map((h) => (
+                  <div key={h.id} className="formation-hero hero-tile">
+                    <span
+                      className="tile-face"
+                      title={`${h.name}: ${ix.alignment(h.alignment).name}`}
+                    >
+                      <Portrait hero={h} size={40} />
+                      {cmd.leader?.id === h.id ? <span className="lead-badge">Leader</span> : null}
+                    </span>
+                    <div className="tile-top">
+                      <div className="fh-head">
+                        <strong>{h.name}</strong>
+                        <span className="muted small">{heroTitle(ix, h, true)}</span>
+                      </div>
+                      <SlimBars hero={h} />
+                    </div>
+                    <div className="tile-kit">
+                      <KitStrip
+                        hero={h}
+                        slots={heroSheet(ix, h).derived.carrySlots}
+                        size={16}
+                        loot={false}
+                      />
                       {cmd.leader?.id === h.id ? (
                         <strong
-                          className="leader-mark small"
-                          title="Command used by the party / this leader's command"
+                          className={`small fh-cost cmd-${cmd.used < cmd.command ? "under" : cmd.used === cmd.command ? "full" : "over"}`}
+                          title="Leader: command used by the party / this leader's command"
                         >
-                          Leader{" "}
-                          <span
-                            className={`cmd-${cmd.used < cmd.command ? "under" : cmd.used === cmd.command ? "full" : "over"}`}
-                          >
-                            ({fmtCommand(cmd.used)}/{cmd.command})
-                          </span>
+                          ({fmtCommand(cmd.used)}/{cmd.command})
                         </strong>
-                      ) : null}
-                      {cmd.leader && cmd.leader.id !== h.id ? (
+                      ) : cmd.leader ? (
                         <span
                           className="muted small fh-cost"
                           title="Command this hero costs the leader (by alignment step)"
@@ -175,18 +185,9 @@ export function PartyPanel({
                         </span>
                       ) : null}
                     </div>
-                    <div className="fh-body">
-                      <KitStrip
-                        hero={h}
-                        slots={heroSheet(ix, h).derived.carrySlots}
-                        size={18}
-                        loot={false}
-                      />
-                      <SlimBars hero={h} />
-                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
               <p className="muted small quiet">Nobody.</p>
             )}
