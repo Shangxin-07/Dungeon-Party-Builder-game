@@ -41,7 +41,7 @@ import type { Act } from "./shared";
 import { TripTown } from "./Trip";
 import { DebriefPanel } from "./Debrief";
 import { AwayPanel, awayLine } from "./Away";
-import { PartyPanel } from "./Party";
+import { PartyPanel, SendButton } from "./Party";
 import { Roster } from "./Roster";
 import { Recruits } from "./Recruits";
 import { Market } from "./Market";
@@ -492,9 +492,16 @@ export function TownPlay({ initial }: { initial: Game }) {
             <CampPanel town={town} act={act} />
             {town.camp ? <PostsPanel town={town} act={act} /> : null}
             <RestockPanel town={town} act={act} />
-            {town.camp ? null : <PartyPanel town={town} act={act} onLaunch={launchParty} />}
             <AwayPanel town={town} act={act} />
-            <Roster town={town} act={act} />
+            {/* M9.27: the party is built at the top of the Roster. */}
+            <Roster
+              town={town}
+              act={act}
+              party={
+                town.camp ? undefined : <PartyPanel town={town} act={act} onLaunch={launchParty} />
+              }
+              send={town.camp ? undefined : <SendButton town={town} onLaunch={launchParty} />}
+            />
             <Recruits town={town} act={act} />
           </FoldGroup>
         </div>

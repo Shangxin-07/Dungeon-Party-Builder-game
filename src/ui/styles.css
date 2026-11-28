@@ -3883,3 +3883,19 @@ sup.down {
     grid-column: auto;
   }
 }
+
+/* M9.27: the next party, built in a box at the top of the Roster. */
+.fold-3.party-box {
+  margin: 4px 0 14px;
+  padding: 2px 10px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.fold-3.party-box.party-outlined {
+  border-width: 2px;
+}
+
+.fold-3.party-box > .fold-body {
+  padding-left: 0;
+}

@@ -30,8 +30,25 @@ export function onShowTarget(f: (target: string) => void): () => void {
   return () => window.removeEventListener(TARGET_EVENT, on);
 }
 
+/**
+ * Panels that live inside another panel (M9.27: the party sits in the Roster),
+ * by id. Opening one opens its parent first, and remembers it open so it
+ * draws open once the parent has drawn it.
+ */
+const PARENT: Record<string, string> = {};
+
+/** Say that panel `child` sits inside panel `parent`. */
+export function nestFold(child: string, parent: string) {
+  PARENT[child] = parent;
+}
+
 /** Open the panel `id` from elsewhere on the page (the town map's clicks, M8). */
 export function openFold(id: string) {
+  const parent = PARENT[id];
+  if (parent) {
+    openFold(parent);
+    remember(id, true);
+  }
   window.dispatchEvent(new CustomEvent<string>(OPEN_EVENT, { detail: id }));
 }
 
@@ -154,6 +171,7 @@ export function Fold({
   title,
   summary,
   actions,
+  closedActions,
   defaultOpen = false,
   level = 2,
   className = "",
@@ -167,6 +185,8 @@ export function Fold({
   summary?: ReactNode;
   /** Buttons beside the title, usable without opening the panel. */
   actions?: ReactNode;
+  /** More buttons beside the title, only while it's closed (M9.27). */
+  closedActions?: ReactNode;
   defaultOpen?: boolean;
   level?: 2 | 3;
   className?: string;
@@ -199,7 +219,12 @@ export function Fold({
           </button>
         </H>
         {summary ? <span className="fold-summary">{summary}</span> : null}
-        {actions ? <span className="fold-actions">{actions}</span> : null}
+        {actions || (!open && closedActions) ? (
+          <span className="fold-actions">
+            {actions}
+            {open ? null : closedActions}
+          </span>
+        ) : null}
       </div>
       {open ? (
         <div id={`${id}-body`} className="fold-body">

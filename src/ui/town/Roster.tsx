@@ -5,7 +5,7 @@ import { askConfirm } from "../Confirm";
 import { ItemIcon } from "../art/Icon";
 import { Portrait } from "../art/Portrait";
 import { Fold } from "../Fold";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { Spend } from "../../sim/training";
 import { ClassPicker, PointsGrid, useTraining } from "./Training";
 import {
@@ -64,7 +64,19 @@ function useRosterSort(): [RosterSort, (s: RosterSort) => void] {
   return [sort, pick];
 }
 
-export function Roster({ town, act }: { town: TownState; act: Act }) {
+export function Roster({
+  town,
+  act,
+  party,
+  send,
+}: {
+  town: TownState;
+  act: Act;
+  /** The next party, built at the top of the roster (M9.27). */
+  party?: ReactNode;
+  /** Its send button, on the heading while the roster is closed. */
+  send?: ReactNode;
+}) {
   const home = town.roster.filter((h) => !outingOf(town, h.id));
   const away = town.roster.length - home.length;
   const [sort, setSort] = useRosterSort();
@@ -76,6 +88,7 @@ export function Roster({ town, act }: { town: TownState; act: Act }) {
       id="roster"
       title="Roster"
       defaultOpen
+      closedActions={send}
       actions={
         <label className="roster-sort small">
           Sort{" "}
@@ -90,6 +103,7 @@ export function Roster({ town, act }: { town: TownState; act: Act }) {
       }
       summary={`${town.roster.length} in the guild${away ? `, ${away} away below` : ""}`}
     >
+      {party}
       {!town.camp && town.roster.some((h) => !h.porter && inCampClass(ix, h)) ? (
         <p className="small">
           The camp is held, and the miners can train for the dungeon. Pick each one's class on their

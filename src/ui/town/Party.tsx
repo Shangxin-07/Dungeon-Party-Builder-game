@@ -2,7 +2,7 @@
  * Party, formation and orders, and the saved parties A and B.
  */
 import { askConfirm } from "../Confirm";
-import { Fold, openFold, showFold } from "../Fold";
+import { Fold, nestFold, showFold } from "../Fold";
 import type { Row } from "../../content/types";
 import { describeParty, partyAlignment } from "../../sim/alignment";
 import { tiesAmong, tieText } from "../../sim/ties";
@@ -71,14 +71,13 @@ function retreatShort(r: RetreatRule): string {
   }
 }
 
-/** Open the Roster and that hero's card, and bring it into view. */
+// M9.27: the party is a panel inside the Roster, and parties on file inside the party.
+nestFold("party", "roster");
+nestFold("parties-on-file", "party");
+
+/** Open that hero's card in the Roster below, and bring it into view. */
 function showHeroCard(id: string) {
-  openFold("roster");
-  // The Roster may have been closed (M9.22: opening it closes the party), so
-  // its cards only exist once it has drawn.
-  requestAnimationFrame(() =>
-    requestAnimationFrame(() => showFold(`hero-${id}`, `hero-card-${id}`)),
-  );
+  showFold(`hero-${id}`, `hero-card-${id}`);
 }
 
 export function partyOutline(heroes: readonly Hero[]): string | undefined {
@@ -160,19 +159,10 @@ export function PartyPanel({
     <Fold
       id="party"
       defaultOpen
-      className={outline ? "party-outlined" : ""}
+      level={3}
+      className={`party-box${outline ? " party-outlined" : ""}`}
       style={outline ? { borderColor: outline } : undefined}
-      actions={
-        <button
-          type="button"
-          className="btn btn-main"
-          disabled={!!why}
-          title={why}
-          onClick={() => onLaunch()}
-        >
-          Send them down
-        </button>
-      }
+      actions={<SendButton town={town} onLaunch={onLaunch} />}
       title={
         <>
           The party{" "}
@@ -292,7 +282,7 @@ export function PartyPanel({
       ) : null}
       {party.length ? null : (
         <p className="muted small">
-          Add heroes from the roster below. There's no limit: the leader's command says how many go
+          Add heroes from their cards below. There's no limit: the leader's command says how many go
           well together.
         </p>
       )}
@@ -555,7 +545,7 @@ export function PartyPanel({
 
       <p
         className="small muted party-porters"
-        title="Porters carry loot, don't fight, and run for home if the party falls. Add them from the roster."
+        title="Porters carry loot, don't fight, and run for home if the party falls. Add them from their cards below."
       >
         Porters {town.porters.length}/{ix.lib.town.porters.slots}
         {town.porters.length
@@ -584,6 +574,28 @@ export function PartyPanel({
       {/* The send button is on the panel's heading (M9.07); here, only why it can't go. */}
       {why ? <p className="muted small">{why}</p> : null}
     </Fold>
+  );
+}
+
+/** Send the next party down, or say why it can't go (M9.27: also on the Roster's heading). */
+export function SendButton({
+  town,
+  onLaunch,
+}: {
+  town: TownState;
+  onLaunch: (prep?: (t: TownState) => TownState) => void;
+}) {
+  const why = cantLaunch(ix, town);
+  return (
+    <button
+      type="button"
+      className="btn btn-main"
+      disabled={!!why}
+      title={why}
+      onClick={() => onLaunch()}
+    >
+      Send them down
+    </button>
   );
 }
 
