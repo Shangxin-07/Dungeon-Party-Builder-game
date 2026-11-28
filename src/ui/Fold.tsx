@@ -3,7 +3,7 @@
  * summary (and optional buttons) that stay visible while it's closed. Which
  * panels are open is remembered in this browser only, never in the save.
  */
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 
 const KEY = "dpb-ui-open";
 const OPEN_EVENT = "dpb-open-fold";
@@ -85,6 +85,7 @@ export function Fold({
   defaultOpen = false,
   level = 2,
   className = "",
+  style,
   children,
 }: {
   /** Unique and stable: the key its open state is remembered under. */
@@ -97,6 +98,8 @@ export function Fold({
   defaultOpen?: boolean;
   level?: 2 | 3;
   className?: string;
+  /** Inline style for the panel, e.g. a border colour (M9.07). */
+  style?: CSSProperties;
   children: ReactNode;
 }) {
   const [open, toggle] = useFold(id, defaultOpen);
@@ -105,6 +108,7 @@ export function Fold({
     <section
       className={`fold fold-${level}${open ? " open" : ""}${level === 2 ? " panel" : ""} ${className}`}
       aria-labelledby={`${id}-heading`}
+      style={style}
     >
       <div className="fold-head">
         <H id={`${id}-heading`}>

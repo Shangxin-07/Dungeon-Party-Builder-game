@@ -3196,3 +3196,48 @@ sup.down {
   line-height: 1.35;
   letter-spacing: 0.02em;
 }
+
+/* M9.07: the party outlined in its alignment's colour; the orders packed tight. */
+.fold.panel.party-outlined {
+  border-width: 2px;
+}
+
+.party-orders {
+  gap: 4px 12px;
+  margin-bottom: 8px;
+}
+
+.party-orders label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.party-orders label.wide {
+  flex: 1 1 100%;
+}
+
+.party-orders select {
+  min-width: 0;
+  max-width: 100%;
+  padding: 2px 6px;
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+}
+
+.party-orders label.wide select {
+  flex: 1;
+}
+
+.party-ties,
+.party-porters {
+  margin: 4px 0;
+}
+
+.party-orders select.mission-pick {
+  width: 7.5em;
+}
