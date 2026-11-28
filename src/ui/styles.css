@@ -2892,3 +2892,99 @@ sup.down {
     flex-shrink: 0;
   }
 }
+
+/* M9.02: recipes as icon, button, then the cost in icons. */
+.recipes {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.recipe {
+  display: grid;
+  grid-template-columns: 28px auto minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: center;
+}
+
+.recipe .btn {
+  white-space: nowrap;
+}
+
+.recipe-off > .icon {
+  opacity: 0.45;
+}
+
+.recipe-cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 12px;
+}
+
+.queue .icon {
+  vertical-align: middle;
+}
+
+/* M9.02: the party card, compact: name line, slim bars, kit icons. */
+.fh-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+}
+
+.fh-cost {
+  margin-left: auto;
+}
+
+.slim-bars {
+  display: grid;
+  gap: 1px;
+  margin: 2px 0 4px;
+}
+
+.slim {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.5em;
+  align-items: center;
+  gap: 8px;
+}
+
+.slim-track {
+  height: 5px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 8%);
+  overflow: hidden;
+}
+
+.slim-fill {
+  display: block;
+  height: 100%;
+  background: #6fbf6a;
+}
+
+.slim-fill.mana {
+  background: #5b8fd6;
+}
+
+.slim-fill.morale {
+  background: var(--accent);
+}
+
+.slim-fill.morale.low {
+  background: var(--bad);
+}
+
+.slim-num {
+  font-size: 0.72rem;
+  line-height: 1.1;
+  color: var(--muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.formation-hero {
+  align-items: flex-start;
+}

@@ -25,21 +25,7 @@ import { heroTitle } from "../../sim/hero";
 import { ix } from "../game";
 import { describeItem, type Act } from "./shared";
 import { HeroIcon, ItemIcon } from "../art/Icon";
-import type { MaterialCost } from "../../content/types";
-
-/** Materials as icons with counts, e.g. for a contract or a petition's cost. */
-function MaterialChips({ cost }: { cost: MaterialCost }) {
-  return (
-    <span className="material-chips">
-      {Object.entries(cost).map(([id, n]) => (
-        <span key={id} className="material-chip" title={ix.item(id).name}>
-          <ItemIcon id={id} size={20} />
-          {n} {ix.item(id).name.toLowerCase()}
-        </span>
-      ))}
-    </span>
-  );
-}
+import { MaterialChips } from "./MaterialChips";
 
 const KIND_NAMES = {
   caravan: "caravan",

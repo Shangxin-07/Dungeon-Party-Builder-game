@@ -37,12 +37,15 @@ import {
 } from "../../sim/town";
 import { RETREATS } from "../Expedition";
 import { Portrait } from "../art/Portrait";
+import { KitStrip } from "./Roster";
+import { isLow } from "../../sim/morale";
 import { ix } from "../game";
-import { HeroBars } from "../Watch";
+import { usesMana } from "../Watch";
+import type { Hero } from "../../sim/hero";
 import { ScoutingReport } from "../Report";
 import { stoneOf } from "../../sim/shards";
 import { heartOn, heartState } from "../../sim/dungeon";
-import { type Act, describeKit } from "./shared";
+import type { Act } from "./shared";
 
 export function PartyPanel({
   town,
@@ -141,19 +144,32 @@ export function PartyPanel({
             {row(r).length ? (
               row(r).map((h) => (
                 <div key={h.id} className="formation-hero">
-                  <Portrait hero={h} size={40} />
+                  <span title={`${h.name}: ${ix.alignment(h.alignment).name}`}>
+                    <Portrait hero={h} size={44} />
+                  </span>
                   <div className="formation-info">
-                    <HeroBars hero={h} />
-                    <span className="muted small">
+                    <div className="fh-head">
+                      <strong>{h.name}</strong>
+                      <span className="muted small">{heroTitle(ix, h, true)}</span>
                       {cmd.leader?.id === h.id ? (
-                        <strong className="leader-mark">Leader · </strong>
+                        <strong className="leader-mark small">Leader</strong>
                       ) : null}
-                      {heroTitle(ix, h, true)} · {ix.alignment(h.alignment).name} · morale{" "}
-                      {h.morale} · {describeKit(h)}
-                      {cmd.leader && cmd.leader.id !== h.id
-                        ? ` · costs ${fmtCommand(cmd.costs[h.id] ?? 1)} command`
-                        : ""}
-                    </span>
+                      {cmd.leader && cmd.leader.id !== h.id ? (
+                        <span
+                          className="muted small fh-cost"
+                          title="Command this hero costs the leader (by alignment step)"
+                        >
+                          {fmtCommand(cmd.costs[h.id] ?? 1)} cmd
+                        </span>
+                      ) : null}
+                    </div>
+                    <SlimBars hero={h} />
+                    <KitStrip
+                      hero={h}
+                      slots={heroSheet(ix, h).derived.carrySlots}
+                      size={18}
+                      loot={false}
+                    />
                   </div>
                 </div>
               ))
@@ -720,6 +736,52 @@ function LeaderLine({ town, act }: { town: TownState; act: Act }) {
       ) : (
         <span className="muted"> · within command.</span>
       )}
+    </div>
+  );
+}
+
+/**
+ * HP, mana (for casters) and morale as slim bars with the numbers at the end
+ * (M9.02): the party card at a glance.
+ */
+function SlimBars({ hero: h }: { hero: Hero }) {
+  const d = heroSheet(ix, h).derived;
+  const bars: { kind: string; label: string; now: number; max: number; text: string }[] = [
+    { kind: "hp", label: "HP", now: h.hp, max: d.maxHp, text: `${h.hp}/${d.maxHp}` },
+  ];
+  if (usesMana(h))
+    bars.push({
+      kind: "mana",
+      label: "Mana",
+      now: h.mana,
+      max: d.mana,
+      text: `${h.mana}/${d.mana}`,
+    });
+  bars.push({
+    kind: isLow(ix, h) ? "morale low" : "morale",
+    label: "Morale",
+    now: h.morale,
+    max: 100,
+    text: `${h.morale}`,
+  });
+  return (
+    <div className="slim-bars">
+      {bars.map((b) => (
+        <span key={b.kind} className="slim" title={`${b.label} ${b.text}`}>
+          <span className="slim-track" aria-hidden="true">
+            <span
+              className={`slim-fill ${b.kind}`}
+              style={{
+                width: `${Math.max(0, Math.min(100, (b.now / Math.max(1, b.max)) * 100))}%`,
+              }}
+            />
+          </span>
+          <span className="slim-num">
+            <span className="sr-only">{b.label} </span>
+            {b.text}
+          </span>
+        </span>
+      ))}
     </div>
   );
 }
