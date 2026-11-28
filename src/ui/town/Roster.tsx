@@ -543,7 +543,18 @@ function ItemSlot({ id, size, empty }: { id?: string; size: number; empty?: stri
  * The compact card's kit at a glance: the three gear slots, then what's
  * packed (repeats counted), then how many slots are left for loot.
  */
-function KitStrip({ hero: h, slots }: { hero: Hero; slots: number }) {
+export function KitStrip({
+  hero: h,
+  slots,
+  size = 24,
+  loot = true,
+}: {
+  hero: Hero;
+  slots: number;
+  size?: number;
+  /** Say how many slots are left for loot. */
+  loot?: boolean;
+}) {
   const packed = tally(h.pack);
   const free = Math.max(0, slots - h.pack.length);
   return (
@@ -556,20 +567,22 @@ function KitStrip({ hero: h, slots }: { hero: Hero; slots: number }) {
             className="kit-cell"
             title={`${SLOT_NAMES[slot]}: ${id ? ix.item(id).name : "none"}`}
           >
-            <ItemSlot id={id} size={24} empty={`${SLOT_NAMES[slot]}: none`} />
+            <ItemSlot id={id} size={size} empty={`${SLOT_NAMES[slot]}: none`} />
           </span>
         );
       })}
       <span className="kit-gap" aria-hidden="true" />
       {packed.map(([id, n]) => (
         <span key={id} className="kit-cell" title={`${ix.item(id).name}${n > 1 ? ` ×${n}` : ""}`}>
-          <ItemSlot id={id} size={24} />
+          <ItemSlot id={id} size={size} />
           {n > 1 ? <span className="kit-count">{n}</span> : null}
         </span>
       ))}
-      <span className="muted small kit-free">
-        {free} {free === 1 ? "slot" : "slots"} for loot
-      </span>
+      {loot ? (
+        <span className="muted small kit-free">
+          {free} {free === 1 ? "slot" : "slots"} for loot
+        </span>
+      ) : null}
     </div>
   );
 }
