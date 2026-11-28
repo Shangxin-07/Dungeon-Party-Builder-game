@@ -204,7 +204,13 @@ describe("downed heroes (custom content)", () => {
   it("can be healed back up before bleeding out", () => {
     const tank = make("Tank", "wall", { hp: 10_000, mana: 0 });
     const victim = make("Victim", "wall", { hp: 1, mana: 0 });
-    const nurse = make("Nurse", "nurse", { hp: 10_000, mana: 500, row: "back" });
+    // A staff is a reach weapon, so the nurse doesn't try to lurk (M9.04).
+    const nurse = make("Nurse", "nurse", {
+      hp: 10_000,
+      mana: 500,
+      row: "back",
+      equipment: { weapon: "staff" },
+    });
     const r = runCombat(tix, [tank, victim, nurse], ["sniper"], { seed: 1, maxRounds: 6 });
     expect(r.log.some((e) => e.kind === "revived" && e.target === "Victim")).toBe(true);
     expect(texts(r.log)).not.toContain("Victim has bled out.");

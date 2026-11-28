@@ -120,6 +120,7 @@ export class BattleBase {
             name: weaponDef.name.toLowerCase(),
             damageType: weaponDef.damageType ?? "crushing",
             ranged: !!weaponDef.ranged,
+            reach: weaponDef.tags.includes("reach"),
           }
         : { name: "fists", damageType: "crushing", ranged: false },
       offhand: off

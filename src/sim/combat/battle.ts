@@ -5,6 +5,7 @@
 import type { AbilityDef } from "../../content/types";
 import { getAi, type Action, type BattleView } from "../ai";
 import { type Hero } from "../hero";
+import { hearingOf } from "../stealth";
 import type { Index } from "../library";
 import { createRng } from "../rng";
 import {
@@ -56,6 +57,7 @@ export class Battle extends BattleEffects {
     this.emit({ kind: "start", text: `${names("party")} face ${names("monsters")}.` });
     if (this.ground) this.emit({ kind: "ground", text: this.ground.text });
     this.checkExposed();
+    this.lurk();
 
     if (this.surprise) this.partySurprise();
     else this.ambushCheck();
@@ -261,7 +263,9 @@ export class Battle extends BattleEffects {
         return this.fighters.filter((f) => f.side === self.side && f.state !== "dead");
       case "all-enemies":
       case "enemy": {
-        const enemies = this.fighters.filter((f) => f.side !== self.side && f.state === "up");
+        let enemies = this.fighters.filter((f) => f.side !== self.side && f.state === "up");
+        // Lurkers (M9.04): nobody can single out a hero hidden in the shadows.
+        if (ability.target === "enemy") enemies = enemies.filter((f) => !f.hidden);
         // Melee weapon attacks can only reach the front row while it stands
         // (a sweeping blow like Cleave hits the whole front row).
         const melee = ability.effects.some((e) => e.type === "weaponAttack") && !self.weapon.ranged;
@@ -349,5 +353,79 @@ export class Battle extends BattleEffects {
       ability.target === "enemy" && ability.effects.some((e) => e.type === "weaponAttack");
     if (struck && actor.offhand && target.state === "up" && actor.state === "up")
       this.weaponAttack(actor, target, 0, false, true);
+    if (struck && actor.hidden) this.spotCheck(actor, target);
+  }
+
+  // -------------------------------------------------------------------------
+  // Lurking (M9.04, DESIGN.md "Lurking")
+  // -------------------------------------------------------------------------
+
+  /** How well a fighter hears: PER × earPerPer, plus a monster's own `hearing`. */
+  protected earOf(f: Fighter): number {
+    if (f.monsterId) return hearingOf(this.ix, f.monsterId);
+    return f.stats.PER * this.ix.lib.stealth.earPerPer;
+  }
+
+  /** The sneak formula (§17.8): base + (a − b) / 100, kept within min-max. */
+  protected stealthOdds(a: number, b: number): number {
+    const r = this.ix.lib.stealth;
+    return Math.max(r.min, Math.min(r.max, r.base + (a - b) / 100));
+  }
+
+  /** At the start of a fight, back-row heroes with a melee weapon try to slip into the shadows. */
+  protected lurk(): void {
+    const foes = this.fighters.filter((f) => f.side === "monsters" && f.state === "up");
+    if (!foes.length) return;
+    const ear = Math.max(...foes.map((f) => this.earOf(f)));
+    for (const f of this.fighters) {
+      if (f.side !== "party" || f.state !== "up" || f.row !== "back") continue;
+      if (f.weapon.ranged || f.weapon.reach) continue;
+      const stealth = f.skills.stealth ?? 0;
+      if (this.rng.chance(this.stealthOdds(stealth, ear))) {
+        f.hidden = true;
+        f.strikesHidden = 0;
+        this.emit({
+          kind: "status",
+          target: f.uid,
+          tone: "good",
+          text: `${f.name} slips into the shadows.`,
+        });
+      } else {
+        this.emit({
+          kind: "status",
+          target: f.uid,
+          text: `${f.name} looks for a shadow to slip into, but they're being watched.`,
+        });
+      }
+    }
+  }
+
+  /**
+   * After a strike from hiding, the foe struck (or, if it fell, the sharpest
+   * ear still standing) may spot the lurker. Each strike makes the next
+   * easier to see. Found, they stand in the front row for the rest of the fight.
+   */
+  protected spotCheck(actor: Fighter, struck: Fighter): void {
+    const foes = this.fighters.filter((f) => f.side !== actor.side && f.state === "up");
+    const sharpest = () => foes.sort((a, b) => this.earOf(b) - this.earOf(a))[0];
+    const watcher = struck.state === "up" ? struck : sharpest();
+    const before = actor.strikesHidden ?? 0;
+    actor.strikesHidden = before + 1;
+    if (!watcher) return;
+    const odds = Math.min(
+      this.ix.lib.stealth.max,
+      this.stealthOdds(this.earOf(watcher), actor.skills.stealth ?? 0) +
+        before * this.ix.lib.stealth.lurk.spotPerStrike,
+    );
+    if (!this.rng.chance(odds)) return;
+    actor.hidden = false;
+    actor.row = "front";
+    this.emit({
+      kind: "status",
+      actor: watcher.uid,
+      target: actor.uid,
+      tone: "bad",
+      text: `${watcher.name} spots ${actor.name}! Out of the shadows, they're in the thick of it.`,
+    });
   }
 }

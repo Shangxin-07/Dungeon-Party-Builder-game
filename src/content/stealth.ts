@@ -13,4 +13,7 @@ export default defineStealthRules({
   quietParty: 2,
   perExtraHero: 5,
   earPerPer: 5,
+  // Lurking (M9.04): rogues in the back row hide, strike from the shadows
+  // (+50%, the ambush bonus) and risk being found after every strike.
+  lurk: { spotPerStrike: 0.1, backRowMelee: -50 },
 });
