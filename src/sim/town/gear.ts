@@ -2,7 +2,7 @@
  * Kitting heroes out: equipping, packing and formation rows.
  */
 import type { Row } from "../../content/types";
-import { EQUIP_SLOTS, heroSheet, type EquipSlot, type Hero } from "../hero";
+import { cantOffhand, EQUIP_SLOTS, heroSheet, type EquipSlot, type Hero } from "../hero";
 import type { Index } from "../library";
 import { type TownState, TownError } from "./state";
 import { shopStock, buyPrice } from "./read";
@@ -52,19 +52,45 @@ export function kitOut(ix: Index, town: TownState, heroId: string, buy = true): 
   return t;
 }
 
-/** Put an item from the store room on a hero. Whatever they had goes back. */
-export function equip(ix: Index, town: TownState, heroId: string, itemId: string): TownState {
-  const slot = ix.item(itemId).slot;
-  if (!(EQUIP_SLOTS as readonly string[]).includes(slot))
+/**
+ * Put an item from the store room on a hero. Whatever they had goes back.
+ * `to: "offhand"` puts a weapon in the off hand (M9.04), for heroes whose
+ * class can dual-wield it; a two-handed (ranged) weapon sends it back.
+ */
+export function equip(
+  ix: Index,
+  town: TownState,
+  heroId: string,
+  itemId: string,
+  to?: EquipSlot,
+): TownState {
+  const item = ix.item(itemId);
+  const slot = (to ?? item.slot) as EquipSlot;
+  if (!(EQUIP_SLOTS as readonly string[]).includes(item.slot))
     throw new TownError("That can't be worn or wielded.");
+  if (slot !== item.slot) {
+    const why =
+      slot === "offhand" ? cantOffhand(ix, hero(town, heroId), itemId) : "It doesn't go there.";
+    if (why) throw new TownError(why);
+  }
   const t = edit(town);
   const h = hero(t, heroId);
   takeFromStash(t, itemId);
-  const old = h.equipment[slot as EquipSlot];
+  const old = h.equipment[slot];
   if (old) t.stash.push(old);
-  h.equipment[slot as EquipSlot] = itemId;
+  h.equipment[slot] = itemId;
+  // A bow or crossbow takes both hands: the off-hand blade goes back.
+  const off = h.equipment.offhand;
+  if (slot === "weapon" && item.ranged && off && ix.item(off).slot === "weapon") {
+    t.stash.push(off);
+    delete h.equipment.offhand;
+  }
   return keepHpInBounds(ix, t, h);
 }
+
+/** Weapons in the store room this hero could carry in the off hand (M9.04). */
+export const offhandChoices = (ix: Index, town: TownState, h: Hero): string[] =>
+  town.stash.filter((id) => ix.item(id).slot === "weapon" && !cantOffhand(ix, h, id));
 
 export function unequip(ix: Index, town: TownState, heroId: string, slot: EquipSlot): TownState {
   const t = edit(town);

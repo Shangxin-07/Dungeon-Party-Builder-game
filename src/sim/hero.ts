@@ -6,6 +6,7 @@
  */
 import {
   STATS,
+  type ItemDef,
   type ItemSlot,
   type PassiveEffect,
   type Row,
@@ -207,7 +208,9 @@ export function heroPassives(ix: Index, hero: Hero): PassiveEffect[] {
   const out: PassiveEffect[] = [];
   for (const slot of EQUIP_SLOTS) {
     const id = hero.equipment[slot];
-    if (id) out.push(...(ix.item(id).passives ?? []));
+    // A weapon in the off hand (M9.04) only gives its second blow.
+    if (id && !(slot === "offhand" && ix.item(id).slot === "weapon"))
+      out.push(...(ix.item(id).passives ?? []));
   }
   for (const id of hero.perks) out.push(...ix.perk(id).passives);
   out.push(...ix.backstory(hero.backstory).passives);
@@ -219,6 +222,60 @@ export function heroPassives(ix: Index, hero: Hero): PassiveEffect[] {
   if (led > 0) out.push({ type: "modifySkill", skill: "leadership", amount: led });
   return out;
 }
+
+/**
+ * Dual-wielding (M9.04): how hard this hero's classes let them strike with
+ * `item` in the off hand, as a damage percent (the best of their classes),
+ * or undefined if none of them can.
+ */
+export function offhandPercent(ix: Index, hero: Hero, item: ItemDef): number | undefined {
+  if (item.slot !== "weapon" || item.ranged) return undefined;
+  const classes = Object.keys(hero.classes).length ? Object.keys(hero.classes) : [hero.classId];
+  let best: number | undefined;
+  for (const id of classes) {
+    const rule = ix.cls(id).offhand;
+    if (!rule || !item.tags.some((t) => rule.tags.includes(t))) continue;
+    if (best === undefined || rule.damagePercent > best) best = rule.damagePercent;
+  }
+  return best;
+}
+
+/** Why `itemId` can't go in this hero's off hand, or undefined if it can. */
+export function cantOffhand(ix: Index, hero: Hero, itemId: string): string | undefined {
+  const item = ix.item(itemId);
+  if (item.slot === "offhand") return undefined;
+  if (item.slot !== "weapon") return "That doesn't go in the off hand.";
+  if (offhandPercent(ix, hero, item) === undefined)
+    return `${hero.name} can't fight with ${item.name.toLowerCase()} in the off hand.`;
+  const main = hero.equipment.weapon ? ix.item(hero.equipment.weapon) : undefined;
+  if (main?.ranged) return `${main.name} takes both hands.`;
+  return undefined;
+}
+
+/**
+ * The weapon a hero fights with in the off hand (M9.04), and its damage
+ * percent: only beside a melee weapon (or bare fists), and only if one of
+ * their classes can.
+ */
+export function offhandWeapon(
+  ix: Index,
+  hero: Hero,
+): { item: ItemDef; damagePercent: number } | undefined {
+  const id = hero.equipment.offhand;
+  if (!id) return undefined;
+  const item = ix.item(id);
+  const main = hero.equipment.weapon ? ix.item(hero.equipment.weapon) : undefined;
+  if (main?.ranged) return undefined;
+  const damagePercent = offhandPercent(ix, hero, item);
+  return damagePercent === undefined ? undefined : { item, damagePercent };
+}
+
+/** A weapon's own attack bonus (its modifyStat attack passives). */
+export const weaponAttackBonus = (item: ItemDef | undefined): number =>
+  (item?.passives ?? []).reduce(
+    (s, p) => s + (p.type === "modifyStat" && p.stat === "attack" ? p.amount : 0),
+    0,
+  );
 
 /**
  * What levels give on top of stat gains (DESIGN.md §9): max HP for every

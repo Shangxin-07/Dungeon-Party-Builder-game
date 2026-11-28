@@ -47,34 +47,46 @@ export class BattleEffects extends BattleBase {
     target: Fighter,
     extraPercent: number,
     basic: boolean,
+    /** The off hand's second blow (M9.04) instead of the main weapon. */
+    offhand = false,
   ): boolean {
+    const off = offhand ? actor.offhand : undefined;
     const hitChance = clamp(
       0.75 + (this.stat(actor, "accuracy") - this.stat(target, "evasion")) * 0.03,
       0.15,
       0.95,
     );
-    const withWeapon = basic ? ` with ${actor.weapon.name}` : "";
+    const withWeapon = off
+      ? ` with the ${off.name} in the other hand`
+      : basic
+        ? ` with ${actor.weapon.name}`
+        : "";
     if (!this.rng.chance(hitChance)) {
-      const text = basic
-        ? `${actor.name} swings at ${target.name}${withWeapon} and misses.`
-        : `${actor.name} misses.`;
+      const text = off
+        ? `${actor.name} stabs at ${target.name}${withWeapon} and misses.`
+        : basic
+          ? `${actor.name} swings at ${target.name}${withWeapon} and misses.`
+          : `${actor.name} misses.`;
       this.emit({ kind: "miss", actor: actor.uid, target: target.uid, text });
       return false;
     }
-    const atk = this.stat(actor, "attack");
+    const atk = Math.max(1, this.stat(actor, "attack") + (off?.attackDelta ?? 0));
     let raw = this.rng.int(Math.ceil(atk / 2), atk);
-    let percent = extraPercent + bonusVsTags(this.passives(actor), target.tags);
+    let percent =
+      extraPercent + (off?.damagePercent ?? 0) + bonusVsTags(this.passives(actor), target.tags);
     if (this.ambushing.has(actor.uid)) percent += AMBUSH_BONUS;
     raw *= 1 + percent / 100;
-    if (basic) {
+    if (basic || off) {
       this.emit({
         kind: "hit",
         actor: actor.uid,
         target: target.uid,
-        text: `${actor.name} hits ${target.name}${withWeapon}.`,
+        text: off
+          ? `${actor.name} strikes again${withWeapon}.`
+          : `${actor.name} hits ${target.name}${withWeapon}.`,
       });
     }
-    this.damage(target, Math.round(raw), actor.weapon.damageType, true, actor);
+    this.damage(target, Math.round(raw), off?.damageType ?? actor.weapon.damageType, true, actor);
     return true;
   }
 

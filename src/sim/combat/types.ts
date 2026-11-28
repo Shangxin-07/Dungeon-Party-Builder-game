@@ -31,6 +31,11 @@ export interface Fighter {
   skills: Record<string, number>;
   tags: string[];
   weapon: { name: string; damageType: DamageType; ranged: boolean };
+  /**
+   * A second weapon in the off hand (M9.04): strikes again after each plain
+   * attack. `attackDelta` is its attack bonus less the main weapon's.
+   */
+  offhand?: { name: string; damageType: DamageType; damagePercent: number; attackDelta: number };
   abilities: string[];
   /** Turns until each ability on cooldown is ready again. */
   cooldowns: Record<string, number>;

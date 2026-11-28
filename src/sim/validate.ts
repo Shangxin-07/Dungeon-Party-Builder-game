@@ -82,6 +82,15 @@ export function validateLibrary(lib: Library): string[] {
 
   for (const c of lib.classes) {
     const w = `class "${c.id}"`;
+    if (c.offhand) {
+      const o = c.offhand;
+      if (!o.tags.length) err(`${w}: offhand needs at least one weapon tag`);
+      if (!(o.damagePercent > -100 && o.damagePercent <= 0))
+        err(`${w}: offhand damagePercent must be above -100 and at most 0`);
+      for (const t of o.tags)
+        if (!lib.items.some((i) => i.slot === "weapon" && !i.ranged && i.tags.includes(t)))
+          err(`${w}: no melee weapon has the offhand tag "${t}"`);
+    }
     const kind = c.kind ?? "base";
     if (!["base", "advanced", "combo", "camp"].includes(kind)) err(`${w}: unknown kind "${kind}"`);
     if (kind === "base" || kind === "camp") {
