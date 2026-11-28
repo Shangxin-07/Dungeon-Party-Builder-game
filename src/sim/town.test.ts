@@ -21,6 +21,8 @@ import {
   pickParty,
   renameParty,
   saveParty,
+  addParty,
+  removeParty,
   sameOrders,
   rest,
   rosterSize,
@@ -372,9 +374,28 @@ describe("parties on file", () => {
     expect(fromFile.outings.at(-1)!.result.orders.clearPercent).toBeUndefined();
   });
 
-  it("only has so many slots, and needs someone in the party", () => {
+  it("keeps any number of parties, and needs someone in the party", () => {
     const t = eightHeroes();
-    expect(() => saveParty(ix, t, rules.savedParties)).toThrow(/parties on file/);
+    expect(() => saveParty(ix, t, 1)).toThrow(/No such party/);
+    let many = t;
+    for (let i = 0; i < 5; i++) many = addParty(ix, many);
+    expect(many.parties.map((p) => p.name)).toEqual([
+      "Party A",
+      "Party B",
+      "Party C",
+      "Party D",
+      "Party E",
+    ]);
+    // Taking one off file frees its name for the next one added.
+    many = addParty(ix, removeParty(ix, many, 1));
+    expect(many.parties.map((p) => p.name)).toEqual([
+      "Party A",
+      "Party C",
+      "Party D",
+      "Party E",
+      "Party B",
+    ]);
+    expect(() => removeParty(ix, many, 9)).toThrow(/Nothing on file/);
     expect(() => saveParty(ix, { ...t, party: [] }, 0)).toThrow(/heroes/);
     expect(() => pickParty(ix, t, 1)).toThrow(/Nothing on file/);
   });

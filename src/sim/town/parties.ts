@@ -1,5 +1,5 @@
 /**
- * Picking the party, standing orders, saved parties A/B and rescue plans.
+ * Picking the party, standing orders, parties on file and rescue plans.
  */
 import { DEFAULT_ORDERS, type StandingOrders } from "../expedition";
 import type { Hero } from "../hero";
@@ -50,18 +50,26 @@ export const savedParty = (town: TownState, slot: number): SavedParty | undefine
 /** Default name for a party slot: Party A, Party B, ... */
 export const partyLetter = (slot: number) => `Party ${String.fromCharCode(65 + slot)}`;
 
-/** Keep the current party, porters and orders on file in a slot. */
-export function saveParty(ix: Index, town: TownState, slot: number, name?: string): TownState {
-  if (slot < 0 || slot >= ix.lib.town.savedParties)
-    throw new TownError(`The guild keeps ${ix.lib.town.savedParties} parties on file.`);
+/** The first "Party A", "Party B"... not already on file. */
+export function freePartyName(town: TownState): string {
+  const taken = new Set(town.parties.map((p) => p.name));
+  for (let i = 0; i < 26; i++) if (!taken.has(partyLetter(i))) return partyLetter(i);
+  return `Party ${town.parties.length + 1}`;
+}
+
+/**
+ * Keep the current party, porters and orders on file in a slot. Any number
+ * can be kept (M9.03): the slot after the last adds a new one.
+ */
+export function saveParty(_ix: Index, town: TownState, slot: number, name?: string): TownState {
+  if (slot < 0 || slot > town.parties.length) throw new TownError("No such party on file.");
   if (!town.party.length) throw new TownError("Pick some heroes first.");
   const t = edit(town);
   // Sealing the stairs (M7.16) is a one-off: it isn't kept on file.
   const { seal: _seal, ...orders } = ordinaryOrders(t.orders);
   const old = t.parties[slot];
-  while (t.parties.length < slot) t.parties.push(emptyParty(t.parties.length));
   t.parties[slot] = {
-    name: name?.trim() || old?.name || partyLetter(slot),
+    name: name?.trim() || old?.name || freePartyName(t),
     heroes: [...t.party],
     porters: [...t.porters],
     ...(t.leader && t.party.includes(t.leader) ? { leader: t.leader } : {}),
@@ -77,11 +85,23 @@ export const emptyParty = (slot: number): SavedParty => ({
   orders: DEFAULT_ORDERS,
 });
 
+/** Keep the current party on file as a new one (M9.03, the "Add party" button). */
+export const addParty = (ix: Index, town: TownState, name?: string): TownState =>
+  saveParty(ix, town, town.parties.length, name);
+
+/** Take a party off file. Its heroes stay in the guild. */
+export function removeParty(_ix: Index, town: TownState, slot: number): TownState {
+  if (!savedParty(town, slot)) throw new TownError("Nothing on file there.");
+  const t = edit(town);
+  t.parties = t.parties.filter((_, i) => i !== slot);
+  return t;
+}
+
 /** Rename a party on file. */
 export function renameParty(_ix: Index, town: TownState, slot: number, name: string): TownState {
   if (!savedParty(town, slot)) throw new TownError("Nothing on file there yet.");
   const t = edit(town);
-  t.parties[slot]!.name = name.trim() || partyLetter(slot);
+  t.parties[slot]!.name = name.trim() || t.parties[slot]!.name;
   return t;
 }
 
