@@ -1,12 +1,18 @@
 /**
  * A building's picture on its card (M8.11): the same sprite the town map
  * draws, at the level about to be built, so the player sees what their gold
- * buys. Buildings without a sprite (the palisade is drawn round the pit) show
+ * buys. The palisade is drawn round the pit on the map, so its card has a
+ * picture of its own (`art.card`, M9.08). Buildings without either show
  * nothing here.
  */
 import { Fragment } from "react";
 import type { BuildingDef } from "../../content/types";
 import { SPRITES, spriteFrame } from "./map/sprites";
+
+/** The card's picture: its own art if it has some, else the map sprite. */
+function cardArt(b: BuildingDef) {
+  return b.art?.card ?? b.art?.sprite;
+}
 
 /** One frame of a building's sprite sheet, fitted to the box and stood on its bottom edge. */
 function Frame({
@@ -20,7 +26,7 @@ function Frame({
   label?: string;
   className?: string;
 }) {
-  const sprite = building.art?.sprite;
+  const sprite = cardArt(building);
   const sheet = sprite && SPRITES[sprite.sheet];
   if (!sprite || !sheet) return null;
   const frame = spriteFrame(sprite.frames, level);
@@ -72,7 +78,7 @@ export function BuildingPicture({
   going?: number;
   damaged?: boolean;
 }) {
-  const sprite = b.art?.sprite;
+  const sprite = cardArt(b);
   if (!sprite || !SPRITES[sprite.sheet]) return null;
   const looks = (n: number) => spriteFrame(sprite.frames, n);
   let frames: { level: number; label?: string; className?: string }[];
