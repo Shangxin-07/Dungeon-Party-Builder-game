@@ -2676,7 +2676,9 @@ sup.down {
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-columns: minmax(320px, 25vw) minmax(0, 1fr) minmax(340px, 27vw);
+    /* Side panes are a share of the grid, never of the window (M9.17): the page has a
+       max width, so on a very wide or zoomed-out screen vw sides squeezed the centre. */
+    grid-template-columns: minmax(300px, 25%) minmax(440px, 1fr) minmax(320px, 27%);
     gap: 16px;
   }
 
@@ -3544,7 +3546,7 @@ sup.down {
   flex: 0 0 auto;
   max-width: none;
   margin: 4px 0 2px;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 2px 14px;
 }
 
