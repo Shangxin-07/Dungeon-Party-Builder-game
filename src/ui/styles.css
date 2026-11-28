@@ -3820,3 +3820,24 @@ sup.down {
     border-bottom: 1px solid var(--border);
   }
 }
+
+/* M9.24: page width "the whole window" (Menu > Video), for very wide screens. */
+:root[data-width="full"] .page-town {
+  max-width: none;
+}
+
+.menu-choice {
+  padding: 0;
+  border: 0;
+}
+
+.menu-choice legend {
+  padding: 0;
+  margin-bottom: 4px;
+}
+
+.menu-choice label,
+.menu-choice > span {
+  display: block;
+  margin-bottom: 4px;
+}

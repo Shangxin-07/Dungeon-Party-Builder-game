@@ -6,6 +6,7 @@
 
 const IDLE_WARN_KEY = "dpb-ui-idle-warn";
 const SPEED_KEY = "dpb-ui-watch-speed";
+const WIDTH_KEY = "dpb-ui-page-width";
 
 /** Every key that only remembers where the screen was left (open panels, tabs). */
 const LAYOUT_KEYS = [
@@ -54,4 +55,24 @@ export const setWatchSpeed = (s: Speed) => set(SPEED_KEY, s === "normal" ? null 
 /** Forget which panels and tabs were open; the page reloads to show it. */
 export function resetLayout() {
   for (const k of LAYOUT_KEYS) set(k, null);
+}
+
+/**
+ * How wide the town may spread (M9.24). "normal" stops at 2200px and centres
+ * the rest; "full" fills any screen, for very wide monitors.
+ */
+export const PAGE_WIDTHS = { normal: "Up to 2200 px, centred", full: "The whole window" } as const;
+export type PageWidth = keyof typeof PAGE_WIDTHS;
+
+export const pageWidth = (): PageWidth => (get(WIDTH_KEY) === "full" ? "full" : "normal");
+
+/** Put the page width on <html> (data-width), where the stylesheet reads it. */
+export function applyPageWidth(w: PageWidth = pageWidth()) {
+  if (w === "full") document.documentElement.dataset.width = "full";
+  else delete document.documentElement.dataset.width;
+}
+
+export function setPageWidth(w: PageWidth) {
+  set(WIDTH_KEY, w === "full" ? w : null);
+  applyPageWidth(w);
 }

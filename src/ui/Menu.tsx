@@ -9,6 +9,10 @@ import { createPortal } from "react-dom";
 import { askConfirm } from "./Confirm";
 import { BUILD_COMMIT, GAME_VERSION } from "../version";
 import {
+  PAGE_WIDTHS,
+  pageWidth,
+  setPageWidth,
+  type PageWidth,
   idleWarnOn,
   resetLayout,
   setIdleWarn,
@@ -214,8 +218,30 @@ function ConfigSection({ onTutorial }: { onTutorial: () => void }) {
 
 function VideoSection() {
   const [speed, setSpeed] = useState<Speed>(watchSpeed);
+  const [width, setWidth] = useState<PageWidth>(pageWidth);
   return (
     <>
+      <fieldset className="menu-row menu-choice">
+        <legend>Page width</legend>
+        {(Object.keys(PAGE_WIDTHS) as PageWidth[]).map((w) => (
+          <label key={w}>
+            <input
+              type="radio"
+              name="page-width"
+              checked={width === w}
+              onChange={() => {
+                setWidth(w);
+                setPageWidth(w);
+              }}
+            />{" "}
+            {PAGE_WIDTHS[w]}
+          </label>
+        ))}
+        <span className="muted small">
+          On a very wide screen the whole window lets the guild, the centre and the buildings spread
+          out instead of leaving empty space at the sides.
+        </span>
+      </fieldset>
       <label className="menu-row">
         Trips and raids play back at{" "}
         <select
@@ -234,10 +260,7 @@ function VideoSection() {
         </select>{" "}
         speed
       </label>
-      <p className="muted small">
-        Changing the speed while watching changes this too. More picture settings will come as the
-        game needs them.
-      </p>
+      <p className="muted small">Changing the speed while watching changes it here too.</p>
     </>
   );
 }
