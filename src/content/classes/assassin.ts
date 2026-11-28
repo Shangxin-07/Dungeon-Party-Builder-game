@@ -19,6 +19,8 @@ export default defineClass({
   likes: ["dagger"],
   row: "front",
   ai: "archer",
+  // A good dagger in the other hand too (M9.04): a second blow at 75%.
+  offhand: { tags: ["dagger"], damagePercent: -25 },
   abilities: { "shadow-strike": 1 },
   startingKit: ["dagger", "leather-armor", "bandages"],
   growth: { DEX: 1, PER: 1 },

@@ -7,7 +7,7 @@
 import type { Derived, FloorGround, PassiveEffect } from "../../content/types";
 import { knownAbilityIds } from "../abilities";
 import { risenAi, risenSheet } from "../fallen";
-import { heroSheet, type Hero } from "../hero";
+import { heroSheet, offhandWeapon, weaponAttackBonus, type Hero } from "../hero";
 import type { Index } from "../library";
 import { type Rng } from "../rng";
 import { computeDerived } from "../stats";
@@ -103,6 +103,7 @@ export class BattleBase {
     const sheet = heroSheet(this.ix, hero);
     const cls = this.ix.cls(hero.classId);
     const weaponDef = hero.equipment.weapon ? this.ix.item(hero.equipment.weapon) : undefined;
+    const off = offhandWeapon(this.ix, hero);
     return {
       uid: hero.id,
       name: hero.name,
@@ -121,6 +122,14 @@ export class BattleBase {
             ranged: !!weaponDef.ranged,
           }
         : { name: "fists", damageType: "crushing", ranged: false },
+      offhand: off
+        ? {
+            name: off.item.name.toLowerCase(),
+            damageType: off.item.damageType ?? "crushing",
+            damagePercent: off.damagePercent,
+            attackDelta: weaponAttackBonus(off.item) - weaponAttackBonus(weaponDef),
+          }
+        : undefined,
       abilities: knownAbilityIds(this.ix, hero),
       cooldowns: {},
       used: {},

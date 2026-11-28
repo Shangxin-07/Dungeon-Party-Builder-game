@@ -84,7 +84,10 @@ export function risenSheet(ix: Index, hero: Hero): HeroSheet {
   const passives = [...heroPassives(ix, hero), ...tf.passives];
   const stats = effectiveStats(hero.stats, passives);
   const weapon = hero.equipment.weapon ? ix.item(hero.equipment.weapon) : undefined;
-  const derived = computeDerived(stats, passives, { ranged: weapon?.ranged ?? false });
+  const derived = computeDerived(stats, passives, {
+    ranged: weapon?.ranged ?? false,
+    finesse: weapon?.tags.includes("finesse") ?? false,
+  });
   derived.maxHp = Math.max(1, Math.round((derived.maxHp * tf.hpPercent) / 100));
   const skills: Record<string, number> = {};
   for (const s of ix.lib.skills) skills[s.id] = skillValue(s, stats, passives);

@@ -13,6 +13,8 @@ import {
   heroSheet,
   heroTitle,
   inCampClass,
+  offhandWeapon,
+  weaponAttackBonus,
   type Hero,
 } from "../../sim/hero";
 import {
@@ -22,6 +24,7 @@ import {
   fightsToTrain,
   kitOut,
   nextCommand,
+  offhandChoices,
   packItem,
   setLeader,
   setRow,
@@ -353,6 +356,24 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
   );
 }
 
+/**
+ * A blade in the off hand (M9.04): what its second blow does, in numbers, or
+ * why it isn't striking.
+ */
+function offhandLine(h: Hero, attack: number): string {
+  const off = offhandWeapon(ix, h);
+  const main = h.equipment.weapon ? ix.item(h.equipment.weapon) : undefined;
+  if (!off)
+    return main?.ranged
+      ? `idle: the ${main.name.toLowerCase()} takes both hands`
+      : "idle: their classes can't fight with it";
+  const atk = Math.max(1, attack + weaponAttackBonus(off.item) - weaponAttackBonus(main));
+  const scale = 1 + off.damagePercent / 100;
+  const lo = Math.round(Math.ceil(atk / 2) * scale);
+  const hi = Math.round(atk * scale);
+  return `strikes again after each blow at one foe: ${100 + off.damagePercent}% damage, ${lo}-${hi} before armour`;
+}
+
 /** Equipment slots with swap/take off, and the pack. */
 function HeroGear({
   town,
@@ -389,7 +410,12 @@ function HeroGear({
       <ul className="gear-slots">
         {EQUIP_SLOTS.map((slot) => {
           const id = h.equipment[slot];
-          const spare = tally(town.stash.filter((x) => ix.item(x).slot === slot));
+          // The off hand also takes a second blade, for classes that dual-wield (M9.04).
+          const spare = tally([
+            ...town.stash.filter((x) => ix.item(x).slot === slot),
+            ...(slot === "offhand" ? offhandChoices(ix, town, h) : []),
+          ]);
+          const blade = slot === "offhand" && id && ix.item(id).slot === "weapon";
           return (
             <li key={slot}>
               <span className="muted small">{SLOT_NAMES[slot]}</span>
@@ -397,7 +423,9 @@ function HeroGear({
               {id ? (
                 <span className="gear-name">
                   {ix.item(id).name}
-                  <span className="muted small">{describeItem(ix.item(id))}</span>
+                  <span className="muted small">
+                    {blade ? offhandLine(h, sheet.derived.attack) : describeItem(ix.item(id))}
+                  </span>
                 </span>
               ) : (
                 <span className="muted small">none</span>
@@ -407,7 +435,12 @@ function HeroGear({
                   <select
                     value=""
                     aria-label={`Swap ${SLOT_NAMES[slot].toLowerCase()}`}
-                    onChange={(e) => act((t) => equip(ix, t, h.id, e.target.value))}
+                    onChange={(e) => {
+                      const x = e.target.value;
+                      act((t) =>
+                        equip(ix, t, h.id, x, ix.item(x).slot === slot ? undefined : slot),
+                      );
+                    }}
                   >
                     <option value="">{id ? "Swap…" : "Equip…"}</option>
                     {spare.map(([x, n]) => (

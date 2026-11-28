@@ -93,6 +93,14 @@ export interface ClassDef {
   likes: readonly string[];
   /** Default row in the formation. */
   row: Row;
+  /**
+   * Dual-wielding (M9.04): weapons with one of these tags can go in the off
+   * hand too, beside a melee weapon. After each blow with the main weapon at
+   * one foe (a plain attack, Backstab, Flurry...) the off hand strikes it again, at `damagePercent` (e.g. -40: 60% damage),
+   * with its own roll to hit. Only the off-hand weapon's attack bonus counts
+   * (it sets that second blow); its other bonuses and abilities don't.
+   */
+  offhand?: { tags: readonly string[]; damagePercent: number };
   /** Id of the combat AI that picks this class's actions. */
   ai: string;
   /**

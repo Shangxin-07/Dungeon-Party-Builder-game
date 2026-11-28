@@ -48,6 +48,8 @@ export function knownAbilities(ix: Index, hero: Hero): KnownAbility[] {
     const id = hero.equipment[slot];
     if (!id) continue;
     const item = ix.item(id);
+    // A weapon in the off hand (M9.04) strikes, but brings no moves of its own.
+    if (slot === "offhand" && item.slot === "weapon") continue;
     for (const a of item.abilities ?? []) add(a, "gear", item.name);
   }
   for (const p of hero.perks) {

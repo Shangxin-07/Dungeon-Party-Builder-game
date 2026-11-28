@@ -693,6 +693,26 @@ New statuses: marked, sundered, disarmed, dazed, chilled. New damage type: cold.
 
 Balance after both halves (`npm run balance -- 1000`, retreat below 30%): floor 2 79% home (was 81% before abilities), floor 3 23% (was 28%). Fighter, cleric, scout: 89% and 40% (was 93% and 41%). Close to the old pressure, with more going on in each fight.
 
+### As built in M9.04: two daggers, and which row
+
+> Added 2026-11-28. Mike: "Scouts that use daggers should be able [to carry a] good one in their off hand, too. Also if they're using daggers, should they be front line, or back?"
+
+- **Dual-wielding is class data.** A class can list `offhand: { tags, damagePercent }`: weapons with one of those tags can also go in the off hand, beside a melee weapon or bare fists. Scouts: daggers at 60% (`-40`). Assassins: daggers at 75% (`-25`). With several classes, the best one counts. Bows and crossbows take both hands: equipping one sends an off-hand blade back to the store room, and an off-hand blade beside a ranged weapon sits idle.
+- **The rule** (`offhandWeapon` in `src/sim/hero.ts`, the follow-up in `combat/battle.ts`): after any blow with the main weapon at one foe (a plain attack, Backstab, Flurry, Mark Prey; not sweeps), the off hand strikes the same foe once more, with its own roll to hit, if the foe is still standing. The second blow uses the hero's attack with the off-hand weapon's attack bonus in place of the main weapon's, at the class's percent. The off-hand weapon gives nothing else: no other bonuses and no moves (no second Backstab), so a better dagger means a harder second blow.
+- **In town** the Off hand slot also offers the daggers in the store room to heroes who can use them, and says what the blow does ("strikes again after each blow at one foe: 60% damage, 4-7 before armour"), or why it's idle.
+- **Daggers hit from DEX or STR, whichever is higher** (Mike, same day). Items tagged `finesse` (the dagger) use `max(STR, DEX)` for attack in place of STR (`baseDerived` in `src/sim/stats.ts`). Fighters keep hitting from STR; scouts (DEX 14) and assassins (DEX 16+) hit much harder with a dagger.
+- **Front or back?** Reach doesn't depend on the attacker's own row: a melee blow from the back row reaches the enemy front row as well as one from the front. Rows only decide who can be hit (monsters' melee reaches the party's back row once the front has fallen), and brutes go for the thinnest armour in reach 80% of the time. So a dagger scout belongs in the back row for now (a rethink of what the back row means for rogues is being discussed). Starter party fighter/scout/mage, 1,000 runs of three fights with no rest, with finesse:
+
+  | Scout kit | Floor 2 won | Scout dies (f2) | Floor 3 won | Floor 3 scout dies | Scout damage per fight |
+  |---|---|---|---|---|---|
+  | Short bow, back | 84% | 1% | 8% | 15% | 54 |
+  | Dagger, back | 78% (58% before finesse) | 1% | 5% | 15% | 54 (40) |
+  | Dagger, front | 63% | 72% | 7% | 92% | 40 |
+  | Two daggers, back | 93% (79%) | 1% | 16% | 13% | 59 (45) |
+  | Two daggers, front | 74% | 58% | 13% | 89% | 45 |
+
+  The off hand adds about 15-24% to a scout's weapon damage on floors 1-3 (9-20% for a level-1 assassin, who uses plain blows less). Two daggers now edge out the bow at close quarters; the bow keeps its reach to the enemy back row (archers, casters) while their front stands. A 50% off hand instead of 60% only moved floor 2 from 93% to 91%, so 60% stays. No starter kit uses daggers, so `npm run balance` is unchanged; assassins (who start with a dagger) are stronger. Saves are unchanged: the off hand already held an item id.
+
 ### As built in M6: materials
 
 > Added 2026-11-21 (M6.15). Mike approved materials first, then the opening (§8), because both the opening and resurrection need them. Materials live in `src/content/materials/`.

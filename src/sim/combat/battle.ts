@@ -343,5 +343,11 @@ export class Battle extends BattleEffects {
       });
     }
     for (const t of targets) this.applyEffects(actor, t, ability.effects, isBasic);
+    // Dual-wielding (M9.04): the off hand follows up any blow with the main
+    // weapon at one foe (a plain attack, Backstab, Flurry...), once.
+    const struck =
+      ability.target === "enemy" && ability.effects.some((e) => e.type === "weaponAttack");
+    if (struck && actor.offhand && target.state === "up" && actor.state === "up")
+      this.weaponAttack(actor, target, 0, false, true);
   }
 }

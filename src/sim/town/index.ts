@@ -119,7 +119,7 @@ export {
 } from "./roster";
 export { buy, sell, restockPlan, restock } from "./market";
 export type { RestockLine } from "./market";
-export { kitOut, equip, unequip, packItem, unpackItem, setRow } from "./gear";
+export { kitOut, equip, unequip, packItem, unpackItem, setRow, offhandChoices } from "./gear";
 export {
   toggleParty,
   setLeader,
