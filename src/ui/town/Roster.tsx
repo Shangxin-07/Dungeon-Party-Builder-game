@@ -41,20 +41,11 @@ import {
   type TownState,
 } from "../../sim/town";
 import { ix } from "../game";
-import { HeroBars, StatSheet } from "../Watch";
+import { StatSheet } from "../Watch";
+import { SlimBars } from "./SlimBars";
 import { useFold } from "../Fold";
-import { mood } from "../../sim/morale";
 import { commandOf, leadershipOf } from "../../sim/leadership";
-import {
-  AbilityList,
-  ClassList,
-  LevelUpPicker,
-  MoraleBar,
-  PerkList,
-  Personality,
-  WearBar,
-  XpBar,
-} from "../Heroes";
+import { AbilityList, ClassList, LevelUpPicker, MoraleLog, PerkList, Personality } from "../Heroes";
 import { SLOT_NAMES, describeItem, tally, type Act } from "./shared";
 
 export function Roster({ town, act }: { town: TownState; act: Act }) {
@@ -186,6 +177,38 @@ function TrainBox({
   );
 }
 
+/** The open card's subscreens (M9.16). */
+const HERO_TABS = [
+  { id: "stats", name: "Stats" },
+  { id: "gear", name: "Gear" },
+  { id: "story", name: "Backstory" },
+  { id: "growth", name: "Growth" },
+] as const;
+type HeroTab = (typeof HERO_TABS)[number]["id"];
+const HERO_TAB_KEY = "dpb-ui-hero-tab";
+
+/** The subscreen last picked on any hero card, remembered in this browser. */
+function useHeroTab(): [HeroTab, (t: HeroTab) => void] {
+  const [tab, setTab] = useState<HeroTab>(() => {
+    try {
+      const t = localStorage.getItem(HERO_TAB_KEY);
+      if (HERO_TABS.some((x) => x.id === t)) return t as HeroTab;
+    } catch {
+      // Blocked storage: start on the stats.
+    }
+    return "stats";
+  });
+  const pick = (t: HeroTab) => {
+    setTab(t);
+    try {
+      localStorage.setItem(HERO_TAB_KEY, t);
+    } catch {
+      // Private windows: the tab just isn't remembered.
+    }
+  };
+  return [tab, pick];
+}
+
 /**
  * A hero on the roster: a compact card (name, bars, anything that needs an
  * answer, party and row buttons) that opens into the full sheet on click.
@@ -203,6 +226,9 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
   const trainReady = h.porter && !fightsToTrain(ix, h);
   const cmd = nextCommand(ix, town);
   const leads = !h.porter && cmd.leader?.id === h.id;
+  const [picked, pickTab] = useHeroTab();
+  // Porters have no Growth screen.
+  const tab = picked === "growth" && h.porter ? "stats" : picked;
 
   return (
     <li
@@ -229,20 +255,19 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
           {leads ? <span className="badge">Leader</span> : null}
         </span>
       </button>
-      <HeroBars hero={h} />
-      <p className="small quiet">
-        <span className={low ? "warn" : "muted"}>
-          Morale {h.morale} {mood(ix, h)}
-        </span>
-        {tier ? <span className="warn"> · {tier.name}</span> : null}
-        {h.injuries.length ? (
-          <span className="warn">
-            {" "}
-            ·{" "}
-            {h.injuries.map((i) => `${ix.injury(i.id).name.toLowerCase()} (${i.days}d)`).join(", ")}
-          </span>
-        ) : null}
-      </p>
+      <SlimBars hero={h} more />
+      {low || tier || h.injuries.length ? (
+        <p className="small quiet warn">
+          {[
+            ...(low ? ["low morale"] : []),
+            ...(tier ? [tier.name] : []),
+            ...h.injuries.map(
+              (i) =>
+                `${ix.injury(i.id).name.toLowerCase()} (${i.days} ${i.days === 1 ? "day" : "days"})`,
+            ),
+          ].join(" · ")}
+        </p>
+      ) : null}
       {open ? null : <KitStrip hero={h} slots={sheet.derived.carrySlots} />}
       {miner && !town.camp ? <MinerTraining town={town} hero={h} act={act} /> : null}
       {trainReady ? <PorterTraining hero={h} act={act} /> : null}
@@ -317,48 +342,79 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
           </button>
         ) : null}
         <button type="button" className="link small" aria-expanded={open} onClick={toggle}>
-          {open ? "Less" : "Stats, gear and more"}
+          {open ? "Less" : "More"}
         </button>
       </div>
 
       {open ? (
-        <div className="hero-body">
-          <div>
-            <MoraleBar hero={h} log />
-            <WearBar hero={h} />
-            {h.porter ? (
-              trainReady ? null : (
-                <PorterTraining hero={h} act={act} />
-              )
-            ) : (
-              <XpBar hero={h} />
-            )}
-            {miner && town.camp ? <MinerTraining town={town} hero={h} act={act} /> : null}
-            <StatSheet hero={h} full />
-            <Personality hero={h} town={town} />
-          </div>
-          <div>
-            <ClassList hero={h} town={town} />
-            <PerkList hero={h} />
-            <LeaderRecordList hero={h} town={town} />
-            <AbilityList hero={h} />
-            <HeroGear town={town} hero={h} act={act} supplies={supplies} packFull={packFull} />
-            <p className="record muted small">
-              {rec
-                ? `${rec.trips} ${rec.trips === 1 ? "trip" : "trips"}, ${rec.kills} kills, joined day ${rec.joined}.`
-                : null}{" "}
+        <div className="hero-body-tabs">
+          <nav className="seg hero-tabs" aria-label={`${h.name}'s sheet`}>
+            {HERO_TABS.filter((t) => t.id !== "growth" || !h.porter).map((t) => (
               <button
+                key={t.id}
                 type="button"
-                className="link danger"
-                onClick={() => {
-                  if (confirm(`Dismiss ${h.name}? Their gear stays with the guild.`))
-                    act((t) => dismiss(ix, t, h.id));
-                }}
+                className={tab === t.id ? "on" : ""}
+                aria-pressed={tab === t.id}
+                onClick={() => pickTab(t.id)}
               >
-                Dismiss
+                {t.name}
               </button>
-            </p>
-          </div>
+            ))}
+          </nav>
+          {tab === "stats" ? (
+            <div className="hero-tab">
+              <StatSheet hero={h} full />
+              <MoraleLog hero={h} />
+              {h.injuries.length ? (
+                <ul className="injuries small">
+                  {h.injuries.map((inj) => {
+                    const def = ix.injury(inj.id);
+                    return (
+                      <li key={inj.id} className="warn">
+                        {def.name} <span className="muted">({def.description})</span>, {inj.days}{" "}
+                        {inj.days === 1 ? "day" : "days"} to heal
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : null}
+              {h.porter && !trainReady ? <PorterTraining hero={h} act={act} /> : null}
+              {miner && town.camp ? <MinerTraining town={town} hero={h} act={act} /> : null}
+            </div>
+          ) : null}
+          {tab === "gear" ? (
+            <div className="hero-tab">
+              <HeroGear town={town} hero={h} act={act} supplies={supplies} packFull={packFull} />
+            </div>
+          ) : null}
+          {tab === "story" ? (
+            <div className="hero-tab">
+              <Personality hero={h} town={town} />
+            </div>
+          ) : null}
+          {tab === "growth" ? (
+            <div className="hero-tab">
+              <ClassList hero={h} town={town} />
+              <PerkList hero={h} />
+              <AbilityList hero={h} />
+              <LeaderRecordList hero={h} town={town} />
+            </div>
+          ) : null}
+          <p className="record muted small">
+            {rec
+              ? `${rec.trips} ${rec.trips === 1 ? "trip" : "trips"}, ${rec.kills} kills, joined day ${rec.joined}.`
+              : null}{" "}
+            <button
+              type="button"
+              className="link danger"
+              onClick={() => {
+                if (confirm(`Dismiss ${h.name}? Their gear stays with the guild.`))
+                  act((t) => dismiss(ix, t, h.id));
+              }}
+            >
+              Dismiss
+            </button>
+          </p>
         </div>
       ) : null}
     </li>
@@ -416,7 +472,7 @@ function HeroGear({
           Kit out
         </button>
       </h4>
-      <ul className="gear-slots">
+      <ul className="gear-slots gear-rows">
         {EQUIP_SLOTS.map((slot) => {
           const id = h.equipment[slot];
           // The off hand also takes a second blade, for classes that dual-wield (M9.04).
@@ -425,20 +481,16 @@ function HeroGear({
             ...(slot === "offhand" ? offhandChoices(ix, town, h) : []),
           ]);
           const blade = slot === "offhand" && id && ix.item(id).slot === "weapon";
+          const about = id
+            ? `${ix.item(id).name}: ${blade ? offhandLine(h, sheet.derived.attack) : describeItem(ix.item(id))}`
+            : `${SLOT_NAMES[slot]}: none`;
           return (
-            <li key={slot}>
-              <span className="muted small">{SLOT_NAMES[slot]}</span>
-              <ItemSlot id={id} size={40} empty={SLOT_NAMES[slot]} />
-              {id ? (
-                <span className="gear-name">
-                  {ix.item(id).name}
-                  <span className="muted small">
-                    {blade ? offhandLine(h, sheet.derived.attack) : describeItem(ix.item(id))}
-                  </span>
-                </span>
-              ) : (
-                <span className="muted small">none</span>
-              )}
+            <li key={slot} title={about}>
+              <ItemSlot id={id} size={28} empty={about} />
+              <span className="gear-name">
+                <span className="muted small">{SLOT_NAMES[slot]}</span>
+                <span>{id ? ix.item(id).name : <span className="muted">none</span>}</span>
+              </span>
               <span className="gear-actions">
                 {spare.length ? (
                   <select
@@ -464,9 +516,10 @@ function HeroGear({
                   <button
                     type="button"
                     className="link small"
+                    title={`Take off the ${ix.item(id).name.toLowerCase()}`}
                     onClick={() => act((t) => unequip(ix, t, h.id, slot))}
                   >
-                    Take off
+                    ✕
                   </button>
                 ) : null}
               </span>
@@ -478,16 +531,16 @@ function HeroGear({
       <h4>
         Pack{" "}
         <span className="muted small">
-          ({h.pack.length}/{sheet.derived.carrySlots} slots; the rest carries loot)
+          ({h.pack.length}/{sheet.derived.carrySlots}; free slots carry loot home)
         </span>
       </h4>
-      <ul className="pack-slots">
+      <ul className="pack-slots pack-compact">
         {Array.from({ length: Math.max(sheet.derived.carrySlots, h.pack.length) }, (_, i) => {
           const id = h.pack[i];
           if (!id)
             return (
               <li key={i} className="pack-slot free" title="Free: carries loot home">
-                <ItemSlot size={32} empty="Free" />
+                <ItemSlot size={22} empty="Free" />
               </li>
             );
           return (
@@ -497,8 +550,7 @@ function HeroGear({
                 title={`${ix.item(id).name}: ${describeItem(ix.item(id))}. Click to put back in the store room.`}
                 onClick={() => act((t) => unpackItem(ix, t, h.id, i))}
               >
-                <ItemSlot id={id} size={32} />
-                <span className="pack-name">{ix.item(id).name}</span>
+                <ItemSlot id={id} size={22} />
               </button>
             </li>
           );
@@ -538,13 +590,18 @@ function LeaderRecordList({ hero: h, town }: { hero: Hero; town: TownState }) {
     .filter((n): n is string => !!n);
   return (
     <div className="leader-record small">
-      <h4>Leading</h4>
       <p>
-        Leadership <strong>{leadershipOf(ix, h)}</strong>: can lead{" "}
-        <strong>{commandOf(ix, h)}</strong> well.
-        {h.lead?.trips
-          ? ` Led ${h.lead.trips} ${h.lead.trips === 1 ? "trip" : "trips"}.`
-          : " Has never led a party."}
+        Leading:{" "}
+        <span title={`Leadership ${leadershipOf(ix, h)}`}>
+          can lead <strong>{commandOf(ix, h)}</strong> well
+        </span>
+        <span className="muted">
+          {" "}
+          ·{" "}
+          {h.lead?.trips
+            ? `led ${h.lead.trips} ${h.lead.trips === 1 ? "trip" : "trips"}`
+            : "never led a party"}
+        </span>
       </p>
       {traits.length ? (
         <ul>
