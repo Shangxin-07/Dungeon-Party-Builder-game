@@ -5,7 +5,7 @@
  * picture of its own (`art.card`), with a drawn stand-in until that sheet
  * arrives (M9.08). Other buildings without a sprite show nothing here.
  */
-import { Fragment } from "react";
+import { Fragment, type ReactElement } from "react";
 import type { BuildingDef } from "../../content/types";
 import { SPRITES, spriteFrame } from "./map/sprites";
 
@@ -26,7 +26,7 @@ function sketched(b: BuildingDef): boolean {
  */
 function WallSketch({ level }: { level: number }) {
   const ground = 92;
-  const shapes: JSX.Element[] = [];
+  const shapes: ReactElement[] = [];
   if (level <= 1) {
     for (let x = 10; x < 118; x += 12) {
       const h = 46 + ((x * 7) % 9);
