@@ -366,7 +366,9 @@ export function TownPlay({ initial }: { initial: Game }) {
   const counts = needsByTab(town, needs);
   const count = (id: TabId) => counts[id] ?? 0;
   const tabButton = (t: (typeof TABS)[number], on: boolean, className = "") => {
-    const n = count(t.id);
+    // The count is things still to do there, so the tab you're on doesn't
+    // repeat it (M9.21, #118): the news strip still lists them.
+    const n = on ? 0 : count(t.id);
     return (
       <button
         key={t.id}

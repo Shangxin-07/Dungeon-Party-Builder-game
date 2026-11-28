@@ -21,7 +21,13 @@ export const tutorialChecks: Record<TutorialCheck, (ix: Index, t: TownState) => 
   trained: (ix, t) => t.roster.some((h) => !h.porter && !inCampClass(ix, h)),
   freeHires: (_, t) => t.freeHires > 0,
   hasHeroes: (_, t) => t.roster.filter((h) => !h.porter).length >= 3,
-  partyPicked: (_, t) => t.party.length >= 2,
+  // Two or more heroes, or everyone who can go if fewer can (M9.21, #117):
+  // miners still need a class, porters go with a party but don't count.
+  partyPicked: (ix, t) => {
+    const away = awaySet(t);
+    const able = t.roster.filter((h) => !h.porter && !away.has(h.id) && !inCampClass(ix, h));
+    return t.party.length >= 1 && t.party.length >= Math.min(2, able.length);
+  },
   sent: (_, t) => t.outings.length > 0 || t.trips.length > 0,
   back: (_, t) => t.trips.length > 0,
 };

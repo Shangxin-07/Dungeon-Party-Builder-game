@@ -2,11 +2,17 @@
  * Party, formation and orders, and the saved parties A and B.
  */
 import { askConfirm } from "../Confirm";
-import { Fold } from "../Fold";
+import { Fold, openFold, showFold } from "../Fold";
 import type { Row } from "../../content/types";
 import { describeParty, partyAlignment } from "../../sim/alignment";
 import { tiesAmong, tieText } from "../../sim/ties";
-import { describeRetreat, isScouting, isSneaking, type LootRule } from "../../sim/expedition";
+import {
+  describeRetreat,
+  isScouting,
+  isSneaking,
+  type LootRule,
+  type RetreatRule,
+} from "../../sim/expedition";
 import { knownLairs, lairSlain, partyStealth, sneakChance } from "../../sim/stealth";
 import { heroSheet, heroTitle } from "../../sim/hero";
 import { commandOf, leadershipOf, traitsOf } from "../../sim/leadership";
@@ -22,6 +28,7 @@ import {
   addParty,
   removeParty,
   sameOrders,
+  fileDrift,
   saveParty,
   savedParty,
   cancelRescue,
@@ -50,6 +57,26 @@ import { heartOn, heartState } from "../../sim/dungeon";
 import type { Act } from "./shared";
 
 /** A party's outline colour (M9.07): its alignment's colour, purple when divided. */
+/** A retreat order in a few words, for a party on file's row. */
+function retreatShort(r: RetreatRule): string {
+  switch (r.kind) {
+    case "never":
+      return "never turns back";
+    case "hero-hp-below":
+      return `back below ${r.percent}% HP`;
+    case "hero-downed":
+      return "back if anyone's down";
+    case "out-of-potions":
+      return "back when out of potions";
+  }
+}
+
+/** Open the Roster and that hero's card, and bring it into view. */
+function showHeroCard(id: string) {
+  openFold("roster");
+  showFold(`hero-${id}`, `hero-card-${id}`);
+}
+
 export function partyOutline(heroes: readonly Hero[]): string | undefined {
   if (!heroes.length) return undefined;
   return partyAlignment(ix, [...heroes]).alignment?.frame ?? "#9a6fd0";
@@ -178,7 +205,21 @@ export function PartyPanel({
             {row(r).length ? (
               <div className="formation-heroes">
                 {row(r).map((h) => (
-                  <div key={h.id} className="formation-hero hero-tile">
+                  // M9.21 (#123): a tile opens that hero's card in the Roster.
+                  <div
+                    key={h.id}
+                    className="formation-hero hero-tile tile-link"
+                    role="button"
+                    tabIndex={0}
+                    title={`Show ${h.name}'s card in the Roster`}
+                    onClick={() => showHeroCard(h.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        showHeroCard(h.id);
+                      }
+                    }}
+                  >
                     <span
                       className="tile-face"
                       title={`${h.name}: ${ix.alignment(h.alignment).name}`}
@@ -633,8 +674,10 @@ export function PartiesOnFile({
               town.party,
               heroes.map((h) => h.id),
             );
-          // Same heroes but other orders: launching now would not follow the card.
-          const drifted = sameCrew && !sameOrders(p.orders, town.orders);
+          // Same heroes but other orders, porters or leader (M9.21, #120):
+          // launching now would not follow the card.
+          const drift = sameCrew ? fileDrift(town, p) : [];
+          const drifted = drift.length > 0;
           const current = sameCrew && !drifted;
           const status = why ? (
             <span className="warn">{why}</span>
@@ -669,7 +712,9 @@ export function PartiesOnFile({
                   }}
                 />
                 {current ? <span className="muted small">picked</span> : null}
-                {drifted ? <span className="muted small">picked, other orders</span> : null}
+                {drifted ? (
+                  <span className="muted small">picked, other {drift.join(", ")}</span>
+                ) : null}
                 <span className="row-buttons">
                   <button
                     type="button"
@@ -705,27 +750,38 @@ export function PartiesOnFile({
                   {isScouting(p.orders) ? "Scout to " : isSneaking(p.orders) ? "Sneak to " : ""}
                   floor {p.orders.targetFloor}
                   {p.orders.clearPercent ? `, thin ${p.orders.clearPercent}%` : ""}
+                  {`, ${retreatShort(p.orders.retreat)}`}
+                  {p.orders.loot === "valuable" ? ", valuables only" : ""}
                 </span>
               </div>
               <div className="party-row-foot small" title={`${describeRetreat(p.orders.retreat)}`}>
                 {drifted ? (
                   <span className="warn">
-                    These heroes are picked with other orders (floor {town.orders.targetFloor}).
-                    Pick to use the orders on file, or save the changes.
+                    These heroes are picked with other {drift.join(", ")}. Pick to use what's on
+                    file, or save the changes.
                   </span>
                 ) : (
                   status
                 )}
                 <span className="row-links">
-                  <button
-                    type="button"
-                    className="link small"
-                    disabled={!town.party.length}
-                    title="Keep the party being picked, its porters and orders, here instead"
-                    onClick={() => act((t) => saveParty(ix, t, slot))}
-                  >
-                    {sameCrew ? "save changes" : "replace with current"}
-                  </button>
+                  {current ? (
+                    <span
+                      className="muted small"
+                      title="The party being picked matches this one. Sealing the stairs is a one-off and is never kept on file."
+                    >
+                      saved
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="link small"
+                      disabled={!town.party.length}
+                      title="Keep the party being picked, its porters, leader and orders, here instead. Sealing the stairs is a one-off and isn't kept on file."
+                      onClick={() => act((t) => saveParty(ix, t, slot))}
+                    >
+                      {sameCrew ? "save changes" : "replace with current"}
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="link danger small"

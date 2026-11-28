@@ -44,6 +44,22 @@ describe("the first-delve tutorial", () => {
     expect(currentStep(ix, sent, tutorialSteps.length)).toBe(tutorialSteps.length);
   });
 
+  it("finishes Pick the party once everyone who can go is in (#117)", () => {
+    const t = autoStart(ix, newTown(ix, heroNames, 1));
+    const [a, b] = t.roster.filter((h) => !h.porter);
+    const step = indexOf("party");
+    expect(at({ ...t, party: [] }, step)).toBe("party");
+    expect(at({ ...t, party: [a!.id] }, step)).toBe("party");
+    expect(at({ ...t, party: [a!.id, b!.id] }, step)).toBe("orders");
+    // Only one hero left who can go: one is enough.
+    const alone = {
+      ...t,
+      roster: t.roster.filter((h) => h.id === a!.id || h.porter),
+      party: [a!.id],
+    };
+    expect(at(alone, step)).toBe("orders");
+  });
+
   it("starts on a new game, not an old one, and never once turned off", () => {
     expect(progressFor(undefined, { seed: 5, day: 1 })).toEqual({ step: 0, off: false, seed: 5 });
     expect(progressFor(undefined, { seed: 5, day: 30 })).toBeUndefined();
