@@ -6,7 +6,7 @@ export default defineItem({
   icon: { sheet: "weapons", cell: 11 },
   slot: "weapon",
   value: 20,
-  tags: ["staff", "melee", "focus"],
+  tags: ["staff", "melee", "focus", "reach"],
   salvage: { timber: 2 },
   damageType: "crushing",
   passives: [

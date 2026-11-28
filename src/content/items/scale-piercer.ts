@@ -9,7 +9,7 @@ export default defineItem({
   icon: { sheet: "weapons", cell: 6 },
   slot: "weapon",
   value: 140,
-  tags: ["spear", "melee", "bane"],
+  tags: ["spear", "melee", "bane", "reach"],
   salvage: { "iron-ore": 2, "deep-silver": 1 },
   damageType: "piercing",
   unlock: { monster: "mire-behemoth", tier: 2 },

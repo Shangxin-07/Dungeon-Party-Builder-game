@@ -74,7 +74,17 @@ export class BattleEffects extends BattleBase {
     let raw = this.rng.int(Math.ceil(atk / 2), atk);
     let percent =
       extraPercent + (off?.damagePercent ?? 0) + bonusVsTags(this.passives(actor), target.tags);
-    if (this.ambushing.has(actor.uid)) percent += AMBUSH_BONUS;
+    if (this.ambushing.has(actor.uid) || actor.hidden) percent += AMBUSH_BONUS;
+    // Lurking (M9.04): a hero swinging a melee weapon from the back row who
+    // isn't hidden can barely reach. Ranged and reach weapons are fine.
+    if (
+      actor.side === "party" &&
+      actor.row === "back" &&
+      !actor.hidden &&
+      !actor.weapon.ranged &&
+      !actor.weapon.reach
+    )
+      percent += this.ix.lib.stealth.lurk.backRowMelee;
     raw *= 1 + percent / 100;
     if (basic || off) {
       this.emit({
@@ -124,6 +134,7 @@ export class BattleEffects extends BattleBase {
     else if (resist > 0) note = " (resisted)";
     else if (resist < 0) note = " (weak spot!)";
     if (source && this.ambushing.has(source.uid)) note += " (ambush!)";
+    else if (source?.hidden && armored) note += " (from the shadows!)";
     if (amount === 0) {
       this.emit({
         kind: "damage",

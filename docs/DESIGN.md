@@ -713,6 +713,41 @@ Balance after both halves (`npm run balance -- 1000`, retreat below 30%): floor 
 
   The off hand adds about 15-24% to a scout's weapon damage on floors 1-3 (9-20% for a level-1 assassin, who uses plain blows less). Two daggers now edge out the bow at close quarters; the bow keeps its reach to the enemy back row (archers, casters) while their front stands. A 50% off hand instead of 60% only moved floor 2 from 93% to 91%, so 60% stays. No starter kit uses daggers, so `npm run balance` is unchanged; assassins (who start with a dagger) are stronger. Saves are unchanged: the off hand already held an item id.
 
+#### Lurking: rogues in the back row (M9.05)
+
+> Mike, 2026-11-28: "We may need to rethink how front/back works... A rogue at the back has the opportunity to sneak off and doesn't have to hit 'at range', but should be able to be discovered." Proposed and approved the same day ("write it, then build it").
+
+1. **Hiding.** At the start of every fight, each hero in the back row with a melee weapon (or bare hands) that isn't a reach weapon tries to slip into the shadows. The chance is the sneak chance (§17.8): 50% + (their Stealth − the group's sharpest ear)%, kept within 5-95%. A level-1 scout (Stealth about 70) against goblins (ear 45) hides about 75% of the time. Noisy gear (chainmail, scale mail, iron shield, war axe) lowers Stealth, so it lowers this too.
+2. **While hidden** no monster can pick them as the target of a blow or a spell aimed at one hero, even once the front row has fallen. Things that hit the whole party (Spore Burst, blasting powder) still catch them. Every weapon blow they land counts as an ambush: +50% damage, the surprise round's bonus.
+3. **Being found.** After each strike (main and off hand together count as one), the foe they struck rolls to spot them with the same formula turned round: 50% + (that foe's ear − their Stealth)%, kept within 5-95%, plus 10% for every strike they've already made from hiding this fight. If the foe fell, the sharpest ear still standing rolls instead.
+4. **Found** means out of the shadows for the rest of the fight. They stand in the front row now: melee reaches them while the front stands, and brutes, who go for thin armour, find them quickly.
+5. **Everyone else in the back.** A hero who isn't hidden (they failed to hide, were found, or aren't trying) and fights with a melee weapon from the back row does 50% damage. Ranged weapons are exempt, and so are reach weapons: anything tagged `reach` (staves, the iron staff, the scale-piercer), so mages swinging staves don't change. Monsters are unchanged: their rows are set per monster and already balanced.
+6. **Rules as data:** `lurk` in `content/stealth.ts` (`spotPerStrike`, `backRowMelee`). The hiding and spotting rolls use the sneak `base`, `min` and `max`.
+
+**As built (M9.05).** `lurk()` and `spotCheck()` in `src/sim/combat/battle.ts`, the +50% and the back-row penalty in `weaponAttack` (`combat/effects.ts`); `Fighter.hidden` / `strikesHidden`, and `weapon.reach` from the `reach` tag. A found lurker's row changes only for that fight. The log says "Wren slips into the shadows.", "(from the shadows!)" on each hidden blow, and "Goblin A spots Wren!". No starting kit puts a melee weapon in the back row (mages carry reach staves), so `npm run balance` and the days bot (`--days 120 --policy climb --build --runs 60`) are byte-identical to M9.04.
+
+A level-1 scout with two daggers in the back row (Stealth about 72), 2,000 fights a floor:
+
+| Floor | Hides | Strikes from hiding a fight | Found before the fight ends |
+|---|---|---|---|
+| 1 | 74% | 2.0 | 53% |
+| 2 | 63% | 2.0 | 72% |
+| 3 | 67% | 2.5 | 83% |
+| 4 | 69% | 2.4 | 75% |
+| 5 | 67% | 2.6 | 92% |
+
+Three fights in a row with no rest, 1,000 runs (fighter/scout/mage; then fighter/cleric/scout/mage):
+
+| Scout kit | F2 won | Scout dies f2 | F3 won | Scout dies f3 | 4 heroes: F3 won / scout dies |
+|---|---|---|---|---|---|
+| Short bow, back | 84% | 1% | 8% | 15% | 85% / 3% |
+| Dagger, back (lurks) | 72% (78% before lurking) | 16% | 9% | 39% | 78% / 18% |
+| Dagger, front | 63% | 72% | 7% | 92% | 79% / 52% |
+| Two daggers, back (lurks) | 82% (93%) | 10% | 22% (16%) | 32% | 87% / 11% |
+| Two daggers, front | 74% | 58% | 13% | 89% | 88% / 39% |
+
+So the back row is no longer free: a dagger rogue there hits harder while hidden (floor 3 wins up from 16% to 22%), but once found they're in the thick of it and die more often (2% to 10% on floor 2). It's still far safer than standing in the front row from the start, and the bow is still the safe choice.
+
 ### As built in M6: materials
 
 > Added 2026-11-21 (M6.15). Mike approved materials first, then the opening (§8), because both the opening and resurrection need them. Materials live in `src/content/materials/`.

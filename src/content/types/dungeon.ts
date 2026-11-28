@@ -228,6 +228,16 @@ export interface StealthRules {
   perExtraHero: number;
   /** A monster's hearing = PER × this + its `hearing`. A group hears by its sharpest ear. */
   earPerPer: number;
+  /**
+   * Lurking (M9.04, DESIGN.md "Lurking"): back-row heroes with melee weapons
+   * hide at the start of a fight (the same chance as sneaking, hero by hero).
+   */
+  lurk: {
+    /** Added to the chance of being spotted for every strike already made from hiding. */
+    spotPerStrike: number;
+    /** Damage percent for melee blows from the back row by a hero who isn't hidden (e.g. -50). */
+    backRowMelee: number;
+  };
 }
 
 /**

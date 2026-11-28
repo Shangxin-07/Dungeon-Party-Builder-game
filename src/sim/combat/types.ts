@@ -30,7 +30,14 @@ export interface Fighter {
   passives: PassiveEffect[];
   skills: Record<string, number>;
   tags: string[];
-  weapon: { name: string; damageType: DamageType; ranged: boolean };
+  weapon: { name: string; damageType: DamageType; ranged: boolean; reach?: boolean };
+  /**
+   * Lurking (M9.04): hidden in the back row. Monsters can't single them out,
+   * and their blows land as ambushes until they're spotted.
+   */
+  hidden?: boolean;
+  /** Strikes made from hiding this fight: each one makes the next easier to spot. */
+  strikesHidden?: number;
   /**
    * A second weapon in the off hand (M9.04): strikes again after each plain
    * attack. `attackDelta` is its attack bonus less the main weapon's.
