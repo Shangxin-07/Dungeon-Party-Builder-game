@@ -4,6 +4,7 @@ import { defineBuilding } from "../types";
 export default defineBuilding({
   id: "graveyard",
   name: "Graveyard",
+  group: "guild",
   blurb: "Somewhere to lay the fallen to rest. Their friends take comfort in it.",
   startLevel: 0,
   levels: [

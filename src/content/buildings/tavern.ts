@@ -7,6 +7,7 @@ import { defineBuilding } from "../types";
 export default defineBuilding({
   id: "tavern",
   name: "Tavern",
+  group: "guild",
   blurb:
     "Word gets around. More and better adventurers come looking for work, and heroes cheer up faster.",
   startLevel: 0,

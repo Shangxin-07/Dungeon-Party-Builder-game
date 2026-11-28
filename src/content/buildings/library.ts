@@ -9,6 +9,7 @@ import { defineBuilding } from "../types";
 export default defineBuilding({
   id: "library",
   name: "Library",
+  group: "guild",
   blurb:
     "Bestiaries, old maps and the miners' notes. Heroes learn more from every trip, and researchers study monsters and finds.",
   startLevel: 0,

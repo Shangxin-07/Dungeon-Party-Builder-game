@@ -4,6 +4,7 @@
  * PostsPanel puts heroes at home on posts: the barricade, the lookout, the
  * salvage crew and (at the camp only) the seam.
  */
+import { askConfirm } from "../Confirm";
 import { Fold } from "../Fold";
 import { heroNames } from "../../content";
 import {
@@ -100,9 +101,13 @@ export function CampPanel({ town, act }: { town: TownState; act: Act }) {
           <button
             type="button"
             className="link"
-            onClick={() => {
+            onClick={async () => {
               if (
-                !confirm("Skip the opening? You'll start with a Guild Hall and proper kit instead.")
+                !(await askConfirm({
+                  message:
+                    "Skip the opening? You'll start with a Guild Hall and proper kit instead.",
+                  ok: "Skip it",
+                }))
               )
                 return;
               act((t) => newTown(ix, heroNames, t.seed));

@@ -1,8 +1,10 @@
 /**
  * Buildings: upgrades, repairs, works in progress and the helpers on site.
  */
-import { Fold } from "../Fold";
+import { useEffect, useState } from "react";
+import { Fold, onShowTarget } from "../Fold";
 import { library } from "../../content";
+import { BUILDING_GROUPS, type BuildingDef, type BuildingGroup } from "../../content/types";
 import {
   builderHands,
   materialWords,
@@ -34,94 +36,172 @@ function buildingSummary(town: TownState): string {
     .join(", ");
 }
 
+const GROUP_NAMES: Record<BuildingGroup, string> = {
+  defence: "Defences",
+  guild: "Guild",
+  production: "Production",
+};
+const groupOf = (b: BuildingDef): BuildingGroup => b.group ?? "production";
+const GROUP_KEY = "dpb-ui-build-tab";
+
+function rememberedGroup(): BuildingGroup {
+  try {
+    const g = localStorage.getItem(GROUP_KEY);
+    if (BUILDING_GROUPS.some((x) => x === g)) return g as BuildingGroup;
+  } catch {
+    // Blocked storage: start on the defences.
+  }
+  return "defence";
+}
+
+/** Something to do there now: an upgrade the guild can pay for, or a repair. */
+function canAct(town: TownState, b: BuildingDef): boolean {
+  if (underConstruction(town, b.id)) return false;
+  if (town.damaged.includes(b.id)) return town.gold >= repairCost(ix, town, b.id);
+  const next = nextLevel(ix, town, b.id);
+  return (
+    !!next &&
+    town.gold >= next.cost &&
+    !materialsShort(ix, town, next.materials) &&
+    !needsRenown(ix, town, next)
+  );
+}
+
 export function Buildings({ town, act }: { town: TownState; act: Act }) {
+  const [group, setGroup] = useState<BuildingGroup>(rememberedGroup);
+  const pick = (g: BuildingGroup) => {
+    setGroup(g);
+    try {
+      localStorage.setItem(GROUP_KEY, g);
+    } catch {
+      // Private windows: the tab just isn't remembered.
+    }
+  };
+  // A jump to a building (the map, the needs-you list) opens its tab first.
+  useEffect(
+    () =>
+      onShowTarget((target) => {
+        if (!target.startsWith("building-")) return;
+        const b = library.buildings.find((x) => `building-${x.id}` === target);
+        if (b) pick(groupOf(b));
+      }),
+    [],
+  );
   return (
     <Fold id="buildings" title="Buildings" summary={buildingSummary(town)}>
       <Helpers town={town} />
-      <ul className="cards">
-        {library.buildings.map((b) => {
-          const level = town.buildings[b.id] ?? 0;
-          const now = level ? b.levels[level - 1] : undefined;
-          const next = nextLevel(ix, town, b.id);
-          const damaged = town.damaged.includes(b.id);
-          const fix = damaged ? repairCost(ix, town, b.id) : 0;
-          const work = underConstruction(town, b.id);
-          const short = next && materialsShort(ix, town, next.materials);
-          const fame = needsRenown(ix, town, next);
+      <nav className="seg building-tabs" aria-label="Kinds of building">
+        {BUILDING_GROUPS.map((g) => {
+          const list = library.buildings.filter((b) => groupOf(b) === g);
+          const ready = list.filter((b) => canAct(town, b)).length;
+          const hurt = list.filter((b) => town.damaged.includes(b.id)).length;
           return (
-            <li key={b.id} id={`building-${b.id}`} className={`card${damaged ? " damaged" : ""}`}>
-              <BuildingPicture
-                building={b}
-                level={level}
-                next={next ? level + 1 : undefined}
-                going={work?.level}
-                damaged={damaged}
-              />
-              <h3>
-                {b.name}{" "}
-                <span className="muted small">{level ? `level ${level}` : "not built"}</span>
-              </h3>
-              <p className="small">{b.blurb}</p>
-              {now ? <p className="small">Now: {now.summary}.</p> : null}
-              {b.raidProof ? <p className="small muted">Raids can't damage it.</p> : null}
-              {level && !willDeal(ix, town, b.id) ? (
-                <p className="small warn">
-                  Shut: only deals with{" "}
-                  {(b.dealsWith ?? []).map((a) => ix.alignment(a).name).join(" or ")} heroes, and
-                  the guild has none.
-                </p>
-              ) : null}
-              {work ? (
-                <Works
-                  building={b.name}
-                  work={work}
-                  total={b.levels[work.level - 1]!.days}
-                  town={town}
-                />
-              ) : null}
-              {damaged ? (
-                <>
-                  <p className="small damaged-note">
-                    Damaged in a raid: it does nothing until repaired.
-                  </p>
-                  <button
-                    type="button"
-                    className="btn"
-                    disabled={town.gold < fix}
-                    onClick={() => act((t) => repair(ix, t, b.id))}
-                  >
-                    Repair for {fix} gold
-                  </button>
-                </>
-              ) : work ? null : next ? (
-                <>
-                  <p className="small muted">
-                    Level {level + 1}: {next.summary}.
-                  </p>
-                  {next.materials ? (
-                    <p className={`small${short ? " warn" : ""}`}>
-                      Also needs {materialWords(ix, next.materials)}
-                      {short ? `: short of ${short}` : ""}.
-                    </p>
-                  ) : null}
-                  {fame ? <p className="small warn">{fame}</p> : null}
-                  <button
-                    type="button"
-                    className="btn"
-                    disabled={town.gold < next.cost || !!short || !!fame}
-                    title={fame ?? (short ? `Short of ${short}.` : undefined)}
-                    onClick={() => act((t) => upgrade(ix, t, b.id))}
-                  >
-                    {level ? "Upgrade" : "Build"} for {costWords(next.cost, next.materials)}
-                    {next.days ? `, ${next.days} ${next.days === 1 ? "day" : "days"}` : ""}
-                  </button>
-                </>
-              ) : (
-                <p className="small muted">As big as it gets for now.</p>
-              )}
-            </li>
+            <button
+              key={g}
+              type="button"
+              className={group === g ? "on" : ""}
+              aria-pressed={group === g}
+              title={[
+                ready ? `${ready} you can build, upgrade or repair now` : "",
+                hurt ? `${hurt} damaged` : "",
+              ]
+                .filter(Boolean)
+                .join(", ")}
+              onClick={() => pick(g)}
+            >
+              {GROUP_NAMES[g]}
+              {ready ? <span className="tab-count">{ready}</span> : null}
+              {hurt ? <span className="tab-count warn">!</span> : null}
+            </button>
           );
         })}
+      </nav>
+      <ul className="cards">
+        {library.buildings
+          .filter((b) => groupOf(b) === group)
+          .map((b) => {
+            const level = town.buildings[b.id] ?? 0;
+            const now = level ? b.levels[level - 1] : undefined;
+            const next = nextLevel(ix, town, b.id);
+            const damaged = town.damaged.includes(b.id);
+            const fix = damaged ? repairCost(ix, town, b.id) : 0;
+            const work = underConstruction(town, b.id);
+            const short = next && materialsShort(ix, town, next.materials);
+            const fame = needsRenown(ix, town, next);
+            return (
+              <li key={b.id} id={`building-${b.id}`} className={`card${damaged ? " damaged" : ""}`}>
+                <BuildingPicture
+                  building={b}
+                  level={level}
+                  next={next ? level + 1 : undefined}
+                  going={work?.level}
+                  damaged={damaged}
+                />
+                <h3>
+                  {b.name}{" "}
+                  <span className="muted small">{level ? `level ${level}` : "not built"}</span>
+                </h3>
+                <p className="small">{b.blurb}</p>
+                {now ? <p className="small">Now: {now.summary}.</p> : null}
+                {b.raidProof ? <p className="small muted">Raids can't damage it.</p> : null}
+                {level && !willDeal(ix, town, b.id) ? (
+                  <p className="small warn">
+                    Shut: only deals with{" "}
+                    {(b.dealsWith ?? []).map((a) => ix.alignment(a).name).join(" or ")} heroes, and
+                    the guild has none.
+                  </p>
+                ) : null}
+                {work ? (
+                  <Works
+                    building={b.name}
+                    work={work}
+                    total={b.levels[work.level - 1]!.days}
+                    town={town}
+                  />
+                ) : null}
+                {damaged ? (
+                  <>
+                    <p className="small damaged-note">
+                      Damaged in a raid: it does nothing until repaired.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={town.gold < fix}
+                      onClick={() => act((t) => repair(ix, t, b.id))}
+                    >
+                      Repair for {fix} gold
+                    </button>
+                  </>
+                ) : work ? null : next ? (
+                  <>
+                    <p className="small muted">
+                      Level {level + 1}: {next.summary}.
+                    </p>
+                    {next.materials ? (
+                      <p className={`small${short ? " warn" : ""}`}>
+                        Also needs {materialWords(ix, next.materials)}
+                        {short ? `: short of ${short}` : ""}.
+                      </p>
+                    ) : null}
+                    {fame ? <p className="small warn">{fame}</p> : null}
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={town.gold < next.cost || !!short || !!fame}
+                      title={fame ?? (short ? `Short of ${short}.` : undefined)}
+                      onClick={() => act((t) => upgrade(ix, t, b.id))}
+                    >
+                      {level ? "Upgrade" : "Build"} for {costWords(next.cost, next.materials)}
+                      {next.days ? `, ${next.days} ${next.days === 1 ? "day" : "days"}` : ""}
+                    </button>
+                  </>
+                ) : (
+                  <p className="small muted">As big as it gets for now.</p>
+                )}
+              </li>
+            );
+          })}
       </ul>
     </Fold>
   );

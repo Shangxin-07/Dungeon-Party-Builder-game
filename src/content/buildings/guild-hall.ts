@@ -9,6 +9,7 @@ import { defineBuilding } from "../types";
 export default defineBuilding({
   id: "guild-hall",
   name: "Guild Hall",
+  group: "guild",
   blurb: "Where parties are put together. A bigger hall means bigger parties.",
   startLevel: 1,
   raidProof: true,

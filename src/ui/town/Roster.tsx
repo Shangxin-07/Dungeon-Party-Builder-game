@@ -1,6 +1,7 @@
 /**
  * The roster: each hero's card, gear, pack and porter training.
  */
+import { askConfirm } from "../Confirm";
 import { ItemIcon } from "../art/Icon";
 import { Portrait } from "../art/Portrait";
 import { Fold } from "../Fold";
@@ -407,8 +408,14 @@ export function HeroCard({ town, hero: h, act }: { town: TownState; hero: Hero; 
             <button
               type="button"
               className="link danger"
-              onClick={() => {
-                if (confirm(`Dismiss ${h.name}? Their gear stays with the guild.`))
+              onClick={async () => {
+                if (
+                  await askConfirm({
+                    message: `Dismiss ${h.name}? Their gear stays with the guild.`,
+                    ok: "Dismiss",
+                    danger: true,
+                  })
+                )
                   act((t) => dismiss(ix, t, h.id));
               }}
             >

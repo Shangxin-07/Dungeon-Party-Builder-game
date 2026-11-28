@@ -1,6 +1,7 @@
 /**
  * The town game: load or start a save, then lay out the town's panels.
  */
+import { askConfirm } from "../Confirm";
 import { useEffect, useRef, useState } from "react";
 import { heroNames, materials } from "../../content";
 import { ItemIcon } from "../art/Icon";
@@ -206,8 +207,14 @@ export function SaveProblem({
         <button
           type="button"
           className="link danger"
-          onClick={() => {
-            if (!confirm(`Start over in slot ${slot}? The save there will be gone for good.`))
+          onClick={async () => {
+            if (
+              !(await askConfirm({
+                message: `Start over in slot ${slot}? The save there will be gone for good.`,
+                ok: "Start over",
+                danger: true,
+              }))
+            )
               return;
             onPlay(slot, freshTown());
           }}
@@ -638,12 +645,6 @@ export function TownBar({
  * last one; pressing it then asks first, unless the player switched that off.
  */
 function NextDay({ idle, onNextDay }: { idle: boolean; onNextDay: () => void }) {
-  const [asking, setAsking] = useState(false);
-  const [warn, setWarn] = useState(idleWarnOn);
-  const go = () => {
-    setAsking(false);
-    onNextDay();
-  };
   return (
     <span className="next-day">
       <button
@@ -654,34 +655,22 @@ function NextDay({ idle, onNextDay }: { idle: boolean; onNextDay: () => void }) 
             ? "Nothing done since the last day passed"
             : "Everyone at home heals, parties below carry on, night falls at the pit, and new recruits turn up"
         }
-        onClick={() => (idle && warn ? setAsking(true) : go())}
+        onClick={async () => {
+          if (
+            idle &&
+            idleWarnOn() &&
+            !(await askConfirm({
+              message: "You've done nothing for this day, are you sure you want to advance a day?",
+              ok: "Next day",
+              check: { label: "Don't warn me again", onChange: (c) => setIdleWarn(!c) },
+            }))
+          )
+            return;
+          onNextDay();
+        }}
       >
         Next day
       </button>
-      {asking ? (
-        <div className="next-day-ask" role="alertdialog" aria-label="Advance a day?">
-          <p>You've done nothing for this day, are you sure you want to advance a day?</p>
-          <label className="small">
-            <input
-              type="checkbox"
-              checked={!warn}
-              onChange={(e) => {
-                setWarn(!e.target.checked);
-                setIdleWarn(!e.target.checked);
-              }}
-            />{" "}
-            Don't warn me again
-          </label>
-          <div className="row-buttons">
-            <button type="button" className="btn btn-main" onClick={go}>
-              Next day
-            </button>
-            <button type="button" className="btn" onClick={() => setAsking(false)}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : null}
     </span>
   );
 }

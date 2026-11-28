@@ -9,6 +9,7 @@ import { defineBuilding } from "../types";
 export default defineBuilding({
   id: "temple",
   name: "Temple",
+  group: "guild",
   blurb: "Priests who can call a hero back from the dead, if the body comes home.",
   startLevel: 0,
   levels: [
