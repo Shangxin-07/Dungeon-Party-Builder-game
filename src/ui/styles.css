@@ -3428,6 +3428,41 @@ sup.down {
   }
 }
 
+/* M9.20: the target is scrolled out of its pane; a glowing arrow at that edge. */
+.tut-away {
+  position: fixed;
+  z-index: 40;
+  height: 40px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 1.4rem;
+  text-shadow: 0 0 10px rgb(224 166 75 / 0.8);
+  animation: tut-nudge 1.2s ease-in-out infinite;
+}
+
+.tut-away-down {
+  background: linear-gradient(to top, rgb(224 166 75 / 0.3), transparent);
+  border-bottom: 2px solid var(--accent);
+}
+
+.tut-away-up {
+  background: linear-gradient(to bottom, rgb(224 166 75 / 0.3), transparent);
+  border-top: 2px solid var(--accent);
+}
+
+@keyframes tut-nudge {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.tut-back {
+  margin: 4px 0;
+}
+
 .tut-callout {
   position: fixed;
   z-index: 41;
