@@ -10,12 +10,12 @@ import {
   outingStatus,
   planRescue,
   rescueTarget,
-  waitUntilBack,
   type Outing,
   type TownState,
 } from "../../sim/town";
-import { heroNames } from "../../content";
 import { ix } from "../game";
+import { Portrait } from "../art/Portrait";
+import { partyOutline } from "./Party";
 import type { Act } from "./shared";
 
 /** "away 2 days · expected back day 14", and how worried to be. */
@@ -41,34 +41,36 @@ export function AwayPanel({ town, act }: { town: TownState; act: Act }) {
       title="Down below"
       defaultOpen
       summary={outings.map((o) => `${o.name}: ${awayLine(town, o).text}`).join("; ")}
-      actions={
-        <button
-          type="button"
-          className="btn"
-          title="Pass the days until a party is back or heard of, or something else happens"
-          onClick={() => act((t) => waitUntilBack(ix, t, heroNames))}
-        >
-          Wait until someone's back
-        </button>
-      }
     >
       <ul className="sites">
         {outings.map((o) => {
           const line = awayLine(town, o);
           const late = town.day > o.expected;
           return (
-            <li key={o.id} className={`site${searching === o.id ? " planned" : ""}`}>
+            <li
+              key={o.id}
+              className={`site away-party party-outlined${searching === o.id ? " planned" : ""}`}
+              style={{ borderColor: partyOutline(o.party) }}
+            >
               <h3>
                 {o.name} <span className={`small ${line.tone ?? "muted"}`}>({line.text})</span>
               </h3>
-              <p className="small">
-                {o.party.map((h) => `${h.name} (${heroTitle(ix, h, true)})`).join(", ")}
-                {o.porterParty.length
-                  ? `, carried for by ${o.porterParty.map((h) => h.name).join(", ")}`
-                  : ""}
-                . Set off on day {o.left} for floor {o.result.orders.targetFloor}
-                {o.result.orders.rescue ? " to search for the missing" : ""}.
-              </p>
+              <div className="party-row-faces">
+                {o.party.map((h) => (
+                  <span key={h.id} title={`${h.name}, ${heroTitle(ix, h, true)}`}>
+                    <Portrait hero={h} size={30} />
+                  </span>
+                ))}
+                {o.porterParty.map((h) => (
+                  <span key={h.id} className="porter-face" title={`${h.name}, porter`}>
+                    <Portrait hero={h} size={24} />
+                  </span>
+                ))}
+                <span className="small muted party-row-orders">
+                  Set off day {o.left} for floor {o.result.orders.targetFloor}
+                  {o.result.orders.rescue ? ", searching for the missing" : ""}
+                </span>
+              </div>
               {late ? (
                 <>
                   <p className="small muted">

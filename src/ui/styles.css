@@ -3367,3 +3367,19 @@ sup.down {
 .train-box > .btn {
   align-self: flex-start;
 }
+
+/* M9.12: parties below and parties on file outlined like the party box. */
+.party-row.party-outlined,
+.site.party-outlined {
+  border-width: 2px;
+  border-style: solid;
+}
+
+.party-row.in-party,
+.site.away-party.planned {
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.site.away-party .party-row-faces {
+  margin: 4px 0;
+}
