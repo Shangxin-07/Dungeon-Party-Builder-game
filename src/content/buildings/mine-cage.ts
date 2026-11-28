@@ -8,6 +8,7 @@ import { defineBuilding } from "../types";
 export default defineBuilding({
   id: "mine-cage",
   name: "Mine Cage",
+  group: "defence",
   blurb: "A winch and cage over the pit. Parties ride past the top floors, down and back up.",
   startLevel: 0,
   levels: [

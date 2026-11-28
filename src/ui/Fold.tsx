@@ -7,6 +7,18 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 
 const KEY = "dpb-ui-open";
 const OPEN_EVENT = "dpb-open-fold";
+const TARGET_EVENT = "dpb-show-target";
+
+/**
+ * Call `f` with each element id showFold is about to bring into view, before
+ * it looks for it: a panel with its own tabs (Buildings) can switch to the one
+ * holding it. Returns the unsubscribe.
+ */
+export function onShowTarget(f: (target: string) => void): () => void {
+  const on = (e: Event) => f((e as CustomEvent<string>).detail);
+  window.addEventListener(TARGET_EVENT, on);
+  return () => window.removeEventListener(TARGET_EVENT, on);
+}
 
 /** Open the panel `id` from elsewhere on the page (the town map's clicks, M8). */
 export function openFold(id: string) {
@@ -29,6 +41,7 @@ export function onOpenFold(f: (id: string) => void): () => void {
  */
 export function showFold(fold: string, target: string) {
   openFold(fold);
+  window.dispatchEvent(new CustomEvent<string>(TARGET_EVENT, { detail: target }));
   requestAnimationFrame(() =>
     requestAnimationFrame(() => {
       const el = document.getElementById(target);

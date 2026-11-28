@@ -4,6 +4,7 @@ import { defineBuilding } from "../types";
 export default defineBuilding({
   id: "gate",
   name: "Pit Gate",
+  group: "defence",
   blurb: "The way down for your parties, and a door that can be barred at night.",
   startLevel: 0,
   levels: [

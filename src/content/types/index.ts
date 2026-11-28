@@ -125,11 +125,12 @@ export type {
   VisitorOffer,
   TownsfolkRules,
   BuildingArt,
+  BuildingGroup,
   BuildingShape,
   SignGlyph,
   TownMapDef,
 } from "./town";
-export { BUILDING_SHAPES, SIGN_GLYPHS } from "./town";
+export { BUILDING_GROUPS, BUILDING_SHAPES, SIGN_GLYPHS } from "./town";
 export {
   defineClass,
   defineItem,

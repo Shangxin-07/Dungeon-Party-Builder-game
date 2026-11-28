@@ -4,6 +4,7 @@ import { defineBuilding } from "../types";
 export default defineBuilding({
   id: "palisade",
   name: "Palisade",
+  group: "defence",
   blurb: "A ring of sharpened stakes around the pit. Holds back monsters climbing out.",
   startLevel: 0,
   levels: [

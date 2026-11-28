@@ -7,6 +7,7 @@ import { defineBuilding } from "../types";
 export default defineBuilding({
   id: "watchtower",
   name: "Watchtower",
+  group: "defence",
   blurb: "A lookout over the pit. Shows what's coming, and how busy the top floors are.",
   startLevel: 0,
   levels: [

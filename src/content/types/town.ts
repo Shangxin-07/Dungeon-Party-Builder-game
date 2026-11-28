@@ -130,7 +130,13 @@ export interface BuildingDef {
   dealsWith?: readonly string[];
   /** How it looks on the town map (M8, DESIGN.md §19). Missing: a plain house on no plot. */
   art?: BuildingArt;
+  /** Which tab of the Buildings panel it sits on (M9.18). Missing: production. */
+  group?: BuildingGroup;
 }
+
+/** The Buildings panel's tabs (M9.18), in order. */
+export const BUILDING_GROUPS = ["defence", "guild", "production"] as const;
+export type BuildingGroup = (typeof BUILDING_GROUPS)[number];
 
 /**
  * The drawn looks the town map knows (src/ui/town/map/). Most grow with level;

@@ -3637,3 +3637,27 @@ sup.down {
 .pack-compact .pack-slot {
   width: auto;
 }
+
+/* M9.18: the Buildings panel in tabs, with a count of what can be built now. */
+.building-tabs {
+  margin: 0 0 10px;
+}
+
+.tab-count {
+  display: inline-block;
+  min-width: 1.4em;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #1b1712;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.4em;
+  text-align: center;
+}
+
+.tab-count.warn {
+  background: var(--bad);
+  color: #fff;
+}

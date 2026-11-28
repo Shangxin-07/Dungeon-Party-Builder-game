@@ -4,6 +4,7 @@ import { defineBuilding } from "../types";
 export default defineBuilding({
   id: "vault",
   name: "Vault",
+  group: "guild",
   blurb: "A locked strongroom. Raiders can't get at what's inside.",
   startLevel: 0,
   levels: [

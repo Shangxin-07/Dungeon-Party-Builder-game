@@ -4,6 +4,7 @@ import { defineBuilding } from "../types";
 export default defineBuilding({
   id: "training-yard",
   name: "Training Yard",
+  group: "guild",
   blurb: "Sparring dummies and a sand pit. Heroes resting in town still get better.",
   startLevel: 0,
   levels: [
