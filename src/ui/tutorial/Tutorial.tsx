@@ -38,29 +38,50 @@ function findTarget(step: TutorialStep): HTMLElement | undefined {
 }
 
 /**
- * The part of `el` that can be seen: cut to any scrolling pane it sits in and
- * to the window, so a tall panel's outline doesn't spill over its neighbours.
+ * Where a step's target is on screen. `box` is the part of it that can be
+ * seen: cut to any scrolling pane it sits in and to the window, so a tall
+ * panel's outline doesn't spill over its neighbours. When it's been scrolled
+ * out of sight (M9.20, issue #114) there's no box; `away` then says which way
+ * it went and gives a thin strip along that edge of the pane or window, so the
+ * callout can wait there and offer to bring it back.
  */
-function visibleBox(el: HTMLElement): Box | undefined {
+type Seen = { box?: Box; away?: { dir: "up" | "down"; edge: Box } };
+
+function seenBox(el: HTMLElement): Seen {
   const r = el.getBoundingClientRect();
   let top = Math.max(r.top, 0);
   let left = Math.max(r.left, 0);
   let bottom = Math.min(r.bottom, window.innerHeight);
   let right = Math.min(r.right, window.innerWidth);
+  // The clip that hides the target: its innermost scrolling pane, or the window.
+  let clip: Box = { top: 0, left: 0, width: window.innerWidth, height: window.innerHeight };
+  let found = false;
   for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
     const o = getComputedStyle(p).overflowY;
     if (o !== "auto" && o !== "scroll" && o !== "hidden") continue;
     const c = p.getBoundingClientRect();
+    if (!found) {
+      clip = { top: c.top, left: c.left, width: c.width, height: c.height };
+      found = true;
+    }
     top = Math.max(top, c.top);
     left = Math.max(left, c.left);
     bottom = Math.min(bottom, c.bottom);
     right = Math.min(right, c.right);
   }
-  if (bottom - top < 4 || right - left < 4) return undefined;
-  return { top, left, width: right - left, height: bottom - top };
+  if (bottom - top >= 4 && right - left >= 4)
+    return { box: { top, left, width: right - left, height: bottom - top } };
+  const ctop = Math.max(clip.top, 0);
+  const cbottom = Math.min(clip.top + clip.height, window.innerHeight);
+  const cleft = Math.max(clip.left, 0);
+  const cwidth = Math.min(clip.left + clip.width, window.innerWidth) - cleft;
+  if (cwidth < 4 || cbottom - ctop < 4) return {};
+  const dir = r.top >= cbottom - 4 ? "down" : "up";
+  const edgeTop = dir === "down" ? cbottom - 40 : ctop;
+  return { away: { dir, edge: { top: edgeTop, left: cleft, width: cwidth, height: 40 } } };
 }
 
-const sameBox = (a?: Box, b?: Box) =>
+const sameBox = (a?: Box, b?: Box): boolean =>
   a === b ||
   (!!a &&
     !!b &&
@@ -68,6 +89,14 @@ const sameBox = (a?: Box, b?: Box) =>
     a.left === b.left &&
     a.width === b.width &&
     a.height === b.height);
+
+const sameSeen = (a?: Seen, b?: Seen) =>
+  a === b ||
+  (!!a &&
+    !!b &&
+    sameBox(a.box, b.box) &&
+    a.away?.dir === b.away?.dir &&
+    sameBox(a.away?.edge, b.away?.edge));
 
 /**
  * Where the callout goes: beside a target in a side pane, else below it if it
@@ -137,17 +166,17 @@ export function Tutorial({ town }: { town: TownState }) {
   }, [step?.id]);
 
   // Follow the target as the page scrolls, resizes and redraws.
-  const [box, setBox] = useState<Box>();
-  const boxRef = useRef<Box>(undefined);
+  const [seen, setSeen] = useState<Seen>({});
+  const seenRef = useRef<Seen>(undefined);
   useEffect(() => {
     if (!step) return;
     let frame = 0;
     const tick = () => {
       const el = findTarget(step);
-      const next = el ? visibleBox(el) : undefined;
-      if (!sameBox(next, boxRef.current)) {
-        boxRef.current = next;
-        setBox(next);
+      const next = el ? seenBox(el) : {};
+      if (!sameSeen(next, seenRef.current)) {
+        seenRef.current = next;
+        setSeen(next);
       }
       frame = requestAnimationFrame(tick);
     };
@@ -163,6 +192,8 @@ export function Tutorial({ town }: { town: TownState }) {
   });
 
   if (!progress || !step || index === undefined) return null;
+  const { box, away } = seen;
+  const bringBack = () => findTarget(step)?.scrollIntoView({ behavior: "smooth", block: "center" });
   const waiting = step.until && !tutorialChecks[step.until](ix, town);
   const last = index === tutorialSteps.length - 1;
   const next = () => save({ ...progress, step: index + 1 });
@@ -194,13 +225,21 @@ export function Tutorial({ town }: { town: TownState }) {
             height: box.height + PAD * 2,
           }}
         />
+      ) : away ? (
+        <div
+          className={`tut-away tut-away-${away.dir}`}
+          aria-hidden="true"
+          style={{ top: away.edge.top, left: away.edge.left, width: away.edge.width }}
+        >
+          {away.dir === "down" ? "↓" : "↑"}
+        </div>
       ) : null}
       <div
         ref={calloutRef}
         className="tut-callout"
         role="dialog"
         aria-label={`Tutorial: ${step.title}`}
-        style={placeCallout(box, height)}
+        style={placeCallout(box ?? away?.edge, height)}
       >
         <div className="tut-head">
           <strong>{step.title}</strong>
@@ -215,6 +254,11 @@ export function Tutorial({ town }: { town: TownState }) {
         </div>
         <p>{step.text}</p>
         {waiting && step.todo ? <p className="tut-todo">{step.todo}</p> : null}
+        {away ? (
+          <button type="button" className="btn small tut-back" onClick={bringBack}>
+            {away.dir === "down" ? "↓" : "↑"} Scroll back to it
+          </button>
+        ) : null}
         <div className="tut-buttons">
           {waiting ? (
             <button type="button" className="btn" onClick={next}>
