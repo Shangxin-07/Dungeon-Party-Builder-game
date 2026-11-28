@@ -38,7 +38,6 @@ import { RestockPanel } from "../Restock";
 import { FallenPanel, LostPanel, TalkPanel } from "../Lost";
 import { Accounts } from "../Accounts";
 import type { Act } from "./shared";
-import { Saves } from "./Saves";
 import { TripTown } from "./Trip";
 import { DebriefPanel } from "./Debrief";
 import { AwayPanel, awayLine } from "./Away";
@@ -63,6 +62,9 @@ import { OffersPanel } from "./Offers";
 import { foldTab, isCentre, needsByTab, needsYou, TABS, type CentreTab, type TabId } from "./needs";
 import { FoldGroup, onOpenFold } from "../Fold";
 import { Tutorial } from "../tutorial/Tutorial";
+import { idleWarnOn, setIdleWarn } from "../settings";
+import { MenuSaves } from "../Menu";
+import { Saves } from "./Saves";
 
 const TAB_KEY = "dpb-ui-tab";
 const CENTRE_KEY = "dpb-ui-centre";
@@ -83,26 +85,6 @@ function rememberCentre(t: CentreTab) {
     localStorage.setItem(CENTRE_KEY, t);
   } catch {
     // Private windows: the tab just isn't remembered.
-  }
-}
-
-const IDLE_WARN_KEY = "dpb-ui-idle-warn";
-
-/** Whether to ask before a second Next day with nothing done in between (M9.13). */
-function idleWarnOn(): boolean {
-  try {
-    return localStorage.getItem(IDLE_WARN_KEY) !== "off";
-  } catch {
-    return true;
-  }
-}
-
-function setIdleWarn(on: boolean) {
-  try {
-    if (on) localStorage.removeItem(IDLE_WARN_KEY);
-    else localStorage.setItem(IDLE_WARN_KEY, "off");
-  } catch {
-    // Private windows: the choice just isn't remembered.
   }
 }
 
@@ -446,16 +428,6 @@ export function TownPlay({ initial }: { initial: Game }) {
         <>
           <Accounts town={town} />
           <Memorial town={town} />
-          <Saves
-            slot={slot}
-            town={town}
-            onSwitch={(n, t) => {
-              setGame({ slot: n, town: t });
-              setError(undefined);
-              setWatching(false);
-            }}
-            onError={setError}
-          />
         </>
       ) : null}
     </>
@@ -482,6 +454,30 @@ export function TownPlay({ initial }: { initial: Game }) {
       <nav className="tabs town-tabs phone-tabs" aria-label="Town">
         {TABS.map((t) => tabButton(t, !watching && tab === t.id))}
       </nav>
+      {/* M9.23: the menu's Save and Load sections are this guild's slots. */}
+      <MenuSaves
+        render={(mode, close) => (
+          <>
+            {error ? (
+              <p className="error" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <Saves
+              mode={mode}
+              slot={slot}
+              town={town}
+              onSwitch={(n, t) => {
+                setGame({ slot: n, town: t });
+                setError(undefined);
+                setWatching(false);
+                close();
+              }}
+              onError={(m) => setError(m || undefined)}
+            />
+          </>
+        )}
+      />
       <EndingPanel town={town} />
       {watching ? null : <Tutorial town={town} />}
       {error ? (
