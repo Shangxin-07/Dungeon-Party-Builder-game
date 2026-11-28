@@ -61,7 +61,7 @@ import { NewsStrip } from "./NewsStrip";
 import { NeedsYou } from "./NeedsYou";
 import { OffersPanel } from "./Offers";
 import { foldTab, isCentre, needsByTab, needsYou, TABS, type CentreTab, type TabId } from "./needs";
-import { onOpenFold } from "../Fold";
+import { FoldGroup, onOpenFold } from "../Fold";
 import { Tutorial } from "../tutorial/Tutorial";
 
 const TAB_KEY = "dpb-ui-tab";
@@ -490,14 +490,17 @@ export function TownPlay({ initial }: { initial: Game }) {
         </p>
       ) : null}
       <div className="town-grid">
+        {/* M9.22 (#122): each side pane shows one panel at a time. */}
         <div className={paneClass("left")} aria-label="The guild">
-          <CampPanel town={town} act={act} />
-          {town.camp ? <PostsPanel town={town} act={act} /> : null}
-          <RestockPanel town={town} act={act} />
-          {town.camp ? null : <PartyPanel town={town} act={act} onLaunch={launchParty} />}
-          <AwayPanel town={town} act={act} />
-          <Roster town={town} act={act} />
-          <Recruits town={town} act={act} />
+          <FoldGroup name="left">
+            <CampPanel town={town} act={act} />
+            {town.camp ? <PostsPanel town={town} act={act} /> : null}
+            <RestockPanel town={town} act={act} />
+            {town.camp ? null : <PartyPanel town={town} act={act} onLaunch={launchParty} />}
+            <AwayPanel town={town} act={act} />
+            <Roster town={town} act={act} />
+            <Recruits town={town} act={act} />
+          </FoldGroup>
         </div>
         <div className="town-middle">
           <NewsStrip
@@ -523,10 +526,12 @@ export function TownPlay({ initial }: { initial: Game }) {
           )}
         </div>
         <div className={paneClass("right")} aria-label="The town's works">
-          <Market town={town} act={act} />
-          <Buildings town={town} act={act} />
-          {town.camp ? null : <ResearchPanel town={town} act={act} />}
-          {town.camp ? null : <WorkshopsPanel town={town} act={act} />}
+          <FoldGroup name="right">
+            <Market town={town} act={act} />
+            <Buildings town={town} act={act} />
+            {town.camp ? null : <ResearchPanel town={town} act={act} />}
+            {town.camp ? null : <WorkshopsPanel town={town} act={act} />}
+          </FoldGroup>
         </div>
       </div>
     </section>
