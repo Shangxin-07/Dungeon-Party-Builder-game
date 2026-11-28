@@ -174,6 +174,21 @@ export function sameOrders(onFile: StandingOrders, next: StandingOrders): boolea
   );
 }
 
+/**
+ * What differs between the party being picked and a party on file with the
+ * same heroes (M9.21, #120): orders, porters, leader. Empty when they match.
+ */
+export function fileDrift(town: TownState, onFile: SavedParty): string[] {
+  const out: string[] = [];
+  if (!sameOrders(onFile.orders, town.orders)) out.push("orders");
+  const porters = (a: readonly string[], b: readonly string[]) =>
+    a.length === b.length && a.every((id) => b.includes(id));
+  if (!porters(onFile.porters, town.porters)) out.push("porters");
+  const picked = town.leader && town.party.includes(town.leader) ? town.leader : undefined;
+  if ((onFile.leader ?? undefined) !== picked) out.push("leader");
+  return out;
+}
+
 /** Back to an ordinary trip. */
 export function cancelRescue(_ix: Index, town: TownState): TownState {
   return { ...town, orders: ordinaryOrders(town.orders) };

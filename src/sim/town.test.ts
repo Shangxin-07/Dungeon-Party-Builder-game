@@ -21,6 +21,7 @@ import {
   pickParty,
   renameParty,
   saveParty,
+  fileDrift,
   addParty,
   removeParty,
   sameOrders,
@@ -29,6 +30,7 @@ import {
   sell,
   sellPrice,
   setOrders,
+  setLeader,
   toggleParty,
   unequip,
   unpackItem,
@@ -354,6 +356,17 @@ describe("parties on file", () => {
     expect(t.party).toEqual(b);
     expect(t.orders.targetFloor).toBe(2);
     expect(cantLaunch(ix, t)).toBeUndefined();
+  });
+
+  it("says what differs from a party on file: orders, porters, leader (#120)", () => {
+    let t = eightHeroes();
+    t = saveParty(ix, t, 0);
+    expect(fileDrift(t, t.parties[0]!)).toEqual([]);
+    t = setOrders(ix, t, { ...t.orders, loot: t.orders.loot === "valuable" ? "everything" : "valuable" });
+    t = setLeader(ix, t, t.party[1]!);
+    expect(fileDrift(t, t.parties[0]!)).toEqual(["orders", "leader"]);
+    t = saveParty(ix, t, 0);
+    expect(fileDrift(t, t.parties[0]!)).toEqual([]);
   });
 
   it("doesn't hand one party's hunt to the next (Mike's report, M7.10)", () => {

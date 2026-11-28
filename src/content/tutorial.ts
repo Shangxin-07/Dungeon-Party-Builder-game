@@ -144,9 +144,9 @@ export const tutorialSteps: TutorialStep[] = [
     fold: "roster",
     target: "#roster-body .hero-card .hero-actions",
     title: "Pick the party",
-    text: "Add heroes to the party and set each one's row. Fighters go in front, archers and casters at the back.",
+    text: "Add heroes to the party and set each one's row. Fighters go in front, archers and casters at the back. A miner can't go down until they pick a class: use Train as on their card first. Porters carry loot but don't count as heroes.",
     until: "partyPicked",
-    todo: "Add two or more heroes to the party.",
+    todo: "Add two or more heroes to the party (or everyone who can go).",
   },
   {
     id: "orders",
