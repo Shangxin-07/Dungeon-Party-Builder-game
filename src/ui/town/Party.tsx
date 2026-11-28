@@ -1,6 +1,7 @@
 /**
  * Party, formation and orders, and the saved parties A and B.
  */
+import { askConfirm } from "../Confirm";
 import { Fold } from "../Fold";
 import type { Row } from "../../content/types";
 import { describeParty, partyAlignment } from "../../sim/alignment";
@@ -728,8 +729,14 @@ export function PartiesOnFile({
                   <button
                     type="button"
                     className="link danger small"
-                    onClick={() => {
-                      if (confirm(`Take ${p.name} off file? Its heroes stay in the guild.`))
+                    onClick={async () => {
+                      if (
+                        await askConfirm({
+                          message: `Take ${p.name} off file? Its heroes stay in the guild.`,
+                          ok: "Remove",
+                          danger: true,
+                        })
+                      )
                         act((t) => removeParty(ix, t, slot));
                     }}
                   >

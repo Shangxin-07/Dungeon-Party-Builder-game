@@ -3,6 +3,7 @@ import { CrashGuard } from "./Crash";
 import { ExpeditionView } from "./Expedition";
 import { TestFight } from "./TestFight";
 import { TownGame } from "./town";
+import { ConfirmHost } from "./Confirm";
 import { BUILD_COMMIT, GAME_VERSION } from "../version";
 import { restartTutorial } from "./tutorial/progress";
 
@@ -79,6 +80,7 @@ export function App() {
           <TestFight />
         </>
       )}
+      <ConfirmHost />
     </main>
   );
 }

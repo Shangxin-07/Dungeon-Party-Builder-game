@@ -4,6 +4,7 @@
  * takes, and what the guild knows of where the rest are. Worked out in
  * src/sim/town/shards.ts; where the shards are is content (content/shards/).
  */
+import { askConfirm } from "../Confirm";
 import { Fold } from "../Fold";
 import {
   cantChooseWay,
@@ -165,8 +166,13 @@ function WayLine({ town, heart, act }: { town: TownState; heart: CoreRules; act:
               className="btn"
               disabled={!!why}
               title={why}
-              onClick={() => {
-                if (confirm(`${way.name}? The ${heart.stone} stays that way for good.`))
+              onClick={async () => {
+                if (
+                  await askConfirm({
+                    message: `${way.name}? The ${heart.stone} stays that way for good.`,
+                    ok: way.name,
+                  })
+                )
                   act((t) => chooseWay(ix, t, heart, way.id));
               }}
             >

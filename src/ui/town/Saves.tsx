@@ -1,6 +1,7 @@
 /**
  * The save slots panel: switch, export, import and clear saves.
  */
+import { askConfirm } from "../Confirm";
 import { Fold } from "../Fold";
 import type { TownState } from "../../sim/town";
 import { importSave } from "../../sim/save";
@@ -46,8 +47,14 @@ export function Saves({
                   <button
                     type="button"
                     className="link danger"
-                    onClick={() => {
-                      if (!confirm(`Delete the save in slot ${n}? It will be gone for good.`))
+                    onClick={async () => {
+                      if (
+                        !(await askConfirm({
+                          message: `Delete the save in slot ${n}? It will be gone for good.`,
+                          ok: "Delete",
+                          danger: true,
+                        }))
+                      )
                         return;
                       clearSlot(n);
                       onError("");
@@ -86,9 +93,16 @@ export function Saves({
                   <button
                     type="button"
                     className="link danger"
-                    onClick={() => {
+                    onClick={async () => {
                       const what = n === slot ? "your current guild" : `the guild in slot ${n}`;
-                      if (!confirm(`Start over in slot ${n}? ${what} will be gone.`)) return;
+                      if (
+                        !(await askConfirm({
+                          message: `Start over in slot ${n}? ${what[0]!.toUpperCase()}${what.slice(1)} will be gone.`,
+                          ok: n === slot ? "Start over" : "Delete",
+                          danger: true,
+                        }))
+                      )
+                        return;
                       if (n === slot) onSwitch(n, freshTown());
                       else clearSlot(n);
                       onError("");
@@ -118,9 +132,10 @@ export function Saves({
               try {
                 const loaded = importSave(ix, await file.text());
                 if (
-                  confirm(
-                    `Load this guild (day ${loaded.day}) into slot ${slot}? The one there now will be replaced.`,
-                  )
+                  await askConfirm({
+                    message: `Load this guild (day ${loaded.day}) into slot ${slot}? The one there now will be replaced.`,
+                    ok: "Load it",
+                  })
                 )
                   onSwitch(slot, loaded);
               } catch (err) {
