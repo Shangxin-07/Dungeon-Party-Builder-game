@@ -2752,3 +2752,143 @@ sup.down {
     border-left: 0;
   }
 }
+
+/*
+ * M9.01: the centre column holds the news strip (top), the centre pane (scrolls)
+ * and the townsfolk (bottom). On a phone the strip tops every tab, and the
+ * townsfolk show with the Town tab.
+ */
+.news-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin-bottom: 10px;
+  padding: 5px 8px 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.news-strip-items {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.news-strip-quiet {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.news-chip {
+  flex-shrink: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  color: var(--text);
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+.news-chip:hover {
+  border-color: var(--accent);
+}
+
+.news-chip-warn {
+  border-left-color: var(--bad);
+  background: color-mix(in srgb, var(--bad) 16%, transparent);
+}
+
+.news-chip-good {
+  border-left-color: var(--good);
+  background: color-mix(in srgb, var(--good) 16%, transparent);
+}
+
+/* News as it was said: cut short, the whole line on hover. */
+.news-chip-said {
+  max-width: 34ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.news-chip-said:not(.news-chip-warn, .news-chip-good) {
+  border-left-color: var(--border);
+}
+
+.news-chip-all {
+  border-left-width: 1px;
+  color: var(--muted);
+}
+
+.town-folk > .fold.panel {
+  margin-top: 10px;
+}
+
+.town-pane > .panel:first-child,
+.town-pane > .fold.panel:first-child {
+  margin-top: 0;
+}
+
+@media (max-width: 1199px) {
+  .town-grid {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .town-middle {
+    display: contents;
+  }
+
+  .news-strip {
+    order: -1;
+  }
+
+  .town-left {
+    order: 1;
+  }
+
+  .town-centre {
+    order: 2;
+  }
+
+  .town-folk {
+    order: 3;
+  }
+
+  .town-right {
+    order: 4;
+  }
+
+  .town-folk:not(.pane-shown) {
+    display: none;
+  }
+}
+
+@media (min-width: 1200px) {
+  .town-middle {
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .town-middle > .town-centre {
+    flex: 1;
+  }
+
+  .town-folk {
+    max-height: 40vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    flex-shrink: 0;
+  }
+}
